@@ -60,40 +60,44 @@ export default function Footer() {
   };
 
   return (
-    <footer className="w-full bg-black shadow-lg rounded-t-4xl">
-      <section className="container !px-[100px] flex flex-col items-center ">
-        <div className="flex w-full items-center py-[60px] justify-between border-b border-white/40">
-          <div className="flex items-center  w-1/4">
-            <Image 
-              src="/images/logo.png" 
-              alt="logo" 
-              width={235} 
-              height={151} 
-              className="w-[235px] h-[151px]"
-            />
-          </div>
-
-          <div className="flex flex-col items-start justify-center w-1/2">
-            <span className="text-white font-semibold text-2xl mb-5">Contacts:</span>
-            <div className="flex items-center  gap-6 w-full">
-              <MapWindow width="226px" height="226px" />
-              <ul className="flex flex-col gap-6 text-white">
-                {contacts.map((contact, index) => (
-                  <li 
-                    key={index}
-                    onClick={() => handleContactClick(contact.type, contact.value)}
-                    className="flex items-center gap-2.5 cursor-pointer hover:text-blue transition-colors"
-                  >
-                    {contact.icon}
-                    <span>{contact.label}</span>
-                  </li>
-                ))}
-              </ul>
+    <footer className="w-full bg-blue  relative z-0">
+      <section className="w-full rounded-t-4xl bg-black">
+        <div className="container !px-[100px] flex flex-col items-center ">
+          <div className="flex w-full items-center py-[60px] justify-between border-b border-white/40">
+            <div className="flex items-center  w-1/4">
+              <Image 
+                src="/images/logo.png" 
+                alt="logo" 
+                width={235} 
+                height={151} 
+                className="w-[235px] h-[151px]"
+              />
             </div>
+
+            <div className="flex flex-col items-start justify-center w-1/2">
+              <span className="text-white font-semibold text-2xl mb-5">Contacts:</span>
+              <div className="flex items-center  gap-6 w-full">
+                <div className="map-isolated" style={{ isolation: 'isolate', zIndex: 1 }}>
+                  <MapWindow width="226px" height="226px" />
+                </div>
+                <ul className="flex flex-col gap-6 text-white">
+                  {contacts.map((contact, index) => (
+                    <li 
+                      key={index}
+                      onClick={() => handleContactClick(contact.type, contact.value)}
+                      className="flex items-center gap-2.5 cursor-pointer hover:text-blue transition-colors"
+                    >
+                      {contact.icon}
+                      <span>{contact.label}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+            <Navigation />
           </div>
-          <Navigation />
+          <Contacts />
         </div>
-        <Contacts />
       </section>
       <Line />
     </footer>

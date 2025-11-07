@@ -12,6 +12,7 @@
   --font-rubik: var(--font-rubik);
   --font-roboto: var(--font-roboto);
   --font-inter: var(--font-inter);
+  --font-plus-jakarta-sans: var(--font-plus-jakarta-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -138,7 +139,7 @@
 
 @layer utilities {
   .container {
-    @apply w-full max-w-[var(--container-max-width)] mx-auto px-4;
+    @apply w-full max-w-[var(--container-max-width)] mx-auto;
   }
   .rubik {
     font-family: var(--font-rubik), sans-serif;
@@ -148,6 +149,9 @@
   }
   .inter {
     font-family: var(--font-inter), sans-serif;
+  }
+  .jakarta {
+    font-family: var(--font-plus-jakarta-sans), sans-serif;
   }
   .text-gray {
     color: var(--color-gray);
@@ -172,4 +176,54 @@
 
 .animate-scroll-right {
   animation: scroll-right 40s linear infinite;
+}
+
+/* SOLUTION: Stacking order - Footer lowest, Header and Main above */
+
+/* Footer is the lowest layer */
+footer {
+  z-index: 0;
+  position: relative;
+}
+
+/* Header is above footer */
+header {
+  z-index: 10;
+  position: relative;
+}
+
+/* Main content is above footer */
+main {
+  z-index: 10;
+  position: relative;
+}
+
+/* SOLUTION: Isolate only the map container, not the entire footer */
+
+/* Map container is isolated - creates new stacking context for Google Maps only */
+.map-isolated {
+  isolation: isolate !important;
+  z-index: 1 !important;
+  position: relative !important;
+}
+
+/* All iframes and Google Maps elements in isolated map container have low z-index */
+.map-isolated iframe,
+.map-isolated .gm-style,
+.map-isolated .gm-style iframe,
+.map-isolated * {
+  z-index: 1 !important;
+}
+
+/* Radix Popover Portal - MUST be above everything */
+[data-radix-portal] {
+  z-index: 2147483647 !important;
+}
+
+[data-radix-popper-content-wrapper] {
+  z-index: 2147483647 !important;
+}
+
+[data-slot="popover-content"] {
+  z-index: 2147483647 !important;
 }
