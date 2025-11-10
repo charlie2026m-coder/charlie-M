@@ -1,0 +1,8 @@
+Setup Beds24:
+
+#How its works? Beds24 API.
+
+1. For connect to api v2 we ne need to get first invite code: https://beds24.com/control3.php?pagetype=apiv2
+2. Then we call authentication/setup to get { token, resreshToken, expiresIn }
+3. With refresh token we can get { token } ( expires in 24 hours )
+4. Use beds24Request(path, method, body) to get any info

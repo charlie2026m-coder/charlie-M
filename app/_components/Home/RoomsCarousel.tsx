@@ -1,4 +1,3 @@
-'use client'
 import * as React from "react"
 import type { CarouselApi } from '../ui/carousel'
 import {
@@ -7,18 +6,11 @@ import {
   CarouselItem,
 } from '../ui/carousel'
 import RoomCard from './RoomCard'
+import type { Beds24RoomType } from '@/types/beds24'
 export function RoomsCarousel({
   items,
 }: {
-  items: {
-    id: string
-    title: string
-    image: string
-    extra: string
-    price: number
-    squareMeters: number
-    beds: string
-  }[]
+  items: Beds24RoomType[]
 }) {
   const [api, setApi] = React.useState<CarouselApi>()
   const [current, setCurrent] = React.useState(0)
@@ -41,7 +33,7 @@ export function RoomsCarousel({
         <CarouselContent className="pb-10">
           {items.map((item) => (
             <CarouselItem key={item.id} className="basis-[416px] shrink-0 pr-4">
-              <RoomCard title={item.title} extra={item.extra} price={item.price} squareMeters={item.squareMeters} beds={item.beds} />
+              <RoomCard title={item.name} extra={''} price={item.minPrice} squareMeters={item.roomSize} beds={item.roomType} />
             </CarouselItem>
           ))}
         </CarouselContent>

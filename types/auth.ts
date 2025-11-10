@@ -14,3 +14,14 @@ export interface AuthResult {
   error?: string;
   requiresEmailConfirmation?: boolean;
 }
+
+export interface Beds24Tokens {
+  token: string;
+  refreshToken: string;
+  expiresIn: number;
+}
+
+export interface Beds24AccessToken {
+  token: string;
+  expiresIn: number;
+}

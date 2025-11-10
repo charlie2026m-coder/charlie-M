@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { login, register, logout, resetPassword, updatePassword } from '../_services/authService';
+import { login, register, logout, resetPassword, updatePassword } from '../auth/authService';
 import { LoginCredentials, RegisterCredentials } from '@/types/auth';
 
 export function useAuthActions() {

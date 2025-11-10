@@ -1,8 +1,8 @@
 import { Button } from '../ui/button'
 import Image from 'next/image'
-import { FaApple } from 'react-icons/fa'
+import { FaApple } from 'react-icons/fa'  
 import { FcGoogle } from 'react-icons/fc'
-import { signInWithOAuth } from '@/app/_services/authService'
+import { signInWithOAuth } from '@/app/auth/authService'
 import { toast } from 'sonner'
 import { contentType } from './AuthModal';
 

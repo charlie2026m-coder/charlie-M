@@ -1,5 +1,5 @@
 'use client';
-import { useAuthActions } from '@/app/_hooks/useAuthActions';
+import { useAuthActions } from '@/app/hooks/useAuthActions';
 
 const SignOut = () => {
   const { handleLogout } = useAuthActions();

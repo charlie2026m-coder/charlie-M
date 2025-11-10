@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { Locale } from '@/i18n/config';
+import type { Locale } from '@/lib/i18n/config';
 
 type Messages = {
   [key: string]: any;
@@ -20,21 +20,18 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>('en');
   const [messages, setMessages] = useState<Messages>({});
 
-  // Загружаем сообщения при изменении языка
   useEffect(() => {
     const loadMessages = async () => {
-      const msgs = await import(`@/messages/${locale}.json`);
+      const msgs = await import(`@/language/${locale}.json`);
       setMessages(msgs.default);
     };
     loadMessages();
 
-    // Сохраняем в localStorage
     if (typeof window !== 'undefined') {
       localStorage.setItem('locale', locale);
     }
   }, [locale]);
 
-  // Загружаем сохраненный язык при монтировании
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedLocale = localStorage.getItem('locale') as Locale;
@@ -57,7 +54,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       if (value && typeof value === 'object' && k in value) {
         value = value[k];
       } else {
-        return key; // Возвращаем ключ если перевод не найден
+        return key;
       }
     }
     

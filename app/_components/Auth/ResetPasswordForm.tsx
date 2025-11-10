@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ResetPasswordFormData, resetPasswordSchema } from "@/types/schemas";
 import { Button } from "../ui/button";
 import { contentType } from "./AuthModal";
-import { useAuthActions } from "@/app/_hooks/useAuthActions";
+import { useAuthActions } from "@/app/hooks/useAuthActions";
 
 const ResetPasswordForm = ({ setFormType }: { setFormType: (type: contentType ) => void }) => {
   const [error, setError] = useState<string | null>(null);

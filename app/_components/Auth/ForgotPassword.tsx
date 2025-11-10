@@ -5,7 +5,7 @@ import { Button } from '../ui/button';
 import CustomInput from '../ui/customInput';
 import { forgotPasswordSchema, type ForgotPasswordFormData } from '@/types/schemas';
 import { contentType } from './AuthModal';
-import { useAuthActions } from '@/app/_hooks/useAuthActions';
+import { useAuthActions } from '@/app/hooks/useAuthActions';
 
 const ForgotPassword = ({ setFormType }: { setFormType: (type: contentType ) => void }) => {
   const [error, setError] = useState<string | null>(null);

@@ -41,7 +41,7 @@ const Contacts = () => {
       </div>
       <div className='flex w-full pb-10 items-center '>
         <Link href="/privacy-policy" className="text-white text-sm pr-4 border-r border-white hover:text-blue transition-colors">Privacy Policy</Link>
-        <Link href="/terms-of-conditions" className="text-white text-sm pl-4 hover:text-blue transition-colors">Terms of Conditions</Link>
+        <Link href="/terms-and-conditions" className="text-white text-sm pl-4 hover:text-blue transition-colors">Terms and Conditions</Link>
         <span className="text-white text-sm ml-auto">© Charlie M. All Rights Reserved.</span>
       </div>
     </>

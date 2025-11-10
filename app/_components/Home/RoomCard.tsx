@@ -23,9 +23,9 @@ const RoomCard = ({
     '/images/room.jpg',
   ]
   return (
-    <div className='w-[400px] flex flex-col rounded-[40px] bg-white overflow-hidden shadow-lg'>
+    <div className='w-[400px] flex flex-col rounded-[40px] bg-white overflow-hidden shadow-lg h-full'>
       <PhotoSlider height={260} images={images} />
-      <div className='flex flex-col p-4 pb-6'>
+      <div className='flex flex-col p-4 pb-6 h-full'>
         <h2 className='text-xl font-medium jakarta mb-3'>{title}</h2>
         <div className='flex items-center gap-1 mb-3'>
           <span className='text-dark text-sm'>{squareMeters}m²</span>
@@ -39,7 +39,7 @@ const RoomCard = ({
           <div className='text-xl rounded-full bg-green/15 font-[700] text-green px-2.5 py-2'>€{price.toFixed(2)}</div>
         </div>
 
-        <div className='flex items-center justify-between'>
+        <div className='flex items-center justify-between mt-auto'>
           <Button variant='outline' className='h-[55px]'>Discover More</Button>
           <Button className='h-[55px]'>Book Now</Button>
         </div>

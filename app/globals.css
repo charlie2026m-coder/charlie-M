@@ -49,10 +49,12 @@
 
   --color-brown: #8B7B70;
   --color-blue: #9EC2DD;
+  --color-light-blue: #DEEAF4;
   --color-dark: #555555;
   --color-light-bg: #F7F5F2;
   --color-green: #2A9421;
   --color-red: #C72D2D;
+  --color-gray: #CCCCCC;
 }
 
 :root {

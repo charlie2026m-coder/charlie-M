@@ -1,8 +1,8 @@
 "use client";
 import { useState } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { useI18n } from '@/lib/i18n';
-import type { Locale } from '@/i18n/config';
+import { useI18n } from '@/lib/i18n/i18n';
+import type { Locale } from '@/lib/i18n/config';
 import { Button } from '../ui/button';
 
 export default function Language() {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { useAuthActions } from '@/app/_hooks/useAuthActions';
+import { useAuthActions } from '@/app/hooks/useAuthActions';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '../ui/button';
 import CustomInput from '../ui/customInput';
