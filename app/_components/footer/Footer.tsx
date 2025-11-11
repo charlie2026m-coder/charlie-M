@@ -8,9 +8,9 @@ import { FaLocationDot } from "react-icons/fa6";
 import { TbMailFilled } from "react-icons/tb";
 import Navigation from "./Navigation";
 import Contacts from "./Contacts";
-
+import { usePathname } from "next/navigation";
 export default function Footer() {
-
+  const pathname = usePathname();
   const contacts = [
     {
       type: "phone",
@@ -59,8 +59,10 @@ export default function Footer() {
     }
   };
 
+  const isHomePage = pathname === '/';
+
   return (
-    <footer className="w-full bg-blue  relative z-0">
+    <footer className={`w-full   relative z-0 ${isHomePage && 'bg-blue'}`}>
       <section className="w-full rounded-t-4xl bg-black">
         <div className="container !px-[100px] flex flex-col items-center ">
           <div className="flex w-full items-center py-[60px] justify-between border-b border-white/40">

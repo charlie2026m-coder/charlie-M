@@ -50,6 +50,12 @@ export default WhySection;
 const icon = 'text-white size-6'
 const cards = [
   {
+    title: "Central Berlin",
+    text: "Friedrichstraße 33, only steps from Checkpoint Charlie.",
+    icon: <PiCityLight className={icon} />
+
+  },
+  {
     title: "Self Check-in",
     text: "Fully automated in 60 seconds",
     icon: <IoSettingsOutline className={icon} />
@@ -61,12 +67,7 @@ const cards = [
     icon: <PiArmchairLight className={icon} />
 
   },
-  {
-    title: "Central Berlin",
-    text: "Friedrichstraße 33, only steps from Checkpoint Charlie.",
-    icon: <PiCityLight className={icon} />
 
-  },
   {
     title: "Flexible Stay",
     text: "One night or six months — always home",

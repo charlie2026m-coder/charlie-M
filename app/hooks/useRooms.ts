@@ -28,3 +28,20 @@ export function useRooms() {
     staleTime: 30 * 60 * 1000,
   });
 }
+
+export function useRoomById(id: string, date: string) {
+  return useQuery({
+    queryKey: [...roomKeys.all, id],
+    queryFn: async () => {
+      const res = await fetch(`/api/rooms/${id}?date=${date}`);
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to fetch property');
+      }
+      const response = await res.json();
+
+      return response;
+    },
+    staleTime: 30 * 60 * 1000,
+  });
+}

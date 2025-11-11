@@ -1,29 +1,36 @@
 "use client"
+
 import { Input } from "./input"
 import { Popover, PopoverTrigger, PopoverContent } from "./popover"
 import { Button } from "./button"
-import { Calendar } from "./calendar"
 import { BsCalendar2 } from "react-icons/bs";
 import { useState } from "react";
+import { DateRange } from "react-day-picker";
+import dayjs from 'dayjs';
 
-function formatDate(date: Date | undefined) {
-  if (!date) {
-    return ""
-  }
-  return date.toLocaleDateString("en-US", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  })
+const getValue = (selected: DateRange | undefined) => {
+  if (!selected) return ''
+  const to = dayjs(selected.to as Date);
+  return to.format('DD MMM YYYY')
 }
 
-export function DateInput() {
-  const [open, setOpen] = useState(false)
-  const [date, setDate] = useState<Date | undefined>(
-    new Date("2025-06-01")
-  )
-  const [month, setMonth] = useState<Date | undefined>(date)
-  const [value, setValue] = useState(formatDate(date))
+export function DateInput({
+  children,
+  value,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+}: {
+  children?: React.ReactNode,
+  value?: DateRange | undefined,
+  open?: boolean,
+  onOpenChange?: (open: boolean) => void,
+}) {
+  const [internalOpen, setInternalOpen] = useState(false)
+  
+  // Use controlled state if provided, otherwise use internal state
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen
+  const setOpen = controlledOnOpenChange || setInternalOpen
+
   return (
     <div className="flex flex-col gap-3">
       <Popover open={open} onOpenChange={setOpen}>
@@ -31,8 +38,8 @@ export function DateInput() {
           <div className="relative flex gap-2">
             <Input
               id="date"
-              value={value}
-              placeholder="Choose date"
+              value={getValue(value)}
+              placeholder={'Choose date'}
               className="rounded-full h-10 px-3 border-brown cursor-pointer"
               readOnly
               onKeyDown={(e) => {
@@ -59,23 +66,12 @@ export function DateInput() {
           onOpenAutoFocus={(e) => e.preventDefault()}
           onInteractOutside={(e) => {
             const target = e.target as HTMLElement
-            // Закрываем только при клике вне календаря И триггера
             if (target.closest('input[id="date"]') || target.closest('[data-slot="popover-content"]')) {
               e.preventDefault()
             }
           }}
         >
-          <Calendar
-            mode="single"
-            selected={date}
-            captionLayout="label"
-            month={month}
-            onMonthChange={setMonth}
-            onSelect={(date) => {
-              setDate(date)
-              setValue(formatDate(date))
-            }}
-          />
+          {children}
         </PopoverContent>
       </Popover>
     </div>

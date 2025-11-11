@@ -106,7 +106,7 @@ function Calendar({
           "bg-accent",
           defaultClassNames.range_start
         ),
-        range_middle: cn(defaultClassNames.range_middle),
+        range_middle: cn("bg-blue text-white", defaultClassNames.range_middle),
         range_end: cn("bg-accent", defaultClassNames.range_end),
         today: cn(
           "bg-accent text-accent-foreground",
@@ -200,7 +200,7 @@ function CalendarDayButton({
       data-range-end={modifiers.range_end}
       data-range-middle={modifiers.range_middle}
       className={cn(
-        "rounded-none text-[14px] max-h-[40px] hover:bg-white data-[selected-single=true]:bg-blue data-[selected-single=true]:text-white data-[range-middle=true]:bg-accent data-[range-middle=true]:text-accent-foreground data-[range-start=true]:bg-blue data-[range-start=true]:text-white data-[range-end=true]:bg-blue data-[range-end=true]:text-white dark:hover:text-accent-foreground flex aspect-square size-auto w-full min-w-(--cell-size) flex-col gap-1 leading-none font-normal [&>span]:text-xs [&>span]:opacity-70",
+        "rounded-none text-[14px] max-h-[40px] hover:bg-white data-[selected-single=true]:bg-blue data-[selected-single=true]:text-white data-[range-middle=true]:bg-blue data-[range-middle=true]:text-white data-[range-start=true]:bg-blue data-[range-start=true]:text-white data-[range-end=true]:bg-blue data-[range-end=true]:text-white dark:hover:text-accent-foreground flex aspect-square size-auto w-full min-w-(--cell-size) flex-col gap-1 leading-none font-normal [&>span]:text-xs [&>span]:opacity-70",
         defaultClassNames.day,
         className
       )}

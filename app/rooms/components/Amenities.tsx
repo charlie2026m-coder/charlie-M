@@ -1,8 +1,8 @@
 import Image from 'next/image'
-const Amenities = () => {
+const Amenities = ({ title = true }: { title?: boolean }) => {
   return (
-    <div className='flex flex-col gap-4 mb-9'>
-      <h2 className='text-xl font-semibold inter mb-5'>Amenities included:</h2>
+    <div className='flex flex-col gap-4 '>
+      {title && <h2 className='text-xl font-semibold inter mb-5'>Amenities included:</h2>} 
       <div className='flex flex-wrap gap-2.5'>
         {amenities.map((amenity) => (
           <div key={amenity.name} className='flex items-center bg-light-blue rounded-full px-2.5 py-1 items-center gap-1'>

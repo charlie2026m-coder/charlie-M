@@ -1,3 +1,4 @@
+'use client'
 import * as React from "react"
 import type { CarouselApi } from '../ui/carousel'
 import {
@@ -33,7 +34,7 @@ export function RoomsCarousel({
         <CarouselContent className="pb-10">
           {items.map((item) => (
             <CarouselItem key={item.id} className="basis-[416px] shrink-0 pr-4">
-              <RoomCard title={item.name} extra={''} price={item.minPrice} squareMeters={item.roomSize} beds={item.roomType} />
+              <RoomCard item={item} />
             </CarouselItem>
           ))}
         </CarouselContent>

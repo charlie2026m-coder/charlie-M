@@ -7,8 +7,8 @@ import { useState, useMemo } from 'react'
 
 const ROOMS_PER_PAGE = 6
 
-const RoomsList = () => {
-  const { data: rooms = [], isLoading, isError } = useRooms()
+const RoomsList = ({ rooms }: { rooms: Beds24RoomType[] }) => {
+  
   const [currentPage, setCurrentPage] = useState(0) // 0-based for CustomPagination
   console.log(rooms, 'rooms')
   // Calculate pagination
@@ -21,13 +21,6 @@ const RoomsList = () => {
     return rooms.slice(startIndex, endIndex)
   }, [rooms, currentPage])
 
-  if (isLoading) {
-    return <div className='flex items-center justify-center h-[260px] rounded-[40px] bg-light-blue/40 text-dark/60'>Loading rooms…</div>
-  }
-
-  if (isError || rooms.length === 0) {
-    return null
-  }
 
   return (
     <div className='flex flex-col gap-[30px] mb-[30px]'>
@@ -35,6 +28,7 @@ const RoomsList = () => {
         {currentRooms.map((room: Beds24RoomType) => (
           <RoomCard 
             key={room.id} 
+            id={room.id}
             title={room.name}
             extra={''}
             price={room.minPrice}

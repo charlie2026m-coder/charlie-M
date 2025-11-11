@@ -27,7 +27,7 @@ const VibeSection = () => {
                 </li>
                 <li className='flex items-center gap-2 text-lg'>
                   <FaBus className=' size-6' />
-                  Central Station (Hbf): 10 min by S-Bahn                
+                  Central Station (Hbf): 10 min                
                 </li>
                 <li className='flex flex-col '>
                   <div className='flex items-center gap-2 text-lg mb-1'>
