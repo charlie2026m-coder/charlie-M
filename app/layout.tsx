@@ -26,7 +26,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className={`${inter.variable} ${plusJakartaSans.variable} antialiased bg-light-bg flex flex-col min-h-screen`}>
         <ReactQueryProvider>
           <Header/>
-          <main className="flex-1  relative z-10">{children}</main>
+          <main className="flex-1 relative z-10">{children}</main>
           <Footer/>
           <Toaster position="top-left" richColors/>
         </ReactQueryProvider>

@@ -15,6 +15,7 @@ export interface Beds24RoomsResponse {
   units: [string];
 
   featureCodes?: string[];
+  availability?: Record<string, boolean>;
 }
 
 export interface Beds24RoomType {
@@ -48,4 +49,22 @@ export interface Beds24PropertiesResponse {
   success?: boolean;
   message?: string;
   [key: string]: unknown;
+}
+
+export interface Beds24AvailabilityResponse {
+  success: boolean;
+  type: "availability";
+  count: number;
+  pages: {
+    nextPageExists: boolean;
+    nextPageLink: string | null;
+  };
+  data: RoomAvailability[];
+}
+
+export interface RoomAvailability {
+  roomId: number;
+  propertyId: number;
+  name: string;
+  availability: Record<string, boolean>; 
 }

@@ -4,13 +4,14 @@ import { FaBus } from "react-icons/fa";
 import { BiSolidPlaneAlt } from "react-icons/bi";
 import { FaWalking } from "react-icons/fa";
 import Image from "next/image";
+import MapWindow from "@/app/_components/footer/MapWindow";
 
 
 
 const LocationSection = () => {
   return (
     <div className='bg-blue'>
-      <div className='container px-[100px] py-[60px] flex flex-col'>
+      <div className='container px-[100px] py-[60px] flex '>
         
         <div className='flex flex-col  w-1/2'>
           <div className='flex items-center gap-2 font-semibold text-[40px] mb-[30px]'>
@@ -25,7 +26,7 @@ const LocationSection = () => {
             </div>
             <div className='flex bg-white items-center rounded-[40px] p-3  text-xl'>
               <FaBus size={24} className='mr-2 text-brown' />
-              Central Station (Hbf): 10 min
+              Central Station (Hbf):
               <div className='text-white bg-brown rounded-full px-2 py-1 ml-auto'>
                 13 min
               </div>
@@ -52,7 +53,7 @@ const LocationSection = () => {
 
           <div className='relative pt-[115px] pb-[92px]'>
             <Image 
-              src='/images/location-1.png' 
+              src='/images/location-2.jpg' 
               alt='location' 
               width={420} 
               height={461} 
@@ -60,7 +61,7 @@ const LocationSection = () => {
             />
             <div className='absolute bg-blue p-2 rounded-[30px] size-[338px] right-[10px] bottom-0 '>
               <Image 
-                src='/images/location-2.jpg' 
+                src='/images/location-1.png' 
                 alt='location' 
                 width={330} 
                 height={330} 
@@ -72,12 +73,42 @@ const LocationSection = () => {
               alt='arrow' 
               width={547} 
               height={880} 
-              className='absolute top-[85px] -right-[50px] w-[150px]' 
+              className='absolute top-[85px] -right-[30px] w-[140px]' 
             />
           </div>
         </div>
-        <div className='w-1/2'>
-        
+        <div className='w-1/2 flex-1 flex flex-col pb-20'>
+          <div className='w-full pl-[50px]'>
+            <MapWindow width="100%" height="420px" />
+          </div>
+          <div className='flex items-center gap-2 font-semibold text-[40px] mb-[30px] mt-auto'>
+            <Dot size={20} color='brown'/>
+            Culture      
+          </div>
+
+          <div className='flex flex-col gap-5 '>
+            <div className='flex bg-white items-center rounded-[40px] p-3  text-xl'>
+              <FaWalking size={24} className='mr-2 text-brown' />
+              Checkpoint Charlie
+              <div className='text-white bg-brown rounded-full px-2 py-1 ml-auto'>
+                2 min
+              </div>
+            </div>
+            <div className='flex bg-white items-center rounded-[40px] p-3  text-xl'>
+              <FaWalking size={24} className='mr-2 text-brown' />
+              Gendarmenmarkt
+              <div className='text-white bg-brown rounded-full px-2 py-1 ml-auto'>
+                7 min
+              </div>
+            </div>
+            <div className='flex bg-white items-center rounded-[40px] p-3 py-2.5  text-xl'>
+              <FaWalking size={24} className='mr-2 text-brown' />
+              Museum Island
+              <div className='text-white bg-brown rounded-full px-2 py-1 ml-auto'>
+                15 min
+              </div>
+            </div>
+          </div>
         
         </div>
 

@@ -2,22 +2,33 @@
 import { Button } from '@/app/_components/ui/button'
 import { Calendar } from '@/app/_components/ui/calendar'
 import Dot from '@/app/_components/ui/dot'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
+import dayjs from 'dayjs'
+import { DateRange } from 'react-day-picker'
 
-const Availability = () => {
-
-  const available:Date[] = [
-    new Date('2025-11-15'), 
-    new Date('2025-11-20'), 
-    new Date('2025-11-25'), 
-    new Date('2025-11-30'),
-    new Date('2025-12-05'),
-    new Date('2025-12-10'),
-    new Date('2025-12-15'),
-    new Date('2025-12-20'),
-    new Date('2025-12-25'),
-  ]
+const Availability = ({ availability = {} }: { availability: Record<string, boolean> }) => {
+  console.log(availability, 'availability')
   
+  const { available, booked } = useMemo(() => {
+    const availableDates: Date[] = [];
+    const bookedDates: Date[] = [];
+
+    Object.keys(availability).forEach((key, index) => {
+      const date = dayjs(key).toDate();
+      date.setHours(0, 0, 0, 0); 
+      
+      if (availability[key]) {
+        availableDates.push(date); 
+      } else {
+        bookedDates.push(date); 
+      }
+    });
+
+    return { available: availableDates, booked: bookedDates };
+  }, [availability]);
+  
+  const [selectedRange, setSelectedRange] = useState<DateRange | undefined>(undefined);
+
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const nextMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1)
 
@@ -30,6 +41,8 @@ const Availability = () => {
     setCurrentMonth(previousMonth)
   }
 
+
+
   return (
     <div className='flex flex-col'>
       <div className='flex items-center gap-2.5 text-2xl font-semibold mb-[30px]'>
@@ -41,23 +54,37 @@ const Availability = () => {
         <div className='bg-white w-full shadow-lg rounded-[20px] p-2'>
           <Calendar 
             required={false}
-            mode="multiple"  
+            mode="range"  
             captionLayout="label"
-            selected={available}
-            disabled={{ before: new Date() }}
+            selected={selectedRange}
+            onSelect={setSelectedRange}
+            disabled={booked}
             month={currentMonth}
             onMonthChange={handlePrimaryMonthChange}
+            modifiers={{ 
+              // highlighted: available, 
+              booked: booked }}
+            modifiersClassNames={{ 
+              // highlighted: "!bg-green-100 text-dark font-semibold", 
+              booked: "!bg-red-400 !text-black opacity-100" 
+            }}
           />
         </div>
         <div className='bg-white w-full shadow-lg rounded-[20px] p-2'>
           <Calendar 
             required={false}
-            mode="multiple"  
+            mode="range"  
             captionLayout="label"
-            selected={available}
-            disabled={{ before: new Date() }}
+            selected={selectedRange}
+            onSelect={setSelectedRange}
+            disabled={booked}
             month={nextMonth}
             onMonthChange={handleSecondaryMonthChange}
+            modifiers={{  booked: booked }}
+            modifiersClassNames={{ 
+              booked: "!bg-red-400 !text-black opacity-100" 
+            }}
+            
           />
         </div>
       </div>

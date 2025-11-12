@@ -1,8 +1,9 @@
 import { Button } from '@/app/_components/ui/button'
 import PhotoSlider from '@/app/_components/Home/PhotoSlider'
 import Link from 'next/link'
-
+import { getPath } from '@/lib/utils'
 const RoomCard = ({ 
+  params,
   id,
   title, 
   extra, 
@@ -10,6 +11,7 @@ const RoomCard = ({
   squareMeters, 
   beds 
 }: { 
+  params: { from: string | undefined, to: string | undefined, adults: string | undefined, children: string | undefined },
   id: string | number,
   title: string, 
   extra: string, 
@@ -24,6 +26,7 @@ const RoomCard = ({
     '/images/room2.jpg',
     '/images/room.jpg',
   ]
+  const queryString = getPath({ from: params.from, to: params.to, adults: params.adults, children: params.children })
   return (
     <div className='w-full flex flex-col rounded-[40px] bg-white overflow-hidden shadow-lg h-full'>
       <PhotoSlider height={260} images={images} />
@@ -52,7 +55,7 @@ const RoomCard = ({
         </p>
         
         
-          <Link href={`/rooms/${id}`} className='mt-auto'>  
+          <Link href={`/rooms/${id}?${queryString}`} className='mt-auto'>  
             <Button className='h-[55px] w-full'>Explore and Book</Button>
           </Link>
       </div>

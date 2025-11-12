@@ -6,6 +6,7 @@ import { Button } from "./button"
 import { Input } from "./input"
 import { ChevronDown, ChevronUp } from "lucide-react"
 import { Separator } from "./separator"
+import { cn } from "@/lib/utils"
 
 const ButtonIcon = ({ onClick, symbol, disabled }: { onClick: () => void, symbol: '+' | '-', disabled?: boolean }) => {
   return (
@@ -19,13 +20,18 @@ const ButtonIcon = ({ onClick, symbol, disabled }: { onClick: () => void, symbol
   )
 }
 
-export function Guests() {
+export function Guests({ 
+  setValue, 
+  value,
+  className = ''
+}: { 
+  setValue: (value: { adults: number, children: number }) => void, 
+  value: { adults: number, children: number },
+  className?: string
+}) {
   const [open, setOpen] = React.useState(false)
-  const [adults, setAdults] = React.useState(1)
-  const [children, setChildren] = React.useState(0)
 
-  const totalGuests = adults + children
-  const guestsText = `${totalGuests} Guest${totalGuests !== 1 ? 's' : ''}`
+  const guestsText = `${value.adults + value.children} Guest${value.adults + value.children !== 1 ? 's' : ''}`
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -34,7 +40,7 @@ export function Guests() {
           <Input
             value={guestsText}
             placeholder="Guests"
-            className="rounded-full h-10 px-3 pr-10 border-brown cursor-pointer"
+            className={cn("rounded-full h-10 px-3 pr-10 border-brown cursor-pointer", className)}
             readOnly
           />
           <div className="absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none">
@@ -44,7 +50,7 @@ export function Guests() {
       </PopoverTrigger>
 
       <PopoverContent
-        className="rounded-[20px] bg-white p-4"
+        className={cn("rounded-[20px] bg-white p-4 min-w-[260px]")}
         align="center"
         side="bottom"
         sideOffset={10}
@@ -62,12 +68,12 @@ export function Guests() {
             <div className="font-semibold text-black">Adults</div>
 
             <div className="flex items-center gap-2">
-              <ButtonIcon onClick={() => setAdults(Math.max(1, adults - 1))} symbol='-' disabled={adults <= 1} />
+              <ButtonIcon onClick={() => setValue({ ...value, adults: Math.max(1, value.adults - 1) })} symbol='-' disabled={value.adults <= 1} />
               <span className="font-semibold min-w-[20px] text-center">
-                {adults}
+                {value.adults}
               </span>
 
-              <ButtonIcon onClick={() => setAdults(adults + 1)} symbol='+' />
+              <ButtonIcon onClick={() => setValue({ ...value, adults: value.adults + 1 })} symbol='+' />
             </div>
           </div>
 
@@ -79,11 +85,11 @@ export function Guests() {
               <div className="font-semibold text-black">Children</div>
 
               <div className="flex items-center gap-2">
-                <ButtonIcon onClick={() => setChildren(Math.max(0, children - 1))} disabled={children <= 0} symbol='-' />
+                <ButtonIcon onClick={() => setValue({ ...value, children: Math.max(0, value.children - 1) })} disabled={value.children <= 0} symbol='-' />
                 <span className="font-semibold min-w-[20px] text-center">
-                  {children}
+                  {value.children}
                 </span>
-                <ButtonIcon onClick={() => setChildren(children + 1)} symbol='+' />
+                <ButtonIcon onClick={() => setValue({ ...value, children: value.children + 1 })} symbol='+' />
               </div>
             </div>
             

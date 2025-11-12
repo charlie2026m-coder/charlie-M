@@ -6,20 +6,20 @@ import { Button } from "@/app/_components/ui/button"
 import { Calendar } from "@/app/_components/ui/calendar"
 import { useState } from "react"
 import { DateRange } from "react-day-picker";
-import { useRoomById } from "@/app/hooks/useRooms";
+import { useRouter } from "next/navigation";
 
-
-const BookingForm = ({ id }: { id: string }) => {
+import { getDate, getPath } from "@/lib/utils";
+const BookingForm = ({ id, room, params }: { id: string, room: any, params: { from?: string, to?: string, adults?: string, children?: string } }) => {
+  const router = useRouter();
   const [openCheckIn, setOpenCheckIn] = useState(false);
   const [openCheckOut, setOpenCheckOut] = useState(false);
+  const [guests, setGuests] = useState({adults: parseInt(params?.adults || '1'), children: parseInt(params?.children || '0')});
 
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: params.from ? new Date(params.from) : undefined,
+    to: params.to ? new Date(params.to) : undefined,
+  });
 
-  const [checkInDate, setCheckInDate] = useState<DateRange | undefined>(undefined);
-  const [checkOutDate, setCheckOutDate] = useState<DateRange | undefined>(undefined);
-
-  const { data: room, isLoading, isError } = useRoomById(id, `&from=${checkInDate?.from}&to=${checkOutDate?.to}`);
-
-  
   const handleCheckInOpenChange = (open: boolean) => {
     setOpenCheckIn(open);
     if (open) setOpenCheckOut(false);
@@ -27,21 +27,32 @@ const BookingForm = ({ id }: { id: string }) => {
   
   const handleCheckOutOpenChange = (open: boolean) => {
     setOpenCheckOut(open);
-    if (open) setOpenCheckIn(false);
+    if (open) setOpenCheckIn(false);  
+  };
+
+  const handleBookNow = () => {
+    if (!dateRange?.from || !dateRange?.to) return;
+    const queryString = getPath({ 
+      from: getDate(dateRange?.from), 
+      to: getDate(dateRange?.to), 
+      adults: guests.adults.toString(), 
+      children: guests.children.toString() 
+    });
+    router.push(`/booking/${id}?${queryString}`);
   };
   return (
     <div className='sticky top-10 flex flex-col bg-white rounded-[20px] px-5 pt-[25px] w-full pb-10'>
       <h3 className='font-semibold text-2xl text-center mb-3'>RESERVE</h3>
       <div className='flex items-center justify-between mb-4'>
         <div className='text-brown '>per night from</div>
-        <div className='text-xl min-w-[80px] text-center rounded-full bg-green/15 font-[700] text-green px-2.5 py-2'>€{room?.minPrice?.toFixed(0) ?? 0}</div>
+        <div className='text-xl min-w-[80px] text-center rounded-full bg-green/15 font-[700] text-green px-2.5 py-2'>€{room?.minPrice.toFixed(0) ?? 0}</div>
       </div>
 
       <div className='flex flex-col gap-5 w-full mb-5'>
         <label className='w-full'>
           <div className='font-medium mb-2'>Check In</div>
           <DateInput 
-            value={checkInDate}
+            value={dateRange?.from}
             open={openCheckIn}
             onOpenChange={handleCheckInOpenChange}
           >
@@ -49,8 +60,8 @@ const BookingForm = ({ id }: { id: string }) => {
               required={false}
               mode="range"  
               captionLayout="label"
-              selected={checkInDate}
-              onSelect={setCheckInDate}
+              selected={dateRange}
+              onSelect={(date) => setDateRange(date as DateRange)}
               disabled={{ before: new Date() }}
             />
           </DateInput>
@@ -59,7 +70,7 @@ const BookingForm = ({ id }: { id: string }) => {
         <label className='w-full'>  
           <div className='font-medium mb-2'>Check Out</div>
           <DateInput 
-            value={checkOutDate}
+            value={dateRange?.to}
             open={openCheckOut}
             onOpenChange={handleCheckOutOpenChange}
           >
@@ -67,10 +78,10 @@ const BookingForm = ({ id }: { id: string }) => {
               required={false}
               mode="range"  
               captionLayout="label"
-              selected={checkOutDate}
-              onSelect={setCheckOutDate}
+              selected={dateRange}
+              onSelect={(date) => setDateRange(date as DateRange)}
               disabled={{ 
-                before: checkInDate?.to || new Date() 
+                before: dateRange?.from || new Date() 
               }}
             />
           </DateInput>
@@ -78,10 +89,10 @@ const BookingForm = ({ id }: { id: string }) => {
         <Separator orientation="horizontal" />
         <label className='w-full'>
           <div className='font-medium mb-2'>Guests</div>
-          <Guests />
+          <Guests setValue={setGuests} value={guests} />
         </label>
       </div>
-      <Button className='w-full'>Book Now</Button>
+      <Button className='w-full' onClick={handleBookNow}>Book Now</Button>
     </div>
   )
 }

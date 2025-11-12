@@ -5,13 +5,11 @@ import { Popover, PopoverTrigger, PopoverContent } from "./popover"
 import { Button } from "./button"
 import { BsCalendar2 } from "react-icons/bs";
 import { useState } from "react";
-import { DateRange } from "react-day-picker";
 import dayjs from 'dayjs';
 
-const getValue = (selected: DateRange | undefined) => {
-  if (!selected) return ''
-  const to = dayjs(selected.to as Date);
-  return to.format('DD MMM YYYY')
+const getValue = (date: Date | undefined) => {
+  if (!date) return ''
+  return dayjs(date).format('DD MMM YYYY')
 }
 
 export function DateInput({
@@ -21,7 +19,7 @@ export function DateInput({
   onOpenChange: controlledOnOpenChange,
 }: {
   children?: React.ReactNode,
-  value?: DateRange | undefined,
+  value?: Date | undefined,
   open?: boolean,
   onOpenChange?: (open: boolean) => void,
 }) {

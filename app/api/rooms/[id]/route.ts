@@ -1,20 +1,25 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { beds24Request } from '../../auth';
-import type { Beds24PropertiesResponse, Beds24RoomType } from '@/types/beds24';
+import type { Beds24AvailabilityResponse, Beds24PropertiesResponse, Beds24RoomType } from '@/types/beds24';
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    
-    const details = await beds24Request(
-      `/properties?includeAllRooms=true&roomId=${id}`, 
-      'GET'
-    );
-    console.log(details?.data?.[0], 'details')
+    const searchParams = request.nextUrl.searchParams;
+    const from = searchParams.get('from');
+    const to = searchParams.get('to');
+    const adults = searchParams.get('adults') || '1';
+    const children = searchParams.get('children') || '0';
+
+    const details = await beds24Request(`/properties?includeAllRooms=true&roomId=${id}`, 'GET');
     const room = details?.data?.[0]?.roomTypes?.[0];
+    
+    const availabilityResponse = await beds24Request<Beds24AvailabilityResponse>(`/inventory/rooms/availability?roomId=${id}&startDate=${from}&endDate=${to}&numAdults=${adults}&numChildren=${children}`, 'GET');
+    const availability = availabilityResponse?.data[0]?.availability ?? undefined; 
+    
     const data = {
       id: room?.id,
       features: room?.featureCodes.flat(),
@@ -30,6 +35,7 @@ export async function GET(
       roomSize: room?.roomSize,
       roomType: room?.roomType,
       unit: room?.unit,
+      availability: availability,
     }  
     
     return NextResponse.json(data);

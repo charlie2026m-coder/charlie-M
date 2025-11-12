@@ -4,16 +4,31 @@ import BookingForm from './components/BookingForm'
 import RoomContent from './components/RoomContent'
 import Availability from './components/Availability'
 import { useRoomById } from '@/app/hooks/useRooms'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import dayjs from 'dayjs'
+import { getPath } from '@/lib/utils'
 
 const RoomPage = () => {
   const params = useParams()
   const id = params.id as string;
+  
+  const searchParams = useSearchParams()
+  const from = searchParams.get('from')
+  const to = searchParams.get('to')
+  const adults = searchParams.get('adults')
+  const children = searchParams.get('children')
+  
   const today = dayjs().format('YYYY-MM-DD')
   const nextYear = dayjs().add(365, 'day').format('YYYY-MM-DD')
-
-  const { data: room, isLoading, isError } = useRoomById(id, `&from=${today}&to=${nextYear}`);
+  
+  const queryString = getPath({ 
+    from: from || today, 
+    to: to || nextYear, 
+    adults: adults || '1', 
+    children: children || '0'
+  })
+  const { data: room, isLoading, isError } = useRoomById(id, queryString);
+  
   if (isError) return <div>Error: {(isError as unknown as Error).message}</div>
 
   return (
@@ -23,10 +38,19 @@ const RoomPage = () => {
 
         <div className='col-span-3 flex flex-col'>
           <RoomContent room={room} isLoading={isLoading} />
-          <Availability />
+          {room?.availability && <Availability availability={room?.availability} />}
         </div>
         <div className='col-span-1'>
-          <BookingForm id={id} />   
+          <BookingForm 
+            id={id} 
+            room={room}
+            params={{ 
+              from: from || undefined,
+              to: to || undefined, 
+              adults: adults || undefined, 
+              children: children || undefined
+            }} 
+          />   
         </div>
       </div>
     </div>

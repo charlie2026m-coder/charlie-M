@@ -31,9 +31,9 @@ export function useRooms() {
 
 export function useRoomById(id: string, date: string) {
   return useQuery({
-    queryKey: [...roomKeys.all, id],
+    queryKey: [...roomKeys.all, id, date], 
     queryFn: async () => {
-      const res = await fetch(`/api/rooms/${id}?date=${date}`);
+      const res = await fetch(`/api/rooms/${id}${date ? `?${date}` : ''}`);
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.error || 'Failed to fetch property');

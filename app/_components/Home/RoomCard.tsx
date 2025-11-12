@@ -3,6 +3,7 @@ import PhotoSlider from './PhotoSlider'
 import Link from 'next/link'
 import { Beds24RoomType } from '@/types/beds24'
 import Dot from '../ui/dot'
+import Price from '../ui/price'
 const RoomCard = ({ 
   item,
 }: { 
@@ -32,12 +33,12 @@ const RoomCard = ({
             <span className='text-dark text-sm'>Balcony</span>
           </>}
         </div>
-        <div className='flex items-center justify-between mb-4'>
+        <div className='flex items-center justify-between mb-4  mt-auto'>
           <div className='text-brown '>per night from</div>
-          <div className='text-xl rounded-full bg-green/15 font-[700] text-green px-2.5 py-2'>€{item.minPrice.toFixed(2)}</div>
+          <Price price={item.minPrice.toFixed(2)} />
         </div>
 
-        <div className='flex items-center justify-between mt-auto'>
+        <div className='flex items-center justify-between'>
           <Link href={`/rooms`}>  
             <Button variant='outline' className='h-[55px]'>Discover More</Button>
           </Link>

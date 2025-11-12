@@ -7,10 +7,10 @@ import { useState, useMemo } from 'react'
 
 const ROOMS_PER_PAGE = 6
 
-const RoomsList = ({ rooms }: { rooms: Beds24RoomType[] }) => {
+const RoomsList = ({ rooms, params }: { rooms: Beds24RoomType[], params: 
+  { from: string | undefined, to: string | undefined, adults: string | undefined, children: string | undefined } }) => {
   
   const [currentPage, setCurrentPage] = useState(0) // 0-based for CustomPagination
-  console.log(rooms, 'rooms')
   // Calculate pagination
   const totalPages = Math.ceil(rooms.length / ROOMS_PER_PAGE)
   
@@ -27,6 +27,7 @@ const RoomsList = ({ rooms }: { rooms: Beds24RoomType[] }) => {
       <div className='grid grid-cols-3 gap-4'> 
         {currentRooms.map((room: Beds24RoomType) => (
           <RoomCard 
+            params={params}
             key={room.id} 
             id={room.id}
             title={room.name}
