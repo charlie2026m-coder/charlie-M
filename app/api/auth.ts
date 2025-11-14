@@ -114,20 +114,20 @@ export async function beds24Request<T = any>(
         body: body ? JSON.stringify(body) : undefined,
       });
 
-      if (!retryResponse.ok) {
-        const errorText = await retryResponse.text();
-        console.error('Error response:', errorText);
-        throw new Error(`Beds24 API error: ${errorText}`);
-      }
+    if (!retryResponse.ok) {
+      const data = await retryResponse.json();
+      console.error('❌ Beds24 Error (retry):', JSON.stringify(data, null, 2));
+      throw new Error(`Beds24 API error: ${data.message || data.error || JSON.stringify(data)}`);
+    }
 
       return await retryResponse.json();
     }
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Error response:', errorText);
-      throw new Error(`Beds24 API error: ${errorText}`);
-    }
+  if (!response.ok) {
+    const data = await response.json();
+    console.log('❌ Beds24 Error:', data.error);
+    throw new Error(`Beds24 API error ${data.error}`);
+  }
 
     return await response.json();
   } catch (error) {

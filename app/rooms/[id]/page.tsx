@@ -38,7 +38,7 @@ const RoomPage = () => {
 
         <div className='col-span-3 flex flex-col'>
           <RoomContent room={room} isLoading={isLoading} />
-          {room?.availability && <Availability availability={room?.availability} />}
+          {room?.unitsAvailable?.availability && <Availability availability={room?.unitsAvailable?.availability[0]} />}
         </div>
         <div className='col-span-1'>
           <BookingForm 

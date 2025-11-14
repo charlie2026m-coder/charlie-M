@@ -1,40 +1,62 @@
 'use client'
-import { useRooms } from '@/app/hooks/useRooms'
 import RoomCard from './RoomCard'
-import { Beds24RoomType } from '@/types/beds24'
+import { Beds24RoomType, UrlParams } from '@/types/beds24'
 import { CustomPagination } from '@/app/_components/ui/CustomPagination'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { useBookingStore } from '@/store/bookingStore'
 
 const ROOMS_PER_PAGE = 6
 
-const RoomsList = ({ rooms, params }: { rooms: Beds24RoomType[], params: 
-  { from: string | undefined, to: string | undefined, adults: string | undefined, children: string | undefined } }) => {
+const RoomsList = ({ 
+  rooms, 
+  params 
+}: { 
+  rooms: Beds24RoomType[],
+  params: UrlParams 
+}) => {
+  const { balconyFilter, categoryFilter } = useBookingStore()
+  const [currentPage, setCurrentPage] = useState(0)
   
-  const [currentPage, setCurrentPage] = useState(0) // 0-based for CustomPagination
-  // Calculate pagination
-  const totalPages = Math.ceil(rooms.length / ROOMS_PER_PAGE)
+  // Apply filters first
+  const filteredRooms = useMemo(() => {
+    let filtered = rooms;
+    
+    // Filter by balcony
+    if (balconyFilter !== undefined) {
+      filtered = filtered.filter(room => room.hasBalcony === balconyFilter);
+    }
+    
+    // Filter by category (if categoryFilter has items)
+    if (categoryFilter && categoryFilter.length > 0) {
+      filtered = filtered.filter(room => 
+        categoryFilter.some(cat => room.roomType?.toLowerCase() === cat.toLowerCase())
+      );
+    }
+    
+    return filtered;
+  }, [rooms, balconyFilter, categoryFilter])
+  
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [balconyFilter, categoryFilter])
+  
+  // Calculate pagination based on filtered results
+  const totalPages = Math.ceil(filteredRooms.length / ROOMS_PER_PAGE)
   
   // Get current page rooms
-  const currentRooms = useMemo(() => {
-    const startIndex = currentPage * ROOMS_PER_PAGE
-    const endIndex = startIndex + ROOMS_PER_PAGE
-    return rooms.slice(startIndex, endIndex)
-  }, [rooms, currentPage])
-
-
+  const displayedRooms = useMemo(() => {
+    const start = currentPage * ROOMS_PER_PAGE
+    return filteredRooms.slice(start, start + ROOMS_PER_PAGE)
+  }, [filteredRooms, currentPage])
   return (
     <div className='flex flex-col gap-[30px] mb-[30px]'>
       <div className='grid grid-cols-3 gap-4'> 
-        {currentRooms.map((room: Beds24RoomType) => (
+        {displayedRooms.map((room: Beds24RoomType) => (
           <RoomCard 
             params={params}
             key={room.id} 
-            id={room.id}
-            title={room.name}
-            extra={''}
-            price={room.minPrice}
-            squareMeters={room.roomSize}
-            beds={room.roomType}
+            room={room}
           />
         ))}
       </div>

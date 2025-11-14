@@ -1,0 +1,29 @@
+// {
+//   "compilerOptions": {
+//     "allowJs": true,
+//     "lib": ["deno.window"],
+//     "strict": false
+//   },
+//   "lint": {
+//     "files": {
+//       "include": ["didit-webhook/"]
+//     },
+//     "rules": {
+//       "tags": ["recommended"],
+//       "exclude": ["no-unused-vars"]
+//     }
+//   },
+//   "fmt": {
+//     "files": {
+//       "include": ["didit-webhook/"]
+//     },
+//     "options": {
+//       "useTabs": false,
+//       "lineWidth": 120,
+//       "indentWidth": 2,
+//       "semiColons": false,
+//       "singleQuote": true
+//     }
+//   }
+// }
+

@@ -6,7 +6,7 @@ import { useState, useMemo } from 'react'
 import dayjs from 'dayjs'
 import { DateRange } from 'react-day-picker'
 
-const Availability = ({ availability = {} }: { availability: Record<string, boolean> }) => {
+const Availability = ({ availability = {} }: { availability: Record<string, Record<string, boolean>> }) => {
   console.log(availability, 'availability')
   
   const { available, booked } = useMemo(() => {

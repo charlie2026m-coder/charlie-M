@@ -1,22 +1,10 @@
 import Link from 'next/link'
 import { Button } from '../ui/button'
 import { RoomsCarousel } from './RoomsCarousel'
-import dayjs from 'dayjs'
-
-async function getRooms() {
-  const today = dayjs().format('YYYY-MM-DD')
-  const nextYear = dayjs().add(365, 'day').format('YYYY-MM-DD')
-  const url = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-  const res = await fetch(`${url}/api/rooms?from=${today}&to=${nextYear}&adults=1&children=0`, {
-    cache: 'no-store' 
-  })
-  if (!res.ok) {
-    throw new Error('Failed to fetch rooms')
-  }
-  return res.json()
-}
+import { getRoomsData } from '@/lib/getRoomsData'
 const RoomsSection = async () => {
-  const rooms = await getRooms()
+
+  const rooms = await getRoomsData()
   return (
     <div className='w-full flex flex-col pb-[85px]'>
       <div className='flex items-center justify-between gap-10'>

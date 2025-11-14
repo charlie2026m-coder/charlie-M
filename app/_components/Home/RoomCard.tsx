@@ -18,7 +18,6 @@ const RoomCard = ({
     '/images/room.jpg',
   ]
 
-  const isBalcony = item.features?.includes('BALCONY');
   return (
     <div className='w-[400px] flex flex-col rounded-[40px] bg-white overflow-hidden shadow-lg h-full'>
       <PhotoSlider height={260} images={images} />
@@ -28,7 +27,7 @@ const RoomCard = ({
           <span className='text-dark text-sm'>{item.roomSize}m²</span>
           <Dot size={7} color='blue' /> 
           <span className='text-dark text-sm'>{item.roomType}</span>
-          {isBalcony && <> 
+          {item.hasBalcony && <> 
             <Dot size={7} color='blue' />
             <span className='text-dark text-sm'>Balcony</span>
           </>}
