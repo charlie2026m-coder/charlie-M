@@ -7,13 +7,14 @@ import { useState } from "react";
 import { IoEyeSharp, IoEyeOffSharp } from "react-icons/io5";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { BsFillTelephoneFill } from "react-icons/bs";
 
 interface CustomInputProps<T extends FieldValues> {
   register: UseFormRegister<T>;
   name: Path<T>;
-  type: 'email' | 'password' | 'text';
+  type: 'email' | 'password' | 'text' | 'phone';
   placeholder: string;
-  icon?: 'email' | 'password' | 'name' | 'booking';
+  icon?: 'email' | 'password' | 'name' | 'booking' | 'phone';
   isError?: boolean;
 }
 
@@ -33,6 +34,7 @@ function CustomInput<T extends FieldValues>({
     password: <MdLock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-blue" />,
     name: <FaUser className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-blue" />,
     booking: <Image className="absolute left-3 top-1/2 -translate-y-1/2 size-6" src="/images/booking-icon-input.png" alt="booking" width={24} height={24} />,
+    phone: <BsFillTelephoneFill className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-blue" />,
   };
   
   return (
@@ -41,7 +43,7 @@ function CustomInput<T extends FieldValues>({
       <Input
         type={type === 'password' ? (showPassword ? 'text' : 'password') : type}
         placeholder={placeholder}
-        className={cn("pl-[45px] h-10 rounded-full border-gray/30", isError && "!border-red text-red focus:border-red !ring-red/20 !focus:ring-red ")}
+        className={cn("pl-[45px] bg-white h-10 rounded-full border-gray shadow-none", isError && "!border-red text-red focus:border-red !ring-red/20 !focus:ring-red ")}
         {...register(name)}
       />
       {type === 'password' && (

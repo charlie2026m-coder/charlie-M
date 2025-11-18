@@ -1,13 +1,40 @@
 import { beds24Request } from '@/app/api/auth';
-import type { Beds24RoomType } from '@/types/beds24';
+import type { Beds24PropertyResponse, Beds24RoomType, ExtrasItem } from '@/types/beds24';
+import dayjs from 'dayjs';
 
-export async function getSingleRoomData(id: string, from?: string, to?: string ): Promise<Beds24RoomType> {
-  const details = await beds24Request(`/properties?includeAllRooms=true&roomId=${id}`, 'GET');
-  const room = details?.data?.[0]?.roomTypes?.[0];
+export async function getSingleRoomData(id: string, from?: string, to?: string ): Promise<Beds24RoomType | { error: string }> {
+  try {
+    const today = dayjs().format('YYYY-MM-DD')
+    const nextYear = dayjs().add(365, 'day').format('YYYY-MM-DD')
 
-  const unitsAvailable = await beds24Request(`/inventory/rooms/unitBookings?propertyId=${details.propertyId}&roomId=${details.id}&startDate=${from}&endDate=${to}`, 'GET')
-  const formattedUnits = transformUnitBookings(unitsAvailable)
-  const filteredUnits = filterOnlyFullyFreeUnits(formattedUnits)
+
+    const details = await beds24Request<Beds24PropertyResponse>(`/properties?includeAllRooms=true&roomId=${id}&includeUpsellItems=true&includeTexts=all&includePictures=true`, 'GET');
+    //here we want to get extras from the &includeUpsellItems=true, 
+    const upsellItemNames = formatUpsellItems(details?.data?.[0].texts[0], details?.data?.[0].upsellItems);
+    const room = details?.data?.[0]?.roomTypes?.[0];
+    if (!room) {
+      console.error('Room not found');
+      return { error: 'Room not found' };
+    }
+    const startDate = from || today;
+    let endDate = to || nextYear;
+    
+
+    if (dayjs(endDate).isBefore(dayjs(startDate))) {
+      endDate = dayjs(startDate).add(1, 'day').format('YYYY-MM-DD');
+    }
+    
+    if (dayjs(endDate).isSame(dayjs(startDate), 'day')) {
+      endDate = dayjs(startDate).add(1, 'day').format('YYYY-MM-DD');
+    }
+
+    const unitsAvailableResponse = await beds24Request(`/inventory/rooms/unitBookings?propertyId=${room.propertyId}&roomId=${id}&startDate=${startDate}&endDate=${endDate}`, 'GET')
+    const unitsAvailable = unitsAvailableResponse.data[0] ?? null;
+
+    const formattedUnits = transformUnitBookings(unitsAvailable)
+    const isNeedFilter = from && to
+    const filteredUnits = isNeedFilter ? filterOnlyFullyFreeUnits(formattedUnits) : formattedUnits
+
   
   const roomDetails =  {
       id: room?.id,
@@ -35,10 +62,15 @@ export async function getSingleRoomData(id: string, from?: string, to?: string )
         total: unitsAvailable?.qty,
         free: Object.keys(filteredUnits).length,
         availability: filteredUnits,
-      }
+      },
+      extras: upsellItemNames.filter((extra) => extra.type !== 'notUsed'),
     } as Beds24RoomType;
 
-  return roomDetails;
+    return roomDetails;
+  } catch (error) {
+    console.error('Error fetching single room data:', error);
+    return { error: (error as Error).message };
+  }
 }
 
 //we format the units data to comfortable for us format
@@ -58,7 +90,6 @@ function transformUnitBookings(data: any) {
   }, {} as Record<number, Record<string, boolean>>);
 }
 
-//filter availability of units if we have selected date range to show only available units and quantity
 function filterOnlyFullyFreeUnits(units: any) {
   const result: any = {};
 
@@ -76,6 +107,22 @@ function filterOnlyFullyFreeUnits(units: any) {
   return result;
 }
 
+function formatUpsellItems(namesObj:Record<string, string>, items:ExtrasItem[]) {
+  const names = Object.entries(namesObj)
+    .filter(([key, value]) => key.startsWith("upsellItemName") && value.trim() !== "")
+    .map(([key, value]) => {
+      const index = Number(key.replace("upsellItemName", ""));
+      return { index, name: value };
+    });
+
+  return items.map(item => {
+    const found = names.find(n => n.index === item.index);
+    return {
+      ...item,
+      name: found ? found.name : null
+    };
+  });
+}
 
 
 const room = [

@@ -1,3 +1,5 @@
+'use client'
+import { useBookingStore } from '@/store/bookingStore'
 import { Label } from "@/app/_components/ui/label"
 import {
   RadioGroup,
@@ -6,10 +8,14 @@ import {
 import { Separator } from "@/app/_components/ui/separator"
 
 const RefundCard = () => {
-  
+  const { booking, setBooking } = useBookingStore()
+  const handleRefundChange = (value: string) => {
+    const isRefunable = value === 'true'
+    setBooking({ ...booking, isRefunable: isRefunable })
+  }
   return (
     <div className='flex flex-col bg-white rounded-[20px] py-6 px-4 shadow-xl'>
-      <RadioGroup>
+      <RadioGroup value={booking.isRefunable.toString()} onValueChange={handleRefundChange} >
         <Label htmlFor="non-refundable" className="flex items-center gap-4 cursor-pointer pb-5"  >
           <RadioGroupItem value="false" id="non-refundable" />
           <div className="inter text-base font-semibold flex flex-col gap-1">

@@ -17,13 +17,13 @@ const CheckInForm = ({
     className?: string, 
     isBrown?: boolean, 
     params?: { 
-      from: string | undefined, 
-      to: string | undefined, 
+      from: string | undefined | Date, 
+      to: string | undefined | Date, 
       adults: string | undefined, 
       children: string | undefined 
     }
   }) => {
-  const { dateRange, guests, sevValue } = useBookingStore();
+  const { dateRange, guests, setValue } = useBookingStore();
   const router = useRouter();
   const [openCalendar, setOpenCalendar] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -36,7 +36,7 @@ const CheckInForm = ({
         const toDate = new Date(params.to);
         
         if (!isNaN(fromDate.getTime()) && !isNaN(toDate.getTime())) {
-          sevValue({
+          setValue({
             from: fromDate,
             to: toDate,
           }, 'dateRange');
@@ -46,13 +46,13 @@ const CheckInForm = ({
       }
       
       if (params.adults !== undefined || params.children !== undefined) {
-        sevValue({
+        setValue({
           adults: params.adults ? Number(params.adults) : 1,
           children: params.children ? Number(params.children) : 0,
         }, 'guests');
       }
     }
-  }, [params, sevValue])
+  }, [params, setValue])
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!dateRange?.from || !dateRange?.to) return;
@@ -76,7 +76,7 @@ const CheckInForm = ({
 
   const getNights = () => {
     if (!dateRange?.from || !dateRange?.to) return null;
-    const nights = Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24));
+    const nights = Math.ceil((dateRange.to as Date).getTime() - (dateRange.from as Date).getTime()) / (1000 * 60 * 60 * 24);
     if(nights === 0) return null;
     return nights === 1 ? '1 night' : `${nights} nights`;
   }
@@ -102,7 +102,7 @@ const CheckInForm = ({
                 mode="range"  
                 captionLayout="label"
                 selected={dateRange}
-                onSelect={(date) => sevValue(date as DateRange, 'dateRange')}
+                onSelect={(date) => setValue(date as DateRange, 'dateRange')}
                 month={currentMonth}
                 onMonthChange={handlePrimaryMonthChange}
                 disabled={{ 
@@ -115,7 +115,7 @@ const CheckInForm = ({
                 mode="range"  
                 captionLayout="label"
                 selected={dateRange}
-                onSelect={(date) => sevValue(date as DateRange, 'dateRange')}
+                onSelect={(date) => setValue(date as DateRange, 'dateRange')}
                 month={nextMonth}
                 onMonthChange={handleSecondaryMonthChange}
                 disabled={{ 
@@ -132,7 +132,7 @@ const CheckInForm = ({
         <Separator orientation="vertical" />
         <label className='w-1/3'>
           <div className='font-medium mb-2'>Guests</div>
-          <Guests setValue={(value) => sevValue(value, 'guests')} value={guests} />
+          <Guests setValue={(value) => setValue(value, 'guests')} value={guests} />
         </label>
       </section>
         <button

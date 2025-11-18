@@ -1,6 +1,9 @@
+'use client'
 import { cn } from '@/lib/utils'
+import { useBookingStore } from '@/store/bookingStore'
 
-const Steps = ({ step }: { step: number }) => {
+const Steps = () => {
+  const { bookingPage } = useBookingStore()
   const steps = [
     {
       index: 1,
@@ -17,11 +20,11 @@ const Steps = ({ step }: { step: number }) => {
   ]
   return (
     <div className='flex items-center mb-[56px]'>
-      <Item active={steps[0].index === step} index={steps[0].index} title={steps[0].title} />
+      <Item active={steps[0].index === bookingPage} index={steps[0].index} title={steps[0].title} />
       <div className='flex-1 border-t border-gray h-7' />
-      <Item active={steps[1].index === step} index={steps[1].index} title={steps[1].title} />
+      <Item active={steps[1].index === bookingPage} index={steps[1].index} title={steps[1].title} />
       <div className='flex-1 border-t border-gray h-7' />
-      <Item active={steps[2].index === step} index={steps[2].index} title={steps[2].title} />
+      <Item active={steps[2].index === bookingPage} index={steps[2].index} title={steps[2].title} />
     </div>
   )
 }

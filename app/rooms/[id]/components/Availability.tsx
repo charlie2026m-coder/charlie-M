@@ -5,30 +5,19 @@ import Dot from '@/app/_components/ui/dot'
 import { useState, useMemo } from 'react'
 import dayjs from 'dayjs'
 import { DateRange } from 'react-day-picker'
+import { Availability as AvailabilityType, UrlParams } from '@/types/beds24'
+import { getDate, getPath } from '@/lib/utils'
+import { useRouter } from 'next/navigation'
+import { useBookingStore } from '@/store/bookingStore'
 
-const Availability = ({ availability = {} }: { availability: Record<string, Record<string, boolean>> }) => {
-  console.log(availability, 'availability')
-  
-  const { available, booked } = useMemo(() => {
-    const availableDates: Date[] = [];
-    const bookedDates: Date[] = [];
 
-    Object.keys(availability).forEach((key, index) => {
-      const date = dayjs(key).toDate();
-      date.setHours(0, 0, 0, 0); 
-      
-      if (availability[key]) {
-        availableDates.push(date); 
-      } else {
-        bookedDates.push(date); 
-      }
-    });
-
-    return { available: availableDates, booked: bookedDates };
-  }, [availability]);
-  
-  const [selectedRange, setSelectedRange] = useState<DateRange | undefined>(undefined);
-
+const Availability = ({ params, availability = {} as AvailabilityType, id }: { params: UrlParams, availability: AvailabilityType, id: string }) => {
+  const router = useRouter();
+  const { dateRange } = useBookingStore();
+  const [selectedRange, setSelectedRange] = useState<DateRange | undefined>({
+    from: params.from ? new Date(params.from) : dateRange?.from,
+    to: params.to ? new Date(params.to) : dateRange?.to,
+  });
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const nextMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1)
 
@@ -41,6 +30,43 @@ const Availability = ({ availability = {} }: { availability: Record<string, Reco
     setCurrentMonth(previousMonth)
   }
 
+
+  const { booked } = useMemo(() => {
+    const availableDates: Date[] = [];
+    const bookedDates: Date[] = [];
+
+    Object.keys(availability).forEach((key) => {
+      const date = dayjs(key).toDate();
+      date.setHours(0, 0, 0, 0); 
+      
+      if (availability[key] === true) {
+        availableDates.push(date); 
+      } else {
+        bookedDates.push(date); 
+      }
+    });
+
+    return { available: availableDates, booked: bookedDates };
+  }, [availability]);
+
+
+  const cancel = () => {
+    setSelectedRange({
+      from: params.from ? new Date(params.from) : undefined,
+      to: params.to ? new Date(params.to) : undefined,
+    });
+  }
+
+  const apply = () =>{
+    if (!selectedRange?.from || !selectedRange?.to) return;
+    const queryString = getPath({ 
+      from: getDate(selectedRange?.from), 
+      to: getDate(selectedRange?.to), 
+      adults: params.adults?.toString() || '1', 
+      children: params.children?.toString() || '0' 
+    });
+    router.push(`/rooms/${id}?${queryString}`);
+  }
 
 
   return (
@@ -58,7 +84,10 @@ const Availability = ({ availability = {} }: { availability: Record<string, Reco
             captionLayout="label"
             selected={selectedRange}
             onSelect={setSelectedRange}
-            disabled={booked}
+            disabled={[
+              { before: new Date() },
+              ...booked
+            ]}
             month={currentMonth}
             onMonthChange={handlePrimaryMonthChange}
             modifiers={{ 
@@ -77,20 +106,22 @@ const Availability = ({ availability = {} }: { availability: Record<string, Reco
             captionLayout="label"
             selected={selectedRange}
             onSelect={setSelectedRange}
-            disabled={booked}
+            disabled={[
+              { before: new Date() },
+              ...booked
+            ]}
             month={nextMonth}
             onMonthChange={handleSecondaryMonthChange}
             modifiers={{  booked: booked }}
             modifiersClassNames={{ 
               booked: "!bg-red-400 !text-black opacity-100" 
             }}
-            
           />
         </div>
       </div>
       <div className='flex items-center justify-end gap-2'>
-        <Button variant='outline' className='h-[55px] w-[160px]'>Cancel</Button>
-        <Button className='h-[55px] w-[160px]'>Apply </Button>
+        <Button  variant='outline' className='h-[55px] w-[160px]' onClick={cancel}>Cancel</Button>
+        <Button className='h-[55px] w-[160px]' onClick={apply}>Apply </Button>
       </div>
     </div>
   )

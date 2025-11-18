@@ -3,12 +3,17 @@ import VideoPlayer from '../_components/Home/VideoPlayer'
 import CheckInForm from '../_components/Home/CheckInForm'
 import Filters from './components/Filters'
 import RoomsList from './components/RoomsList'
-import { getRoomsData } from '@/lib/getRoomsData'
+import { getRoomsData } from '@/services/getRoomsData'
 import { UrlParams } from '@/types/beds24'
+import ErrorCard from '@/app/rooms/components/ErrorCard'
+import NotFoundCard from './[id]/components/NotFoundCard'
 
 const RoomsPage = async ({  searchParams } : {  searchParams: UrlParams  }) => {
   const { from, to, adults, children } = await searchParams;
   const rooms = await getRoomsData(from, to, adults, children)
+
+  if ('error' in rooms) return <ErrorCard />
+
 
   return (
     <section className='flex flex-col container px-[100px] pt-10'>
@@ -28,10 +33,12 @@ const RoomsPage = async ({  searchParams } : {  searchParams: UrlParams  }) => {
         />
       </div>
       <Filters />
-      <RoomsList 
-        rooms={rooms} 
-        params={{ from, to, adults, children }} 
-      />
+      {('error' in rooms) 
+        ? <ErrorCard />
+        : rooms.length === 0
+          ? <NotFoundCard text='No rooms found' />
+          : <RoomsList rooms={rooms} params={{ from, to, adults, children }} />
+      } 
     </section>
   )
 }

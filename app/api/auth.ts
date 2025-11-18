@@ -51,13 +51,13 @@ export async function getAccessToken() {
     if (!response.ok) {
       const errorText = await response.json();
       console.error('Failed to refresh token:', errorText);
-      throw new Error(`Failed to refresh token: ${errorText.error}`);
+      throw new Error(`❌ Failed to refresh token: ${errorText.error}`);
     }
 
     const data: Beds24AccessToken = await response.json();
 
     if (!data.token) {
-      throw new Error('No token in response');
+      throw new Error('❌ No token in response');
     }
 
     return data;
@@ -85,7 +85,6 @@ export async function beds24Request<T = any>(
       tokenExpiry = now + (tokenData.expiresIn * 1000);
     }
 
-    console.log('cachedToken', cachedToken);
     // Make request
     const response = await fetch(`${BEDS24_API}${endpoint}`, {
       method,
@@ -117,7 +116,7 @@ export async function beds24Request<T = any>(
     if (!retryResponse.ok) {
       const data = await retryResponse.json();
       console.error('❌ Beds24 Error (retry):', JSON.stringify(data, null, 2));
-      throw new Error(`Beds24 API error: ${data.message || data.error || JSON.stringify(data)}`);
+      throw new Error(`❌ Beds24 API Error: ${data.message || data.error || JSON.stringify(data)}`);
     }
 
       return await retryResponse.json();
@@ -126,7 +125,7 @@ export async function beds24Request<T = any>(
   if (!response.ok) {
     const data = await response.json();
     console.log('❌ Beds24 Error:', data.error);
-    throw new Error(`Beds24 API error ${data.error}`);
+    throw new Error(`❌ Beds24 API Error ${data.error}`);
   }
 
     return await response.json();

@@ -21,10 +21,14 @@ const ButtonIcon = ({ onClick, symbol, disabled }: { onClick: () => void, symbol
 }
 
 export function Guests({ 
+  maxAdults = 99,
+  maxChildren = 99,
   setValue, 
   value,
   className = ''
 }: { 
+  maxAdults?: number,
+  maxChildren?: number,
   setValue: (value: { adults: number, children: number }) => void, 
   value: { adults: number, children: number },
   className?: string
@@ -73,7 +77,11 @@ export function Guests({
                 {value.adults}
               </span>
 
-              <ButtonIcon onClick={() => setValue({ ...value, adults: value.adults + 1 })} symbol='+' />
+              <ButtonIcon 
+                onClick={() => setValue({ ...value, adults: Math.min(maxAdults, value.adults + 1) })} 
+                symbol='+' 
+                disabled={value.adults >= maxAdults}
+              />
             </div>
           </div>
 
@@ -89,7 +97,11 @@ export function Guests({
                 <span className="font-semibold min-w-[20px] text-center">
                   {value.children}
                 </span>
-                <ButtonIcon onClick={() => setValue({ ...value, children: value.children + 1 })} symbol='+' />
+                <ButtonIcon 
+                  onClick={() => setValue({ ...value, children: Math.min(maxChildren, value.children + 1) })} 
+                  symbol='+' 
+                  disabled={value.children >= maxChildren}
+                />
               </div>
             </div>
             

@@ -6,10 +6,10 @@ import { RadioGroupDemo } from "@/app/_components/ui/CustomRadio"
 import { useBookingStore } from "@/store/bookingStore"
 
 const Filters = () => {
-  const { categoryFilter, balconyFilter, bedSizeFilter, sortByFilter, sevValue } = useBookingStore()
+  const { categoryFilter, balconyFilter, bedSizeFilter, sortByFilter, setValue } = useBookingStore()
 
   const handleCategoryChange = (item: string) => {
-    sevValue(categoryFilter.includes(item) ? categoryFilter.filter((categoryFilter) => categoryFilter !== item) : [...categoryFilter, item], 'categoryFilter')
+    setValue(categoryFilter.includes(item) ? categoryFilter.filter((categoryFilter) => categoryFilter !== item) : [...categoryFilter, item], 'categoryFilter')
   }
   return (
     <div className='flex flex-col p-5 border border-gray bg-white rounded-[20px] mb-22'>
@@ -26,12 +26,12 @@ const Filters = () => {
         </div>
         <div className='flex items-center gap-3 font-medium'>
           Sort by: 
-          <CustomSelect options={['Price', 'Size']} placeholder="Price" value={sortByFilter} onChange={(value) => sevValue(value as 'Price' | 'Size', 'sortByFilter')} />
+          <CustomSelect options={['Price', 'Size']} placeholder="Price" value={sortByFilter} onChange={(value) => setValue(value as 'Price' | 'Size', 'sortByFilter')} />
         </div>
       </div>
       <div className='flex gap-10'>
-        <RadioGroupDemo title="Balcony:" options={['Yes', 'No']} value={balconyFilter ? 'Yes' : 'No'} onChange={(value) => sevValue(value === 'Yes', 'balconyFilter')} />
-        <RadioGroupDemo title="Bed Size:" options={['90/200', '120/200', '140/200', '160/200']} value={bedSizeFilter} onChange={(value) => sevValue(value as string, 'bedSizeFilter')} />
+        <RadioGroupDemo title="Balcony:" options={['Yes', 'No']} value={balconyFilter ? 'Yes' : 'No'} onChange={(value) => setValue(value === 'Yes', 'balconyFilter')} />
+        <RadioGroupDemo title="Bed Size:" options={['90/200', '120/200', '140/200', '160/200']} value={bedSizeFilter} onChange={(value) => setValue(value as string, 'bedSizeFilter')} />
       </div>
     </div>
   )

@@ -1,76 +1,97 @@
 import dayjs from 'dayjs';
 import { beds24Request } from '@/app/api/auth';
-import type { Beds24PropertiesResponse, Beds24RoomType } from '@/types/beds24';
+import type { Beds24PropertyResponse, Beds24RoomType } from '@/types/beds24';
 
-export async function getRoomsData(from?: string | undefined, to?: string | undefined, adults?: string | undefined, children?: string | undefined): Promise<Beds24RoomType[]> {
-  const today = dayjs().format('YYYY-MM-DD')
-  const nextYear = dayjs().add(365, 'day').format('YYYY-MM-DD')
-  //get all rooms with from proprty data
-  const res = await beds24Request<Beds24PropertiesResponse>('/properties?includeAllRooms=true', 'GET');
-
-  const properties = res?.data ?? [];
-  const data= properties.flatMap((property) => property.roomTypes ?? [])
-
-  //get available dates for each unit of room
-  const availabilityResponses = await Promise.all(
-    data.map((room) => {
-      return beds24Request(
-        `/inventory/rooms/unitBookings?propertyId=${room.propertyId}&roomId=${room.id}&startDate=${from || today}&endDate=${to || nextYear}`,
-        'GET'
-      );
-    })
-  );
-  
-  const rooms = data.map((room, index) => {
-    //get available dates for each unit of room
-    const unitsAvailable = availabilityResponses[index]?.data[0] ?? null;
-
-    const flatFeatures = room?.featureCodes?.flat() || [];
-    const hasBalcony = flatFeatures.includes('BALCONY');
+export async function getRoomsData(
+  from?: string | undefined | Date, 
+  to?: string | undefined | Date, 
+  adults?: string | undefined, 
+  children?: string | undefined
+): Promise<Beds24RoomType[] | { error: string }> {
+  try {
+    const today = dayjs().format('YYYY-MM-DD')
+    const nextYear = dayjs().add(365, 'day').format('YYYY-MM-DD')
     
-    //we format the units data to comfortable for us format
-    const formattedUnits = transformUnitBookings(unitsAvailable)
-    const isNeedFilter = from && to
+    // Get all rooms with property data
+    const res = await beds24Request<Beds24PropertyResponse>('/properties?includeAllRooms=true', 'GET');
 
+    const properties = res?.data ?? [];
+    const data = properties.flatMap((property) => property.roomTypes ?? [])
+    const startDate = from || today;
+    let endDate = to || nextYear;
+    
+    // Если endDate раньше startDate, используем startDate + 1 день
+    if (dayjs(endDate).isBefore(dayjs(startDate))) {
+      endDate = dayjs(startDate).add(1, 'day').format('YYYY-MM-DD');
+    }
+    
+    // Если даты равны (один день), добавляем 1 день к endDate
+    if (dayjs(endDate).isSame(dayjs(startDate), 'day')) {
+      endDate = dayjs(startDate).add(1, 'day').format('YYYY-MM-DD');
+    }
+    //get available dates for each unit of room
+    const availabilityResponses = await Promise.all(
+      data.map((room) => {
+        return beds24Request(
+          `/inventory/rooms/unitBookings?propertyId=${room.propertyId}&roomId=${room.id}&startDate=${startDate}&endDate=${endDate}`,
+          'GET'
+        );
+      })
+    );
+  
+    const rooms = data.map((room, index) => {
+      //get available dates for each unit of room
+      const unitsAvailable = availabilityResponses[index]?.data[0] ?? null;
 
-    //filter availability of units if we have selected date range to show only available units and quantity
-    const filteredUnits = isNeedFilter ? filterOnlyFullyFreeUnits(formattedUnits) : formattedUnits
-
-    return {
-      id: room?.id,
-      propertyId: room?.propertyId,
-      name: room?.name,
-      roomType: room?.roomType,
-      minPrice: room?.minPrice,
+      const flatFeatures = room?.featureCodes?.flat() || [];
+      const hasBalcony = flatFeatures.includes('BALCONY');
       
-      //amount of guests in thus type of room
-      adults: room?.maxAdult,
-      children: room?.maxChildren,
-      people: room?.maxPeople,
-      
-      //amount of guests in all units, for filters by guests
-      maxAdult: room?.maxAdult * Object.keys(filteredUnits).length,
-      maxChildren: room?.maxChildren * Object.keys(filteredUnits).length,
-      maxPeople: room?.maxPeople * Object.keys(filteredUnits).length,
-      
-      qty: room?.qty,
-      roomSize: room?.roomSize,
-      features: flatFeatures,
-      hasBalcony: hasBalcony,
-      unitsAvailable: {
-        total: unitsAvailable?.qty,
-        free: Object.keys(filteredUnits).length,
-        availability: filteredUnits,
-      }
-    } as Beds24RoomType;
-  });
+      //we format the units data to comfortable for us format
+      const formattedUnits = transformUnitBookings(unitsAvailable)
+      const isNeedFilter = from && to
 
 
-  const adultsAmount = adults ? Number(adults) : 1;
-  const childrenAmount = children ? Number(children) : 0;
-  const filteredRooms = rooms.filter((room) => (room.maxAdult >= adultsAmount) && (room.maxChildren >= childrenAmount))
+      //filter availability of units if we have selected date range to show only available units and quantity
+      const filteredUnits = isNeedFilter ? filterOnlyFullyFreeUnits(formattedUnits) : formattedUnits
 
-  return filteredRooms;
+      return {
+        id: room?.id,
+        propertyId: room?.propertyId,
+        name: room?.name,
+        roomType: room?.roomType,
+        minPrice: room?.minPrice,
+        
+        //amount of guests in thus type of room
+        adults: room?.maxAdult,
+        children: room?.maxChildren,
+        people: room?.maxPeople,
+        
+        //amount of guests in all units, for filters by guests
+        maxAdult: room?.maxAdult * Object.keys(filteredUnits).length,
+        maxChildren: room?.maxChildren * Object.keys(filteredUnits).length,
+        maxPeople: room?.maxPeople * Object.keys(filteredUnits).length,
+        
+        qty: room?.qty,
+        roomSize: room?.roomSize,
+        features: flatFeatures,
+        hasBalcony: hasBalcony,
+        unitsAvailable: {
+          total: unitsAvailable?.qty,
+          free: Object.keys(filteredUnits).length,
+          availability: filteredUnits,
+        },
+      } as Beds24RoomType;
+    });
+
+    const adultsAmount = adults ? Number(adults) : 1;
+    const childrenAmount = children ? Number(children) : 0;
+    const filteredRooms = rooms.filter((room) => (room.maxAdult >= adultsAmount) && (room.maxChildren >= childrenAmount))
+    return filteredRooms;
+  } catch (error) {
+    console.error('Error fetching rooms data:', error);
+
+    return { error: (error as Error).message };
+  }
 }
 
 function transformUnitBookings(data: any) {
@@ -131,7 +152,7 @@ const rooms = [
     rackRate: 0,
     people: 2,
     unitsAvailable: {
-      bookings: {
+      availability: {
         1: { "2025-11-15": true, "2025-11-16": true, "2025-11-17": true, "2025-11-18": true, "2025-11-19": true },
         2: { "2025-11-15": true, "2025-11-16": true, "2025-11-17": true, "2025-11-18": true, "2025-11-19": true },
         3: { "2025-11-15": true, "2025-11-16": true, "2025-11-17": true, "2025-11-18": true, "2025-11-19": true },
@@ -163,7 +184,7 @@ const rooms = [
     rackRate: 0,
     people: 2,
     unitsAvailable: {
-      bookings: {
+      availability: {
         1: { "2025-11-15": true, "2025-11-16": true, "2025-11-17": true, "2025-11-18": true, "2025-11-19": true },
         2: { "2025-11-15": true, "2025-11-16": true, "2025-11-17": true, "2025-11-18": true, "2025-11-19": true },
         3: { "2025-11-15": true, "2025-11-16": true, "2025-11-17": true, "2025-11-18": true, "2025-11-19": true },
@@ -193,7 +214,7 @@ const rooms = [
     rackRate: 0,
     people: 6,
     unitsAvailable: {
-      bookings: {
+      availability: {
         1: { "2025-11-15": true, "2025-11-16": true, "2025-11-17": true, "2025-11-18": true, "2025-11-19": true },
         2: { "2025-11-15": true, "2025-11-16": true, "2025-11-17": true, "2025-11-18": true, "2025-11-19": true },
         3: { "2025-11-15": true, "2025-11-16": true, "2025-11-17": true, "2025-11-18": true, "2025-11-19": true }
@@ -222,7 +243,7 @@ const rooms = [
     rackRate: 0,
     people: 1,
     unitsAvailable: {
-      bookings: {
+      availability: {
         1: { "2025-11-15": true, "2025-11-16": true, "2025-11-17": true, "2025-11-18": true, "2025-11-19": true },
         2: { "2025-11-15": true, "2025-11-16": true, "2025-11-17": true, "2025-11-18": true, "2025-11-19": true },
         3: { "2025-11-15": true, "2025-11-16": true, "2025-11-17": true, "2025-11-18": true, "2025-11-19": true },
@@ -256,7 +277,7 @@ const rooms = [
     rackRate: 0,
     people: 4,
     unitsAvailable: {
-      bookings: {
+      availability: {
         1: { "2025-11-15": true, "2025-11-16": true, "2025-11-17": true, "2025-11-18": true, "2025-11-19": true },
         2: { "2025-11-15": true, "2025-11-16": true, "2025-11-17": true, "2025-11-18": true, "2025-11-19": true }
       }
@@ -284,7 +305,7 @@ const rooms = [
     rackRate: 0,
     people: 4,
     unitsAvailable: {
-      bookings: {
+      availability: {
         1: { "2025-11-15": true, "2025-11-16": true, "2025-11-17": true, "2025-11-18": true, "2025-11-19": true },
         2: { "2025-11-15": true, "2025-11-16": true, "2025-11-17": true, "2025-11-18": true, "2025-11-19": true },
         3: { "2025-11-15": true, "2025-11-16": true, "2025-11-17": true, "2025-11-18": true, "2025-11-19": true },

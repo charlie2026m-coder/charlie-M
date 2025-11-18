@@ -42,3 +42,21 @@ export const reservationSchema = z.object({
 });
 
 export type ReservationFormData = z.infer<typeof reservationSchema>;
+
+
+export const guestDetailsSchema = z.object({
+  name: z.string()
+    .min(2, 'Name must be at least 2 characters')
+    .max(50, 'Name must be less than 50 characters'),
+  last_name: z.string()
+    .min(2, 'Last name must be at least 2 characters')
+    .max(50, 'Last name must be less than 50 characters'),
+  email: z.string()
+    .email('Invalid email address')
+    .min(1, 'Email is required'),
+  phone: z.string()
+    .min(10, 'Phone number must be at least 10 digits')
+    .regex(/^[0-9+\s()-]+$/, 'Invalid phone number format'),
+})
+
+export type GuestDetailsFormData = z.infer<typeof guestDetailsSchema>

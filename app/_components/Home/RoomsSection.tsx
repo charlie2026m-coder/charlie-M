@@ -1,10 +1,17 @@
 import Link from 'next/link'
 import { Button } from '../ui/button'
 import { RoomsCarousel } from './RoomsCarousel'
-import { getRoomsData } from '@/lib/getRoomsData'
-const RoomsSection = async () => {
+import { getRoomsData } from '@/services/getRoomsData'
+import ErrorCard from '@/app/rooms/components/ErrorCard'
 
+const RoomsSection = async () => {
   const rooms = await getRoomsData()
+  
+  // Show fallback UI if no rooms available (e.g., API error)
+  if ('error' in rooms || !rooms || rooms.length === 0) {
+    return <ErrorCard link='/' isSingleRoom={false} />
+  }
+  
   return (
     <div className='w-full flex flex-col pb-[85px]'>
       <div className='flex items-center justify-between gap-10'>

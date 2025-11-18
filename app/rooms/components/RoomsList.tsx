@@ -22,12 +22,12 @@ const RoomsList = ({
     let filtered = rooms;
     
     // Filter by balcony
-    if (balconyFilter !== undefined) {
+    if (balconyFilter) {
       filtered = filtered.filter(room => room.hasBalcony === balconyFilter);
     }
     
     // Filter by category (if categoryFilter has items)
-    if (categoryFilter && categoryFilter.length > 0) {
+    if (categoryFilter && categoryFilter.length > 0 && categoryFilter.length > 0) {
       filtered = filtered.filter(room => 
         categoryFilter.some(cat => room.roomType?.toLowerCase() === cat.toLowerCase())
       );
@@ -35,7 +35,7 @@ const RoomsList = ({
     
     return filtered;
   }, [rooms, balconyFilter, categoryFilter])
-  
+
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(0);

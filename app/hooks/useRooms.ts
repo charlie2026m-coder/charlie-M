@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 export const roomKeys = {
   all: ['room'] as const,
@@ -11,7 +12,9 @@ export function useRooms() {
       const res = await fetch('/api/rooms');
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Failed to fetch property');
+        const errorMessage = error.error || 'Failed to fetch property';
+        toast.error(errorMessage);
+        throw new Error(errorMessage);
       }
       const response = await res.json();
 
@@ -36,7 +39,9 @@ export function useRoomById(id: string, date: string) {
       const res = await fetch(`/api/rooms/${id}${date ? `?${date}` : ''}`);
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Failed to fetch property');
+        const errorMessage = error.error || 'Failed to fetch property';
+        toast.error(errorMessage);
+        throw new Error(errorMessage);
       }
       const response = await res.json();
 
