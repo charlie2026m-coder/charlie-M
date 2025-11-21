@@ -52,7 +52,7 @@ export default function ResetPassword() {
         {formType === 'success'  && <Success type='passSuccess' onClose={() => setFormType('login')} />}
         {formType === 'resetPassword' && <ResetPasswordForm setFormType={setFormType} /> }
         {formType === 'login' && <LoginForm setFormType={setFormType} /> }
-        {formType === 'reservation' && <ReservationForm setFormType={setFormType} /> }
+        {formType === 'reservation' && <ReservationForm /> }
       </DialogContent>
     </Dialog>
   );

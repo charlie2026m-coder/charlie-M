@@ -23,11 +23,11 @@ const RoomPage = async ({ params, searchParams }: IParams) => {
   if ('error' in room) return <ErrorCard isSingleRoom={true} link='/rooms' />
 
   return (
-    <div className='flex flex-col relative container px-[100px] pt-10 flex-1'>
+    <div className='flex flex-col relative container px-4 md:px-10 xl:px-[100px] pt-10 flex-1'>
       <PhotoGallery />
-      <div className='grid grid-cols-4 gap-10 mb-[30px]'>
+      <div className='grid grid-cols-1  lg:grid-cols-3 xl:grid-cols-4 gap-y-10 md:gap-10 mb-[30px]'>
 
-        <div className='col-span-3 flex flex-col'>
+        <div className='col-span-2 xl:col-span-3 flex flex-col'>
           <RoomContent room={room} />
           {room?.unitsAvailable?.availability && Object.keys(room.unitsAvailable.availability).length > 0 && (
             <Availability 

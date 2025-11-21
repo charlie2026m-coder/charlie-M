@@ -16,7 +16,7 @@ import { useBookingStore } from "@/store/bookingStore";
 const BookingForm = ({ id, room, params }: { id: string, room: Beds24RoomType, params: UrlParams }) => {
   const router = useRouter();
   const { dateRange: dateRangeStore, guests: guestsStore } = useBookingStore();
-  const { price, priceText } = getPriceData({ params, room })
+  const { price, priceText, nightsText } = getPriceData({ params, room })
 
   const [openCheckIn, setOpenCheckIn] = useState(false);
   const [guests, setGuests] = useState({adults: parseInt(params?.adults || guestsStore?.adults.toString() || '1'), children: parseInt(params?.children || guestsStore?.children.toString() || '0')});
@@ -61,8 +61,10 @@ const BookingForm = ({ id, room, params }: { id: string, room: Beds24RoomType, p
   return (
     <div className='sticky top-10 flex flex-col bg-white rounded-[20px] px-5 pt-[25px] w-full pb-10'>
       <h3 className='font-semibold text-2xl text-center mb-3'>RESERVE</h3>
-      <div className='flex flex-col  justify-between mb-4 gap-2'>
-        <div className='text-brown flex items-center gap-1'><BsFillPersonFill className='size-4 text-brown' />{currentPriceText}</div>
+      <div className='text-brown flex items-center gap-1 mb-1'><BsFillPersonFill className='size-4 text-brown' />{currentPriceText}</div>
+      <div className='flex justify-between mb-4 gap-2'>
+      <div className='text-brown flex items-center gap-1'>Price per {nightsText}</div>
+
         <div className='text-xl min-w-[80px] self-end text-center rounded-full bg-green/15 font-[700] text-green px-2.5 py-2'>€{currentPrice}</div>
       </div>
 

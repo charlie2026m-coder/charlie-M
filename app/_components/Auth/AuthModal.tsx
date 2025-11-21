@@ -7,13 +7,13 @@ import RegisterForm from "./RegisterForm";
 import Success from "./Success";
 import ForgotPassword from "./ForgotPassword";
 import ReservationForm from "./ReservationForm";
-
+import { cn } from '@/lib/utils'
 
 export type contentType = 'signin' | 'signup' | 'confirm' | 'pass' | 'forgot' | 'resetPassword' | 'login' | 'success' | 'reservation';
 
 //I created one modal for all operations with auth :) so depends of steps I show different content
 //initial type we set via props and show trigger button like login or sign up
-const AuthModal = ({ type = 'signin' }: { type: contentType }) => {
+const  AuthModal = ({ type = 'signin', className }: { type: contentType, className?: string }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [formType, setFormType] = useState<contentType>(type);
 
@@ -27,8 +27,8 @@ const AuthModal = ({ type = 'signin' }: { type: contentType }) => {
       <DialogTrigger asChild>
         {
           type === 'signin' 
-            ?<Button variant="outline">Login</Button>
-            :<button className="text-lg text-brown hover:text-brown/50 cursor-pointer px-2">Sign Up</button>
+            ?<Button variant="outline" className={className}>Login</Button>
+            :<button className={cn(className, "text-lg text-brown hover:text-brown/50 cursor-pointer px-2")}>Sign Up</button>
         }
       </DialogTrigger>
       <DialogContent className="!max-w-[600px] px-[100px] w-full gap-0  py-[50px] rounded-3xl bg-white">
@@ -46,7 +46,7 @@ const AuthModal = ({ type = 'signin' }: { type: contentType }) => {
         {formType === 'confirm' && <Success type='confirm' onClose={() => handleOpenChange(false)} />}
         {/* Show Success image that user need go email to continue reset password */}
         {formType === 'pass' && <Success type='pass' onClose={() => handleOpenChange(false)} />} 
-        {formType === 'reservation' && <ReservationForm setFormType={setFormType} />}
+        {formType === 'reservation' && <ReservationForm />}
       </DialogContent>
     </Dialog>
   )

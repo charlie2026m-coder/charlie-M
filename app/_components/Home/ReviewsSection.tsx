@@ -1,13 +1,36 @@
 'use client'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { FaStar } from "react-icons/fa";
 import { Separator } from "../ui/separator";
 
 const ReviewsSection = () => {
   const [currentSet, setCurrentSet] = useState(0)
   const [isTransitioning, setIsTransitioning] = useState(false)
+  const [reviewsPerSet, setReviewsPerSet] = useState(6)
 
-  const reviewsPerSet = 6
+  // Adjust cards per set based on screen size
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth
+      let newCount = 6
+      
+      if (width < 768) {
+        newCount = 1 // Mobile: 1 column, 1 card
+      } else if (width < 1024) {
+        newCount = 4 // Tablet: 2 columns, 4 cards
+      } else {
+        newCount = 6 // Desktop: 3 columns, 6 cards
+      }
+      
+      setReviewsPerSet(newCount)
+      setCurrentSet(0) // Reset to first set when screen size changes
+    }
+
+    handleResize() // Initial check
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
   const totalSets = Math.ceil(reviews.length / reviewsPerSet)
   const currentReviews = reviews.slice(
     currentSet * reviewsPerSet,
@@ -27,14 +50,14 @@ const ReviewsSection = () => {
 
   return (
     <div className='w-full bg-blue'>
-      <div className='container px-[100px] pt-[50px] pb-10'>
+      <div className='container px-4 lg:px-[100px] pt-[50px] pb-10'>
         <div className='flex items-center gap-2 mb-10'>
           <div className='size-5 rounded-full bg-brown'/>
           <h2 className='font-medium text-[40px]'>Reviews</h2>
         </div>
 
         <div className='relative '>
-          <div className='grid grid-cols-3 gap-4'>
+          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
             {Array.from({ length: reviewsPerSet }).map((_, index) => {
               const review = currentReviews[index]
               if (!review) return null

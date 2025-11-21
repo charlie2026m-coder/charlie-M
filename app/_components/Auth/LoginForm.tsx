@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { useAuthActions } from '@/app/hooks/useAuthActions';
+import { useLogin } from '@/app/hooks/useAuth';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '../ui/button';
 import CustomInput from '../ui/customInput';
@@ -12,8 +12,7 @@ import { contentType } from './AuthModal';
 
 const LoginForm = ({ setFormType }: { setFormType: (type: contentType ) => void }) => {
   const [error, setError] = useState<string | null>(null);
-  const [loginError, setLoginError] = useState<string | null>(null);
-  const { handleLogin, isLoading } = useAuthActions();
+  const loginMutation = useLogin();
   
   const {
     register,
@@ -36,19 +35,16 @@ const LoginForm = ({ setFormType }: { setFormType: (type: contentType ) => void 
       setError(errorMessages);
     } else {
       setError(null);
-      setLoginError(null);
     }
   }, [errors, email, password]);
 
   // Handle form submission
   const onSubmit = async (data: LoginFormData) => {
     setError(null);
-    setLoginError(null);
-    const result = await handleLogin({ email: data.email, password: data.password });
-    
-    if (!result.success) {
-      const errorMessage = result.error || 'Login failed. Please try again.';
-      setLoginError(errorMessage);
+    try {
+      await loginMutation.mutateAsync({ email: data.email, password: data.password });
+    } catch (err) {
+      // Error is handled by React Query with toast
     }
   };
 
@@ -64,7 +60,7 @@ const LoginForm = ({ setFormType }: { setFormType: (type: contentType ) => void 
           type="email" 
           placeholder="Email" 
           icon="email" 
-          isError={!!errors.email || !!loginError} 
+          isError={!!errors.email} 
         />
         <CustomInput 
           register={register} 
@@ -72,22 +68,22 @@ const LoginForm = ({ setFormType }: { setFormType: (type: contentType ) => void 
           type="password" 
           placeholder="Password" 
           icon="password" 
-          isError={!!errors.password || !!loginError} 
+          isError={!!errors.password} 
         />
 
         <button type="button" onClick={() => setFormType('forgot' as contentType)} className="text-sm text-gray font-light cursor-pointer hover:text-dark transition-colors">Forgot password? </button>
 
         <Button
           type="submit"
-          disabled={isLoading || !isValid}
+          disabled={loginMutation.isPending || !isValid}
           className="w-full h-12 rounded-full bg-brown hover:bg-brown/80 text-white font-medium !mb-0"
         >
-          {isLoading ? 'Loading...' : 'Login'}
+          {loginMutation.isPending ? 'Loading...' : 'Login'}
         </Button>
 
-        {(error || loginError) && (
+        {error && (
           <div className="absolute bottom-[-28px] text-center text-red text-sm px-4 w-full">
-            {loginError || error}
+            {error}
           </div>
         )}
       </form>

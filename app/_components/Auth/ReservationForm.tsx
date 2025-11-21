@@ -1,17 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { useAuthActions } from '@/app/hooks/useAuthActions';
+import { useLogin } from '@/app/hooks/useAuth';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '../ui/button';
 import CustomInput from '../ui/customInput';
 
 import { type ReservationFormData, reservationSchema } from '@/types/schemas';
-import { contentType } from './AuthModal';
 
-const ReservationForm = ({ setFormType }: { setFormType: (type: contentType ) => void }) => {
+const ReservationForm = () => {
   const [error, setError] = useState<string | null>(null);
-  const [loginError, setLoginError] = useState<string | null>(null);
-  const { handleLogin, isLoading } = useAuthActions();
+  const loginMutation = useLogin();
 
   const {
     register,
@@ -50,7 +48,7 @@ const ReservationForm = ({ setFormType }: { setFormType: (type: contentType ) =>
           type="text" 
           placeholder="Enter Booking.com Number" 
           icon="booking" 
-          isError={!!errors.number || !!loginError} 
+          isError={!!errors.number} 
         />
         <CustomInput 
           register={register} 
@@ -58,20 +56,20 @@ const ReservationForm = ({ setFormType }: { setFormType: (type: contentType ) =>
           type="text" 
           placeholder="Last Name" 
           icon="name" 
-          isError={!!errors.name || !!loginError} 
+          isError={!!errors.name} 
         />
 
         <Button
           type="submit"
-          disabled={isLoading || !isValid}
+          disabled={loginMutation.isPending || !isValid}
           className="w-full h-12 rounded-full bg-brown hover:bg-brown/80 text-white font-medium !mb-0"
         >
-          {isLoading ? 'Loading...' : 'Continue'}
+          {loginMutation.isPending ? 'Loading...' : 'Continue'}
         </Button>
 
-        {(error || loginError) && (
+        {error && (
           <div className="absolute bottom-[-28px] text-center text-red text-sm px-4 w-full">
-            {loginError || error}
+            {error}
           </div>
         )}
       </form>

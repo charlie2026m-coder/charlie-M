@@ -1,10 +1,6 @@
 'use client'
 import { useBookingStore } from '@/store/bookingStore'
-
-import { Separator } from "@/app/_components/ui/separator"
-import { MdOutlineWatchLater } from "react-icons/md";
 import { Button } from "@/app/_components/ui/button";
-import dayjs from "dayjs";
 import { FiInfo } from "react-icons/fi";
 import Price from "@/app/_components/ui/price";
 import { BiSolidLike } from "react-icons/bi";
@@ -16,6 +12,7 @@ import AddRooms from './AddRooms';
 import Image from 'next/image';
 import { getExtrasPrice, getPeriodText, getPerText } from '@/lib/utils';
 import { TAX_RATE } from '@/lib/Constants';
+import CheckInCheckOutDates from '@/app/_components/ui/CheckInCheckOutDates';
 
 const BookingMenu = ({
   room,
@@ -87,25 +84,7 @@ const BookingMenu = ({
 
   return (
     <div className='flex flex-col bg-white rounded-[20px] py-5 px-3 shadow-xl'>
-      <div className='flex '>
-        <div className='flex flex-col gap-2 items-center w-1/2'>
-          <span>Check in</span>
-          <span className='text-lg font-bold'>{dayjs(params.from).format('DD MMM YYYY')}</span>
-          <div className='flex items-center gap-1'>
-            <MdOutlineWatchLater className='size-5 text-blue' />
-            <span>11:30 - 14:30</span>
-          </div>
-        </div>
-        <Separator orientation="vertical" />
-        <div className='flex flex-col gap-2 items-center w-1/2'>
-          <span>Check out</span>
-          <span className='text-lg font-bold'>{dayjs(params.to).format('DD MMM YYYY')}</span>
-          <div className='flex items-center gap-1'>
-            <MdOutlineWatchLater className='size-5 text-blue' />
-            <span>11:30 - 14:30</span>
-          </div>
-        </div>
-      </div>
+      <CheckInCheckOutDates from={booking.arrival as string} to={booking.departure as string} />
       <AddRooms maxAdults={room.adults} maxChildren={room.children} />
 
       <div className='flex flex-col'>

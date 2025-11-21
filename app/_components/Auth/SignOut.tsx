@@ -1,12 +1,15 @@
 'use client';
-import { useAuthActions } from '@/app/hooks/useAuthActions';
+import { useLogout } from '@/app/hooks/useAuth';
 
 const SignOut = () => {
-  const { handleLogout } = useAuthActions();
+  const logoutMutation = useLogout();
 
   return (
-    <button onClick={handleLogout} >
-      out
+    <button 
+      onClick={() => logoutMutation.mutate()} 
+      disabled={logoutMutation.isPending}
+    >
+      {logoutMutation.isPending ? 'Logging out...' : 'out'}
     </button>
   );
 };

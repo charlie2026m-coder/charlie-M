@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { useAuthActions } from '@/app/hooks/useAuthActions';
+import { useRegister } from '@/app/hooks/useAuth';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '../ui/button';
 import CustomInput from '../ui/customInput';
@@ -12,7 +12,7 @@ import { contentType } from './AuthModal';
 
 const RegisterForm = ({ setFormType }: { setFormType: (type: contentType ) => void }) => {
   const [error, setError] = useState<string | null>(null);
-  const { handleRegister, isLoading } = useAuthActions();
+  const registerMutation = useRegister();
   
   const {
     register,
@@ -42,16 +42,19 @@ const RegisterForm = ({ setFormType }: { setFormType: (type: contentType ) => vo
 
   const onSubmit = async (data: RegisterFormData) => {
     setError(null);
-    const result = await handleRegister({
-      name: data.name,
-      email: data.email,
-      password: data.password,
-    });
-
-    if (!result.success && result.error) {
-      setError(result.error);
-    } else if (result.success && result.requiresEmailConfirmation) {
-      setFormType('confirm');
+    try {
+      const result = await registerMutation.mutateAsync({
+        name: data.name,
+        email: data.email,
+        password: data.password,
+      });
+      
+      if (result.requiresEmailConfirmation) {
+        setFormType('confirm');
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Registration failed';
+      setError(errorMessage);
     }
   };
 
@@ -95,10 +98,10 @@ const RegisterForm = ({ setFormType }: { setFormType: (type: contentType ) => vo
 
         <Button
           type="submit"
-          disabled={isLoading || !isValid}
+          disabled={registerMutation.isPending || !isValid}
           className="w-full h-12 rounded-full bg-brown hover:bg-brown/80 text-white font-medium !mb-0"
         >
-          {isLoading ? 'Loading...' : 'Sign Up'}
+          {registerMutation.isPending ? 'Loading...' : 'Sign Up'}
         </Button>
         {error && <div className="absolute bottom-[-28px] text-center text-red text-sm px-4 w-full">{error}</div>}
       </form>

@@ -76,7 +76,7 @@ const Availability = ({ params, availability = {} as AvailabilityType, id }: { p
         Availability
       </div>
 
-      <div className='flex  gap-6 border-b pb-[30px] mb-[30px]'>
+      <div className='flex flex-col md:flex-row gap-6 border-b pb-[30px] mb-[30px]'>
         <div className='bg-white w-full shadow-lg rounded-[20px] p-2'>
           <Calendar 
             required={false}
@@ -119,7 +119,7 @@ const Availability = ({ params, availability = {} as AvailabilityType, id }: { p
           />
         </div>
       </div>
-      <div className='flex items-center justify-end gap-2'>
+      <div className='flex items-center justify-between md:justify-end gap-2'>
         <Button  variant='outline' className='h-[55px] w-[160px]' onClick={cancel}>Cancel</Button>
         <Button className='h-[55px] w-[160px]' onClick={apply}>Apply </Button>
       </div>

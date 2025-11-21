@@ -2,27 +2,11 @@ import { Button } from '../ui/button'
 import Image from 'next/image'
 import { FaApple } from 'react-icons/fa'  
 import { FcGoogle } from 'react-icons/fc'
-import { signInWithOAuth } from '@/app/auth/authService'
-import { toast } from 'sonner'
+import { useOAuthSignIn } from '@/app/hooks/useAuth'
 import { contentType } from './AuthModal';
 
 const SocialMediaButtons = ( { setFormType }: { setFormType: (type: contentType ) => void } ) => {
-  const handleOAuthLogin = async (provider: 'google' | 'apple') => {
-    try {
-      const loadingToastId = toast.loading(`Signing in with ${provider}...`);
-      const result = await signInWithOAuth(provider);
-      
-      if (result.success) {
-        toast.dismiss(loadingToastId);
-      } else {
-        toast.error(result.error || `Failed to sign in with ${provider}`, { id: loadingToastId });
-      }
-    } catch (error) {
-      console.error(`${provider} login error:`, error);
-      toast.error(`Failed to sign in with ${provider}. Please try again.`);
-    }
-  };
-
+  const oauthMutation = useOAuthSignIn();
 
   return (
     <div className="space-y-4 pt-[30px]">
@@ -39,7 +23,8 @@ const SocialMediaButtons = ( { setFormType }: { setFormType: (type: contentType 
       <Button
         type="button"
         variant="outline"
-        onClick={() => handleOAuthLogin('apple')}
+        onClick={() => oauthMutation.mutate('apple')}
+        disabled={oauthMutation.isPending}
         className={buttonStyle}
       >
         <FaApple className="size-6" /> Continue with Apple
@@ -48,7 +33,8 @@ const SocialMediaButtons = ( { setFormType }: { setFormType: (type: contentType 
       <Button
         type="button"
         variant="outline"
-        onClick={() => handleOAuthLogin('google')}
+        onClick={() => oauthMutation.mutate('google')}
+        disabled={oauthMutation.isPending}
         className={buttonStyle}
       >
         <FcGoogle className="size-6" /> Continue with Google

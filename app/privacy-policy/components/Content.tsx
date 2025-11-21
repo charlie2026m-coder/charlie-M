@@ -4,8 +4,9 @@ import Menu from "../components/Menu";
 import { useState, useEffect } from "react";
 import { materials } from "../../../materials/materials";
 
-export default function Content() {
+export default function Content({type}:{ type: 'privacyPolicy' | 'termsAndConditions'}) {
   const [activeSection, setActiveSection] = useState<string>('introduction')
+  const content = materials[type].content
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -22,7 +23,7 @@ export default function Content() {
       }
     )
 
-    materials.termsAndConditions.content.forEach((item) => {
+    content.forEach((item) => {
       const element = document.getElementById(getSectionId(item.title))
       if (element) {
         observer.observe(element)
@@ -51,9 +52,9 @@ export default function Content() {
   
   return (
 
-      <div className="grid grid-cols-4 gap-9">
-        <div className="col-span-3">
-          {materials.termsAndConditions.content.map((item, index) => (
+      <div className="flex flex-col-reverse md:grid md:grid-cols-4 gap-9">
+        <div className="col-span-2 lg:col-span-3">
+          {content.map((item, index) => (
             <Section 
               key={index}
               id={getSectionId(item.title)}
@@ -62,9 +63,9 @@ export default function Content() {
             />
           ))}
         </div>
-        <div className="col-span-1">
+        <div className="col-span-2 lg:col-span-1">
           <Menu 
-            sections={materials.termsAndConditions.content.map(item => item.title)}
+            sections={content.map(item => item.title)}
             activeSection={activeSection}
             onSectionClick={handleScrollToSection}
           />

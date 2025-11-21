@@ -23,9 +23,11 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${plusJakartaSans.variable} antialiased bg-light-bg flex flex-col min-h-screen`}>
+      <body className={`${inter.variable} ${plusJakartaSans.variable} antialiased bg-light-bg flex flex-col min-h-screen relative`}>
         <ReactQueryProvider>
-          <Header/>
+          <div className='z-11'>
+            <Header/>
+          </div>
           <main className="flex-1 relative z-10">{children}</main>
           <Footer/>
           <Toaster position="top-left" richColors/>

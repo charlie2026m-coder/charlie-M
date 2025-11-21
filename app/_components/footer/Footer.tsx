@@ -9,6 +9,7 @@ import { TbMailFilled } from "react-icons/tb";
 import Navigation from "./Navigation";
 import Contacts from "./Contacts";
 import { usePathname } from "next/navigation";
+
 export default function Footer() {
   const pathname = usePathname();
   const contacts = [
@@ -62,11 +63,11 @@ export default function Footer() {
   const isHomePage = pathname === '/';
 
   return (
-    <footer className={`w-full   relative z-0 ${isHomePage && 'bg-blue'}`}>
+    <footer className={`w-full relative z-0 ${isHomePage && 'bg-blue'}`}>
       <section className="w-full rounded-t-4xl bg-black">
-        <div className="container !px-[100px] flex flex-col items-center ">
-          <div className="flex w-full items-center py-[60px] justify-between border-b border-white/40">
-            <div className="flex items-center  w-1/4">
+        <div className="container px-4 xl:!px-[100px] flex flex-col items-center ">
+          <div className="grid grid-cols-1 lg:grid-cols-4 w-full items-center py-[60px] gap-8 border-b border-white/40">
+            <div className="flex items-center col-span-1 mx-auto">
               <Image 
                 src="/images/logo.png" 
                 alt="logo" 
@@ -76,9 +77,9 @@ export default function Footer() {
               />
             </div>
 
-            <div className="flex flex-col items-start justify-center w-1/2">
+            <div className="flex flex-col items-start justify-center col-span-2 mx-auto w-full">
               <span className="text-white font-semibold text-2xl mb-5">Contacts:</span>
-              <div className="flex items-center  gap-6 w-full">
+              <div className="flex flex-col md:flex-row md:items-center gap-6 w-full">
                 <div className="map-isolated" style={{ isolation: 'isolate', zIndex: 1 }}>
                   <MapWindow width="226px" height="226px" />
                 </div>

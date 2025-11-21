@@ -5,11 +5,11 @@ import { Button } from '../ui/button';
 import CustomInput from '../ui/customInput';
 import { forgotPasswordSchema, type ForgotPasswordFormData } from '@/types/schemas';
 import { contentType } from './AuthModal';
-import { useAuthActions } from '@/app/hooks/useAuthActions';
+import { useForgotPassword } from '@/app/hooks/useAuth';
 
 const ForgotPassword = ({ setFormType }: { setFormType: (type: contentType ) => void }) => {
   const [error, setError] = useState<string | null>(null);
-  const { handleForgotPassword, isLoading } = useAuthActions();
+  const forgotPasswordMutation = useForgotPassword();
   
   const {
     register,
@@ -37,13 +37,12 @@ const ForgotPassword = ({ setFormType }: { setFormType: (type: contentType ) => 
 
   const onSubmit = async (data: ForgotPasswordFormData) => {
     setError(null);
-    
-    const result = await handleForgotPassword(data.email);
-
-    if (result.success) {
+    try {
+      await forgotPasswordMutation.mutateAsync(data.email);
       setFormType('pass');
-    } else {
-      setError(result.error || 'Failed to send reset link. Please try again.');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to send reset link';
+      setError(errorMessage);
     }
   };
 
@@ -57,10 +56,10 @@ const ForgotPassword = ({ setFormType }: { setFormType: (type: contentType ) => 
 
         <Button
           type="submit"
-          disabled={isLoading || !isValid}
+          disabled={forgotPasswordMutation.isPending || !isValid}
           className="w-full h-12 rounded-full bg-brown hover:bg-brown/80 text-white font-medium !mb-0"
         >
-          {isLoading ? 'Loading...' : 'Reset Password'}
+          {forgotPasswordMutation.isPending ? 'Loading...' : 'Reset Password'}
         </Button>
         {error && <div className="absolute bottom-[-28px] text-center left-1/2 -translate-x-1/2 text-red text-sm  w-[120%]">{error}</div>}
       </form>

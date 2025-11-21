@@ -60,3 +60,28 @@ export const guestDetailsSchema = z.object({
 })
 
 export type GuestDetailsFormData = z.infer<typeof guestDetailsSchema>
+
+
+// Password change schema - for email/password users
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(6, 'Current password must be at least 6 characters'),
+  newPassword: z.string().min(6, 'New password must be at least 6 characters'),
+  confirmPassword: z.string().min(6, 'Confirm password must be at least 6 characters'),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+})
+
+export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>
+
+
+// Set password schema - for OAuth users
+export const setPasswordSchema = z.object({
+  newPassword: z.string().min(6, 'Password must be at least 6 characters'),
+  confirmPassword: z.string().min(6, 'Confirm password must be at least 6 characters'),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+})
+
+export type SetPasswordFormData = z.infer<typeof setPasswordSchema>

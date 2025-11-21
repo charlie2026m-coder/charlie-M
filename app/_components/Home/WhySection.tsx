@@ -2,6 +2,7 @@ import Image from 'next/image'
 import { PiCityLight, PiArmchairLight } from "react-icons/pi";
 import { IoSettingsOutline } from "react-icons/io5";
 import { AiOutlineLike } from "react-icons/ai";
+import TextReadMore from '../ui/TextReadMore';
 
 const WhySection = () => {
 
@@ -12,29 +13,32 @@ const WhySection = () => {
         <h2 className='font-medium text-[40px]'>Why Charlie M</h2>
       </div>
 
-      <div className='flex gap-10 '>
-        <div className='flex relative w-2/5 '>
+      <div className='grid lg:grid-cols-2 xl:grid-cols-5 gap-10 '>
+        <div className='flex relative xl:col-span-2 '>
           <Image 
             src='/images/why-image.jpg' 
             alt='why1' 
             width={475} 
             height={450} 
-            className='rounded-[20px] object-cover w-[475px] h-[450px] z-10'
+            className='rounded-[20px] object-cover w-full h-[450px] z-10'
           />
-          <div className='absolute top-2 left-2 w-[475px] h-[450px] bg-blue rounded-[20px] ' />
+          <div className='absolute top-2 left-2 w-full h-[450px] bg-blue rounded-[20px] ' />
         </div>
-        <div className='flex flex-col w-3/5'>
-          <p className='text-dark mb-5 text-[15px] inter'>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-          <p className='text-dark mb-5 text-[15px] inter'>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+        <div className='flex flex-col xl:col-span-3'>
+          <TextReadMore 
+            text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum." 
+            lines={3} 
+            className='mb-5'
+          />  
           <div className='grid grid-cols-2 gap-6'>
             {cards.map((card) => (
-              <div key={card.title} className='flex px-6 items-center h-[100px] rounded-lg border border-brown gap-2.5 hover:border-blue hover:bg-blue transition-all duration-300 '>
-                <div className='size-[50px] min-w-[50px]  rounded-full bg-brown flex items-center self-center justify-center'>
+              <div key={card.title} className='flex flex-col items-center md:flex-row px-5 py-6 items-center md:h-[100px] rounded-lg border border-brown gap-2.5 hover:border-blue hover:bg-blue transition-all duration-300 '>
+                <div className='size-[50px] min-w-[50px] rounded-full bg-brown flex items-center self-center justify-center'>
                   {card.icon}
                 </div>
-                <div className='flex flex-col'>
+                <div className='flex flex-col items-center md:items-start'>
                   <h3 className='font-medium '>{card.title}</h3>
-                  <p className='text-sm'>{card.text}</p>
+                  <p className='text-sm text-center md:text-start'>{card.text}</p>
                 </div>
               </div>
             ))}
@@ -46,6 +50,7 @@ const WhySection = () => {
 }
 
 export default WhySection;
+
 
 const icon = 'text-white size-6'
 const cards = [

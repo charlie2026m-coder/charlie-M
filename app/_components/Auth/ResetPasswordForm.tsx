@@ -5,11 +5,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ResetPasswordFormData, resetPasswordSchema } from "@/types/schemas";
 import { Button } from "../ui/button";
 import { contentType } from "./AuthModal";
-import { useAuthActions } from "@/app/hooks/useAuthActions";
+import { useUpdatePassword } from "@/app/hooks/useAuth";
 
 const ResetPasswordForm = ({ setFormType }: { setFormType: (type: contentType ) => void }) => {
   const [error, setError] = useState<string | null>(null);
-  const { handleUpdatePassword, isLoading } = useAuthActions();
+  const updatePasswordMutation = useUpdatePassword();
 
   const {
     register,
@@ -35,12 +35,12 @@ const ResetPasswordForm = ({ setFormType }: { setFormType: (type: contentType ) 
 
   const onSubmit = async (data: ResetPasswordFormData) => {
     setError(null);
-    const result = await handleUpdatePassword(data.password);
-
-    if (result.success) {
+    try {
+      await updatePasswordMutation.mutateAsync(data.password);
       setFormType('success');
-    } else {
-      setError(result.error || 'Failed to save password. Please try again.');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to save password';
+      setError(errorMessage);
     }
   };
   
@@ -68,10 +68,10 @@ const ResetPasswordForm = ({ setFormType }: { setFormType: (type: contentType ) 
 
       <Button
         type="submit"
-        disabled={isLoading || !isValid}
+        disabled={updatePasswordMutation.isPending || !isValid}
         className="w-full h-12 rounded-full bg-brown hover:bg-brown/80 text-white font-medium !mb-0"
       >
-        {isLoading ? 'Updating...' : 'Save'}
+        {updatePasswordMutation.isPending ? 'Updating...' : 'Save'}
       </Button>
       
       {error && (

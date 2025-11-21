@@ -131,15 +131,15 @@ export default function VideoPlayer({ videoSrc, posterSrc, className = '', showT
       <div className={`absolute top-0 left-0 right-0 bottom-0 ${isPlaying ? '' : 'bg-black/50'} transition-all duration-300 pointer-events-none`}/>
       
       {!isPlaying && showTitle && <>
-        <h1 className='text-6xl text-white font-[700] absolute top-[30px] jakarta w-full text-center'>Charlie M — Hotel Rethought</h1>
-        <h1 className='text-4xl text-white font-[700] absolute top-[120px] jakarta w-full text-center'>Feel the vibe in the heart of Berlin</h1>
+        <h1 className='text-4xl md:text-5xl lg:text-6xl text-white font-[700] absolute top-[30px] jakarta w-full text-center'>Charlie M — Hotel Rethought</h1>
+        <h1 className='text-xl md:text-2xl lg:text-4xl text-white font-[700] absolute top-[110px] sm:top-[80px] lg:top-[120px] jakarta w-full text-center'>Feel the vibe in the heart of Berlin</h1>
       </>}
 
       {/* Custom Play Button Overlay */}
       <button
         onClick={togglePlay}
         className={
-          `absolute cursor-pointer top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-[130px] rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center shadow-xl transition-all duration-300 hover:scale-110 hover:opacity-100 
+          `absolute cursor-pointer top-1/3 md:top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-[130px] rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center shadow-xl transition-all duration-300 hover:scale-110 hover:opacity-100 
           ${isPlaying ? 'opacity-0' : 'opacity-100'}`
         }
         aria-label={isPlaying ? 'Pause video' : 'Play video'}

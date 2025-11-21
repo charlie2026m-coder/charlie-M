@@ -18,7 +18,7 @@ export default function Language() {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button 
-          className="flex items-center gap-1 cursor-pointer w-[50px] justify-between ml-4"
+          className="flex items-center gap-1 cursor-pointer w-[45px] justify-between  xl:ml-4 text-white md:text-black"
         >
           <span className="rubik font-light">{locale === "en" ? "ENG" : "GER"}</span>
           <div className={`border-6 border-brown border-b-transparent border-r-transparent border-l-transparent  ${open ? 'rotate-180 -translate-y-1' : 'translate-y-1'} `}></div>

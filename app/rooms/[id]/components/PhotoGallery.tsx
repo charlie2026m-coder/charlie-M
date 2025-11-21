@@ -38,25 +38,26 @@ const PhotoGallery = () => {
     setShowImages(showImages - 1)
   }
   return (
-    <div className='grid grid-cols-2 gap-4 h-[460px] mb-[30px]'>
+    <div className='grid lg:grid-cols-2 gap-4  mb-[30px]'>
       
-      <div className='col-span-1 relative group rounded-4xl overflow-hidden'>
+      <div className='lg:col-span-1 relative group rounded-4xl overflow-hidden'>
         <Image 
           onClick={() => setShowImages(0)}
           src={images[0]} 
           alt='room' 
           width={600} 
           height={460} 
-          className='w-full h-full max-h-[460px] object-cover transition-transform duration-500 ease-out cursor-pointer group-hover:scale-110' 
+          className='w-full h-full max-h-[260px] md:max-h-[360px] lg:max-h-[460px] object-cover transition-transform duration-500 ease-out cursor-pointer group-hover:scale-110' 
         />
         <div className=' flex items-center gap-1 text-brown px-4 py-2 rounded-full bg-white/85 absolute bottom-5 right-5'>
           <IoMdImage className='size-5 text-brown' />{images.length} Photos
         </div>
       </div>
-      <div className='col-span-1 grid grid-cols-2 gap-4 relative'>
+
+      <div className='lg:col-span-1 grid grid-cols-2 gap-4 relative'>
         {images.slice(1, 5).map((image, index) => (
           <div key={index} className='col-span-1 group rounded-[30px] overflow-hidden'>
-            <Image onClick={() => setShowImages(index)} src={image} alt='room' width={300} height={222} className='w-full h-[222px] object-cover transition-transform duration-500 ease-out cursor-pointer group-hover:scale-110' />
+            <Image onClick={() => setShowImages(index)} src={image} alt='room' width={300} height={222} className='w-full h-[126px] md:h-[222px] object-cover transition-transform duration-500 ease-out cursor-pointer group-hover:scale-110' />
           </div>
         ))}
       </div>

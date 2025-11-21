@@ -33,7 +33,7 @@ export function RoomsCarousel({
       <Carousel className="w-full" setApi={setApi}>
         <CarouselContent className="pb-10">
           {items.map((item) => (
-            <CarouselItem key={item.id} className="basis-[416px] shrink-0 pr-4">
+            <CarouselItem key={item.id} className=" basic-1 md:basis-1/2 lg:basis-1/3 shrink-0 pr-4">
               <RoomCard item={item} />
             </CarouselItem>
           ))}
@@ -41,7 +41,7 @@ export function RoomsCarousel({
       </Carousel>
 
       {/* Pagination Dots */}
-      <div className="flex items-center justify-center gap-[5px] pt-[50px]">
+      <div className="flex items-center justify-center gap-[5px] md:pt-[50px]">
         {(() => {
           const maxDots = 5
           if (count <= maxDots) {

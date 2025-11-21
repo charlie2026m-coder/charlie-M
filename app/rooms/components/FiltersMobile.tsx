@@ -1,0 +1,131 @@
+'use client'
+import { useState } from 'react'
+import { Checkbox } from "@/app/_components/ui/checkbox"
+import { Label } from "@/app/_components/ui/label"
+import { CustomSelect } from "@/app/_components/ui/CustomSelect"
+import { useBookingStore } from "@/store/bookingStore"
+import {  IoFilter } from "react-icons/io5";
+import { Button } from "@/app/_components/ui/button"
+import { Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerTitle, } from "@/app/_components/ui/drawer"
+import { IoClose } from "react-icons/io5";
+import { cn } from '@/lib/utils'
+import { RadioGroup,RadioGroupItem } from '@/app/_components/ui/radio-group'
+import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
+
+
+const FiltersMobile = () => {
+  const { categoryFilter, balconyFilter, bedSizeFilter, sortByFilter, setValue } = useBookingStore()
+  const [openDrawer, setOpenDrawer] = useState(false)
+
+  const handleCategoryChange = (item: string) => {
+    setValue(categoryFilter.includes(item) ? categoryFilter.filter((categoryFilter) => categoryFilter !== item) : [...categoryFilter, item], 'categoryFilter')
+  }
+  const clearFilters = () => {
+    setValue(false, 'balconyFilter')
+    setValue('90/200', 'bedSizeFilter')
+    setValue([], 'categoryFilter')
+    setValue('Price', 'sortByFilter')
+  }
+  const catagories = ['Double', 'Single', 'Triple', 'Quad']
+  
+  return (
+    <>
+      <div className='flex md:hidden items-center justify-between mb-[30px]'>
+        <Button onClick={() => setOpenDrawer(true)} className='flex items-center gap-2 h-[44px] !px-6'>
+          <IoFilter className='size-5' />
+          Filters
+        </Button>
+        <div className='flex items-center gap-1 font-bold'>
+          Sort by: 
+          <CustomSelect 
+            options={['Price', 'Size']} 
+            placeholder="Price" 
+            value={sortByFilter} 
+            onChange={(value) => setValue(value as 'Price' | 'Size', 'sortByFilter')} 
+            className='w-[120px]'
+          />
+        </div>
+      </div>
+
+      <Drawer open={openDrawer} onOpenChange={setOpenDrawer} direction="left">
+        <DrawerTitle className='hidden'>Filters</DrawerTitle>
+        <DrawerContent className='rounded-r-[16px] overflow-hidden p-0 border-none bg-white min-w-[90%] flex flex-col h-full'>
+          <div className='bg-black text-white px-5 py-3 flex justify-between items-center shrink-0'>
+            <div className='text-[20px] font-bold flex gap-2 items-center'>
+              <IoFilter className='size-5' />
+              Filters
+            </div>
+            <IoClose className='size-8 cursor-pointer' onClick={() => setOpenDrawer(false)} />
+          </div>
+          <div className='flex flex-col gap-5 p-5 overflow-y-auto flex-1'>
+          <CategoryFilter title="Categories">
+            <div className='flex flex-col gap-5'>
+              {catagories.map((item) => (
+                <div key={item} className='flex items-center gap-3'>
+                  <Checkbox id={item} checked={categoryFilter.includes(item)} onCheckedChange={() => handleCategoryChange(item)} />
+                  <Label htmlFor={item} className='text-[17px] font-[400] inter'>{item}</Label>
+                </div>
+              ))}
+            </div>
+          </CategoryFilter>
+          <CategoryFilter title="Balcony">
+            <RadioGroup value={balconyFilter ? 'Yes' : 'No'} onValueChange={(value) => setValue(value === 'Yes', 'balconyFilter')} className="flex flex-col">
+              {
+                ['Yes', 'No'].map((item) => (
+                  <div className='flex items-center gap-3' key={item}>
+                    <RadioGroupItem value={item} id={item} />
+                    <Label htmlFor={item} className="text-[17px] inter font-[400]">{item}</Label>
+                  </div>
+                ))
+              }
+            </RadioGroup>
+          </CategoryFilter>
+          <CategoryFilter title="Bed Size">
+            <RadioGroup value={bedSizeFilter?.toString() ?? ''} onValueChange={(value) => setValue(value as string, 'bedSizeFilter')} className="flex flex-col">
+              {
+                ['90/200', '120/200', '140/200', '160/200'].map((item) => (
+                  <div className='flex items-center gap-3' key={item}>
+                    <RadioGroupItem value={item} id={item} />
+                    <Label htmlFor={item} className="text-[17px] inter font-[400]">{item}</Label>
+                  </div>
+                ))
+              }
+            </RadioGroup>
+          </CategoryFilter>
+          </div>
+
+          <DrawerFooter className='shrink-0 border-t bg-white'>
+            <Button onClick={() => setOpenDrawer(false)}>Apply Filters</Button>
+            <DrawerClose asChild>
+              <Button variant="outline" onClick={clearFilters}>Clear Filters</Button>
+            </DrawerClose>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+    </>
+  )
+}
+
+export default FiltersMobile
+
+const CategoryFilter = ({
+  children,
+  title, 
+}: {
+  children: React.ReactNode
+  title: string
+
+}) => {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className='flex flex-col gap-3'>
+      <div className='flex items-center justify-between font-semibold text-lg'onClick={() => setOpen(prev => !prev)}>
+        {title}
+        {open ? <IoMdArrowDropup className='size-5 text-brown' /> : <IoMdArrowDropdown className='size-5 text-brown' />}    
+      </div>
+      <div className={cn('flex flex-col gap-2', open && 'h-0 overflow-hidden transition-all duration-300 ease-in-out opacity-0')}>
+        {children}
+      </div>
+    </div>
+  )
+}

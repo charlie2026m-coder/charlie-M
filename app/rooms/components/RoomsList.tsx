@@ -5,8 +5,6 @@ import { CustomPagination } from '@/app/_components/ui/CustomPagination'
 import { useState, useMemo, useEffect } from 'react'
 import { useBookingStore } from '@/store/bookingStore'
 
-const ROOMS_PER_PAGE = 6
-
 const RoomsList = ({ 
   rooms, 
   params 
@@ -16,6 +14,24 @@ const RoomsList = ({
 }) => {
   const { balconyFilter, categoryFilter } = useBookingStore()
   const [currentPage, setCurrentPage] = useState(0)
+  const [roomsPerPage, setRoomsPerPage] = useState(6)
+  
+  // Adjust rooms per page based on screen size
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth
+      
+      if (width >= 1024) {
+        setRoomsPerPage(6) // lg: 6 cards
+      } else {
+        setRoomsPerPage(4) // md and smaller: 4 cards
+      }
+    }
+
+    handleResize() // Initial check
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
   
   // Apply filters first
   const filteredRooms = useMemo(() => {
@@ -36,22 +52,22 @@ const RoomsList = ({
     return filtered;
   }, [rooms, balconyFilter, categoryFilter])
 
-  // Reset to first page when filters change
+  // Reset to first page when filters or rooms per page change
   useEffect(() => {
     setCurrentPage(0);
-  }, [balconyFilter, categoryFilter])
+  }, [balconyFilter, categoryFilter, roomsPerPage])
   
   // Calculate pagination based on filtered results
-  const totalPages = Math.ceil(filteredRooms.length / ROOMS_PER_PAGE)
+  const totalPages = Math.ceil(filteredRooms.length / roomsPerPage)
   
   // Get current page rooms
   const displayedRooms = useMemo(() => {
-    const start = currentPage * ROOMS_PER_PAGE
-    return filteredRooms.slice(start, start + ROOMS_PER_PAGE)
-  }, [filteredRooms, currentPage])
+    const start = currentPage * roomsPerPage
+    return filteredRooms.slice(start, start + roomsPerPage)
+  }, [filteredRooms, currentPage, roomsPerPage])
   return (
     <div className='flex flex-col gap-[30px] mb-[30px]'>
-      <div className='grid grid-cols-3 gap-4'> 
+      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'> 
         {displayedRooms.map((room: Beds24RoomType) => (
           <RoomCard 
             params={params}

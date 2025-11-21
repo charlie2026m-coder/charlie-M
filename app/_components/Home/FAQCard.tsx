@@ -11,12 +11,23 @@ interface FAQCardProps {
 const FAQCard = ({ question, answer, active, setActiveTab, index }: FAQCardProps) => {
   return (
     <div 
-      className={`w-full relative border  rounded-xl p-4 cursor-pointer ${active ? 'border-blue bg-blue' : 'border-brown bg-white'}`}
+      className={`w-full relative border rounded-xl p-4 cursor-pointer transition-all duration-300 ${active ? 'border-blue bg-blue/50' : 'border-brown bg-white'}`}
       onClick={() => setActiveTab(index)}
     >
-      {question}
-      {active ? <IoIosArrowUp className={icon} /> : <IoIosArrowDown className={icon} />}
-      {active && <p className="mt-2.5 text-xs">{answer}</p> }
+      <div className="flex items-start justify-between pr-8">
+        {question}
+        {active ? <IoIosArrowUp className={icon} /> : <IoIosArrowDown className={icon} />}
+      </div>
+      
+      <div 
+        className={`grid transition-all duration-300 ease-in-out ${
+          active ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+        }`}
+      >
+        <div className="overflow-hidden">
+          <p className="mt-2.5 text-xs">{answer}</p>
+        </div>
+      </div>
     </div>
   )
 }

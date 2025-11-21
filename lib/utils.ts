@@ -2,6 +2,7 @@ import { clsx, type ClassValue } from "clsx"
 import dayjs from "dayjs"
 import { twMerge } from "tailwind-merge"
 import { Beds24RoomType, ExtrasItem, UrlParams } from "@/types/beds24"
+import imageCompression from 'browser-image-compression';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -54,12 +55,14 @@ room,
   const priceValue = roomsNeeded * nights * room.minPrice;
 
   return {
+    nightsText: `${nights} ${n}`,
+    guestsText: `${guests} ${g}`,
+    roomsNeededText: `${roomsNeeded} ${r}`,
     price: priceValue.toFixed(2),
     priceText,
     nights,
     roomsNeeded,
     guests,
-
   }
 }
 
@@ -143,3 +146,14 @@ export const getPerText = (extra: ExtrasItem, roomsQty: number, guests: { adults
   return PerLabels[extra.per]
 }
 
+
+export async function resizeImage(file: File) {
+  const options = {
+    maxSizeMB: 0.4,      // до ~200 KB
+    maxWidthOrHeight: 512,
+    useWebWorker: true
+  };
+
+  const compressedFile = await imageCompression(file, options);
+  return compressedFile;
+}

@@ -7,6 +7,7 @@ import { DateInput } from '../ui/DateInput';
 import { Guests } from '../ui/guests';
 import { Calendar } from '../ui/calendar';
 import { DateRange } from 'react-day-picker';
+import { Button } from "../ui/button"
 import { useRouter } from 'next/navigation';  
 import { useBookingStore } from '@/store/bookingStore';
 const CheckInForm = ({ 
@@ -80,13 +81,20 @@ const CheckInForm = ({
     if(nights === 0) return null;
     return nights === 1 ? '1 night' : `${nights} nights`;
   }
+  const resetForm = () => {
+    setValue({
+      from: undefined,
+      to: undefined,
+    }, 'dateRange');
+    setOpenCalendar(false)
+  }
   return (
     <form
       onSubmit={handleSubmit}
-      className={cn('flex bg-white rounded-[30px]', className )}>
-      <section className='flex py-3 pr-10 pl-7 w-full justify-between gap-[45px]'>
+      className={cn('flex flex-col md:flex-row  bg-white rounded-[30px]', className )}>
+      <section className='flex flex-col md:flex-row p-3 px-4 md:pr-10 md:pl-7 w-full justify-between gap-5 md:gap-[45px]'>
 
-        <label className='w-2/3'>
+        <label className='w-full md:w-2/3'>
           <div className='flex font-medium mb-2 gap-2 h-5 '>
             <div className=' pr-2 border-r-2 border-black pb-1'>Check In  </div>
             <div className='pb-1'>Check out</div>
@@ -96,7 +104,7 @@ const CheckInForm = ({
             open={openCalendar}
             onOpenChange={setOpenCalendar}
           >
-            <div className='flex gap-2 border-b pb-2'>
+            <div className='flex flex-col md:flex-row gap-2  pb-2 '>
               <Calendar 
                 required={false}
                 mode="range"  
@@ -124,23 +132,36 @@ const CheckInForm = ({
               />
             </div>
             {getNights() &&
-                <div className='font-semibold pt-5 pb-3'>
+                <div className='font-semibold pt-5 pb-3 border-t'>
                {getNights()}
             </div>}
+            <div className='grid grid-cols-2 gap-2 md:hidden'>
+              <Button onClick={resetForm} className='w-full' variant='outline'>Cancel</Button>
+              <Button onClick={()=> setOpenCalendar(false)} className='w-full'>Apply</Button>
+            </div>
           </DateInput>
        </label>
-        <Separator orientation="vertical" />
-        <label className='w-1/3'>
+        <Separator orientation="vertical" className='hidden md:block'/>
+        <Separator orientation="horizontal" className=' md:hidden'/>
+
+        <label className='w-full md:w-1/3'>
           <div className='font-medium mb-2'>Guests</div>
           <Guests setValue={(value) => setValue(value, 'guests')} value={guests} />
         </label>
       </section>
         <button
           disabled={!dateRange?.from || !dateRange?.to}
-          className={cn('h-[100px] cursor-pointer w-[110px] flex items-center justify-center rounded-r-[30px]  transition-all duration-300', isBrown ? 'bg-brown hover:bg-brown/80' : 'bg-blue hover:bg-blue/80')}
+          className={cn('h-[100px]  cursor-pointer w-[110px] hidden  md:flex items-center justify-center rounded-r-[30px]  transition-all duration-300', isBrown ? 'bg-brown hover:bg-brown/80' : 'bg-blue hover:bg-blue/80')}
           type='submit'
         >
           <RiSearchLine className='text-white text-[40px]  ' />
+        </button>
+        <button
+          disabled={!dateRange?.from || !dateRange?.to}
+          className={cn('py-3 text-lg text-white gap-2 mt-2 font-bold cursor-pointer md:hidden flex items-center justify-center rounded-b-[30px]  transition-all duration-300', isBrown ? 'bg-brown hover:bg-brown/80' : 'bg-blue hover:bg-blue/80')}
+          type='submit'
+        >
+          <RiSearchLine className='text-white text-[25px]  ' /> Check Availability
         </button>
     </form>
   );

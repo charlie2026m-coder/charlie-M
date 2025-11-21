@@ -51,13 +51,13 @@ const VibeSlider = ({
           slidesToScroll: 1,
         }}
       >
-        <CarouselContent className="py-10 -ml-[35px]">
+        <CarouselContent className="py-10 -ml-[85px]">
           {images.map((image, index) => (
-            <CarouselItem key={index} className="pl-[70px] basis-1/2">
+            <CarouselItem key={index} className="pl-10 lg:pl-[70px] basis-1/2">
               <div 
-                className={`relative w-full h-[480px] rounded-[40px] overflow-hidden transition-all duration-500 ${
+                className={`relative w-full h-[250px] lg:h-[480px] rounded-[40px] overflow-hidden transition-all duration-500 ${
                   index === current 
-                    ? 'scale-110 z-10' 
+                    ? 'scale-120 lg:scale-110 z-10' 
                     : 'scale-100 opacity-70 z-0'
                 }`}
               >

@@ -1,4 +1,3 @@
-
 import PosterSection from './_components/Home/PosterSection';
 import RoomsSection from './_components/Home/RoomsSection';
 import WhySection from './_components/Home/WhySection';
@@ -12,7 +11,7 @@ export default function Home() {
 
   return (
       <section className="flex flex-col  pt-[50px] ">
-        <div className='container px-[100px]'>
+        <div className='container px-4 xl:px-[100px]'>
           <PosterSection />
           <RoomsSection />
           <WhySection />

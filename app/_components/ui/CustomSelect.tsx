@@ -6,6 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/app/_components/ui/select"
+import { cn } from "@/lib/utils"
 
 export function CustomSelect(
   {
@@ -13,16 +14,18 @@ export function CustomSelect(
     placeholder,
     value,
     onChange,
+    className,
   }: {
     options: string[]
     placeholder: string
     value: string
     onChange: (value: string) => void
+    className?: string
   }
 ) {
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="min-h-10 border-brown rounded-full w-[150px]">
+      <SelectTrigger className={cn("min-h-10 border-brown rounded-full w-[150px]", className)}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>

@@ -1,7 +1,7 @@
 import Image from 'next/image'
 const Amenities = ({ title = true }: { title?: boolean }) => {
   return (
-    <div className='flex flex-col gap-4 '>
+    <div className='flex flex-col gap-4 mb-[30px]'>
       {title && <h2 className='text-xl font-semibold inter mb-5'>Amenities included:</h2>} 
       <div className='flex flex-wrap gap-2.5'>
         {amenities.map((amenity) => (
@@ -34,5 +34,4 @@ const amenities = [
   { name: 'Bicycle parking',  image: '/images/amenities/cycle-parking.png' },
   { name: 'Community area with co-working space ',  image: '/images/amenities/co-working.png' },
   { name: 'Virtual concierge “Charlie” available 24/7',  image: '/images/amenities/service.png' },
-
 ]

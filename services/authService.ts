@@ -113,7 +113,7 @@ export async function resetPassword(email: string): Promise<AuthResult> {
   }
 }
 
-// Update user password
+// Update user password (used for reset password flow)
 export async function updatePassword(newPassword: string): Promise<AuthResult> {
   try {
     const { error } = await supabase.auth.updateUser({ password: newPassword });
@@ -122,6 +122,47 @@ export async function updatePassword(newPassword: string): Promise<AuthResult> {
 
     // Sign out to invalidate recovery session
     await supabase.auth.signOut();
+
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: parseAuthError(error as Error) };
+  }
+}
+
+// Change password (for email/password users - requires current password verification)
+export async function changePassword(email: string, currentPassword: string, newPassword: string): Promise<AuthResult> {
+  try {
+    // Verify current password by attempting to sign in
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password: currentPassword,
+    });
+
+    if (signInError) {
+      return { success: false, error: 'Current password is incorrect' };
+    }
+
+    // Update password
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+    if (error) return { success: false, error: parseAuthError(error) };
+
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: parseAuthError(error as Error) };
+  }
+}
+
+// Set password (for OAuth users who want to add email/password login)
+export async function setPassword(newPassword: string): Promise<AuthResult> {
+  try {
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+    if (error) return { success: false, error: parseAuthError(error) };
 
     return { success: true };
   } catch (error) {
