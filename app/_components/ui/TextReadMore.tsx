@@ -8,6 +8,7 @@ interface TextReadMoreProps {
   lines?: 1 | 2 | 3 | 4 | 5 | 6
   className?: string
   buttonClassName?: string
+  textClassName?: string
 }
 
 export default function TextReadMore({ 
@@ -15,6 +16,7 @@ export default function TextReadMore({
   lines = 3, 
   className = '',
   buttonClassName = '',
+  textClassName = '',
 }: TextReadMoreProps) {
   const [readMore, setReadMore] = useState(false)
 
@@ -25,6 +27,7 @@ export default function TextReadMore({
       <p className={cn(
         'text-[13px] inter font-[400]',
         !readMore ? `${lineClampClass} xl:line-clamp-none` : '',
+        textClassName
       )}>
         {text}
       </p>

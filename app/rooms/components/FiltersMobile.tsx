@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Checkbox } from "@/app/_components/ui/checkbox"
 import { Label } from "@/app/_components/ui/label"
 import { CustomSelect } from "@/app/_components/ui/CustomSelect"
-import { useBookingStore } from "@/store/bookingStore"
+import { MainFilter, useBookingStore } from "@/store/bookingStore"
 import {  IoFilter } from "react-icons/io5";
 import { Button } from "@/app/_components/ui/button"
 import { Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerTitle, } from "@/app/_components/ui/drawer"
@@ -14,20 +14,17 @@ import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
 
 
 const FiltersMobile = () => {
-  const { categoryFilter, balconyFilter, bedSizeFilter, sortByFilter, setValue } = useBookingStore()
+  const { filter, bedSizeFilter, priceFilter, setValue } = useBookingStore()
   const [openDrawer, setOpenDrawer] = useState(false)
 
-  const handleCategoryChange = (item: string) => {
-    setValue(categoryFilter.includes(item) ? categoryFilter.filter((categoryFilter) => categoryFilter !== item) : [...categoryFilter, item], 'categoryFilter')
-  }
   const clearFilters = () => {
-    setValue(false, 'balconyFilter')
+    setValue(undefined, 'filter')
     setValue('90/200', 'bedSizeFilter')
-    setValue([], 'categoryFilter')
-    setValue('Price', 'sortByFilter')
+    setValue('Cheapest', 'priceFilter')
   }
-  const catagories = ['Double', 'Single', 'Triple', 'Quad']
-  
+  const setFilter = (value: MainFilter) => {
+    setValue(filter === value ? undefined : value, 'filter')
+  }
   return (
     <>
       <div className='flex md:hidden items-center justify-between mb-[30px]'>
@@ -36,12 +33,12 @@ const FiltersMobile = () => {
           Filters
         </Button>
         <div className='flex items-center gap-1 font-bold'>
-          Sort by: 
+          Sort by Price: 
           <CustomSelect 
-            options={['Price', 'Size']} 
-            placeholder="Price" 
-            value={sortByFilter} 
-            onChange={(value) => setValue(value as 'Price' | 'Size', 'sortByFilter')} 
+            options={['Cheapest', 'Expensive']} 
+            placeholder="Select price filter" 
+            value={priceFilter} 
+            onChange={(value) => setValue(value, 'priceFilter')} 
             className='w-[120px]'
           />
         </div>
@@ -60,26 +57,15 @@ const FiltersMobile = () => {
           <div className='flex flex-col gap-5 p-5 overflow-y-auto flex-1'>
           <CategoryFilter title="Categories">
             <div className='flex flex-col gap-5'>
-              {catagories.map((item) => (
-                <div key={item} className='flex items-center gap-3'>
-                  <Checkbox id={item} checked={categoryFilter.includes(item)} onCheckedChange={() => handleCategoryChange(item)} />
-                  <Label htmlFor={item} className='text-[17px] font-[400] inter'>{item}</Label>
+              {filters.map((item) => (
+                <div key={item.value} className='flex items-center gap-3'>
+                  <Checkbox id={item.value} checked={filter === item.value} onCheckedChange={() => setFilter(item.value as MainFilter)} />
+                  <Label htmlFor={item.value} className='text-[17px] font-[400] inter'>{item.label}</Label>
                 </div>
               ))}
             </div>
           </CategoryFilter>
-          <CategoryFilter title="Balcony">
-            <RadioGroup value={balconyFilter ? 'Yes' : 'No'} onValueChange={(value) => setValue(value === 'Yes', 'balconyFilter')} className="flex flex-col">
-              {
-                ['Yes', 'No'].map((item) => (
-                  <div className='flex items-center gap-3' key={item}>
-                    <RadioGroupItem value={item} id={item} />
-                    <Label htmlFor={item} className="text-[17px] inter font-[400]">{item}</Label>
-                  </div>
-                ))
-              }
-            </RadioGroup>
-          </CategoryFilter>
+         
           <CategoryFilter title="Bed Size">
             <RadioGroup value={bedSizeFilter?.toString() ?? ''} onValueChange={(value) => setValue(value as string, 'bedSizeFilter')} className="flex flex-col">
               {
@@ -105,6 +91,21 @@ const FiltersMobile = () => {
     </>
   )
 }
+
+const filters = [
+  {
+    label: 'Balcony',
+    value: 'balcony'
+  },
+  {
+    label: 'Terrace',
+    value: 'terrace'
+  },
+  {
+    label: 'Shared Terrace',
+    value: 'shared_terrace'
+  },
+]
 
 export default FiltersMobile
 

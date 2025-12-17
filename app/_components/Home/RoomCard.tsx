@@ -31,10 +31,7 @@ const RoomCard = ({
         </div>
 
         <div className='flex items-center  lg:flex-col xl:flex-row justify-between w-full'>
-          <Link href={`/rooms`} className="lg:w-full xl:w-auto lg:mb-3 xl:m-0">  
-            <Button variant='outline' className='h-[55px] w-full'>Discover More</Button>
-          </Link>
-          <Link href={`/rooms/${item.id}`} className='lg:w-full xl:w-auto'>  
+          <Link href={`/rooms/${item.id}`} className='w-full '>  
             <Button className='h-[55px] w-full '>Book Now</Button>
           </Link>
         </div>

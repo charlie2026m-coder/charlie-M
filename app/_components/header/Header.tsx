@@ -12,7 +12,7 @@ const Header = () => {
         <MobileMenu />
         <Link href="/">
           <Image 
-            src="/images/logo.png" 
+            src="/images/Logo.svg" 
             alt="logo" 
             width={106} 
             height={67} 

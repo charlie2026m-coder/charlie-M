@@ -3,7 +3,7 @@ import { IoMdImage } from "react-icons/io";
 import { useState } from "react";
 import Image from 'next/image'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/app/_components/ui/dialog";
-import { FaArrowRight, FaArrowLeft } from "react-icons/fa6";
+import { IoChevronBack, IoChevronForward } from "react-icons/io5";
 
 const PhotoGallery = () => {
   const [showImages, setShowImages] = useState<null | number>(null);
@@ -62,24 +62,33 @@ const PhotoGallery = () => {
         ))}
       </div>
       <Dialog open={showImages !== null} onOpenChange={() =>setShowImages(null)}>
-        <DialogContent className='!max-w-[50%] px-12 rounded-4xl'>
+        <DialogContent className='px-5 md:px-12 rounded-4xl w-full max-w-[95%] lg:max-w-[80%] max-h-[80vh] flex flex-col '>
           <DialogHeader>
             <DialogTitle className='text-2xl font-bold'>Photo Gallery</DialogTitle>
           </DialogHeader>
-          <Image src={images[showImages || 0]} alt='room' width={720} height={440} className='w-full h-[440px] object-cover rounded-4xl' />
+          <div className='flex items-center gap-2 w-full relative select-none'>
+            <div onClick={prevPhoto} className='absolute left-0 top-0 bottom-0 w-10 md:w-20 flex items-center justify-center  rounded-l-4xl'>
+              <IoChevronBack className='size-10 md:size-20 cursor-pointer text-black'  />
+            </div>
+            <Image 
+              src={images[showImages || 0]} 
+              alt='room' 
+              width={720} 
+              height={440} 
+              className='max-h-[calc(80vh-140px)] w-full object-contain rounded-4xl cursor-pointer' 
+              onClick={() => setShowImages(showImages === null ? 0 : showImages + 1)}
+            />
+            <div onClick={nextPhoto} className='absolute right-0 top-0 bottom-0 w-10 md:w-20 flex items-center justify-center  rounded-r-4xl'>
+              <IoChevronForward className='size-10 md:size-20 cursor-pointer text-black'  />
+            </div>
+          </div>
 
           <div className='flex items-center justify-between w-full'>
-            <FaArrowLeft 
-              onClick={prevPhoto} 
-              className={`size-5 ${showImages === 0 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`} 
-            />
-            <div className='text-xl px-5 py-2 rounded-full border border-blue'>
+            
+            <div className='text-xl px-5 pb-5 mx-auto'>
               {(showImages || 0) + 1} / {images.length}
             </div>
-            <FaArrowRight 
-              onClick={nextPhoto} 
-              className={`size-5  ${showImages === images.length - 1 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`} 
-            />
+           
           </div>
         </DialogContent>
       </Dialog>

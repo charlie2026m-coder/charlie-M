@@ -6,20 +6,20 @@ import { Separator } from "../ui/separator";
 const ReviewsSection = () => {
   const [currentSet, setCurrentSet] = useState(0)
   const [isTransitioning, setIsTransitioning] = useState(false)
-  const [reviewsPerSet, setReviewsPerSet] = useState(6)
+  const [reviewsPerSet, setReviewsPerSet] = useState(3)
 
   // Adjust cards per set based on screen size
   useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth
-      let newCount = 6
+      let newCount = 3
       
       if (width < 768) {
         newCount = 1 // Mobile: 1 column, 1 card
       } else if (width < 1024) {
-        newCount = 4 // Tablet: 2 columns, 4 cards
+        newCount = 2 // Tablet: 2 columns, 4 cards
       } else {
-        newCount = 6 // Desktop: 3 columns, 6 cards
+        newCount = 3 // Desktop: 3 columns, 6 cards
       }
       
       setReviewsPerSet(newCount)
@@ -49,10 +49,9 @@ const ReviewsSection = () => {
   }, [reviewsPerSet])
 
   return (
-    <div className='w-full bg-blue'>
+    <div className='w-full bg-light1'>
       <div className='container px-4 lg:px-[100px] pt-[50px] pb-10'>
         <div className='flex items-center gap-2 mb-10'>
-          <div className='size-5 rounded-full bg-brown'/>
           <h2 className='font-medium text-[40px]'>Reviews</h2>
         </div>
 

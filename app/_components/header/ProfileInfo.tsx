@@ -9,7 +9,7 @@ export default function ProfileInfo() {
   return (
     <div className="flex items-center gap-2 pl-3">
       <Image 
-        src={avatarUrl || "/images/ProfilePhoto.png"} 
+        src={avatarUrl || "/images/cat-icon.jpg"} 
         alt="profile photo" 
         width={44} 
         height={44}

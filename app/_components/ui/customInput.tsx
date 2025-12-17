@@ -8,14 +8,19 @@ import { IoEyeSharp, IoEyeOffSharp } from "react-icons/io5";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { BsFillTelephoneFill } from "react-icons/bs";
+import { BiSolidIdCard } from "react-icons/bi";
+import { FaGlobeAsia } from "react-icons/fa";
+import { TbDirectionsFilled } from "react-icons/tb";
+
 
 interface CustomInputProps<T extends FieldValues> {
   register: UseFormRegister<T>;
   name: Path<T>;
   type: 'email' | 'password' | 'text' | 'phone';
   placeholder: string;
-  icon?: 'email' | 'password' | 'name' | 'booking' | 'phone';
+  icon?: 'email' | 'password' | 'name' | 'booking' | 'phone' | 'id' | 'nationality' | 'address';
   isError?: boolean;
+  className?: string;
 }
 
 function CustomInput<T extends FieldValues>({
@@ -25,6 +30,7 @@ function CustomInput<T extends FieldValues>({
   placeholder,
   icon,
   isError,
+  className,
 }: CustomInputProps<T>) {
   const iconType = icon || (type === 'email' ? 'email' : type === 'password' ? 'password' : 'name');
   const [showPassword, setShowPassword] = useState(false);
@@ -35,10 +41,13 @@ function CustomInput<T extends FieldValues>({
     name: <FaUser className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-blue" />,
     booking: <Image className="absolute left-3 top-1/2 -translate-y-1/2 size-6" src="/images/booking-icon-input.png" alt="booking" width={24} height={24} />,
     phone: <BsFillTelephoneFill className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-blue" />,
+    id: <BiSolidIdCard className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-blue" />,
+    nationality: <FaGlobeAsia className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-blue" />,
+    address: <TbDirectionsFilled className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-blue" />,
   };
   
   return (
-    <div className="relative">
+    <div className={cn("relative", className)}>
       {icons[iconType]}
       <Input
         type={type === 'password' ? (showPassword ? 'text' : 'password') : type}

@@ -141,7 +141,7 @@ export default function Profile() {
     <>
       <form onSubmit={(e) => e.preventDefault()}>
         <h3 className="flex gap-2 items-center font-semibold text-2xl mb-9"><Dot size={15} color='blue'/>Profile</h3>
-        <div className='grid grid-cols-2 gap-8  pb-6 border-b mb-6'>
+        <div className='grid  lg:grid-cols-2 gap-8  pb-6 border-b mb-6'>
           <div className='relative flex flex-col gap-1 '>
             <CustomInput 
               register={register} 
@@ -246,7 +246,7 @@ export default function Profile() {
       <form onSubmit={(e) => e.preventDefault()} className='mt-6'>
         <h4 className='text-lg font-medium mb-5'>Set Password</h4>
         
-        <div className='grid grid-cols-1 md:grid-cols-2 gap-8'>
+        <div className='grid lg:grid-cols-2 gap-8'>
           <div className='relative flex flex-col gap-1'>
             <CustomInput 
               register={registerSetPassword}
@@ -281,11 +281,11 @@ export default function Profile() {
         </div>
       </form>
     )}
-    <div className='flex gap-4 mt-auto self-end'>
+    <div className='flex gap-4 mt-auto '>
       <Button 
         type='button' 
         variant='outline' 
-        className='w-full md:w-auto h-[44px]'
+        className='flex-1 md:flex-0 h-[44px]'
         onClick={handleDiscard}
         disabled={!hasChanges || isLoading}
       >
@@ -293,7 +293,7 @@ export default function Profile() {
       </Button>
       <Button 
         type='button'
-        className='w-full md:w-auto h-[44px]'
+        className='flex-1 md:flex-0 h-[44px]'
         onClick={handleSaveChanges}
         disabled={!hasChanges || isLoading}
       >

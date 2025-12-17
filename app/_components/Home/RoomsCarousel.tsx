@@ -41,7 +41,7 @@ export function RoomsCarousel({
       </Carousel>
 
       {/* Pagination Dots */}
-      <div className="flex items-center justify-center gap-[5px] md:pt-[50px]">
+      <div className="flex items-center justify-center gap-[5px] md:pt-10">
         {(() => {
           const maxDots = 5
           if (count <= maxDots) {
@@ -65,7 +65,7 @@ export function RoomsCarousel({
               <button
                 key={slideIndex}
                 className={`size-[14px] rounded-full transition-colors duration-500 ease-in-out cursor-pointer ${
-                  slideIndex === current ? 'bg-blue' : 'bg-[#C4D4E5]'
+                  slideIndex === current ? 'bg-blue' : 'bg-blue/50'
                 }`}
                 onClick={() => api?.scrollTo(slideIndex)}
                 aria-label={`Go to slide ${slideIndex + 1}`}

@@ -43,8 +43,8 @@ const PhotoSlider = ({
         }}
       >
         {/* Category Badge */}
-        <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm px-6 py-2 rounded-full z-10">
-          <span className="text-white font-medium">{category}</span>
+        <div className="absolute top-4 right-4 bg-white backdrop-blur-sm px-6 py-2 rounded-full z-10">
+          <span className="text-blue font-medium">{category}</span>
         </div>
         <CarouselContent>
           {images.map((image, index) => (
@@ -56,7 +56,6 @@ const PhotoSlider = ({
                   fill
                   className="object-cover"
                 />
-
               </div>
             </CarouselItem>
           ))}

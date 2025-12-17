@@ -7,6 +7,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables. Please check your .env.local file.');
 }
 
-// Client-side Supabase client that uses cookies (syncs with server)
-export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
+// Client-side Supabase client
+// createBrowserClient automatically handles cookies correctly
+export const supabase = createBrowserClient(
+  supabaseUrl,
+  supabaseAnonKey
+);
 

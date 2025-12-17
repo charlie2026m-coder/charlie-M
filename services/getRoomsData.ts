@@ -10,7 +10,8 @@ export async function getRoomsData(
 ): Promise<Beds24RoomType[] | { error: string }> {
   try {
     const today = dayjs().format('YYYY-MM-DD')
-    const nextYear = dayjs().add(365, 'day').format('YYYY-MM-DD')
+    // Reduce the date range to 90 days instead of 365 to reduce API calls
+    const next90Days = dayjs().add(90, 'day').format('YYYY-MM-DD')
     
     // Get all rooms with property data
     const res = await beds24Request<Beds24PropertyResponse>('/properties?includeAllRooms=true', 'GET');
@@ -18,7 +19,8 @@ export async function getRoomsData(
     const properties = res?.data ?? [];
     const data = properties.flatMap((property) => property.roomTypes ?? [])
     const startDate = from || today;
-    let endDate = to || nextYear;
+    // Use 90 days instead of full year to reduce API load
+    let endDate = to || next90Days;
     
     // Если endDate раньше startDate, используем startDate + 1 день
     if (dayjs(endDate).isBefore(dayjs(startDate))) {
@@ -30,8 +32,13 @@ export async function getRoomsData(
       endDate = dayjs(startDate).add(1, 'day').format('YYYY-MM-DD');
     }
     //get available dates for each unit of room
+    // Batch requests with delay to avoid rate limiting
     const availabilityResponses = await Promise.all(
-      data.map((room) => {
+      data.map(async (room, index) => {
+        // Add small delay between requests to avoid hitting rate limits
+        if (index > 0) {
+          await new Promise(resolve => setTimeout(resolve, 100 * Math.floor(index / 3)));
+        }
         return beds24Request(
           `/inventory/rooms/unitBookings?propertyId=${room.propertyId}&roomId=${room.id}&startDate=${startDate}&endDate=${endDate}`,
           'GET'

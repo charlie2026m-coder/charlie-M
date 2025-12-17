@@ -12,12 +12,13 @@ import { useLogout } from '@/app/hooks/useAuth';
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
+import ReservationIdDialog from './ReservationIdDialog'
 
 
 const ProfileMenu = () => {
   const pathname = usePathname()
   const logoutMutation = useLogout();
-  const { profile, loading, error } = useProfile()
+  const { profile } = useProfile()
   const [activeResTab, setActiveResTab] = useState('All')
 
   // if (loading) return <div>Loading...</div>
@@ -76,9 +77,7 @@ const ProfileMenu = () => {
         onSectionClick={(title) => setActiveResTab(title)}
       />
 
-      <div className='text-brown cursor-pointer hover:text-brown/80 transition-all duration-300'>
-      + Add via Reservation ID
-      </div>
+      <ReservationIdDialog />
 
       <div 
           className={cn('flex items-center p-2.5 rounded-[16px] gap-2 w-full cursor-pointer hover:bg-light-bg transition-all duration-300')} 

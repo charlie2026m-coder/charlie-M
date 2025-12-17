@@ -60,13 +60,12 @@ const BookingForm = ({ id, room, params }: { id: string, room: Beds24RoomType, p
   };
   return (
     <div className='sticky top-10 flex flex-col bg-white rounded-[20px] px-5 pt-[25px] w-full pb-10'>
-      <h3 className='font-semibold text-2xl text-center mb-3'>RESERVE</h3>
-      <div className='text-brown flex items-center gap-1 mb-1'><BsFillPersonFill className='size-4 text-brown' />{currentPriceText}</div>
-      <div className='flex justify-between mb-4 gap-2'>
-      <div className='text-brown flex items-center gap-1'>Price per {nightsText}</div>
-
+      <h3 className='font-semibold text-2xl text-center mb-3'>BOOK</h3>
+      <div className='flex justify-between mb-1 gap-2'>
+        <div className='text-brown flex items-center gap-1'>Price per {nightsText}</div>
         <div className='text-xl min-w-[80px] self-end text-center rounded-full bg-green/15 font-[700] text-green px-2.5 py-2'>€{currentPrice}</div>
       </div>
+      <div className='text-red flex items-center gap-1 my-4'><BsFillPersonFill className='size-4 text-red' />{currentPriceText}</div>
 
       <div className='flex flex-col gap-5 w-full mb-5'>
         <label className='w-full'>

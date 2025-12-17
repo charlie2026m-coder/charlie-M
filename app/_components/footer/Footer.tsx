@@ -63,13 +63,13 @@ export default function Footer() {
   const isHomePage = pathname === '/';
 
   return (
-    <footer className={`w-full relative z-0 ${isHomePage && 'bg-blue'}`}>
-      <section className="w-full rounded-t-4xl bg-black">
+    <footer className={`w-full relative z-0 ${isHomePage && 'bg-light1'}`}>
+      <section className="w-full rounded-t-4xl bg-mute">
         <div className="container px-4 xl:!px-[100px] flex flex-col items-center ">
           <div className="grid grid-cols-1 lg:grid-cols-4 w-full items-center py-[60px] gap-8 border-b border-white/40">
             <div className="flex items-center col-span-1 mx-auto">
               <Image 
-                src="/images/logo.png" 
+                src="/images/Logo.svg" 
                 alt="logo" 
                 width={235} 
                 height={151} 

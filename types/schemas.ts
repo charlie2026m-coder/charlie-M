@@ -85,3 +85,25 @@ export const setPasswordSchema = z.object({
 })
 
 export type SetPasswordFormData = z.infer<typeof setPasswordSchema>
+
+
+// Guest info schema - for updating guest details
+export const guestInfoSchema = z.object({
+  name: z.string()
+    .min(2, 'Name must be at least 2 characters')
+    .max(100, 'Name must be less than 100 characters'),
+  idNumber: z.string()
+    .min(5, 'ID number must be at least 5 characters')
+    .max(50, 'ID number must be less than 50 characters'),
+  nationality: z.string()
+    .min(2, 'Nationality must be at least 2 characters')
+    .max(50, 'Nationality must be less than 50 characters'),
+  birthdate: z.string()
+    .min(1, 'Birth date is required')
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)'),
+  address: z.string()
+    .min(5, 'Address must be at least 5 characters')
+    .max(200, 'Address must be less than 200 characters'),
+})
+
+export type GuestInfoFormData = z.infer<typeof guestInfoSchema>

@@ -43,7 +43,7 @@ const MobileMenu = () => {
     
     <Drawer open={open} onOpenChange={setOpen} direction="left">
       <DrawerTitle className='hidden'>Mobile Menu</DrawerTitle>
-      <DrawerContent className='p-0 border-none bg-black min-w-full h-full rounded-[16px]'>
+      <DrawerContent className='p-0 border-none bg-mute min-w-full h-full rounded-[16px]'>
         <div className='flex flex-col items-center py-5 px-3 h-full'>
           <XIcon 
             onClick={()=> setOpen(false)}
@@ -51,7 +51,7 @@ const MobileMenu = () => {
           /> 
           <Link href="/">
             <Image 
-              src="/images/logo.png" 
+              src="/images/Logo.svg" 
               alt="logo" 
               width={163} 
               height={104} 
@@ -75,10 +75,9 @@ const MobileMenu = () => {
             </Link>
             {!loading && !user && (<>
               <Link href='/rooms' className='w-full' onClick={() => setOpen(false)}>
-                <Button variant='outline' className='w-full h-[55px] text-white'> Check In</Button>
+                <Button variant='outline' className='w-full h-[55px] text-white border-white'> Check In</Button>
               </Link>
-              <AuthModal  type="signin" className='w-full h-[55px] text-white' />
-              <AuthModal  type="signup" className='w-full h-[55px] !text-white' />
+              <AuthModal  type="signin" className='w-full h-[55px] text-white border-white' />
             </>)}
 
             {!loading && user &&<div className='w-full flex justify-center '>
@@ -86,9 +85,9 @@ const MobileMenu = () => {
             </div>}
           </div>
           <ul className="flex gap-5 text-black mb-6">
-            <li className="flex size-10 rounded-full bg-blue items-center justify-center"><FaFacebookF /></li>
-            <li className="flex size-10 rounded-full bg-blue items-center justify-center"><AiFillInstagram /></li>
-            <li className="flex size-10 rounded-full bg-blue items-center justify-center"><FaYoutube /></li>
+            <li className="flex size-10 rounded-full bg-blue items-center justify-center"><FaFacebookF className='size-6' /></li>
+            <li className="flex size-10 rounded-full bg-blue items-center justify-center"><AiFillInstagram className='size-6' /></li>
+            <li className="flex size-10 rounded-full bg-blue items-center justify-center"><FaYoutube className='size-6' /></li>
           </ul>
  
           <Language /> 

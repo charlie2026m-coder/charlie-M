@@ -16,9 +16,7 @@ export default function Home() {
           <RoomsSection />
           <WhySection />
         </div>
-          <Line black={true}/>
           <VibeSection />
-          <Line black={true}/>
           <FAQSection />
           <ReviewsSection />
           <CheckInSection />

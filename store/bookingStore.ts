@@ -55,26 +55,26 @@ export interface Booking {
   country: string;
 }
 
-
+export type MainFilter = 'balcony' | 'terrace' | 'shared_terrace' | undefined;
+export type PriceFilter = 'Cheapest' | 'Expensive';
 interface BookingState {
   dateRange: {
     from: undefined;
     to: undefined;
   };
   guests: Guests;
-  
-  categoryFilter: string[];
-  balconyFilter: boolean;
-  bedSizeFilter: string;
-  sortByFilter: 'Price' | 'Size';
 
+
+
+  priceFilter: PriceFilter;
+  filter: MainFilter;
+  bedSizeFilter: string;
 
   bookingPage: number;
-
   booking: Booking;
 
   setValue: (
-    value: number | string | string[] | boolean | DateRange | Guests | ExtrasItem[], 
+    value: number | string | string[] | boolean | DateRange | Guests | ExtrasItem[] | MainFilter | PriceFilter , 
     key: string
   ) => void;
 
@@ -89,12 +89,11 @@ export const useBookingStore = create<BookingState>((set) => ({
   },
   guests: { adults: 1, children: 0 },
 
-  categoryFilter: [],
-  balconyFilter: false,
+  filter: undefined,
   bedSizeFilter: '90/200',
-  sortByFilter: 'Price',
+  priceFilter: 'Cheapest',
   
-  bookingPage: 3,
+  bookingPage: 1,
   
   //booking process store
   booking: {

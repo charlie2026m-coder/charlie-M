@@ -25,7 +25,7 @@ export function CustomSelect(
 ) {
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className={cn("min-h-10 border-brown rounded-full w-[150px]", className)}>
+      <SelectTrigger className={cn("min-h-10 border-brown rounded-full w-full", className)}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>

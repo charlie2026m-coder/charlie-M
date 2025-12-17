@@ -151,17 +151,17 @@ const CheckInForm = ({
       </section>
         <button
           disabled={!dateRange?.from || !dateRange?.to}
-          className={cn('h-[100px]  cursor-pointer w-[110px] hidden  md:flex items-center justify-center rounded-r-[30px]  transition-all duration-300', isBrown ? 'bg-brown hover:bg-brown/80' : 'bg-blue hover:bg-blue/80')}
+          className={cn('h-[100px]  cursor-pointer w-[110px] hidden  md:flex items-center justify-center rounded-r-[30px]  transition-all duration-300 bg-blue hover:bg-blue/80')}
           type='submit'
         >
-          <RiSearchLine className='text-white text-[40px]  ' />
+          <RiSearchLine className='text-mute text-[40px]  ' />
         </button>
         <button
           disabled={!dateRange?.from || !dateRange?.to}
-          className={cn('py-3 text-lg text-white gap-2 mt-2 font-bold cursor-pointer md:hidden flex items-center justify-center rounded-b-[30px]  transition-all duration-300', isBrown ? 'bg-brown hover:bg-brown/80' : 'bg-blue hover:bg-blue/80')}
+          className={cn('py-3 text-lg text-mute gap-2 mt-2 font-bold cursor-pointer md:hidden flex items-center justify-center rounded-b-[30px]  transition-all duration-300 bg-blue hover:bg-blue/80')}
           type='submit'
         >
-          <RiSearchLine className='text-white text-[25px]  ' /> Check Availability
+          <RiSearchLine className='text-mute text-[25px]  ' /> Check Availability
         </button>
     </form>
   );

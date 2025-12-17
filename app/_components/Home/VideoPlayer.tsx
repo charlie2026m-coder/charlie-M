@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { Play, Pause } from 'lucide-react';
+import Dot from '../ui/dot';
 
 interface VideoPlayerProps {
   videoSrc: string;
@@ -131,8 +132,10 @@ export default function VideoPlayer({ videoSrc, posterSrc, className = '', showT
       <div className={`absolute top-0 left-0 right-0 bottom-0 ${isPlaying ? '' : 'bg-black/50'} transition-all duration-300 pointer-events-none`}/>
       
       {!isPlaying && showTitle && <>
-        <h1 className='text-4xl md:text-5xl lg:text-6xl text-white font-[700] absolute top-[30px] jakarta w-full text-center'>Charlie M — Hotel Rethought</h1>
-        <h1 className='text-xl md:text-2xl lg:text-4xl text-white font-[700] absolute top-[110px] sm:top-[80px] lg:top-[120px] jakarta w-full text-center'>Feel the vibe in the heart of Berlin</h1>
+      <div className='flex flex-col items-center justify-center absolute top-[30px] w-full px-6 gap-3'>
+        <h1 className='text-4xl md:text-5xl lg:text-6xl text-white font-[700] text-center jakarta'>Charlie M - Your Berlin story starts here</h1>
+        <h1 className='text-xl md:text-2xl lg:text-4xl text-white font-[700]  jakarta hidden md:flex items-center gap-4 justify-center'>Fully automated stay <Dot size={14} color="gold" /> Central of Berlin </h1>
+      </div>
       </>}
 
       {/* Custom Play Button Overlay */}

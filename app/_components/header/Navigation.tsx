@@ -12,12 +12,12 @@ const Navigation = () => {
       href: '/rooms',
     },
     {
-      label: 'Why Charlie M',
-      href: "/why",
-    },
-    {
       label: 'Location',
       href: "/location",
+    },
+    {
+      label: 'Concept',
+      href: "/concept",
     },
     {
       label: 'FAQ',

@@ -13,15 +13,33 @@ const AvatarComponent = () => {
   const { avatarUrl, originalAvatarUrl, uploadAvatar, deleteAvatar, isUploading, isDeleting } = useAvatar()
   const [openEditAvatarModal, setOpenEditAvatarModal] = useState(false)
   const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false)
+  const getDefaultCrop = (): Crop => {
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
+
+    if (isMobile) {
+      return {
+        unit: 'px',
+        width: 100,
+        height: 100,
+        x: 10,
+        y: 10,
+      }
+    }
+
+    return {
+      unit: 'px',
+      width: 250,
+      height: 250,
+      x: 10,
+      y: 10,
+    }
+  }
+
   const [previewImage, setPreviewImage] = useState<string | null>(null)
   const [originalFile, setOriginalFile] = useState<File | null>(null)
-  const [crop, setCrop] = useState<Crop>({
-    unit: 'px',
-    width: 250,
-    height: 250,
-    x: 10,
-    y: 10
-  })
+  const [defaultCrop, setDefaultCrop] = useState<Crop>(() => getDefaultCrop())
+ 
+  const [crop, setCrop] = useState<Crop>(defaultCrop)
   const [completedCrop, setCompletedCrop] = useState<PixelCrop | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -34,14 +52,9 @@ const AvatarComponent = () => {
   const handleEditAvatar = async () => {
     if (!originalAvatarUrl) return
     
-    // Reset crop to center
-    setCrop({
-      unit: 'px',
-      width: 250,
-      height: 250,
-      x: 10,
-      y: 10
-    })
+    const responsiveCrop = getDefaultCrop()
+    setDefaultCrop(responsiveCrop)
+    setCrop(responsiveCrop)
     setCompletedCrop(null)
     
     // Load original image for cropping
@@ -63,14 +76,9 @@ const AvatarComponent = () => {
     // Create preview and open modal
     const reader = new FileReader()
     reader.onload = () => {
-      // Reset crop to center
-      setCrop({
-        unit: 'px',
-        width: 250,
-        height: 250,
-        x: 10,
-        y: 10
-      })
+      const responsiveCrop = getDefaultCrop()
+      setDefaultCrop(responsiveCrop)
+      setCrop(responsiveCrop)
       setCompletedCrop(null)
       
       setPreviewImage(reader.result as string)
@@ -153,7 +161,7 @@ const AvatarComponent = () => {
           {avatarUrl &&
             <>
               <Image 
-                src={avatarUrl} alt="profile photo" 
+                src={avatarUrl || "/images/cat-icon.jpg"} alt="profile photo" 
                 width={92} height={92} 
                 className='rounded-full object-cover w-full h-full' 
               /> 
@@ -183,7 +191,7 @@ const AvatarComponent = () => {
       </div>
 
       <Dialog open={openEditAvatarModal} onOpenChange={() => setOpenEditAvatarModal(false)}>
-        <DialogContent className='!max-w-[800px] px-12 rounded-4xl overflow-hidden'>
+        <DialogContent className='!max-w-[800px] px-4 lg:px-12 rounded-4xl overflow-hidden w-9/10'>
           <DialogHeader>
             <DialogTitle className='text-2xl text-center mb-[30px]'>Crop the Photo</DialogTitle>
           </DialogHeader>
@@ -210,29 +218,31 @@ const AvatarComponent = () => {
               </div>
 
               <div className={`flex gap-3 ${avatarUrl ? 'justify-between' : 'justify-end'}`}>
-                {avatarUrl && (
-                  <Button 
-                    variant='destructive' 
-                    onClick={() => setOpenDeleteConfirm(true)}
-                    className='h-12 px-8'
-                  >
-                    Delete
-                  </Button>
-                )}
-                <div className='flex gap-3'>
-                  <Button 
-                    variant='outline' 
-                    onClick={() => {
-                      setOpenEditAvatarModal(false)
-                    }}
-                    className='h-12 px-8'
-                  >
-                    Cancel
-                  </Button>
+                
+                <div className='flex gap-3 w-full md:justify-end'>
+                {avatarUrl ? (
+                    <Button 
+                      variant='destructive' 
+                      onClick={() => setOpenDeleteConfirm(true)}
+                      className='h-12 px-8 flex-1 md:flex-0'
+                    >
+                      Delete
+                    </Button>
+                  ):(
+                    <Button 
+                      variant='outline' 
+                      onClick={() => {
+                        setOpenEditAvatarModal(false)
+                      }}
+                      className='h-12 px-8 flex-1 md:flex-0'
+                    >
+                      Cancel
+                    </Button>)
+                }
                   <Button 
                     onClick={handleSaveCrop}
                     disabled={isUploading || !completedCrop}
-                    className='h-12 px-8'
+                    className='h-12 px-8 flex-1 md:flex-0'
                   >
                     {isUploading ? 'Saving...' : 'Save'}
                   </Button>
@@ -255,12 +265,12 @@ const AvatarComponent = () => {
               Are you sure you want to delete your avatar? This action cannot be undone.
             </p>
             
-            <div className='flex gap-3 justify-end'>
+            <div className='flex gap-3 md:justify-end w-full'>
               <Button 
                 variant='outline' 
                 onClick={() => setOpenDeleteConfirm(false)}
                 disabled={isDeleting}
-                className='h-12 px-8'
+                className='h-12 px-8 flex-1 md:flex-0'
               >
                 Cancel
               </Button>
@@ -268,7 +278,7 @@ const AvatarComponent = () => {
                 variant='destructive'
                 onClick={handleDeleteAvatar}
                 disabled={isDeleting}
-                className='h-12 px-8'
+                className='h-12 px-8 flex-1 md:flex-0'
               >
                 {isDeleting ? 'Deleting...' : 'Delete'}
               </Button>

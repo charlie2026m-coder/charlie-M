@@ -48,13 +48,19 @@
   --radius-xl: calc(var(--radius) + 4px);
 
   --color-brown: #8B7B70;
-  --color-blue: #9EC2DD;
+  --color-mute:#2B2A29;
+  --color-blue: #D3C393;
+  --color-dark-gold: #A09060;
   --color-light-blue: #DEEAF4;
   --color-dark: #555555;
   --color-light-bg: #F7F5F2;
   --color-green: #2A9421;
-  --color-red: #C72D2D;
+  --color-red: #923D4F;
   --color-gray: #CCCCCC;
+  
+  --color-light2: #F0EBDF;
+  --color-light1: #EBEBEB;
+
 }
 
 :root {
@@ -209,13 +215,7 @@ main {
   position: relative !important;
 }
 
-/* All iframes and Google Maps elements in isolated map container have low z-index */
-.map-isolated iframe,
-.map-isolated .gm-style,
-.map-isolated .gm-style iframe,
-.map-isolated * {
-  z-index: 1 !important;
-}
+
 
 /* Radix Popover Portal - MUST be above everything */
 [data-radix-portal] {

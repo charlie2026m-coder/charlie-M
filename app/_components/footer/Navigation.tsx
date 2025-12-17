@@ -9,10 +9,6 @@ export default function Navigation() {
 
   const navigation = [
     {
-      label: 'Home',
-      href: '/',
-    },
-    {
       label: 'Rooms',
       href: "/rooms",
     },
@@ -21,13 +17,13 @@ export default function Navigation() {
       href: "/location",
     },
     {
+      label: 'Concept',
+      href: "/concept",
+    },
+    {
       label: 'FAQ',
       href: "/faq",
     },
-    {
-      label: 'Customer Reviews',
-      href: "/reviews",
-    }
   ]
 
   return (

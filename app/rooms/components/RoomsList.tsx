@@ -12,10 +12,9 @@ const RoomsList = ({
   rooms: Beds24RoomType[],
   params: UrlParams 
 }) => {
-  const { balconyFilter, categoryFilter } = useBookingStore()
+  const { filter, priceFilter } = useBookingStore()
   const [currentPage, setCurrentPage] = useState(0)
   const [roomsPerPage, setRoomsPerPage] = useState(6)
-  
   // Adjust rooms per page based on screen size
   useEffect(() => {
     const handleResize = () => {
@@ -37,25 +36,27 @@ const RoomsList = ({
   const filteredRooms = useMemo(() => {
     let filtered = rooms;
     
-    // Filter by balcony
-    if (balconyFilter) {
-      filtered = filtered.filter(room => room.hasBalcony === balconyFilter);
+    if(priceFilter === 'Cheapest') {
+      filtered = filtered.sort((a, b) => a.minPrice - b.minPrice)
+    } else {
+      filtered = filtered.sort((a, b) => b.minPrice - a.minPrice)
     }
-    
-    // Filter by category (if categoryFilter has items)
-    if (categoryFilter && categoryFilter.length > 0 && categoryFilter.length > 0) {
-      filtered = filtered.filter(room => 
-        categoryFilter.some(cat => room.roomType?.toLowerCase() === cat.toLowerCase())
-      );
+    if(filter === 'balcony') {
+      filtered = filtered.filter((room) => room.hasBalcony)
     }
-    
+    // if(filter?.includes('terrace')) {
+    //   filtered = filtered.filter((room) => room.hasTerrace)
+    // }
+    // if(filter?.includes('shared_terrace')) {
+    //   filtered = filtered.filter((room) => room.hasSharedTerrace)
+    // }
     return filtered;
-  }, [rooms, balconyFilter, categoryFilter])
+  }, [rooms, priceFilter, filter])
 
   // Reset to first page when filters or rooms per page change
   useEffect(() => {
     setCurrentPage(0);
-  }, [balconyFilter, categoryFilter, roomsPerPage])
+  }, [roomsPerPage, filteredRooms, filter])
   
   // Calculate pagination based on filtered results
   const totalPages = Math.ceil(filteredRooms.length / roomsPerPage)
@@ -64,7 +65,7 @@ const RoomsList = ({
   const displayedRooms = useMemo(() => {
     const start = currentPage * roomsPerPage
     return filteredRooms.slice(start, start + roomsPerPage)
-  }, [filteredRooms, currentPage, roomsPerPage])
+  }, [filteredRooms, currentPage, roomsPerPage, priceFilter, filter])
   return (
     <div className='flex flex-col gap-[30px] mb-[30px]'>
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'> 
