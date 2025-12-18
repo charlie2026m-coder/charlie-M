@@ -20,7 +20,7 @@ const StatusBadge = ({ status, className, isDot = false }: { status?: string, cl
     'yellow': 'bg-yellow-50 text-yellow-500',
     'orange': 'bg-orange-50 text-orange-700',
     'blue': 'bg-blue-50 text-blue-500',
-    'red': 'bg-red-50 text-red-500',
+    'red': 'bg-red-100 text-red-600',
     'black': 'bg-black/20 text-black',
   }
   
@@ -35,7 +35,7 @@ const StatusBadge = ({ status, className, isDot = false }: { status?: string, cl
 
 
   return (
-    <div className={cn('flex items-center  px-2.5 py-1 gap-2 rounded-full', style[color as keyof typeof style], className)}>
+    <div className={cn('flex items-center  px-2.5 h-6 text-[14px] gap-2 rounded-full', style[color as keyof typeof style], className)}>
       {isDot && <Dot size={10} color={colors[color as keyof typeof colors]} /> }
       {status}
     </div>

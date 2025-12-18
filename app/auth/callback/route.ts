@@ -37,7 +37,7 @@ export async function GET(request: Request) {
         }
       );
 
-      const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+      const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
       
       if (exchangeError) {
         console.error('Code exchange error:', exchangeError);
@@ -53,8 +53,28 @@ export async function GET(request: Request) {
         return NextResponse.redirect(`${requestUrl.origin}/reset-password`);
       }
 
-      // Successful authentication - redirect to home or specified next URL
-      return NextResponse.redirect(next || requestUrl.origin);
+      // Check if this is email confirmation
+      const type = requestUrl.searchParams.get('type');
+      const isEmailConfirmation = type === 'email_change' || type === 'email';
+      
+      // If email was confirmed, sync it to profiles table
+      if (isEmailConfirmation && data?.user) {
+        console.log('Email confirmed, syncing to profiles:', data.user.email);
+        
+        // Update email in profiles table
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ email: data.user.email })
+          .eq('id', data.user.id);
+        
+        if (updateError) {
+          console.error('Failed to sync email to profiles:', updateError);
+        }
+        
+        return NextResponse.redirect(`${requestUrl.origin}/profile?email_confirmed=true`);
+      }
+      
+      return NextResponse.redirect(next || `${requestUrl.origin}/profile`);
     } catch (err) {
       console.error('Unexpected error during code exchange:', err);
       return NextResponse.redirect(
@@ -64,5 +84,5 @@ export async function GET(request: Request) {
   }
 
   // No code provided - redirect to home
-  return NextResponse.redirect(requestUrl.origin);
+  return NextResponse.redirect(`${requestUrl.origin}/profile`);
 }

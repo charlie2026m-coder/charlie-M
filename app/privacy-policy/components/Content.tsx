@@ -2,7 +2,7 @@
 import Section from "../components/Section";
 import Menu from "../components/Menu";
 import { useState, useEffect } from "react";
-import { materials } from "../../../materials/materials";
+import { materials } from "../../../content/content";
 
 export default function Content({type}:{ type: 'privacyPolicy' | 'termsAndConditions'}) {
   const [activeSection, setActiveSection] = useState<string>('introduction')

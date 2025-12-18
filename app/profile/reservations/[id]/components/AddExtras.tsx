@@ -6,11 +6,11 @@ const UpgradeRoom = () => {
 const [selected, setSelected] = useState<ExtrasItem[]>([])
 
   return (
-    <>
+    <div className='px-3 lg:px-[30px]'>
       <div className='flex items-center gap-2 border-b pb-2 mb-5 text-lg font-semibold w-full'>
         Add Extras:
       </div>
-      <div className='grid grid-cols-4 gap-6 gap-y-10 mb-5'>
+      <div className='grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 lg:gap-6 gap-y-3 lg:gap-y-10 mb-5'>
         {extras.map((extra, index) => (
           <ExtraCard 
             key={extra.title + index} 
@@ -20,7 +20,7 @@ const [selected, setSelected] = useState<ExtrasItem[]>([])
           />
         ))}
       </div>
-    </>
+    </div>
   )
 }
 

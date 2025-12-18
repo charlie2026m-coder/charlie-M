@@ -30,7 +30,6 @@ export const useProfile = () => {
     queryKey: profileKeys.detail(user?.id || ''),
     queryFn: async () => {
       if (!user?.id) return null
-
       const { data, error: fetchError } = await supabase
         .from('profiles')
         .select('*')
@@ -48,6 +47,31 @@ export const useProfile = () => {
   const updateMutation = useMutation({
     mutationFn: async (updates: Partial<Omit<Profile, 'id' | 'created_at' | 'updated_at'>>) => {
       if (!user?.id) throw new Error('No user ID')
+      
+      if (updates.email) {
+        const currentEmail = (user.email || '').trim().toLowerCase();
+        const newEmail = updates.email.trim().toLowerCase();
+
+        if (currentEmail !== newEmail) {
+          const { data: authData, error: authError } = await supabase.auth.updateUser({
+            email: newEmail
+          })
+
+          if (authError) {
+            console.error('❌ Auth error:', authError);
+            
+            if (authError.message.includes('already registered') || authError.message.includes('already in use')) {
+              throw new Error('This email is already registered by another user')
+            }
+            if (authError.message.includes('invalid') || authError.message.includes('Invalid')) {
+              throw new Error(`Email update failed: ${authError.message}. Try a different email.`)
+            }
+            throw new Error(`Failed to update email: ${authError.message}`)
+          }
+
+
+        }
+      }
 
       const { data, error: updateError } = await supabase
         .from('profiles')
@@ -63,9 +87,16 @@ export const useProfile = () => {
     onMutate: () => {
       toast.loading('Updating profile...')
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       queryClient.setQueryData(profileKeys.detail(user?.id || ''), data)
-      toast.success('Profile updated successfully!')
+      const currentEmail = (user?.email || '').trim().toLowerCase();
+      const newEmail = (variables.email || '').trim().toLowerCase();
+      
+      if (variables.email && currentEmail !== newEmail) {
+        toast.success('Email update sent! Check your NEW email inbox to confirm the change. After confirmation, your email will be updated in auth.users.')
+      } else {
+        toast.success('Profile updated successfully!')
+      }
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : 'Failed to update profile')

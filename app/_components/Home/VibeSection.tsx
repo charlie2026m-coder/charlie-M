@@ -9,7 +9,7 @@ const VibeSection = () => {
   return (
     <div className='bg-light1 w-full flex flex-col relative'>
       <Image 
-        src='/images/vide-image.webp' 
+        src='/images/street.webp' 
         alt='vibe' 
         width={680} 
         height={730} 
@@ -74,7 +74,7 @@ const VibeSection = () => {
             </ul>
           </div>
           <Image 
-            src='/images/vide-image.webp' 
+            src='/images/street.webp' 
             alt='vibe' 
             width={375} 
             height={232} 

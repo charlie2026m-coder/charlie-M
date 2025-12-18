@@ -1,6 +1,4 @@
 'use client'
-
-import Dot from '@/app/_components/ui/dot'
 import Image from 'next/image'
 import { Button } from '@/app/_components/ui/button'
 import Link from 'next/link'
@@ -23,9 +21,9 @@ const Reservations = () => {
   }, [currentPage])
 
   return (
-    <div className='flex flex-col flex-1'>
+    <div className='flex flex-col flex-1 px-3 lg:px-[30px]'>
       <div className='flex items-center gap-2 font-semibold text-2xl mb-5'>
-        <Dot size={15} color="blue" /> All Reservations
+        All Reservations
       </div>
         {reservations.length === 0 ? <NoReservations /> : <></>}
         <div className='flex flex-col gap-3 mb-6'>
@@ -49,9 +47,9 @@ export default Reservations;
 
 const NoReservations = () => {
   return (
-    <div className='flex items-center justify-center w-full  flex-col gap-6 flex-1'>
-      <Image src="/images/calendar-image.svg" alt="no reservations" width={180} height={104} priority className='w-[180px] h-[104px]' />
-      <p className='text-sm text-gray-500'>You haven’t booked any rooms yet</p>
+    <div className='flex items-center justify-center w-full flex-col flex-1'>
+      <Image src="/images/no-reservations.svg" alt="no reservations" width={166} height={250} priority className='w-[166px] h-[250px]' />
+      <p className='text-sm text-gray-500 mb-5'>You haven’t booked any rooms yet</p>
       <Link href='/rooms'>
         <Button className=' h-[45px] w-[300px]' >Book now</Button>
       </Link>
@@ -59,15 +57,16 @@ const NoReservations = () => {
   )
 }
 
+// const reservations: any[] = []
 const reservations = [
   {
     id: 1,
-    checkInStatus: 'Pending Check-in', 
+    isCheckin: false, 
     name: 'Cozy Retreat Suite',
     date: '2025-01-01',
     checkIn: '2025-01-01',
     checkOut: '2025-01-02',
-    status: 'upcoming',
+    status: 'active',
     image: '/images/reservation_1.jpg',
     category: 'Suite',
     people: 2,
@@ -77,31 +76,13 @@ const reservations = [
     price: 1245.50,
   },
   {
-    id: 1,
-    checkInStatus: 'Checked in', 
+    id: 2,
+    isCheckin: true, 
     name: 'Cozy Retreat Suite',
     date: '2025-01-01',
     checkIn: '2025-01-01',
     checkOut: '2025-01-02',
-    status: 'ongoing',
-    image: '/images/reservation_1.jpg',
-    category: 'Suite',
-    people: 2,
-    roomSize: 50,
-    roomType: 'Suite',
-    hasBalcony: true,
-    price: 1245.50,
-    code: 232333,
-    roomNumber: 77
-  },
-  {
-    id: 1,
-    checkInStatus: 'Checked out', 
-    name: 'Cozy Retreat Suite',
-    date: '2025-01-01',
-    checkIn: '2025-01-01',
-    checkOut: '2025-01-02',
-    status: 'completed',
+    status: 'active',
     image: '/images/reservation_1.jpg',
     category: 'Suite',
     people: 2,
@@ -113,7 +94,25 @@ const reservations = [
     roomNumber: 77
   },
   {
-    id: 1,
+    id: 3,
+    isCheckin: true, 
+    name: 'Cozy Retreat Suite',
+    date: '2025-01-01',
+    checkIn: '2025-01-01',
+    checkOut: '2025-01-02',
+    status: 'cancelled',
+    image: '/images/reservation_1.jpg',
+    category: 'Suite',
+    people: 2,
+    roomSize: 50,
+    roomType: 'Suite',
+    hasBalcony: true,
+    price: 1245.50,
+
+  },
+  {
+    id: 4,
+    isCheckin: true, 
     name: 'Cozy Retreat Suite',
     date: '2025-01-01',
     checkIn: '2025-01-01',
@@ -128,7 +127,8 @@ const reservations = [
     price: 1245.50,
   },
   {
-    id: 1,
+    id: 5,
+    isCheckin: true, 
     name: 'Cozy Retreat Suite',
     date: '2025-01-01',
     checkIn: '2025-01-01',
@@ -141,46 +141,11 @@ const reservations = [
     roomType: 'Suite',
     hasBalcony: true,
     price: 1245.50,
-    code: 23233,
-    roomNumber: 77
+
   },
   {
-    id: 1,
-    checkInStatus: 'Pending Check-in', 
-    name: 'Cozy Retreat Suite',
-    date: '2025-01-01',
-    checkIn: '2025-01-01',
-    checkOut: '2025-01-02',
-    status: 'upcoming',
-    image: '/images/reservation_1.jpg',
-    category: 'Suite',
-    people: 2,
-    roomSize: 50,
-    roomType: 'Suite',
-    hasBalcony: true,
-    price: 1245.50,
-    code: 232333,
-    roomNumber: 77
-  },
-  {
-    id: 1,
-    checkInStatus: 'Checked in', 
-    name: 'Cozy Retreat Suite',
-    date: '2025-01-01',
-    checkIn: '2025-01-01',
-    checkOut: '2025-01-02',
-    status: 'ongoing',
-    image: '/images/reservation_1.jpg',
-    category: 'Suite',
-    people: 2,
-    roomSize: 50,
-    roomType: 'Suite',
-    hasBalcony: true,
-    price: 1245.50,
-  },
-  {
-    id: 1,
-    checkInStatus: 'Checked out', 
+    id: 6,
+    isCheckin: true, 
     name: 'Cozy Retreat Suite',
     date: '2025-01-01',
     checkIn: '2025-01-01',
@@ -193,7 +158,38 @@ const reservations = [
     roomType: 'Suite',
     hasBalcony: true,
     price: 1245.50,
-    code: 232333,
-    roomNumber: 77
+
+  },
+  {
+    id: 7,
+    isCheckin: true, 
+    name: 'Cozy Retreat Suite',
+    date: '2025-01-01',
+    checkIn: '2025-01-01',
+    checkOut: '2025-01-02',
+    status: 'completed',
+    image: '/images/reservation_1.jpg',
+    category: 'Suite',
+    people: 2,
+    roomSize: 50,
+    roomType: 'Suite',
+    hasBalcony: true,
+    price: 1245.50,
+  },
+  {
+    id: 8,
+    isCheckin: true, 
+    name: 'Cozy Retreat Suite',
+    date: '2025-01-01',
+    checkIn: '2025-01-01',
+    checkOut: '2025-01-02',
+    status: 'completed',
+    image: '/images/reservation_1.jpg',
+    category: 'Suite',
+    people: 2,
+    roomSize: 50,
+    roomType: 'Suite',
+    hasBalcony: true,
+    price: 1245.50,
   },
 ]

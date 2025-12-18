@@ -7,7 +7,13 @@ const defaultCenter = {
   lng: 13.391040308320248  
 };
 
-export default function MapWindow({width = "100%", height = "400px", center = defaultCenter}: {width?: string, height?: string, center?: {lat: number, lng: number}}) {
+export default function MapWindow({
+  width = "100%", 
+  height = "400px", 
+  center = defaultCenter,
+  isFullscreen = true,
+  image = '/images/map-marker.svg'
+}: {width?: string, height?: string, center?: {lat: number, lng: number}, isFullscreen?: boolean, image?: string}) {
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string,
@@ -18,8 +24,8 @@ export default function MapWindow({width = "100%", height = "400px", center = de
   const customMarkerIcon = useMemo(() => {
     if (!isLoaded || typeof google === 'undefined') return undefined;
 
-    return {
-      url: '/images/map-marker.svg',
+    return {  
+      url: image,
       scaledSize: new google.maps.Size(39, 45),
       anchor: new google.maps.Point(13, 30),
     };
@@ -41,6 +47,7 @@ export default function MapWindow({width = "100%", height = "400px", center = de
             zoomControl: false, 
             streetViewControl: false, 
             mapTypeControl: false, 
+            fullscreenControl: isFullscreen,
             gestureHandling: "cooperative", 
           }}
         >

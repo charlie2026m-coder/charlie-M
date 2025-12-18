@@ -1,6 +1,5 @@
 'use client'
 import CustomCard from '@/app/_components/ui/CustomCard'
-import AvatarComponent from './AvatarComponent'
 import { useProfile } from '@/app/hooks/useProfile'
 import { FaUser } from "react-icons/fa6";
 import { PiCalendarBlankFill } from "react-icons/pi";
@@ -21,8 +20,6 @@ const ProfileMenu = () => {
   const { profile } = useProfile()
   const [activeResTab, setActiveResTab] = useState('All')
 
-  // if (loading) return <div>Loading...</div>
-  // if (error) return <div>Error: {error}</div>
 
   const tabs = [
     {
@@ -38,8 +35,7 @@ const ProfileMenu = () => {
   const resTabs = ['All', 'Ongoing', 'Upcoming', 'Completed', 'Cancelled' ] as const
 
   return (
-    <CustomCard className=" col-span-1 self-start">
-      <AvatarComponent />
+    <CustomCard className=" col-span-1 self-start shadow-lg">
       <h1 className='text-lg pb-5 border-b w-full text-center mb-5'>{profile?.name || ' Jnohn Dou'}</h1>
 
       {tabs.map((tab) => {

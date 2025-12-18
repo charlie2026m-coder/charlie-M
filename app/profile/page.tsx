@@ -3,32 +3,17 @@ import Dot from "@/app/_components/ui/dot";
 import CustomInput from "@/app/_components/ui/customInput";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { 
-  GuestDetailsFormData, 
-  guestDetailsSchema,
-  ChangePasswordFormData,
-  changePasswordSchema,
-  SetPasswordFormData,
-  setPasswordSchema
-} from "@/types/schemas";
-import { useAuth } from "@/lib/auth-provider";
+import { GuestDetailsFormData,  guestDetailsSchema } from "@/types/schemas";
 import { Button } from "@/app/_components/ui/button";
-import { useChangePassword, useSetPassword } from "@/app/hooks/useAuth";
 import { useProfile } from "@/app/hooks/useProfile";
 import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { toast } from "sonner";
+import PasswordForm from "./components/PasswordForm";
 
 export default function Profile() {
-  const { user } = useAuth();
-  const { profile, updateMutation, loading: profileLoading } = useProfile();
-
-  // React Query mutations
-  const changePasswordMutation = useChangePassword();
-  const setPasswordMutation = useSetPassword();
-
-  // Check if user signed in with email/password or OAuth (Google)
-  const isEmailPasswordUser = user?.app_metadata?.provider === 'email' || user?.identities?.some(identity => identity.provider === 'email');
-  const isOAuthUser = user?.app_metadata?.provider === 'google' || user?.identities?.some(identity => identity.provider === 'google');
-
+  const { profile, updateMutation } = useProfile();
+  const searchParams = useSearchParams();
   // Profile form
   const {
     register,
@@ -44,6 +29,16 @@ export default function Profile() {
       phone: '',
     },
   })
+
+  // Check for email confirmation success
+  useEffect(() => {
+    const emailConfirmed = searchParams.get('email_confirmed');
+    if (emailConfirmed === 'true') {
+      toast.success('Email confirmed successfully! Your email has been updated.');
+      // Remove the query parameter from URL without page reload
+      window.history.replaceState({}, '', '/profile');
+    }
+  }, [searchParams]);
 
   // Load profile data into form when available
   useEffect(() => {
@@ -62,43 +57,28 @@ export default function Profile() {
     }
   }, [profile, reset]);
 
-  // Password change form (for email/password users)
-  const {
-    register: registerPassword,
-    handleSubmit: handlePasswordSubmit,
-    formState: { errors: passwordErrors, isDirty: isPasswordDirty },
-    reset: resetPasswordForm,
-  } = useForm<ChangePasswordFormData>({
-    resolver: zodResolver(changePasswordSchema),
-  })
-
-  // Set password form (for OAuth users)
-  const {
-    register: registerSetPassword,
-    handleSubmit: handleSetPasswordSubmit,
-    formState: { errors: setPasswordErrors, isDirty: isSetPasswordDirty },
-    reset: resetSetPasswordForm,
-  } = useForm<SetPasswordFormData>({
-    resolver: zodResolver(setPasswordSchema),
-  })
-
   // Unified handlers for all forms
   const handleSaveChanges = async () => {
     // Save all changed forms
     if (isProfileDirty) await handleSubmit(onSubmit)();
-    if (isPasswordDirty)await handlePasswordSubmit(onChangePassword)();
-    if (isSetPasswordDirty) await handleSetPasswordSubmit(onSetPassword)();
   }
 
   const handleDiscard = () => {
     if (isProfileDirty) reset();
-    if (isPasswordDirty) resetPasswordForm();
-    if (isSetPasswordDirty)resetSetPasswordForm();
   }
 
   const onSubmit = async (data: GuestDetailsFormData) => {
     // Combine first and last name
     const fullName = `${data.name} ${data.last_name}`.trim();
+
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(data.email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
     
     await updateMutation.mutateAsync({
       name: fullName,
@@ -115,33 +95,16 @@ export default function Profile() {
     });
   }
 
-  // Handle password change for email/password users
-  const onChangePassword = async (data: ChangePasswordFormData) => {
-    await changePasswordMutation.mutateAsync({
-      email: user?.email || '',
-      currentPassword: data.currentPassword,
-      newPassword: data.newPassword,
-    });
-    resetPasswordForm();
-  }
-
-  // Handle set password for OAuth users
-  const onSetPassword = async (data: SetPasswordFormData) => {
-    await setPasswordMutation.mutateAsync(data.newPassword);
-    resetSetPasswordForm();
-  }
-
   // Check if any form is loading
-  const isLoading = changePasswordMutation.isPending || setPasswordMutation.isPending || updateMutation.isPending;
-  
+  const isLoading = updateMutation.isPending;
   // Check if any form has changes
-  const hasChanges = isProfileDirty || isPasswordDirty || isSetPasswordDirty;
+  const hasChanges = isProfileDirty;
 
   return (
-    <>
+    <div className='px-[30px] flex flex-col'>
       <form onSubmit={(e) => e.preventDefault()}>
         <h3 className="flex gap-2 items-center font-semibold text-2xl mb-9"><Dot size={15} color='blue'/>Profile</h3>
-        <div className='grid  lg:grid-cols-2 gap-8  pb-6 border-b mb-6'>
+        <div className='grid  lg:grid-cols-2 gap-8 mb-5'>
           <div className='relative flex flex-col gap-1 '>
             <CustomInput 
               register={register} 
@@ -200,106 +163,29 @@ export default function Profile() {
         </div>
       </form>
 
-    {/* Password Change Section */}
-    {isEmailPasswordUser && (
-      <form onSubmit={(e) => e.preventDefault()} className='mt-6'>
-        <h4 className='text-lg font-medium mb-5'>Change Password</h4>
-        
-        <div className='grid grid-cols-1 w-1/2 gap-8'>
-          <div className='relative flex flex-col gap-1'>
-            <CustomInput 
-              register={registerPassword}
-              name='newPassword' 
-              type='password' 
-              placeholder='New Password' 
-              icon='password'
-              isError={!!passwordErrors.newPassword}
-            />
-            {passwordErrors.newPassword && (
-              <span className='absolute -bottom-5 left-0 text-red text-xs pl-4'>
-                {passwordErrors.newPassword?.message}
-              </span>
-            )}
-          </div>
-
-          <div className='relative flex flex-col gap-1'>
-            <CustomInput 
-              register={registerPassword}
-              name='confirmPassword' 
-              type='password' 
-              placeholder='Confirm New Password' 
-              icon='password'
-              isError={!!passwordErrors.confirmPassword}
-            />
-            {passwordErrors.confirmPassword && (
-              <span className='absolute -bottom-5 left-0 text-red text-xs pl-4'>
-                {passwordErrors.confirmPassword?.message}
-              </span>
-            )}
-          </div>
-        </div>
-      </form>
-    )}
-
-    {/* Set Password Section for OAuth Users */}
-    {isOAuthUser && !isEmailPasswordUser && (
-      <form onSubmit={(e) => e.preventDefault()} className='mt-6'>
-        <h4 className='text-lg font-medium mb-5'>Set Password</h4>
-        
-        <div className='grid lg:grid-cols-2 gap-8'>
-          <div className='relative flex flex-col gap-1'>
-            <CustomInput 
-              register={registerSetPassword}
-              name='newPassword' 
-              type='password' 
-              placeholder='New Password' 
-              icon='password'
-              isError={!!setPasswordErrors.newPassword}
-            />
-            {setPasswordErrors.newPassword && (
-              <span className='absolute -bottom-5 left-0 text-red text-xs pl-4'>
-                {setPasswordErrors.newPassword?.message}
-              </span>
-            )}
-          </div>
-
-          <div className='relative flex flex-col gap-1'>
-            <CustomInput 
-              register={registerSetPassword}
-              name='confirmPassword' 
-              type='password' 
-              placeholder='Confirm Password' 
-              icon='password'
-              isError={!!setPasswordErrors.confirmPassword}
-            />
-            {setPasswordErrors.confirmPassword && (
-              <span className='absolute -bottom-5 left-0 text-red text-xs pl-4'>
-                {setPasswordErrors.confirmPassword?.message}
-              </span>
-            )}
-          </div>
-        </div>
-      </form>
-    )}
-    <div className='flex gap-4 mt-auto '>
-      <Button 
-        type='button' 
-        variant='outline' 
-        className='flex-1 md:flex-0 h-[44px]'
-        onClick={handleDiscard}
-        disabled={!hasChanges || isLoading}
-      >
-        Discard
-      </Button>
-      <Button 
-        type='button'
-        className='flex-1 md:flex-0 h-[44px]'
-        onClick={handleSaveChanges}
-        disabled={!hasChanges || isLoading}
-      >
-        {isLoading ? 'Saving...' : 'Save Changes'}
-      </Button>
+ 
+    {hasChanges && (
+      <div className='flex gap-4 self-end mb-10'>
+        <Button 
+          type='button' 
+          variant='outline' 
+          className='flex-1 md:flex-0 h-[44px]'
+          onClick={handleDiscard}
+          disabled={!hasChanges || isLoading}
+        >
+          Discard
+        </Button>
+        <Button 
+          type='button'
+          className='flex-1 md:flex-0 h-[44px]'
+          onClick={handleSaveChanges}
+          disabled={!hasChanges || isLoading}
+        >
+          {isLoading ? 'Saving...' : 'Save Changes'}
+        </Button>
+      </div>)
+    }
+    <PasswordForm />
     </div>
-    </>
   )
 }

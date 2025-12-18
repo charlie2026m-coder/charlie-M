@@ -33,7 +33,7 @@ export const useLogin = () => {
     onSuccess: () => {
       toast.success('Login successful!', { id: 'login' });
       setTimeout(() => {
-        router.push('/');
+        router.push('/profile');
         router.refresh();
       }, 500);
     },

@@ -17,7 +17,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
   return (
     <div className="container px-4 md:px-10  xl:px-[100px] py-8 grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 min-h-[calc(100vh-91px)]">
       <ProfileMenu />
-      <CustomCard className=' md:col-span-1 lg:col-span-2 xl:col-span-3 self-start'>
+      <CustomCard className=' md:col-span-1 lg:col-span-2 xl:col-span-3 self-start shadow-lg px-0'>
         {children}
       </CustomCard>
      

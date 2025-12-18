@@ -2,7 +2,6 @@
 import Link from "next/link"
 import { Button } from "../ui/button"
 import Language from "./Language"
-import ProfileInfo from "./ProfileInfo"
 import AuthModal from "../Auth/AuthModal"
 import { useAuth } from "@/lib/auth-provider"
 import Image from "next/image"
@@ -12,9 +11,11 @@ import { TbMenu2 } from "react-icons/tb";
 import { XIcon } from "lucide-react";
 import { useState } from "react";
 import { Drawer, DrawerContent, DrawerTitle } from "../ui/drawer"
+import { useProfile } from "@/app/hooks/useProfile";
 // import SignOut from "../Auth/SignOut"
 
 const MobileMenu = () => {
+  const { profile } = useProfile(); 
   const [open, setOpen] = useState(false)
   const { user, loading } = useAuth();
 
@@ -24,8 +25,8 @@ const MobileMenu = () => {
       href: '/rooms',
     },
     {
-      label: 'Why Charlie M',
-      href: '/why',
+      label: 'Concept',
+      href: '/concept',
     },
     {
       label: 'Location',
@@ -69,7 +70,7 @@ const MobileMenu = () => {
               >{item.label}</Link>
             ))}
           </div>
-          <div className='flex flex-col gap-6 w-full mb-6 border-b border-0.5 border-brown pb-6 mt-auto'> 
+          <div className='flex flex-col gap-6 w-full mb-6 border-b border-0.5 border-brown pb-6 flex-1'> 
             <Link href='/rooms' className='w-full' onClick={() => setOpen(false)}>
               <Button className='w-full h-[55px]'> Book Now </Button>
             </Link>
@@ -80,9 +81,12 @@ const MobileMenu = () => {
               <AuthModal  type="signin" className='w-full h-[55px] text-white border-white' />
             </>)}
 
-            {!loading && user &&<div className='w-full flex justify-center '>
-              <ProfileInfo />
-            </div>}
+            {!loading && user &&
+              <Link href="/profile" className="flex flex-col items-center mt-auto" onClick={() => setOpen(false)}>
+                <h3 className="text-[18px] text-white">My Account</h3>
+                <span className=" text-blue">{profile?.name || 'Dear guest'}</span>
+              </Link>
+            }
           </div>
           <ul className="flex gap-5 text-black mb-6">
             <li className="flex size-10 rounded-full bg-blue items-center justify-center"><FaFacebookF className='size-6' /></li>

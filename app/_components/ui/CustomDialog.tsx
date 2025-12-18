@@ -22,7 +22,7 @@ export function CustomDialog({
   return (
     <Dialog open={open} onOpenChange={(open) => setOpen(open)}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className='px-4 lg:px-10 xl:px-[100px] !rounded-[30px]'>
+      <DialogContent className='px-4 lg:px-10 xl:px-[100px] !rounded-[30px] w-[95%] max-w-[900px]'>
         <DialogHeader>
           <DialogTitle className='text-center text-xl font-semibold'>{title}</DialogTitle>
         </DialogHeader>

@@ -13,13 +13,11 @@ const AuthBlock = () => {
       <Link href='/rooms' >
         <Button className='h-[44px]'> Book Now </Button>
       </Link>
-      <Link href='/rooms'>
-        <Button variant='outline' className='h-[44px]'>Check In</Button>
-      </Link>
-      {/* {!loading && !user && (<> */}
+
+      {!loading && !user && (<>
         <AuthModal  type="signin" className="h-[44px]"/>
-      {/* </>)} */}
-      {!loading && user &&<ProfileInfo />}
+      </>)}
+      {!loading && user && <ProfileInfo />}
       <Language />
     </div>
   )
