@@ -6,17 +6,15 @@ import { PiCalendarBlankFill } from "react-icons/pi";
 import { TiArrowSortedDown } from "react-icons/ti";
 import { cn } from '@/lib/utils'
 import SlideMenu from './SlideMenu'
-import { IoLogOut } from "react-icons/io5";
-import { useLogout } from '@/app/hooks/useAuth';
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import ReservationIdDialog from './ReservationIdDialog'
+import Logout from './Logout'
 
 
 const ProfileMenu = () => {
   const pathname = usePathname()
-  const logoutMutation = useLogout();
   const { profile } = useProfile()
   const [activeResTab, setActiveResTab] = useState('All')
 
@@ -75,12 +73,7 @@ const ProfileMenu = () => {
 
       <ReservationIdDialog />
 
-      <div 
-          className={cn('flex items-center p-2.5 rounded-[16px] gap-2 w-full cursor-pointer hover:bg-light-bg transition-all duration-300')} 
-          onClick={() => logoutMutation.mutate()}
-      >
-        <IoLogOut className='size-5 text-blue' /> Logout
-      </div>
+      <Logout />
 
     </CustomCard>
   )

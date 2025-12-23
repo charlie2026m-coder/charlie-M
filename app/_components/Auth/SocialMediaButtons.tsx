@@ -1,5 +1,4 @@
 import { Button } from '../ui/button'
-import Image from 'next/image'
 import { FaApple } from 'react-icons/fa'  
 import { FcGoogle } from 'react-icons/fc'
 import { useOAuthSignIn } from '@/app/hooks/useAuth'
@@ -16,8 +15,7 @@ const SocialMediaButtons = ( { setFormType }: { setFormType: (type: contentType 
         onClick={()=>setFormType('reservation' as contentType)}
         className={buttonStyle}
       >
-        <Image src="/images/bookingIcon.png" alt="reservation" width={20} height={20} />
-        <span>Continue with Reservation ID</span>
+        Continue with Reservation ID
       </Button>
 
       <Button

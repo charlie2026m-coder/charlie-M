@@ -11,11 +11,11 @@ import { useRouter } from "next/navigation";
 import { getDate, getPath, getPriceData } from "@/lib/utils";
 import { Beds24RoomType, UrlParams } from "@/types/beds24";
 import { BsFillPersonFill } from "react-icons/bs"
-import { useBookingStore } from "@/store/bookingStore";
+import { useStore } from "@/store/useStore"
 
 const BookingForm = ({ id, room, params }: { id: string, room: Beds24RoomType, params: UrlParams }) => {
   const router = useRouter();
-  const { dateRange: dateRangeStore, guests: guestsStore } = useBookingStore();
+  const { dateRange: dateRangeStore, guests: guestsStore } = useStore();
   const { price, priceText, nightsText } = getPriceData({ params, room })
 
   const [openCheckIn, setOpenCheckIn] = useState(false);
@@ -65,7 +65,7 @@ const BookingForm = ({ id, room, params }: { id: string, room: Beds24RoomType, p
         <div className='text-brown flex items-center gap-1'>Price per {nightsText}</div>
         <div className='text-xl min-w-[80px] self-end text-center rounded-full bg-green/15 font-[700] text-green px-2.5 py-2'>€{currentPrice}</div>
       </div>
-      <div className='text-red flex items-center gap-1 my-4'><BsFillPersonFill className='size-4 text-red' />{currentPriceText}</div>
+      <div className='text-blue flex items-center gap-1 my-4'><BsFillPersonFill className='size-4 text-blue' />{currentPriceText}</div>
 
       <div className='flex flex-col gap-5 w-full mb-5'>
         <label className='w-full'>

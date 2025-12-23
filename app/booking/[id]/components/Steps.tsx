@@ -1,9 +1,9 @@
 'use client'
 import { cn } from '@/lib/utils'
-import { useBookingStore } from '@/store/bookingStore'
+import { useStore } from '@/store/useStore'
 
 const Steps = () => {
-  const { bookingPage } = useBookingStore()
+  const { bookingPage } = useStore()
   const steps = [
     {
       index: 1,

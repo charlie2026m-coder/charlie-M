@@ -8,12 +8,12 @@ import { DateRange } from 'react-day-picker'
 import { Availability as AvailabilityType, UrlParams } from '@/types/beds24'
 import { getDate, getPath } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
-import { useBookingStore } from '@/store/bookingStore'
+import { useStore } from '@/store/useStore'
 
 
 const Availability = ({ params, availability = {} as AvailabilityType, id }: { params: UrlParams, availability: AvailabilityType, id: string }) => {
   const router = useRouter();
-  const { dateRange } = useBookingStore();
+  const { dateRange } = useStore();
   const [selectedRange, setSelectedRange] = useState<DateRange | undefined>({
     from: params.from ? new Date(params.from) : dateRange?.from,
     to: params.to ? new Date(params.to) : dateRange?.to,
@@ -72,7 +72,6 @@ const Availability = ({ params, availability = {} as AvailabilityType, id }: { p
   return (
     <div className='flex flex-col'>
       <div className='flex items-center gap-2.5 text-2xl font-semibold mb-[30px]'>
-        <Dot size={20} color='blue' />
         Availability
       </div>
 

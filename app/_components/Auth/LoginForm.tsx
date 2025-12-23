@@ -11,7 +11,7 @@ import { contentType } from './AuthModal';
 
 
 const LoginForm = ({ setFormType }: { setFormType: (type: contentType ) => void }) => {
-  const [error, setError] = useState<string | null>(null);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const loginMutation = useLogin();
   
   const {
@@ -32,19 +32,26 @@ const LoginForm = ({ setFormType }: { setFormType: (type: contentType ) => void 
   useEffect(() => {
     if (Object.keys(errors).length > 0) {
       const errorMessages = Object.entries(errors).map(([, error]) => error?.message).filter(Boolean).join(', ');
-      setError(errorMessages);
+      setLoginError(errorMessages);
     } else {
-      setError(null);
+      setLoginError(null);
     }
   }, [errors, email, password]);
 
+  // Clear login error when user types
+  useEffect(() => {
+    if (loginError) {
+      setLoginError(null);
+    }
+  }, [email, password]);
+
   // Handle form submission
   const onSubmit = async (data: LoginFormData) => {
-    setError(null);
+    setLoginError(null);
     try {
       await loginMutation.mutateAsync({ email: data.email, password: data.password });
-    } catch (err) {
-      // Error is handled by React Query with toast
+    } catch (err: any) {
+      setLoginError(err?.response?.data?.message || err?.message || 'Login failed. Please check your credentials and try again.');
     }
   };
 
@@ -71,19 +78,19 @@ const LoginForm = ({ setFormType }: { setFormType: (type: contentType ) => void 
           isError={!!errors.password} 
         />
 
-        <button type="button" onClick={() => setFormType('forgot' as contentType)} className="text-sm text-gray font-light cursor-pointer hover:text-dark transition-colors">Forgot password? </button>
+        <button type="button" onClick={() => setFormType('forgot' as contentType)} className="text-sm text-mute font-light cursor-pointer hover:text-mute/50 transition-colors">Forgot password? </button>
 
         <Button
           type="submit"
           disabled={loginMutation.isPending || !isValid}
-          className="w-full h-12 rounded-full bg-brown hover:bg-brown/80 text-white font-medium !mb-0"
+          className="w-full h-12 rounded-full bg-blue hover:bg-blue/80 text-white font-medium mb-1"
         >
           {loginMutation.isPending ? 'Loading...' : 'Login'}
         </Button>
 
-        {error && (
-          <div className="absolute bottom-[-28px] text-center text-red text-sm px-4 w-full">
-            {error}
+        {loginError && (
+          <div className="text-center text-red-400 text-sm px-4 w-full font-light">
+            {loginError}
           </div>
         )}
       </form>

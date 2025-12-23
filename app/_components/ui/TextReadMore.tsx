@@ -20,13 +20,25 @@ export default function TextReadMore({
 }: TextReadMoreProps) {
   const [readMore, setReadMore] = useState(false)
 
-  const lineClampClass = "line-clamp-"+lines
+  // Получаем класс line-clamp (Tailwind требует статические классы)
+  const getLineClampClass = () => {
+    if (readMore) return ''
+    switch (lines) {
+      case 1: return 'line-clamp-1 xl:line-clamp-none'
+      case 2: return 'line-clamp-2 xl:line-clamp-none'
+      case 3: return 'line-clamp-3 xl:line-clamp-none'
+      case 4: return 'line-clamp-4 xl:line-clamp-none'
+      case 5: return 'line-clamp-5 xl:line-clamp-none'
+      case 6: return 'line-clamp-6 xl:line-clamp-none'
+      default: return 'line-clamp-3 xl:line-clamp-none'
+    }
+  }
 
   return (
     <div className={cn('mb-4', className)}>
       <p className={cn(
-        'text-[13px] inter font-[400]',
-        !readMore ? `${lineClampClass} xl:line-clamp-none` : '',
+        'text-[15px] text-dark inter font-[400]',
+        getLineClampClass(),
         textClassName
       )}>
         {text}
@@ -34,7 +46,7 @@ export default function TextReadMore({
       <button 
         onClick={() => setReadMore(!readMore)} 
         className={cn(
-          'text-brown text-sm font-medium hover:underline mt-2 lg:hidden',
+          'text-blue text-sm font-medium hover:underline mt-2 lg:hidden',
           buttonClassName
         )}
       >

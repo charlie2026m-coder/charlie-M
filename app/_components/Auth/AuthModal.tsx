@@ -1,5 +1,5 @@
 'use client';
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/app/_components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/app/_components/ui/ClientDialog";
 import { Button } from "../ui/button";
 import { useState } from "react";
 import LoginForm from "./LoginForm";
@@ -31,7 +31,7 @@ const  AuthModal = ({ type = 'signin', className }: { type: contentType, classNa
             :<button className={cn(className, "text-lg text-brown hover:text-brown/50 cursor-pointer px-2")}>Sign Up</button>
         }
       </DialogTrigger>
-      <DialogContent className="!max-w-[600px] px-[100px] w-full gap-0  py-[50px] rounded-3xl bg-white">
+      <DialogContent className="!max-w-[600px] px-4 md:px-15 xl:px-25 w-[95%] gap-0  py-[50px] rounded-3xl bg-white">
         {/* Hide the title of dialog but left him for screen readers */}
         <DialogTitle className="absolute opacity-0">{titles[formType as keyof typeof titles]}</DialogTitle>
 

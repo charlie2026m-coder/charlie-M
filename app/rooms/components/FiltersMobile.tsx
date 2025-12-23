@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Checkbox } from "@/app/_components/ui/checkbox"
 import { Label } from "@/app/_components/ui/label"
 import { CustomSelect } from "@/app/_components/ui/CustomSelect"
-import { MainFilter, useBookingStore } from "@/store/bookingStore"
+import { MainFilter } from "@/store/useStore"
 import {  IoFilter } from "react-icons/io5";
 import { Button } from "@/app/_components/ui/button"
 import { Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerTitle, } from "@/app/_components/ui/drawer"
@@ -11,10 +11,11 @@ import { IoClose } from "react-icons/io5";
 import { cn } from '@/lib/utils'
 import { RadioGroup,RadioGroupItem } from '@/app/_components/ui/radio-group'
 import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
+import { useStore } from '@/store/useStore'
 
 
 const FiltersMobile = () => {
-  const { filter, bedSizeFilter, priceFilter, setValue } = useBookingStore()
+  const { filter, bedSizeFilter, priceFilter, setValue } = useStore()
   const [openDrawer, setOpenDrawer] = useState(false)
 
   const clearFilters = () => {
@@ -103,7 +104,7 @@ const filters = [
   },
   {
     label: 'Shared Terrace',
-    value: 'shared_terrace'
+    value: 'shared'
   },
 ]
 

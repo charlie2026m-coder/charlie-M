@@ -1,4 +1,4 @@
-import ExtraCard from "@/app/booking/[id]/components/ExtraCard"
+import ExtraCard from "@/app/booking/[id]/components/booking/ExtraCard"
 import { useState } from "react"
 import { ExtrasItem } from "@/types/beds24"
 

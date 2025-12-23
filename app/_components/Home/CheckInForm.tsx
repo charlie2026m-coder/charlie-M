@@ -9,14 +9,12 @@ import { Calendar } from '../ui/calendar';
 import { DateRange } from 'react-day-picker';
 import { Button } from "../ui/button"
 import { useRouter } from 'next/navigation';  
-import { useBookingStore } from '@/store/bookingStore';
+import { useStore } from '@/store/useStore';
 const CheckInForm = ({ 
     className = '', 
-    isBrown = false, 
     params 
   }:{ 
     className?: string, 
-    isBrown?: boolean, 
     params?: { 
       from: string | undefined | Date, 
       to: string | undefined | Date, 
@@ -24,7 +22,7 @@ const CheckInForm = ({
       children: string | undefined 
     }
   }) => {
-  const { dateRange, guests, setValue } = useBookingStore();
+  const { dateRange, guests, setValue } = useStore();
   const router = useRouter();
   const [openCalendar, setOpenCalendar] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());

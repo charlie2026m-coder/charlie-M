@@ -9,23 +9,18 @@ const PhotoGallery = () => {
   const [showImages, setShowImages] = useState<null | number>(null);
 
   const images = [
-    '/images/room.jpg',
-    '/images/room2.jpg',
-    '/images/room3.jpg',
-    '/images/room2.jpg',
-    '/images/room.jpg',
-    '/images/room2.jpg',
-    '/images/room3.jpg',
-    '/images/room2.jpg',
-    '/images/room.jpg',
-    '/images/room2.jpg',
-    '/images/room3.jpg',
-    '/images/room2.jpg',
-    '/images/room.jpg',
-    '/images/room2.jpg',
-    '/images/room3.jpg',
-    '/images/room2.jpg',
-    '/images/room.jpg',
+    '/images/room1.webp',
+    '/images/room2.webp',
+    '/images/room3.webp',
+    '/images/room2.webp',
+    '/images/room3.webp',
+    '/images/room2.webp',
+      '/images/room3.webp',
+    '/images/room2.webp',
+    '/images/room3.webp',
+    '/images/room2.webp',
+    '/images/room3.webp',
+    '/images/room2.webp',
   ]
 
   const nextPhoto = () => {
@@ -49,8 +44,8 @@ const PhotoGallery = () => {
           height={460} 
           className='w-full h-full max-h-[260px] md:max-h-[360px] lg:max-h-[460px] object-cover transition-transform duration-500 ease-out cursor-pointer group-hover:scale-110' 
         />
-        <div className=' flex items-center gap-1 text-brown px-4 py-2 rounded-full bg-white/85 absolute bottom-5 right-5'>
-          <IoMdImage className='size-5 text-brown' />{images.length} Photos
+        <div className=' flex items-center gap-1  px-4 py-2 rounded-full bg-white absolute bottom-5 right-5'>
+          <IoMdImage className='size-5 ' />{images.length} Photos
         </div>
       </div>
 
@@ -67,9 +62,6 @@ const PhotoGallery = () => {
             <DialogTitle className='text-2xl font-bold'>Photo Gallery</DialogTitle>
           </DialogHeader>
           <div className='flex items-center gap-2 w-full relative select-none'>
-            <div onClick={prevPhoto} className='absolute left-0 top-0 bottom-0 w-10 md:w-20 flex items-center justify-center  rounded-l-4xl'>
-              <IoChevronBack className='size-10 md:size-20 cursor-pointer text-black'  />
-            </div>
             <Image 
               src={images[showImages || 0]} 
               alt='room' 
@@ -78,7 +70,10 @@ const PhotoGallery = () => {
               className='max-h-[calc(80vh-140px)] w-full object-contain rounded-4xl cursor-pointer' 
               onClick={() => setShowImages(showImages === null ? 0 : showImages + 1)}
             />
-            <div onClick={nextPhoto} className='absolute right-0 top-0 bottom-0 w-10 md:w-20 flex items-center justify-center  rounded-r-4xl'>
+            <div onClick={prevPhoto} className='absolute left-0 bg-light1/50 hover:bg-gray-200/50 top-0 bottom-0 w-10 md:w-20 flex items-center justify-center  rounded-l-4xl'>
+              <IoChevronBack className='size-10 md:size-20 cursor-pointer text-black'  />
+            </div>
+            <div onClick={nextPhoto} className='absolute right-0 bg-light1/50 hover:bg-gray-200/50 top-0 bottom-0 w-10 md:w-20 flex items-center justify-center  rounded-r-4xl'>
               <IoChevronForward className='size-10 md:size-20 cursor-pointer text-black'  />
             </div>
           </div>

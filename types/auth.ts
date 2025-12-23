@@ -25,3 +25,10 @@ export interface Beds24AccessToken {
   token: string;
   expiresIn: number;
 }
+
+export interface ApaleoTokenResponse {
+  access_token: string;
+  expires_in: number;
+  token_type: string;
+  scope?: string;
+}

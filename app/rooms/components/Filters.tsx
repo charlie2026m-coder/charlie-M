@@ -3,11 +3,11 @@ import { Checkbox } from "@/app/_components/ui/checkbox"
 import { Label } from "@/app/_components/ui/label"
 import { CustomSelect } from "@/app/_components/ui/CustomSelect"
 import { RadioGroupDemo } from "@/app/_components/ui/CustomRadio"
-import { MainFilter, useBookingStore } from "@/store/bookingStore"
+import { MainFilter } from "@/store/useStore"
+import { useStore } from "@/store/useStore"
 
 const Filters = () => {
-  const { filter, bedSizeFilter, priceFilter, setValue } = useBookingStore()
-  console.log( priceFilter)
+  const { filter, bedSizeFilter, priceFilter, setValue } = useStore()
   const setFilter = (value: MainFilter) => {
     setValue(filter === value ? undefined : value, 'filter')
   }
@@ -58,5 +58,5 @@ const filters = [{
   value: 'terrace'
 }, {
   label: 'Shared Terrace',
-  value: 'shared_terrace'
+  value: 'shared'
 }]

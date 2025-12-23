@@ -4,8 +4,8 @@ import { AiFillInfoCircle } from "react-icons/ai";
 import { FaCalendar } from "react-icons/fa";
 import { MdDownload } from "react-icons/md";
 import { useState } from "react";
-import CodeModal from "./CodeModal";
 import Link from "next/link";
+import CodeModal from "./CodeModal";
 
 export const AddExtrasButton = () => {
   return (

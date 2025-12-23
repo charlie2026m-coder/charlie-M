@@ -6,8 +6,12 @@ import UpgradeSection from './components/UpgradeSection';
 import MainInfo from './components/MainInfo';
 import AddExtras from './components/AddExtras';
 import InformationSection from "./components/InformationSection";
-
+import { useParams } from "next/navigation";
+import { reservations } from "@/content/content";
 const ReservationPage = () => {
+  const { id } = useParams();
+  const reservation = reservations.find((reservation) => reservation.id === Number(id));
+
   return (
     <div className='flex flex-col flex-1'>
       <Link href='/profile/reservations'>
@@ -26,24 +30,4 @@ const ReservationPage = () => {
 
 export default ReservationPage;
 
-
-
-const reservation = {
-  id: 1,
-  checkInStatus: 'Pending Check-in', 
-  name: 'Cozy Retreat Suite',
-  date: '2025-01-01',
-  checkIn: '2025-01-01',
-  checkOut: '2025-01-02',
-  status: 'upcoming',
-  image: '/images/reservation_1.jpg',
-  category: 'Suite',
-  people: 2,
-  roomSize: 50,
-  roomType: 'Suite',
-  hasBalcony: true,
-  price: 1245.50,
-  code: 123456,
-  roomNumber: 101,
-}
 

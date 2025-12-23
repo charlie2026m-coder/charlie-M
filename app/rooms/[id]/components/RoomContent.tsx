@@ -1,16 +1,15 @@
-import Dot from '@/app/_components/ui/dot'
 import Amenities from '../../components/Amenities'
-import { Beds24RoomType } from '@/types/beds24'
 import { GiHouseKeys } from "react-icons/gi";
 import TextReadMore from '@/app/_components/ui/TextReadMore';
 import RoomParamsRow from '@/app/_components/ui/RoomParamsRow';
+import { RoomDetails } from '@/types/types'
 
-const RoomContent = ({room}: {room: Beds24RoomType}) => {
+const RoomContent = ({ room }: { room: RoomDetails }) => {
   return (
     <>
-      <div className='flex justify-between mb-5 items-start gap-2'>
+      <div className='flex flex-col-reverse md:flex-row justify-between mb-5 items-start gap-2'>
         <h2 className='text-[30px] md:text-[40px] font-semibold w-4/5 leading-[0.95]'>{room.name}</h2>
-        <div className='text-brown bg-white/80 shadow-lg p-2.5 rounded-full'>{room.roomType}</div>
+        <div className='text-blue bg-white/80 shadow-lg p-2.5 rounded-full'>{room.roomType}</div>
       </div>
       <div className='pb-3 mb-5 w-full border-b flex flex-col md:flex-row  justify-between'>
         <RoomParamsRow item={room} />

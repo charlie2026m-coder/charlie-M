@@ -2,14 +2,14 @@ import Steps from './components/Steps'
 import { getSingleRoomData } from '@/services/getSingleRoomData'
 import ErrorCard from '@/app/rooms/components/ErrorCard'
 import {  sortGuestsByRooms } from '@/lib/utils'
-import PageContent from './components/PageContent'
-
+import StepsContent from './components/StepsContent'
+import { Room } from '@/types/types'
 
 interface IParams {
   params: Promise<{ id: string }>
   searchParams: Promise<{ 
-    from?: string
-    to?: string
+    from: string
+    to: string
     adults?: string
     children?: string
   }>
@@ -18,24 +18,20 @@ interface IParams {
 const BookingPage = async ({ params, searchParams }: IParams) => {
   const { id } = await params
   const { from, to, adults, children } = await searchParams
-
   const room = await getSingleRoomData(id, from, to)
-
   if ('error' in room) return <ErrorCard isSingleRoom={true} link='/rooms' />
-  const filledRooms = sortGuestsByRooms(room.adults, room.children, Number(adults), Number(children))
-
+  const filledRooms: Room[] = sortGuestsByRooms(room.adults, room.children, Number(adults), Number(children), {from, to})
   return (
-    <section className='container px-[100px] pt-8'>
+    <section className='container px-4 md:px-10 xl:px-[100px] pt-8'>
       <Steps  />
-      <PageContent 
+      <StepsContent 
         room={room} 
         from={from} 
         to={to} 
-        adults={adults} 
-        children={children} 
+        adults={adults || '1'} 
+        children={children || '0'} 
         filledRooms={filledRooms} 
       />
-
     </section>
   )
 }

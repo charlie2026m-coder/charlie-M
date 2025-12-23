@@ -4,28 +4,30 @@ import CheckInForm from '../_components/Home/CheckInForm'
 import Filters from './components/Filters'
 import FiltersMobile from './components/FiltersMobile'
 import RoomsList from './components/RoomsList'
-import { getRoomsData } from '@/services/getRoomsData'
 import { UrlParams } from '@/types/beds24'
 import ErrorCard from '@/app/rooms/components/ErrorCard'
 import NotFoundCard from './[id]/components/NotFoundCard'
-import TextReadMore from '../_components/ui/TextReadMore'
+import { getApaleoRooms } from '@/services/getApaleoRooms'
+
 
 const RoomsPage = async ({  searchParams } : {  searchParams: UrlParams  }) => {
   const { from, to, adults, children } = await searchParams;
-  const rooms = await getRoomsData(from, to, adults, children)
+  const guests = (adults ? Number(adults) : 1) + (children ? Number(children) : 0);
 
-  // if ('error' in rooms) return <ErrorCard />
+  const rooms = await getApaleoRooms(from, to);
 
+  if ('error' in rooms || !rooms) return <ErrorCard />
+  if (rooms.length === 0) return <NotFoundCard text='No rooms found' />
 
+  const availableRooms = rooms.filter(room => {
+    return (room.available * room.maxPersons) >= guests
+  });
+  
   return (
     <section className='flex flex-col container px-4 md:px-10 xl:px-[100px] pt-10'>
       <h1 className='text-[35px] md:text-6xl font-bold jakarta mb-6'>Charlie M — Rooms</h1>
 
-      <TextReadMore 
-        text="Our rooms at Charlie M are designed to feel inviting from the moment you arrive. Modern interiors, great beds, and thoughtful amenities create a calm space to unwind after a day in the city. Each room category has its own character — from private balconies to shared terraces — so you can choose the one that fits your stay." 
-        lines={3} 
-        className='mb-7'
-      />  
+      <p className='text-[15px] text-dark inter font-[400] mb-7'> Our rooms at Charlie M are designed to feel inviting from the moment you arrive. Modern interiors, great beds, and thoughtful amenities create a calm space to unwind after a day in the city. Each room category has its own character — from private balconies to shared terraces — so you can choose the one that fits your stay.</p>
 
       <div className="w-full mb-[30px] md:mb-[85px] relative">
       <VideoPlayer 
@@ -40,12 +42,7 @@ const RoomsPage = async ({  searchParams } : {  searchParams: UrlParams  }) => {
       <Filters />
       <FiltersMobile />
       <Amenities />
-      {('error' in rooms) 
-        ? <ErrorCard />
-        : rooms.length === 0
-          ? <NotFoundCard text='No rooms found' />
-          : <RoomsList rooms={rooms} params={{ from, to, adults, children }} />
-      } 
+      <RoomsList rooms={availableRooms} params={{ from, to, adults, children }} />
     </section>
   )
 }

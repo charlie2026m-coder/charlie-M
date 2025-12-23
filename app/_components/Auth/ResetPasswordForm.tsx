@@ -46,8 +46,8 @@ const ResetPasswordForm = ({ setFormType }: { setFormType: (type: contentType ) 
   
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 relative mb-[30px]">
-      <h1 className="text-3xl font-[400] text-center mb-[30px]">Reset Password</h1>
-      <h2 className="text-sm text-center mb-[30px] text-gray">Enter your new password</h2>
+      <h1 className="text-3xl font-[400] text-center mb-6">New Password</h1>
+      <h2 className="text-sm text-center mb-8 text-dark">Enter your new password</h2>
       <CustomInput 
         register={register} 
         name="password" 
@@ -69,7 +69,7 @@ const ResetPasswordForm = ({ setFormType }: { setFormType: (type: contentType ) 
       <Button
         type="submit"
         disabled={updatePasswordMutation.isPending || !isValid}
-        className="w-full h-12 rounded-full bg-brown hover:bg-brown/80 text-white font-medium !mb-0"
+        className="w-full h-12 rounded-full bg-blue hover:bg-blue/80 text-white font-medium !mb-0"
       >
         {updatePasswordMutation.isPending ? 'Updating...' : 'Save'}
       </Button>

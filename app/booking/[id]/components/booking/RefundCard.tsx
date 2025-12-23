@@ -1,5 +1,5 @@
 'use client'
-import { useBookingStore } from '@/store/bookingStore'
+import { useBookingStore } from '@/store/useBookingStore'
 import { Label } from "@/app/_components/ui/label"
 import {
   RadioGroup,

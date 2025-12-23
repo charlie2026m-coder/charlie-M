@@ -26,3 +26,9 @@ export const ExtendButton = () => {
     <Button variant='outline' className='h-[35px] text-sm px-5 gap-2 justify-start'><FaCalendar />Extend Your Stay</Button>
   )
 }
+
+export const BookAgainButton = () => {
+  return (
+    <Button variant='outline' className='h-[35px] text-sm px-5 gap-2 justify-start'><FaCalendar />Book Again </Button>
+  )
+}

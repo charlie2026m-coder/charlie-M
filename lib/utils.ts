@@ -3,6 +3,7 @@ import dayjs from "dayjs"
 import { twMerge } from "tailwind-merge"
 import { Beds24RoomType, ExtrasItem, UrlParams } from "@/types/beds24"
 import imageCompression from 'browser-image-compression';
+import { v4 as uuidv4 } from 'uuid';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -66,24 +67,28 @@ room,
   }
 }
 
+
 export function sortGuestsByRooms(
   maxAdults: number,
   maxChildren: number,
   adults: number,
-  children: number
+  children: number,
+  dateRange: {from: string, to: string}
 ) {
-  const rooms: { id: number; adults: number; children: number }[] = [];
+  const rooms: { id: string; adults: number; children: number, from: string, to: string}[] = [];
   let remainingAdults = adults;
   let remainingChildren = children;
-  let id = 1;
+
   while (remainingAdults > 0 || remainingChildren > 0) {
     const roomAdults = Math.min(maxAdults, remainingAdults);
     const roomChildren = maxChildren > 0 ? Math.min(maxChildren, remainingChildren) : 0;
 
     rooms.push({
-      id: id++,
+      id: uuidv4(), // Генерируем UUID
       adults: roomAdults,
-      children: roomChildren
+      children: roomChildren,
+      from: dateRange.from,
+      to: dateRange.to,
     });
 
     remainingAdults -= roomAdults;
@@ -157,3 +162,9 @@ export async function resizeImage(file: File) {
   const compressedFile = await imageCompression(file, options);
   return compressedFile;
 }
+
+export const calculateNights = (arrival: string, departure: string): number => {
+  const checkIn = dayjs(arrival);
+  const checkOut = dayjs(departure);
+  return checkOut.diff(checkIn, 'day');
+};

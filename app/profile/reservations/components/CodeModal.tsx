@@ -5,7 +5,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/app/_components/ui/dialog"
+} from "@/app/_components/ui/ClientDialog"
 interface CodeModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void

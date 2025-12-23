@@ -5,12 +5,14 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Switch } from '@/app/_components/ui/switch'
 import { Label } from '@/app/_components/ui/label'
 import { Button } from '@/app/_components/ui/button'
-import { useBookingStore } from '@/store/bookingStore'
+import { useBookingStore } from '@/store/useBookingStore'
 import { GuestDetailsFormData, guestDetailsSchema } from '@/types/schemas'
+import { useStore } from '@/store/useStore'
 
 
 const GuestDetailsForm = () => {
-  const { setBooking, booking, setValue } = useBookingStore()
+  const { setValue } = useStore()
+  const { setBooking, booking } = useBookingStore()
   const {
     register,
     handleSubmit,

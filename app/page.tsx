@@ -1,7 +1,6 @@
 import PosterSection from './_components/Home/PosterSection';
 import RoomsSection from './_components/Home/RoomsSection';
 import WhySection from './_components/Home/WhySection';
-import Line from './_components/footer/Line';
 import VibeSection from './_components/Home/VibeSection';
 import FAQSection from './_components/Home/FAQSection';
 import ReviewsSection from './_components/Home/ReviewsSection';

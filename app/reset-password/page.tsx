@@ -45,7 +45,7 @@ export default function ResetPassword() {
 
   return (
     <Dialog open={true} onOpenChange={() => router.push('/')}>
-      <DialogContent className="!max-w-[600px] px-[100px] w-full gap-0  py-[50px] rounded-3xl bg-white">
+      <DialogContent className="!max-w-[600px] px-4 md:px-15 xl:px-25 w-[95%] gap-0  py-[50px] rounded-3xl bg-white">
         {/* Hide the title of dialog but left him for screen readers */}
         <DialogTitle className="absolute opacity-0">Reset Password</DialogTitle>
 

@@ -17,9 +17,9 @@ export default function MapWindow({
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string,
+    libraries: ["places"], // Синхронизируем с другими компонентами
   });
 
-  console.log('Map loaded, rendering Marker at:', center);
 
   const customMarkerIcon = useMemo(() => {
     if (!isLoaded || typeof google === 'undefined') return undefined;
@@ -49,6 +49,7 @@ export default function MapWindow({
             mapTypeControl: false, 
             fullscreenControl: isFullscreen,
             gestureHandling: "cooperative", 
+            
           }}
         >
           <Marker position={center} icon={customMarkerIcon} />

@@ -42,10 +42,7 @@ const PhotoSlider = ({
           watchDrag: false,
         }}
       >
-        {/* Category Badge */}
-        <div className="absolute top-4 right-4 bg-white backdrop-blur-sm px-6 py-2 rounded-full z-10">
-          <span className="text-blue font-medium">{category}</span>
-        </div>
+ 
         <CarouselContent>
           {images.map((image, index) => (
             <CarouselItem key={index}>

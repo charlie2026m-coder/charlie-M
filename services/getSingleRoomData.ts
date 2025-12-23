@@ -1,17 +1,56 @@
 import { beds24Request } from '@/app/api/auth';
 import type { Beds24PropertyResponse, Beds24RoomType, ExtrasItem } from '@/types/beds24';
 import dayjs from 'dayjs';
+import { RoomDetails } from '@/types/types';
 
-export async function getSingleRoomData(id: string, from?: string, to?: string ): Promise<Beds24RoomType | { error: string }> {
+
+export async function getSingleRoomData(id: string, from?: string, to?: string ): Promise<RoomDetails | { error: string }> {
+
   try {
+    const room = [
+      {
+        adults: 2,
+        children: 0,
+        features: ["BALCONY"],
+        hasBalcony: true,
+        id: 612384,
+        name: "Studio with queen size bed and balcony",
+        roomType: "double",
+        roomSize: 12,
+        propertyId: 287404,
+        qty: 6,
+        total: 6,
+        free: 6,
+        maxAdult: 12,
+        maxChildren: 0,
+        maxPeople: 12,
+        maxStay: 180,
+        minStay: 1,
+        minPrice: 40,
+        rackRate: 0,
+        people: 2,
+        unitsAvailable: {
+          total: 6,
+          free: 6,
+          availability: {
+            1: { "2025-11-15": true, "2025-11-16": true, "2025-11-17": true, "2025-11-18": true, "2025-11-19": true },
+            2: { "2025-11-15": true, "2025-11-16": true, "2025-11-17": true, "2025-11-18": true, "2025-11-19": true },
+            3: { "2025-11-15": true, "2025-11-16": true, "2025-11-17": true, "2025-11-18": true, "2025-11-19": true },
+            4: { "2025-11-15": true, "2025-11-16": true, "2025-11-17": true, "2025-11-18": true, "2025-11-19": true },
+            5: { "2025-11-15": true, "2025-11-16": true, "2025-11-17": true, "2025-11-18": true, "2025-11-19": true },
+            6: { "2025-11-15": true, "2025-11-16": true, "2025-11-17": true, "2025-11-18": true, "2025-11-19": true }
+          }
+        }
+      },
+    ]
     const today = dayjs().format('YYYY-MM-DD')
     const nextYear = dayjs().add(365, 'day').format('YYYY-MM-DD')
-
-
+    return room[0] as unknown as RoomDetails;
+      
     const details = await beds24Request<Beds24PropertyResponse>(`/properties?includeAllRooms=true&roomId=${id}&includeUpsellItems=true&includeTexts=all&includePictures=true`, 'GET');
     //here we want to get extras from the &includeUpsellItems=true, 
     const upsellItemNames = formatUpsellItems(details?.data?.[0].texts[0], details?.data?.[0].upsellItems);
-    const room = details?.data?.[0]?.roomTypes?.[0];
+    // const room = details?.data?.[0]?.roomTypes?.[0];
     if (!room) {
       console.error('Room not found');
       return { error: 'Room not found' };
@@ -36,7 +75,7 @@ export async function getSingleRoomData(id: string, from?: string, to?: string )
     const filteredUnits = isNeedFilter ? filterOnlyFullyFreeUnits(formattedUnits) : formattedUnits
 
   
-  const roomDetails =  {
+    const roomDetails =  {
       id: room?.id,
       propertyId: room?.propertyId,
       name: room?.name,
@@ -64,7 +103,7 @@ export async function getSingleRoomData(id: string, from?: string, to?: string )
         availability: filteredUnits,
       },
       extras: upsellItemNames.filter((extra) => extra.type !== 'notUsed'),
-    } as Beds24RoomType;
+    } as unknown as RoomDetails;
 
     return roomDetails;
   } catch (error) {
@@ -124,40 +163,3 @@ function formatUpsellItems(namesObj:Record<string, string>, items:ExtrasItem[]) 
   });
 }
 
-
-const room = [
-  {
-    adults: 2,
-    children: 0,
-    features: ["BALCONY"],
-    hasBalcony: true,
-    id: 612384,
-    name: "Studio with queen size bed and balcony",
-    roomType: "double",
-    roomSize: 12,
-    propertyId: 287404,
-    qty: 6,
-    total: 6,
-    free: 6,
-    maxAdult: 12,
-    maxChildren: 0,
-    maxPeople: 12,
-    maxStay: 180,
-    minStay: 1,
-    minPrice: 40,
-    rackRate: 0,
-    people: 2,
-    unitsAvailable: {
-      total: 6,
-      free: 6,
-      availability: {
-        1: { "2025-11-15": true, "2025-11-16": true, "2025-11-17": true, "2025-11-18": true, "2025-11-19": true },
-        2: { "2025-11-15": true, "2025-11-16": true, "2025-11-17": true, "2025-11-18": true, "2025-11-19": true },
-        3: { "2025-11-15": true, "2025-11-16": true, "2025-11-17": true, "2025-11-18": true, "2025-11-19": true },
-        4: { "2025-11-15": true, "2025-11-16": true, "2025-11-17": true, "2025-11-18": true, "2025-11-19": true },
-        5: { "2025-11-15": true, "2025-11-16": true, "2025-11-17": true, "2025-11-18": true, "2025-11-19": true },
-        6: { "2025-11-15": true, "2025-11-16": true, "2025-11-17": true, "2025-11-18": true, "2025-11-19": true }
-      }
-    }
-  },
-]

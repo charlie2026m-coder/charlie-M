@@ -7,13 +7,14 @@ import { cn } from '@/lib/utils';
 import { Separator } from '@/app/_components/ui/separator';
 import { toast } from 'sonner';
 import { AddExtrasButton, InfoButton, DetailsButton, BookAgainButton, InvoiceButton, CheckinButton } from './Buttons';
+import { bookingStatuses } from '@/types/types';
 const ReservationCard = ({ reservation }: { reservation: any }  ) => {
-  const { people, checkIn, checkOut, name, id, isCheckin, roomNumber, code } = reservation;
-  const from = dayjs(checkIn).format('ddd D MMM YYYY');
-  const to = dayjs(checkOut).format('ddd D MMM YYYY');
-  const isCancelled = reservation.status === 'cancelled';
-  const isCompleted = reservation.status === 'completed';
-  const isActive = reservation.status === 'active';
+  const { people, arrival, departure, name, id, isCheckin, roomNumber, code } = reservation;
+  const from = dayjs(arrival).format('ddd D MMM YYYY');
+  const to = dayjs(departure).format('ddd D MMM YYYY');
+  const isCancelled = reservation.status === bookingStatuses.Cancelled;
+  const isCompleted = reservation.status === bookingStatuses.CheckedOut;
+  const isActive = reservation.status === bookingStatuses.Confirmed;
 
   return (
     <div className='flex flex-col lg:flex-row bg-white border rounded-2xl p-3 relative'>
@@ -27,7 +28,7 @@ const ReservationCard = ({ reservation }: { reservation: any }  ) => {
       <div className='flex flex-col justify-center w-full'>
         <div className='flex items-center justify-between mb-2 mt-4 lg:mt-0'>
           <h2 className='text-xl jakarta font-bold '>{name}</h2>
-          {isCancelled && <StatusBadge status='cancelled' className='lg:hidden' />}
+          {isCancelled && <StatusBadge status={bookingStatuses.Cancelled} className='lg:hidden' />}
             
         </div>
         <div className='flex flex-col lg:flex-row gap-1 lg:items-center text-sm text-mute mb-3'>
@@ -53,7 +54,7 @@ const ReservationCard = ({ reservation }: { reservation: any }  ) => {
 
       </div>
       {isCancelled && <div className='absolute top-3 right-3 hidden lg:block'>
-        <StatusBadge status='cancelled' />
+        <StatusBadge status={bookingStatuses.Cancelled} />
       </div>}
     </div>
   )

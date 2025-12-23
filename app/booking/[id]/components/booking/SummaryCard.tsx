@@ -1,5 +1,5 @@
 'use client'
-import { useBookingStore } from '@/store/bookingStore'
+import { useBookingStore } from '@/store/useBookingStore'
 
 import { FiInfo } from "react-icons/fi";
 import Price from "@/app/_components/ui/price";

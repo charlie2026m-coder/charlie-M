@@ -5,11 +5,11 @@ import Link from 'next/link'
 
 const Contacts = () => {
   const paymentMethods = [
-    '/images/visaIcon.png',
-    '/images/mastercardIcon.png',
-    '/images/stripeIcon.png',
-    '/images/googlepayIcon.png',
-    '/images/applepayIcon.png',
+    '/images/payment-visa.svg',
+    '/images/payment-ms.svg',
+    '/images/payment-stripe.svg',
+    '/images/payment-google.svg',
+    '/images/payment-apple.svg',
   ];
 
   return (

@@ -1,43 +1,27 @@
 import { cn } from '@/lib/utils'
-import Dot from './dot';
+import { bookingStatuses } from '@/types/types';
 
-
-const StatusBadge = ({ status, className, isDot = false }: { status?: string, className?: string, isDot?: boolean }) => {
+const StatusBadge = ({ status, className}: { status?: bookingStatuses, className?: string }) => {
   if (!status) return null;
 
-  const statusColors = {
-    'checked in': 'green',
-    'completed': 'green',
-    'pending check-in': 'yellow',
-    'upcoming': 'orange',
-    'ongoing': 'blue',
-    'cancelled': 'red',
-    'checked out': 'black',
-  }
-  const color = statusColors[status.toLowerCase() as keyof typeof statusColors];
   const style = {
-    'green': 'bg-green/10 text-green',
-    'yellow': 'bg-yellow-50 text-yellow-500',
-    'orange': 'bg-orange-50 text-orange-700',
-    'blue': 'bg-blue-50 text-blue-500',
-    'red': 'bg-red-100 text-red-600',
-    'black': 'bg-black/20 text-black',
+    [bookingStatuses.Confirmed]: 'bg-[#E08A3F1A] text-yellow-500',
+    [bookingStatuses.CheckedOut]: 'bg-green/10 text-green',
+    [bookingStatuses.InHouse]: 'bg-[#2A94211A] text-[#5F839E]',
+    [bookingStatuses.Cancelled]: 'bg-red-100 text-red-600',
+    [bookingStatuses.NoShow]: 'bg-gray/10 text-gray',
   }
-  
-  const colors = {
-    'green': 'green',
-    'yellow': 'yellow',
-    'orange': 'orange',
-    'blue': 'blue',
-    'red': 'red',
-    'black': 'black',
+  const textOfStatus = {
+    [bookingStatuses.Confirmed]: 'upcoming',
+    [bookingStatuses.CheckedOut]: 'completed',
+    [bookingStatuses.InHouse]: 'ongoing',
+    [bookingStatuses.Cancelled]: 'cancelled',
+    [bookingStatuses.NoShow]: 'no show',
   }
-
 
   return (
-    <div className={cn('flex items-center  px-2.5 h-6 text-[14px] gap-2 rounded-full', style[color as keyof typeof style], className)}>
-      {isDot && <Dot size={10} color={colors[color as keyof typeof colors]} /> }
-      {status}
+    <div className={cn('flex items-center px-2.5 h-6 text-[14px] gap-2 rounded-full', style[status], className)}>
+      {textOfStatus[status]}
     </div>
   )
 }

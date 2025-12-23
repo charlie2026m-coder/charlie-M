@@ -1,5 +1,5 @@
 import { Button } from "@/app/_components/ui/button"
-import { CustomDialog } from "@/app/_components/ui/CustomDialog"
+import { ClientCustomDialog } from "@/app/_components/ui/ClientCustomDialog"
 import { Input } from "@/app/_components/ui/input"
 import { useState } from "react"
 import Image from "next/image"
@@ -25,7 +25,7 @@ const ReservationIdDialog = () => {
     }
 
   return (
-    <CustomDialog
+    <ClientCustomDialog
       open={isOpen}
       setOpen={setIsOpen}
       trigger={

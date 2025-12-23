@@ -102,7 +102,7 @@ const Cards = () => {
     <div className='grid xl:grid-cols-2 gap-4 w-full  pt-2'>
       {cards.map((card) => (
         <div key={card.title} className='flex gap-2.5  items-center bg-white px-3 py-2 rounded-full'>
-          <FaWalking className='text-brown size-6' />
+          <FaWalking className='text-mute size-6' />
           <h3 className='text-lg'>{card.title}</h3>
           <div className='px-2 py-1 rounded-full bg-blue text-mute ml-auto self-start min-w-[65px] text-center'>{card.time} min</div>
         </div>
@@ -111,13 +111,6 @@ const Cards = () => {
   )
 }
 
-const images = [
-  '/images/street-1.png',
-  '/images/street-2.png',
-  '/images/street-3.png',
-  '/images/street-2.png',
-  '/images/street-1.png',
-]
 
 
 const cards = [
@@ -126,19 +119,19 @@ const cards = [
     time: 2,
   },
   {
+    title: 'Gendarmenmarkt',
+    time: 10,
+  },
+  {
     title: 'Potsdamer Platz',
     time: 10,
   },
   {
-    title: 'Museum Island',
+    title: 'Brandenburg Gate',
     time: 15,
   },
   {
-    title: 'Gendarmenmarkt',
-    time: 7,
-  },
-  {
-    title: 'Brandenburg Gate',
+    title: 'Museum Island',
     time: 15,
   },
   {
