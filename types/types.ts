@@ -1,4 +1,4 @@
-import { Beds24RoomType } from "./beds24";
+import { Service, SingleRoom } from "./apaleo";
 
 export enum bookingStatuses {
   Confirmed = "Confirmed",
@@ -32,19 +32,19 @@ export interface Params extends Guests {
   to: string | undefined;
 }
 
+
+export type RoomExtra = Omit<Service, 'description' | 'daysOfWeek'>;
+
 export interface Room {
   id: string;
   adults: number;
   children: number;
   from: string;
   to: string;
-  extras: string[];
+  extras?: RoomExtra[];
 }
 
-export interface RoomDetails extends Beds24RoomType {
+export interface RoomDetails extends SingleRoom {
   id: string;
-  title: string;
-  description: string;
-  price: number;
-
+  code: string;
 }

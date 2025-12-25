@@ -3,13 +3,12 @@ import { useState } from 'react'
 import { Checkbox } from "@/app/_components/ui/checkbox"
 import { Label } from "@/app/_components/ui/label"
 import { CustomSelect } from "@/app/_components/ui/CustomSelect"
-import { MainFilter } from "@/store/useStore"
+import { BedSizeFilter, MainFilter } from "@/store/useStore"
 import {  IoFilter } from "react-icons/io5";
 import { Button } from "@/app/_components/ui/button"
 import { Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerTitle, } from "@/app/_components/ui/drawer"
 import { IoClose } from "react-icons/io5";
 import { cn } from '@/lib/utils'
-import { RadioGroup,RadioGroupItem } from '@/app/_components/ui/radio-group'
 import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
 import { useStore } from '@/store/useStore'
 
@@ -20,13 +19,16 @@ const FiltersMobile = () => {
 
   const clearFilters = () => {
     setValue(undefined, 'filter')
-    setValue('90/200', 'bedSizeFilter')
+    setValue('single', 'bedSizeFilter')
     setValue('Cheapest', 'priceFilter')
   }
   const setFilter = (value: MainFilter) => {
     setValue(filter === value ? undefined : value, 'filter')
   }
-  return (
+  const setBedSizeFilter = (value: BedSizeFilter) => {
+    setValue(bedSizeFilter === value ? undefined : value, 'bedSizeFilter')
+  }
+    return (
     <>
       <div className='flex md:hidden items-center justify-between mb-[30px]'>
         <Button onClick={() => setOpenDrawer(true)} className='flex items-center gap-2 h-[44px] !px-6'>
@@ -68,16 +70,12 @@ const FiltersMobile = () => {
           </CategoryFilter>
          
           <CategoryFilter title="Bed Size">
-            <RadioGroup value={bedSizeFilter?.toString() ?? ''} onValueChange={(value) => setValue(value as string, 'bedSizeFilter')} className="flex flex-col">
-              {
-                ['90/200', '120/200', '140/200', '160/200'].map((item) => (
-                  <div className='flex items-center gap-3' key={item}>
-                    <RadioGroupItem value={item} id={item} />
-                    <Label htmlFor={item} className="text-[17px] inter font-[400]">{item}</Label>
-                  </div>
-                ))
-              }
-            </RadioGroup>
+              {bedsFilter.map((item) => (
+                <div key={item.value} className='flex items-center gap-3'>
+                  <Checkbox id={item.value} checked={bedSizeFilter === item.value} onCheckedChange={() => setBedSizeFilter(item.value as BedSizeFilter)} />
+                  <Label htmlFor={item.value} className='text-[17px] font-[400] inter'>{item.label}</Label>
+                </div>
+              ))}
           </CategoryFilter>
           </div>
 
@@ -105,6 +103,24 @@ const filters = [
   {
     label: 'Shared Terrace',
     value: 'shared'
+  },
+]
+const bedsFilter = [
+  {
+    label: '90/200',
+    value: ''
+  },
+  {
+    label: '120/200',
+    value: ''
+  },
+  {
+    label: '140/200',
+    value: 'queen'
+  },
+  {
+    label: '160/200',
+    value: 'king'
   },
 ]
 

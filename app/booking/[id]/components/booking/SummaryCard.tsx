@@ -1,86 +1,121 @@
 'use client'
 import { useBookingStore } from '@/store/useBookingStore'
-
-import { FiInfo } from "react-icons/fi";
 import Price from "@/app/_components/ui/price";
 import { BiSolidLike } from "react-icons/bi";
 import Image from 'next/image';
-import { getExtrasPrice, getPeriodText, getPerText } from '@/lib/utils';
-import CheckInCheckOutDates from '@/app/_components/ui/CheckInCheckOutDates';
+import { calculateNights } from '@/lib/utils';
+import { TAX_RATE } from '@/lib/Constants';
+import { BsCalendar2Fill } from 'react-icons/bs';
+import dayjs from 'dayjs';
+import { getExtraPrice } from '@/lib/utils';
 
 const SummaryCard = () => {
-  const { booking } = useBookingStore()
-  const guests = booking.guests.adults + booking.guests.children
-  const extrasTotalPrice = booking.extras.reduce((acc, item) => acc + getExtrasPrice(item, booking.roomsAmount, booking.guests, booking.nights), 0)
+  const { booking, rooms, roomDetails } = useBookingStore()
+
+  if (!booking || !booking.reservations) {
+    return (
+      <div className='flex flex-col bg-white rounded-[20px] py-5 px-3 shadow-xl'>
+        <h2 className='text-2xl font-bold mb-3 text-center'>Summary</h2>
+        <p className='text-center text-gray-500'>No booking data available</p>
+      </div>
+    )
+  }
+
+  const { reservations } = booking
+  const totalGuests = reservations.adults + (reservations.childrenAges?.length || 0)
+  const nights = calculateNights(reservations.arrival, reservations.departure)
+  const roomPrice = roomDetails?.price || 0
+
+  const updatedRooms = rooms.map(room => {
+    const updateExtras = room.extras?.map(extra => {
+      return {
+        ...extra,
+        totalPrice: getExtraPrice(extra, room.adults + room.children, nights),
+      }
+    })
+    return {
+      ...room,
+      extras: updateExtras,
+    }
+  })
+
+
+
+  const flatExtras = updatedRooms.flatMap(room => room.extras || [])
+  const getText = (days: number) => days === 1 ? 'night' : 'nights'
+  console.log(rooms)
+  //calculate total price for rooms and extras
+  const extrasTotalPrice = flatExtras.reduce((acc, extra) => acc + extra.totalPrice, 0)
+
+
+  const totalPrice = reservations.prePaymentAmount.amount
 
   return (
-    <div className='flex flex-col bg-white rounded-[20px] py-5 px-3 shadow-xl'>
+    <div className='flex flex-col bg-white rounded-[20px] py-5 px-3 shadow-xl self-start'>
       <h2 className='text-2xl font-bold mb-3 text-center'>Summary</h2>
       <Image 
-        src="/images/room.jpg" 
+        src="/images/room1.webp" 
         alt="summary" 
         width={327} 
         height={202} 
-        className='w-full max-h-[202px] rounded-xl mb-3'
+        className='w-full max-h-[202px] rounded-xl mb-3 object-cover'
       />
 
-      <CheckInCheckOutDates from={booking.arrival as string} to={booking.departure as string} />
-
       <div className='text-[16px] flex justify-between font-[500] py-3 border-b mb-3'> 
-        Guests: <span>{guests}</span>
+        Guests: <span className='font-bold'>{totalGuests}</span>
       </div>
 
       <div className='flex flex-col'>
-        <span className='font-semibold mb-1.5 text-[15px]'>Price:</span>
-        <div className='flex flex-col gap-1 mb-5'>
-          {booking.rooms.map((item, index) => (
-            <div key={index} className='flex items-center gap-2 inter text-sm text-dark'>
-              <span className=' truncate overflow-hidden whitespace-nowrap w-1/2'>{booking.name}</span>
-              <span>{booking.price}</span>x<span>{booking.nights} {getText(booking.nights)}</span>
-              <span className='text-bale font-semibold ml-auto'>€ {booking.price * booking.nights}</span>
+        <span className='font-semibold mb-4 text-[15px]'>Price:</span>
+        <div className='flex flex-col gap-1 mb-3'>
+          {rooms.map((room, index) => (
+            <div key={room.id} className='flex flex-col gap-1 mb-2'>
+              <div className='flex items-center gap-2 inter text-sm text-dark'>
+                <span className='truncate overflow-hidden whitespace-nowrap'>Room {index + 1}</span>
+                <span>€ {roomDetails?.averagePrice || 0}</span>×<span>{nights} {getText(nights)}</span>
+                <span className='text-bale font-bold text-base ml-auto'>€ {roomPrice}</span>
+              </div>
+              <div className='flex gap-2 text-sm '>
+                <BsCalendar2Fill className='size-4 cursor-pointer self-center text-blue' /> {dayjs(room.from).format('DD MMM YYYY')} - {dayjs(room.to).format('DD MMM YYYY')}
+              </div>
             </div>
           ))}
-
+          
         </div>
       </div>
-      {
-        booking.extras.length > 0 && (
-          <div className='flex flex-col mb-5'>
-            <span className='font-semibold mb-1.5 text-[15px]'>Extras:</span>
-              {booking.extras.map(item => {
-                const fullPrice = getExtrasPrice(item, booking.roomsAmount, booking.guests, booking.nights)
-                const periodText = getPeriodText(item, booking.nights)
-                const perText = getPerText(item, booking.roomsAmount, booking.guests)
 
-                return (
-                  <div key={item.index} className='flex  inter text-sm pb-1 text-dark'>
-                    <div className='flex gap-2 items-center'>
-                      <div className=' flex items-center gap-2' >
-                        {item.name} <span className='text-xs text-brown'>( {periodText} x {perText} )</span> <FiInfo className='size-5 text-brown ml-2 cursor-pointer' />
-                      </div>
-                      
-                    </div>
-                    <span className='font-bold ml-auto'>€ {fullPrice}</span>
+      {reservations.services && reservations.services.length > 0 && (
+        <div className='flex flex-col mb-5'>
+          <span className='font-semibold mb-4 text-[15px]'>Extras:</span>
+          {rooms.map((room, index) => (
+            room.extras && room.extras.length > 0 && (
+              <div key={room.id} className='flex flex-col gap-1 mb-2'>
+                {room.extras.map((extra) => (
+                  <div key={extra.id} className='flex items-center gap-2 inter text-sm text-dark'>
+                    <span className='truncate'>Room {index + 1} - {extra.name}</span>
+                    <span className='text-bale font-semibold ml-auto'>
+                    </span>
                   </div>
-              )})}
-            <div  className='flex items-center gap-2 inter text-sm text-dark'>
-              <span >Tax</span>
-              <span className='text-bale font-semibold ml-auto'>€ 85</span>
-            </div>
-            <div className='flex items-center justify-between gap-2 inter text-sm text-dark mt-2'>
-              <div className=' flex items-center ' >
-                Total:
+                ))}
               </div>
-              <span className='text-bale font-semibold ml-auto'>€ {extrasTotalPrice}</span>
-            </div>
+            )
+          ))}
+          <div className='flex items-center justify-between gap-2 inter text-sm text-dark mb-2'>
+            <span>Total:</span>
+            <span className='text-bale font-semibold'>€ {extrasTotalPrice.toFixed(2)}</span>
           </div>
-        )
-      }
+          <div className='flex items-center gap-2 inter text-sm text-dark mt-2'>
+            <span>Tax:</span>
+            <span className='text-bale font-semibold ml-auto'>€ {TAX_RATE}</span>
+          </div>
+        </div>
+      )}
+
       <div className='flex items-center justify-between mb-3'>
-          <span className='font-semibold text-lg'>Total price:</span>
-          <Price price={booking.totalPrice.toFixed(2)} />
+        <span className='font-semibold text-lg'>Total price:</span>
+        <Price price={totalPrice.toFixed(2)} />
       </div>
-      <div className='flex justify-center p-1 bg-[#FFC10733] rounded-full text text-[#D78426]'>
+      <div className='flex justify-center p-1 bg-[#FFC10733] rounded-full text-[#D78426]'>
         <BiSolidLike className='size-6 text-[#D78426]' />
         -10% cheaper than on booking.com 
       </div> 

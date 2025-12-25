@@ -186,46 +186,34 @@
   animation: scroll-right 40s linear infinite;
 }
 
-/* SOLUTION: Stacking order - Footer lowest, Header and Main above */
 
-/* Footer is the lowest layer */
 footer {
   z-index: 0;
   position: relative;
 }
 
-/* Header is above footer */
 header {
   z-index: 10;
   position: relative;
 }
 
-/* Main content is above footer */
 main {
   z-index: 10;
   position: relative;
 }
 
-/* SOLUTION: Isolate only the map container, not the entire footer */
 
-/* Map container is isolated - creates new stacking context for Google Maps only */
 .map-isolated {
   isolation: isolate !important;
   z-index: 1 !important;
   position: relative !important;
 }
-
-
-
-/* Radix Popover Portal - MUST be above everything */
 [data-radix-portal] {
   z-index: 2147483647 !important;
 }
-
 [data-radix-popper-content-wrapper] {
   z-index: 2147483647 !important;
 }
-
 [data-slot="popover-content"] {
   z-index: 2147483647 !important;
 }

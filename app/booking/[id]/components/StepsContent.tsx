@@ -1,20 +1,25 @@
 'use client'
-import GuestDetailsForm from "./booking/GuestDetailsForm"
+import GuestDetailsForm from "./payment/GuestDetailsForm"
 import SummaryCard from "./booking/SummaryCard"
-import PaymentForm from "./PaymentForm"
+import PaymentForm from "./payment/PaymentCard" 
 import { useStore } from "@/store/useStore"
 import BookingPage from "./booking/BookingPage"
-import { Room, RoomDetails } from "@/types/types"
+import { Room } from "@/types/types"
+import { RoomOffer } from "@/types/offers"
+import { Service } from "@/types/apaleo"
+import SuccessSection from "./payment/SuccessSection"
 
 const StepsContent = ({
-  room,
+  rooms,
+  extras,
   from,
   to,
   adults,
   children,
   filledRooms,
 }: {
-  room: RoomDetails
+  rooms: RoomOffer[]
+  extras: Service[]
   from: string
   to: string
   adults: string
@@ -25,14 +30,17 @@ const StepsContent = ({
 
   if(bookingPage === 1) {
     return (
-      <BookingPage params={{ from, to, adults, children, room, filledRooms }}/>
+      <BookingPage params={{ from, to, adults, children, rooms, filledRooms, extras }}/>
     )
   }
   if(bookingPage === 2) {
     return <div className='grid grid-cols-3 gap-10 pb-[30px]'><GuestDetailsForm /><SummaryCard /> </div>
   }
   if(bookingPage === 3) {
-    return <div className='grid grid-cols-3 gap-10 pb-[30px]'><PaymentForm /><SummaryCard /></div>
+    return <div className='grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-10 pb-[30px]'>
+      <SuccessSection />   
+      {/* <PaymentForm /> */}
+    <SummaryCard /></div>
   }
 }
 

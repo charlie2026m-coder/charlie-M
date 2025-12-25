@@ -1,20 +1,19 @@
 'use client'
 import RoomCard from './RoomCard'
-import { UrlParams } from '@/types/beds24'
+import { UrlParams } from '@/types/apaleo'
 import { CustomPagination } from '@/app/_components/ui/CustomPagination'
 import { useState, useMemo, useEffect } from 'react'
-import { RoomGroup } from '@/types/apaleo'
 import { useStore } from '@/store/useStore'
+import { RoomOffer } from '@/types/offers'
 
 const RoomsList = ({ 
   rooms, 
   params 
 }: { 
-  rooms: RoomGroup[],
+  rooms: RoomOffer[],
   params: UrlParams 
 }) => {
-  console.log(rooms, 'rooms')
-  const { filter, priceFilter } = useStore()
+  const { filter, priceFilter, bedSizeFilter } = useStore()
   const [currentPage, setCurrentPage] = useState(0)
   const [roomsPerPage, setRoomsPerPage] = useState(6)
   // Adjust rooms per page based on screen size
@@ -52,8 +51,18 @@ const RoomsList = ({
     if(filter === 'shared') {
       filtered = filtered.filter((room) => room.attributes?.includes('shared'))
     }
+    if(bedSizeFilter === 'king') {
+      filtered = filtered.filter((room) => room.attributes?.includes('king'))
+    }
+    if(bedSizeFilter === 'queen') {
+      filtered = filtered.filter((room) => room.attributes?.includes('queen'))
+    }
+    if(bedSizeFilter === 'single') {
+      filtered = filtered.filter((room) => (room.attributes?.includes('single')))
+    }
+
     return filtered;
-  }, [rooms, priceFilter, filter])
+  }, [rooms, priceFilter, filter, bedSizeFilter])
 
   // Reset to first page when filters or rooms per page change
   useEffect(() => {
@@ -71,7 +80,7 @@ const RoomsList = ({
   return (
     <div className='flex flex-col gap-[30px] mb-[30px]'>
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'> 
-        {displayedRooms.map((room: RoomGroup) => (
+        {displayedRooms.map((room) => (
           <RoomCard 
             params={params}
             key={room.id} 

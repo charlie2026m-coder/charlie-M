@@ -1,6 +1,5 @@
 import { create } from 'zustand'
 import { DateRange } from 'react-day-picker';
-import type { ExtrasItem } from '@/types/beds24';
 
 interface Guests {
   adults: number;
@@ -8,6 +7,7 @@ interface Guests {
 }
 export type MainFilter = 'balcony' | 'terrace' | 'shared' | undefined;
 export type PriceFilter = 'Cheapest' | 'Expensive';
+export type BedSizeFilter = 'king' | 'queen' | 'single' | undefined;
 
 interface StoreState {
   dateRange: {
@@ -18,12 +18,12 @@ interface StoreState {
 
   priceFilter: PriceFilter;
   filter: MainFilter;
-  bedSizeFilter: string;
+  bedSizeFilter: BedSizeFilter;
 
   bookingPage: number;
 
   setValue: (
-    value: number | string | string[] | boolean | DateRange | Guests | ExtrasItem[] | MainFilter | PriceFilter , 
+    value:number | DateRange | Guests | MainFilter | PriceFilter | BedSizeFilter , 
     key: string
   ) => void;
 }
@@ -35,7 +35,7 @@ export const useStore = create<StoreState>((set) => ({
 
   //rooms filters
   filter: undefined,
-  bedSizeFilter: '90/200',
+  bedSizeFilter: undefined,
   priceFilter: 'Cheapest',
 
   //booking steps

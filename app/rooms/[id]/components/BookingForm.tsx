@@ -8,45 +8,71 @@ import { useEffect, useState } from "react"
 import { DateRange } from "react-day-picker";
 import { useRouter } from "next/navigation";
 
-import { getDate, getPath, getPriceData } from "@/lib/utils";
-import { Beds24RoomType, UrlParams } from "@/types/beds24";
+import { calculateNights, getDate, getPath, getPriceData } from "@/lib/utils";
 import { BsFillPersonFill } from "react-icons/bs"
 import { useStore } from "@/store/useStore"
+import { RoomOffer } from "@/types/offers"
+import dayjs from "dayjs"
+import { UrlParams } from "@/types/apaleo"
 
-const BookingForm = ({ id, room, params }: { id: string, room: Beds24RoomType, params: UrlParams }) => {
-  const router = useRouter();
-  const { dateRange: dateRangeStore, guests: guestsStore } = useStore();
-  const { price, priceText, nightsText } = getPriceData({ params, room })
-
+const BookingForm = ({ id, room, params }: { id: string, room: RoomOffer , params: UrlParams }) => {
   const [openCheckIn, setOpenCheckIn] = useState(false);
+  const router = useRouter();
+  const dateRangeStore = useStore(state => state.dateRange);
+  const guestsStore = useStore(state => state.guests);
+  const setValue = useStore(state => state.setValue);
+
   const [guests, setGuests] = useState({adults: parseInt(params?.adults || guestsStore?.adults.toString() || '1'), children: parseInt(params?.children || guestsStore?.children.toString() || '0')});
+  const { priceText, nightsText } = getPriceData({ params, room })
+
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: params.from ? new Date(params.from) : dateRangeStore?.from,
-    to: params.to ? new Date(params.to) : dateRangeStore?.to,
+    from: dateRangeStore.from || (params.from ? dayjs(params.from).toDate() : undefined),
+    to: dateRangeStore.to || (params.to ? dayjs(params.to).toDate() : undefined),
   });
-  const [currentPrice, setCurrentPrice] = useState(price)
+  const [currentPrice, setCurrentPrice] = useState(room.price)
   const [currentPriceText, setCurrentPriceText] = useState(priceText)
+  const [currentNightsText, setCurrentNightsText] = useState(nightsText)
 
   useEffect(() => {
-    setDateRange({
-      from: params.from ? new Date(params.from) : dateRangeStore?.from,
-      to: params.to ? new Date(params.to) : dateRangeStore?.to,
+    if (params.from && params.to) {
+      setDateRange({
+        from: dayjs(params.from).toDate(),
+        to: dayjs(params.to).toDate(),
+      });
+    }
+  }, [params.from, params.to]);
+
+  useEffect(() => {
+    if (!dateRange?.from || !dateRange?.to) return;
+    
+    const fromDate = getDate(dateRange.from);
+    const toDate = getDate(dateRange.to);
+    
+    if (!fromDate || !toDate) return;
+    
+    const nights = calculateNights(fromDate, toDate);
+    
+    
+    const totalGuestsCount = guests.adults + guests.children;
+    const roomsNeeded = Math.ceil(totalGuestsCount / room.maxPersons);
+    const totalPrice = room.price * nights * roomsNeeded;
+    
+    const { priceText: newPriceText, nightsText: newNightsText } = getPriceData({ 
+      params: {
+        from: fromDate,
+        to: toDate,
+        adults: guests.adults.toString(),
+        children: guests.children.toString(),
+      }, 
+      room 
     });
-  }, [params.from, params.to, dateRangeStore]);
 
+    setCurrentPrice(room.price);
+    setCurrentPriceText(newPriceText);
+    setCurrentNightsText(newNightsText);
+  }, [dateRange?.from, dateRange?.to, guests, room]);
 
-  useEffect(() => {
-    const { price, priceText } = getPriceData({ params:{
-      from: dateRange?.from ? getDate(dateRange.from) : undefined,
-      to: dateRange?.to ? getDate(dateRange.to) : undefined,
-      adults: guests.adults.toString(),
-      children: guests.children.toString(),
-    }, room })
-
-    setCurrentPrice(price)
-    setCurrentPriceText(priceText)
-  }, [dateRange, guests])
-
+  console.log(dateRange, 'dateRange')
 
   const handleBookNow = () => {
     if (!dateRange?.from || !dateRange?.to) return;
@@ -62,7 +88,7 @@ const BookingForm = ({ id, room, params }: { id: string, room: Beds24RoomType, p
     <div className='sticky top-10 flex flex-col bg-white rounded-[20px] px-5 pt-[25px] w-full pb-10'>
       <h3 className='font-semibold text-2xl text-center mb-3'>BOOK</h3>
       <div className='flex justify-between mb-1 gap-2'>
-        <div className='text-brown flex items-center gap-1'>Price per {nightsText}</div>
+        <div className='text-brown flex items-center gap-1'>Per {currentNightsText} from </div>
         <div className='text-xl min-w-[80px] self-end text-center rounded-full bg-green/15 font-[700] text-green px-2.5 py-2'>€{currentPrice}</div>
       </div>
       <div className='text-blue flex items-center gap-1 my-4'><BsFillPersonFill className='size-4 text-blue' />{currentPriceText}</div>
@@ -77,13 +103,19 @@ const BookingForm = ({ id, room, params }: { id: string, room: Beds24RoomType, p
             value={dateRange || undefined}
             open={openCheckIn}
             onOpenChange={setOpenCheckIn}
+            className="max-w-[350px]"
           >
             <Calendar 
               required={false}
               mode="range"  
               captionLayout="label"
               selected={dateRange}
-              onSelect={(date) => setDateRange(date as DateRange)}
+              onSelect={(date) => {
+                setDateRange(date as DateRange);
+                if (date?.from && date?.to) {
+                  setValue(date as DateRange, 'dateRange');
+                }
+              }}
               disabled={{ before: new Date() }}
             />
           </DateInput>

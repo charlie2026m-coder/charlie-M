@@ -46,17 +46,25 @@ export async function getOrRefreshToken(): Promise<string> {
 }
 
 // 3. Make request to Apaleo API
-export async function apaleoRequest<T>(endpoint: string): Promise<T> {
+export async function Fetch<T>(
+  endpoint: string, 
+  options?: {
+    method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+    body?: any;
+  }
+): Promise<T> {
   const token = await getOrRefreshToken();
 
   const response = await fetch(`${APALEO_API_URL}${endpoint}`, {
-    method: 'GET',
+    method: options?.method || 'GET',
     headers: {
       'Authorization': `Bearer ${token}`,
       'Accept': 'application/json',
+      ...(options?.body && { 'Content-Type': 'application/json' }),
     },
+    ...(options?.body && { body: JSON.stringify(options.body) }),
   });
-
+  
   if (!response.ok) {
     throw new Error(`Apaleo API error: ${response.status}`);
   }

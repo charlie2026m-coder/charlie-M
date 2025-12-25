@@ -74,7 +74,7 @@ export default function Concept() {
       </div>
       <div className='w-full h-[250px] md:h-[65px] '>
         <div className='container px-4 lg:px-[100px] py-10'>
-          <CheckInForm isBrown={true} />
+          <CheckInForm />
         </div>
       </div>
 

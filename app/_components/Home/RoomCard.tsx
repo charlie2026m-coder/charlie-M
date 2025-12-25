@@ -22,7 +22,7 @@ const RoomCard = ({
       <PhotoSlider height={260} images={images} />
       <div className='flex flex-col p-4 pb-6 h-full'>
         <h2 className='text-xl font-medium jakarta mb-3'>{item.name}</h2>
-        <RoomParamsRow attributes={item.attributes } maxPersons={item.maxPersons} />
+        <RoomParamsRow attributes={item.attributes } maxPersons={item.maxPersons} size={item.size} />
         <div className='flex items-center justify-between mb-4  mt-auto'>
           <div className='text-brown '>per night from</div>
           <Price price={item.price.toFixed(2)} />

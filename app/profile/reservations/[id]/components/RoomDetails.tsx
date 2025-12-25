@@ -35,7 +35,7 @@ export const RoomDetailsButton = ({ reservation }: { reservation: any }) => {
           <ImagesSlider images={images} />
           <div className='flex flex-col lg:flex-row gap-2 lg:items-center mb-5'>
             <div className='flex px-2.5 rounded-full border border-red py-1 text-sm w-fit'>Category A</div>
-            <RoomParamsRow item={reservation} />
+            <RoomParamsRow attributes={reservation.attributes} maxPersons={reservation.maxPersons} size={reservation.size} />
           </div>
           <Amenities />
           <p className='text-mute text-sm mt-5'>

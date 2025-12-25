@@ -23,12 +23,14 @@ const ButtonIcon = ({ onClick, symbol, disabled }: { onClick: () => void, symbol
 export function Guests({ 
   maxAdults = 99,
   maxChildren = 99,
+  maxPersons,
   setValue, 
   value,
   className = ''
 }: { 
   maxAdults?: number,
   maxChildren?: number,
+  maxPersons?: number,
   setValue: (value: { adults: number, children: number }) => void, 
   value: { adults: number, children: number },
   className?: string
@@ -36,6 +38,11 @@ export function Guests({
   const [open, setOpen] = React.useState(false)
 
   const guestsText = `${value.adults + value.children} Guest${value.adults + value.children !== 1 ? 's' : ''}`
+  
+  // Вычисляем реальные лимиты с учетом maxPersons
+  const totalGuests = value.adults + value.children;
+  const canAddAdult = maxPersons ? totalGuests < maxPersons && value.adults < maxAdults : value.adults < maxAdults;
+  const canAddChild = maxPersons ? totalGuests < maxPersons && value.children < maxChildren : value.children < maxChildren;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -78,9 +85,9 @@ export function Guests({
               </span>
 
               <ButtonIcon 
-                onClick={() => setValue({ ...value, adults: Math.min(maxAdults, value.adults + 1) })} 
+                onClick={() => setValue({ ...value, adults: value.adults + 1 })} 
                 symbol='+' 
-                disabled={value.adults >= maxAdults}
+                disabled={!canAddAdult}
               />
             </div>
           </div>
@@ -98,9 +105,9 @@ export function Guests({
                   {value.children}
                 </span>
                 <ButtonIcon 
-                  onClick={() => setValue({ ...value, children: Math.min(maxChildren, value.children + 1) })} 
+                  onClick={() => setValue({ ...value, children: value.children + 1 })} 
                   symbol='+' 
-                  disabled={value.children >= maxChildren}
+                  disabled={!canAddChild}
                 />
               </div>
             </div>

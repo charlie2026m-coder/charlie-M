@@ -9,34 +9,45 @@ import { Checkbox } from "@/app/_components/ui/checkbox";
 import { Button } from "@/app/_components/ui/button";
 import { useState, useEffect } from "react";
 import { useBookingStore } from "@/store/useBookingStore";
+import { Service } from "@/types/apaleo";
 
 
-const AddExtraButton = ({extraId, title}:{extraId:string, title:string}) => {
+const AddExtraButton = ({extra}:{extra: Service}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isDone, setIsDone] = useState(false);
-  const { setRooms } = useBookingStore()
+  const setRooms = useBookingStore( state => state.setRooms )
   const rooms = useBookingStore(state => state.rooms)
   
   const [selectedRooms, setSelectedRooms] = useState<string[]>([]);
 
   useEffect(() =>{
-    setSelectedRooms(rooms.filter(room => room.extras?.includes(extraId)).map(room => room.id))
-  }, [rooms, extraId])
-  console.log(rooms,'rooms')
+    setSelectedRooms(
+      rooms.filter(room => room.extras?.some(e => e.id === extra.id)).map(room => room.id)
+    )
+  }, [rooms, extra.id])
   
   const handleAddExtra = (selectedRooms: string[]) => {
     const newRooms = rooms.map(room => {
       const currentExtras = room.extras || []
       
       if (selectedRooms.includes(room.id)) {
-        // Add extraId if room is selected and extraId is not already in extras
-        if (!currentExtras.includes(extraId)) {
-          return { ...room, extras: [...currentExtras, extraId] }
+        const newExtra = {
+          roomId: room.id,
+          currency: extra.currency,
+          price: extra.price,
+          name: extra.name,
+          id: extra.id,
+          pricingType: extra.pricingType,
+          pricingUnit: extra.pricingUnit,
+        }
+        const hasExtra = currentExtras.some(e => e.id === extra.id)
+        if (!hasExtra) {
+          return { ...room, extras: [...currentExtras, newExtra] }
         }
       } else {
-        // Remove extraId if room is not selected and extraId is in extras
-        if (currentExtras.includes(extraId)) {
-          return { ...room, extras: currentExtras.filter(extra => extra !== extraId) }
+        const hasExtra = currentExtras.some(e => e.id === extra.id)
+        if (hasExtra) {
+          return { ...room, extras: currentExtras.filter(e => e.id !== extra.id) }
         }
       }
       
@@ -49,7 +60,7 @@ const AddExtraButton = ({extraId, title}:{extraId:string, title:string}) => {
     setTimeout(() => {
       setIsDone(false)
       setIsOpen(false)
-    }, 1000)
+    }, 300)
   }
 
   const handleSelectRoom = (roomId: string) => {
@@ -73,12 +84,12 @@ const AddExtraButton = ({extraId, title}:{extraId:string, title:string}) => {
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
     <PopoverTrigger asChild>
-      <div className='absolute hidden lg:flex top-2.5 right-2.5 flex items-center justify-center  rounded transition-all duration-300 cursor-pointer size-10  shadow-lg bg-blue border-blue text-white  '>
+      <div className='absolute flex top-2.5 right-2.5 items-center justify-center  rounded transition-all duration-300 cursor-pointer size-10  shadow-lg bg-blue border-blue text-white  '>
         <FaPlus className='size-6'  />
       </div>
     </PopoverTrigger>
     <PopoverContent className="rounded-xl w-[300px]">
-      <h4 className='font-semibold mb-3'>{title}</h4>
+      <h4 className='font-semibold mb-3'>{extra.name}</h4>
       <div className='flex flex-col gap-3 py-3 border-t border-b'>
         {rooms.map((room, index) => (
           <div key={room.id} className='flex items-center gap-2 font-semibold cursor-pointer'>

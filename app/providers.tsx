@@ -1,7 +1,6 @@
 'use client';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { I18nProvider } from '@/lib/i18n/i18n';
 import { AuthProvider } from '@/lib/auth-provider';
 
@@ -23,7 +22,7 @@ export function ReactQueryProvider({ children }: React.PropsWithChildren) {
       <AuthProvider>
         <I18nProvider>
           {children}
-          <ReactQueryDevtools initialIsOpen={false} />
+
         </I18nProvider>
       </AuthProvider>
     </QueryClientProvider>

@@ -1,22 +1,25 @@
 'use client'
+import { useEffect, useState } from 'react'
 import CustomInput from '@/app/_components/ui/customInput'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Switch } from '@/app/_components/ui/switch'
-import { Label } from '@/app/_components/ui/label'
 import { Button } from '@/app/_components/ui/button'
 import { useBookingStore } from '@/store/useBookingStore'
 import { GuestDetailsFormData, guestDetailsSchema } from '@/types/schemas'
 import { useStore } from '@/store/useStore'
-
+import { useCreateBooking } from '@/app/hooks/useCreateBooking'
 
 const GuestDetailsForm = () => {
   const { setValue } = useStore()
   const { setBooking, booking } = useBookingStore()
+  const createBooking = useCreateBooking()
+  const [isHydrated, setIsHydrated] = useState(false)
+  
   const {
     register,
     handleSubmit,
     formState: { errors },
+    reset,
   } = useForm<GuestDetailsFormData>({
     resolver: zodResolver(guestDetailsSchema),
     defaultValues: {
@@ -27,12 +30,66 @@ const GuestDetailsForm = () => {
     },
   })
 
+  useEffect(() => {
+    if (!useBookingStore.persist.hasHydrated()) {
+      useBookingStore.persist.rehydrate()
+    }
+    setIsHydrated(true)
+  }, [])
+
+  useEffect(() => {
+    if (!isHydrated) return
+    
+    const bookerData = booking?.booker
+    const guestData = booking?.reservations?.primaryGuest
+    
+    const firstName = bookerData?.firstName || guestData?.firstName || ''
+    const lastName = bookerData?.lastName || guestData?.lastName || ''
+    const email = bookerData?.email || guestData?.email || ''
+    const phone = bookerData?.phone || guestData?.phone || ''
+    
+    if (firstName || lastName || email || phone) {
+      reset({
+        name: firstName,
+        last_name: lastName,
+        email: email,
+        phone: phone,
+      })
+    }
+  }, [booking, reset, isHydrated])
+
   const onSubmit = (data: GuestDetailsFormData) => {
-    setBooking({ ...booking, firstName: data.name, lastName: data.last_name, email: data.email, mobile: data.phone })
+    if (!booking || !booking.reservations) {
+      console.error('Booking data is missing')
+      return
+    }
+
+    const updatedBooking = {
+      ...booking,
+      booker: {
+        firstName: data.name,
+        lastName: data.last_name,
+        email: data.email,
+        phone: data.phone,
+      },
+      reservations: {
+        ...booking.reservations,
+        primaryGuest: {
+          ...booking.reservations.primaryGuest,
+          firstName: data.name,
+          lastName: data.last_name,
+          email: data.email,
+          phone: data.phone,
+        }
+      }
+    }
+
+    setBooking(updatedBooking)
+
+    // createBooking.mutate(updatedBooking)
     setValue(3,'bookingPage')
   }
 
-  console.log(booking)
   return (
     <form onSubmit={handleSubmit(onSubmit)} className='flex flex-col gap-4 col-span-2'>
       <h2 className='text-[22px] font-bold mb-10'>Guest Details</h2>
@@ -94,10 +151,6 @@ const GuestDetailsForm = () => {
           )}
         </div>
       </div>
-      <div className="flex items-center gap-2 mb-9">
-        <Switch id="withoutAccount" checked={booking.withoutAccount} onCheckedChange={() => setBooking({ ...booking, withoutAccount: !booking.withoutAccount })} />
-        <Label htmlFor="withoutAccount" className='text-[17px] font-[400]'>Continue without creating an account </Label>
-      </div>
 
       <div className='flex items-center gap-3 justify-start'>
         <Button 
@@ -105,8 +158,15 @@ const GuestDetailsForm = () => {
           variant='outline' 
           className='w-[210px] h-[55px]'
           onClick={() => setValue(1,'bookingPage')}
+          disabled={createBooking.isPending}
         >Back</Button>
-        <Button type='submit' className='w-[210px] h-[55px]'>Continue</Button>
+        <Button 
+          type='submit' 
+          className='w-[210px] h-[55px]'
+          disabled={createBooking.isPending}
+        >
+          {createBooking.isPending ? 'Creating Booking...' : 'Continue'}
+        </Button>
       </div>
     </form>
   )

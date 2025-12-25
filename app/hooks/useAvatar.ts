@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/auth-provider'
-import { resizeImage } from '@/lib/utils'
 import { profileKeys } from './useProfile'
 
 interface AvatarData {
@@ -63,20 +62,7 @@ export const useAvatar = () => {
       // Upload original image if provided
       let originalPublicUrl = null
       if (originalFile) {
-        const compressedOriginal = await resizeImage(originalFile)
-        const originalExt = compressedOriginal.name.split('.').pop()
-        const originalFileName = `${user.id}/original-${timestamp}.${originalExt}`
-        
-        const { error: originalError } = await supabase.storage
-          .from('avatars')
-          .upload(originalFileName, compressedOriginal, { upsert: true })
-
-        if (!originalError) {
-          const { data: { publicUrl: origUrl } } = supabase.storage
-            .from('avatars')
-            .getPublicUrl(originalFileName)
-          originalPublicUrl = origUrl
-        }
+        originalPublicUrl = originalFile.name
       }
 
       // Update database

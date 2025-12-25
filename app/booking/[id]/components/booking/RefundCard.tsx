@@ -6,16 +6,21 @@ import {
   RadioGroupItem,
 } from "@/app/_components/ui/radio-group"
 import { Separator } from "@/app/_components/ui/separator"
+import { RoomOffer } from '@/types/offers'
+import { getType } from '@/lib/utils'
 
-const RefundCard = () => {
-  const { booking, setBooking } = useBookingStore()
+const RefundCard = ({ rooms }: { rooms: RoomOffer[] }) => {
+  const { isRefundable, setIsRefundable, params, setRoomDetails } = useBookingStore()
   const handleRefundChange = (value: string) => {
     const isRefunable = value === 'true'
-    setBooking({ ...booking, isRefunable: isRefunable })
+    const planType = getType(params.nights, isRefunable)
+    const mainRoom = rooms.find(room => room.code === planType) || rooms[0]
+    setIsRefundable(isRefunable)
+    setRoomDetails(mainRoom)
   }
   return (
     <div className='flex flex-col bg-white rounded-[20px] py-6 px-4 shadow-xl'>
-      <RadioGroup value={booking.isRefunable.toString()} onValueChange={handleRefundChange} >
+      <RadioGroup value={isRefundable ? 'true' : 'false'} onValueChange={handleRefundChange} >
         <Label htmlFor="non-refundable" className="flex items-center gap-4 cursor-pointer pb-5"  >
           <RadioGroupItem value="false" id="non-refundable" />
           <div className="inter text-base font-semibold flex flex-col gap-1">
