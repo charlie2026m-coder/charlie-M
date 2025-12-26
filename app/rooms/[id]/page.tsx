@@ -20,8 +20,7 @@ const RoomPage = async ({ params, searchParams }: IParams) => {
   const { id } = await params
   const { from, to, adults, children = '1' } = await searchParams
   
-  const guests = Number(adults || 0) + Number(children || 0)
-  const rooms = await getSingleRoom(id, from, to, guests)
+  const rooms = await getSingleRoom(id, from, to)
   if ('error' in rooms) return <ErrorCard isSingleRoom={true} link='/rooms' />
   const nights = calculateNights(from as string, to as string);
   const type = nights > 7  ? 'LONG_STAY' : 'BAR_WEB';

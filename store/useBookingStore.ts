@@ -16,6 +16,7 @@ interface BookingState {
 
   isRefundable: boolean;
   params: { from: string; to: string; nights: number; }
+  bookingId: string | undefined; // Identifier for current booking session
 
   
   setBooking: (booking: Booking) => void;
@@ -23,6 +24,7 @@ interface BookingState {
 
   setIsRefundable: (isRefundable: boolean) => void;
   setParams: (params: { from: string; to: string; nights: number }) => void;
+  setBookingId: (id: string) => void;
 
   //Rooms and content
   setRooms: (rooms: Room[]) => void;
@@ -34,6 +36,8 @@ interface BookingState {
     value: number | string | string[] | boolean | DateRange | Guests | Service[] , 
     key: string
   ) => void;
+  
+  clearBooking: () => void;
 }
 
 export const useBookingStore = create<BookingState>()(
@@ -49,7 +53,9 @@ export const useBookingStore = create<BookingState>()(
         to: '',
         nights: 0,
       },
+      bookingId: undefined,
       setParams: (params: { from: string; to: string; nights: number }) => set((state) => ({ ...state, params })),
+      setBookingId: (id: string) => set((state) => ({ ...state, bookingId: id })),
 
       rooms: [],
       //booking process store
@@ -73,6 +79,16 @@ export const useBookingStore = create<BookingState>()(
       setBooking: (booking) => {
         set((state) => ({ ...state, booking }))
       },
+      
+      clearBooking: () => {
+        set({
+          booking: undefined,
+          rooms: [],
+          roomDetails: undefined,
+          bookingId: undefined,
+          isRefundable: true,
+        })
+      },
     }),
     {
       name: 'charlie-booking-storage',
@@ -80,8 +96,9 @@ export const useBookingStore = create<BookingState>()(
         booking: state.booking, 
         rooms: state.rooms,
         roomDetails: state.roomDetails,
+        bookingId: state.bookingId,
+        isRefundable: state.isRefundable,
       }),
-      skipHydration: true, // ⚠️ ВАЖНО для Next.js SSR!
     }
   )
 )

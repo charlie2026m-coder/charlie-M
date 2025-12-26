@@ -22,7 +22,6 @@ const RoomCard = ({
     '/images/room1.webp',
   ]
   const queryString = getPath({ from: params.from, to: params.to, adults: params.adults, children: params.children })
-  console.log(room, 'room')
   const price = room.timeSlices[0].totalGrossAmount.amount
   return (
     <div className='w-full flex flex-col rounded-[40px] bg-white overflow-hidden shadow-lg h-full'>

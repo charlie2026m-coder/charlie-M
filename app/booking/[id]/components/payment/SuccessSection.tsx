@@ -3,9 +3,11 @@ import Image from "next/image";
 import { useBookingStore } from "@/store/useBookingStore";
 import { Button } from "@/app/_components/ui/button";
 import { useRouter } from "next/navigation";
+import { useStore } from "@/store/useStore";
 const SuccessSection = () => {
   const booking = useBookingStore(state => state.booking)
   const router = useRouter()
+  const setBookingPage = useStore(state => state.setValue)
   return (
     <div className='col-span-1 xl:col-span-2 flex flex-col '>
         <div className='flex gap-2 items-center mb-10'>
@@ -21,8 +23,10 @@ const SuccessSection = () => {
 
           className='w-[375px] h-[344px] mx-auto object-cover mb-4'
         />
-        <p className='font-medium inter  text-center mb-5'>{booking?.booker.email}</p>
-        <Button className='mx-auto' onClick={() => router.push('/')}>Back to Homepage</Button>
+        <p className='font-medium inter  text-center mb-5'>{booking?.booker?.email}</p>
+        <Button className='mx-auto' onClick={() => {
+          setBookingPage(1, 'bookingPage')
+        }}>Back to Homepage</Button>
     </div>
   )
 }

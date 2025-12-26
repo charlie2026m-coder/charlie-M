@@ -10,25 +10,16 @@ import { useStore } from '@/store/useStore'
 import { useCreateBooking } from '@/app/hooks/useCreateBooking'
 
 const GuestDetailsForm = () => {
-  const { setValue } = useStore()
-  const { setBooking, booking } = useBookingStore()
+  const defaultValues = {name: '', last_name: '', email: '', phone: ''}
+  const { register,  handleSubmit,  formState: { errors },  reset,  } = useForm<GuestDetailsFormData>({ resolver: zodResolver(guestDetailsSchema),  defaultValues,})
+
+  const setValue = useStore(state => state.setValue)
+  const setBooking = useBookingStore(state => state.setBooking)
+  const booking = useBookingStore(state => state.booking)
   const createBooking = useCreateBooking()
+
   const [isHydrated, setIsHydrated] = useState(false)
   
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm<GuestDetailsFormData>({
-    resolver: zodResolver(guestDetailsSchema),
-    defaultValues: {
-      name: '',
-      last_name: '',
-      email: '',
-      phone: '',
-    },
-  })
 
   useEffect(() => {
     if (!useBookingStore.persist.hasHydrated()) {
@@ -41,7 +32,7 @@ const GuestDetailsForm = () => {
     if (!isHydrated) return
     
     const bookerData = booking?.booker
-    const guestData = booking?.reservations?.primaryGuest
+    const guestData = booking?.reservations?.[0]?.primaryGuest
     
     const firstName = bookerData?.firstName || guestData?.firstName || ''
     const lastName = bookerData?.lastName || guestData?.lastName || ''
@@ -64,30 +55,29 @@ const GuestDetailsForm = () => {
       return
     }
 
-    const updatedBooking = {
-      ...booking,
+    const updatedReservations = booking.reservations.map(reservation => ({
+      ...reservation,
+      primaryGuest: {
+        ...reservation.primaryGuest,
+        firstName: data.name,
+        lastName: data.last_name,
+        email: data.email,
+        phone: data.phone,
+      }
+    }))
+    const bookingModel = {
       booker: {
         firstName: data.name,
         lastName: data.last_name,
         email: data.email,
         phone: data.phone,
       },
-      reservations: {
-        ...booking.reservations,
-        primaryGuest: {
-          ...booking.reservations.primaryGuest,
-          firstName: data.name,
-          lastName: data.last_name,
-          email: data.email,
-          phone: data.phone,
-        }
-      }
+      reservations: updatedReservations
     }
+    setBooking(bookingModel)
 
-    setBooking(updatedBooking)
-
-    // createBooking.mutate(updatedBooking)
-    setValue(3,'bookingPage')
+    //Create booking temporrary
+    createBooking.mutate(bookingModel)
   }
 
   return (

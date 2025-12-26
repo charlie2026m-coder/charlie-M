@@ -10,18 +10,10 @@ import { DateRange } from 'react-day-picker';
 import { Button } from "../ui/button"
 import { useRouter } from 'next/navigation';  
 import { useStore } from '@/store/useStore';
-const CheckInForm = ({ 
-    className = '', 
-    params 
-  }:{ 
-    className?: string, 
-    params?: { 
-      from: string | undefined | Date, 
-      to: string | undefined | Date, 
-      adults: string | undefined, 
-      children: string | undefined 
-    }
-  }) => {
+import { UrlParams } from '@/types/apaleo';
+
+
+const CheckInForm = ({ className = '', params }: { className?: string, params: UrlParams }) => {
   const { dateRange, guests, setValue } = useStore();
   const router = useRouter();
   const [openCalendar, setOpenCalendar] = useState(false);
@@ -35,10 +27,7 @@ const CheckInForm = ({
         const toDate = new Date(params.to);
         
         if (!isNaN(fromDate.getTime()) && !isNaN(toDate.getTime())) {
-          setValue({
-            from: fromDate,
-            to: toDate,
-          }, 'dateRange');
+          setValue({  from: fromDate,  to: toDate }, 'dateRange');
           
           setCurrentMonth(new Date(fromDate.getFullYear(), fromDate.getMonth(), 1));
         }
@@ -52,6 +41,8 @@ const CheckInForm = ({
       }
     }
   }, [params, setValue])
+
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!dateRange?.from || !dateRange?.to) return;
@@ -75,7 +66,15 @@ const CheckInForm = ({
 
   const getNights = () => {
     if (!dateRange?.from || !dateRange?.to) return null;
-    const nights = Math.ceil((dateRange.to as Date).getTime() - (dateRange.from as Date).getTime()) / (1000 * 60 * 60 * 24);
+    
+    // Ensure we're working with Date objects
+    const fromDate = new Date(dateRange.from);
+    const toDate = new Date(dateRange.to);
+    
+    // Calculate difference in milliseconds and convert to days, using Math.round to avoid float numbers
+    const diffTime = toDate.getTime() - fromDate.getTime();
+    const nights = Math.round(diffTime / (1000 * 60 * 60 * 24));
+    
     if(nights === 0) return null;
     return nights === 1 ? '1 night' : `${nights} nights`;
   }

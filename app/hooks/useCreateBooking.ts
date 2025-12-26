@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { Booking } from '@/types/booking';
 import { toast } from 'sonner';
-import { useStore } from '@/store/useStore';
+// import { useStore } from '@/store/useStore';
 
 interface CreateBookingResponse {
   id: string;
@@ -14,7 +14,7 @@ interface CreateBookingResponse {
 }
 
 export const useCreateBooking = () => {
-  const { setValue } = useStore();
+  // const setValue = useStore(state => state.setValue)
 
   return useMutation({
     mutationFn: async (booking: Booking): Promise<CreateBookingResponse> => {
@@ -40,8 +40,6 @@ export const useCreateBooking = () => {
       toast.success('Booking created successfully!', { id: 'create-booking' });
       console.log('Booking created:', data);
       
-      // Go to success page (step 3)
-      setValue(3, 'bookingPage');
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to create booking', { id: 'create-booking' });

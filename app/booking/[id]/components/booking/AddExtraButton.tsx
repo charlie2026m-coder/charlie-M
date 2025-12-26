@@ -88,7 +88,7 @@ const AddExtraButton = ({extra}:{extra: Service}) => {
         <FaPlus className='size-6'  />
       </div>
     </PopoverTrigger>
-    <PopoverContent className="rounded-xl w-[300px]">
+    <PopoverContent className="rounded-xl ">
       <h4 className='font-semibold mb-3'>{extra.name}</h4>
       <div className='flex flex-col gap-3 py-3 border-t border-b'>
         {rooms.map((room, index) => (
@@ -109,14 +109,14 @@ const AddExtraButton = ({extra}:{extra: Service}) => {
         <Button 
           onClick={() => handleCancel()} 
           variant="outline" 
-          className='h-[45px] w-32'
+          className='h-[45px] w-30'
           disabled={isDone}
         >
           Cancel
         </Button>
         <Button 
           onClick={() => handleAddExtra(selectedRooms)} 
-          className={`h-[45px] w-32 flex items-center justify-center gap-2 `}
+          className={`h-[45px] w-30 flex items-center justify-center gap-2 `}
           disabled={isDone}
         >
           {isDone ? (

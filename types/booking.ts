@@ -1,5 +1,5 @@
 export interface Booking {
-  booker: {
+  booker?: {
     firstName: string;
     lastName: string;
     email: string;
@@ -13,31 +13,19 @@ export interface Booking {
     childrenAges?: number[], // optional maybe
     channelCode: "Direct",
 
-    primaryGuest: {
+    primaryGuest?: {
       firstName: string;
       lastName: string;
       email: string;
       phone: string;
-      address: {
-        addressLine1: string;
-        postalCode: string;
-        city: string;
-        countryCode: string;
-      };
     };
 
-    guaranteeType: "Prepayment" | "CreditCard",
+    guaranteeType: "Prepayment",
     timeSlices: { ratePlanId: string; }[];
 
     services: {
       serviceId: string; 
     }[];
-
-    prePaymentAmount: {
-      amount: number;
-      currency: string;
-    };
-    transactionReference:string;
-  }
+  }[]
 
 }

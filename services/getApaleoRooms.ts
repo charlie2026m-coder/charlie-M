@@ -36,7 +36,6 @@ const getApaleoRoomPriceInternal = async (from: string, to: string) => {
         }
       })
     );
-    console.log(plansWithPrices, 'plansWithPrices');
     return plansWithPrices;
 
   } catch (error: any) {
@@ -74,7 +73,6 @@ const getApaleoRoomsInternal = async (from?: string, to?: string) => {
     return rooms;
     // return [];
   } catch (e: any) {
-    console.error('Get Rooms error:', e.message);
     // Return error object instead of empty array
     return { error: e.message || 'Failed to fetch rooms' };
   }

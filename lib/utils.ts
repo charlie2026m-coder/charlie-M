@@ -150,7 +150,7 @@ export const getPriceType = (arrival: string , departure: string, isNonRef?: boo
 
 export const getType = (nights: number, isRefundable: boolean) => {
   if(nights > 7) {
-    return 'LONG_STAY'
+    return 'LONG_STAY_WEB'
   }
   if(!isRefundable) {
     return 'NON_REF_WEB'
@@ -162,76 +162,31 @@ export const getType = (nights: number, isRefundable: boolean) => {
 }
 
 
-export const buildBookingModel = (
-  updatedRooms: Room[], 
-  flatExtras: RoomExtra[], 
-  roomDetails: RoomOffer, 
+export const formatReservations = (
   from: string, 
   to: string, 
-  totalPrice: number,
-  existingBooking?: Booking // Add existing booking parameter
-): Partial<Booking> => {
-  // Calculate total adults and collect children ages from all rooms
-  const totalAdults = updatedRooms.reduce((sum, room) => sum + room.adults, 0)
-  const childrenAges: number[] = []
-  
-  updatedRooms.forEach(room => {
-    // Assuming children are represented by room.children count
-    // If you have actual ages, replace this with actual ages array
-    for (let i = 0; i < room.children; i++) {
-      childrenAges.push(0) // Default age, replace with actual if available
-    }
-  })
-
-  // Collect all services from all rooms
-  const services = flatExtras.map(extra => ({
-    serviceId: extra.id
-  }))
-
-  // Build timeSlices from roomDetails
+  roomDetails: RoomOffer, 
+  updatedRooms: Room[], 
+) => {
   const timeSlices = roomDetails.timeSlices.map(slice => ({
     ratePlanId: roomDetails.ratePlan.id
   }))
 
-  return {
-    // Keep existing booker data if available, otherwise initialize with empty fields
-    booker: existingBooking?.booker || {
-      firstName: '',
-      lastName: '',
-      email: '',
-      phone: '',
-    },
-    
-    reservations: {
-      arrival: from as string,
-      departure: to as string,
-      adults: totalAdults,
-      childrenAges: childrenAges.length > 0 ? childrenAges : undefined,
-      channelCode: "Direct",
-      
-      // Keep existing primaryGuest data if available
-      primaryGuest: existingBooking?.reservations?.primaryGuest || {
-        firstName: '',
-        lastName: '',
-        email: '',
-        phone: '',
-        address: {
-          addressLine1: '',
-          postalCode: '',
-          city: '',
-          countryCode: '',
-        }
-      },
-      
-      guaranteeType: "Prepayment",
+  const reservations = updatedRooms.map(item =>{
+    const childrenAges = item.children > 0 ? Array(item.children).fill(0) as number[] : undefined
+    return {
+      arrival: from,
+      departure: to,
+      adults: item.adults,
+      channelCode: 'Direct' as const,
+      guaranteeType: 'Prepayment' as const,
       timeSlices,
-      services,
-      
-      prePaymentAmount: {
-        amount: totalPrice,
-        currency: roomDetails.currency || 'EUR'
-      },
-      transactionReference: '' // Will be filled after payment
+      services: item.extras?.map(extra => ({
+        serviceId: extra.id
+      })) || [],
+      ...(childrenAges && { childrenAges }),
     }
-  }
+  })
+
+  return reservations;
 }

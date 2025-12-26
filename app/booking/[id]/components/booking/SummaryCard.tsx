@@ -22,8 +22,8 @@ const SummaryCard = () => {
   }
 
   const { reservations } = booking
-  const totalGuests = reservations.adults + (reservations.childrenAges?.length || 0)
-  const nights = calculateNights(reservations.arrival, reservations.departure)
+  const totalGuests = reservations[0].adults + (reservations[0].childrenAges?.length || 0)
+  const nights = calculateNights(reservations[0].arrival, reservations[0].departure)
   const roomPrice = roomDetails?.price || 0
 
   const updatedRooms = rooms.map(room => {
@@ -40,15 +40,15 @@ const SummaryCard = () => {
   })
 
 
-
   const flatExtras = updatedRooms.flatMap(room => room.extras || [])
   const getText = (days: number) => days === 1 ? 'night' : 'nights'
-  console.log(rooms)
   //calculate total price for rooms and extras
   const extrasTotalPrice = flatExtras.reduce((acc, extra) => acc + extra.totalPrice, 0)
 
 
-  const totalPrice = reservations.prePaymentAmount.amount
+  const tax = TAX_RATE
+  const roomsTotalPrice = rooms.reduce((acc, _) => acc + roomPrice, 0)
+  const totalPrice = roomsTotalPrice + extrasTotalPrice + tax
 
   return (
     <div className='flex flex-col bg-white rounded-[20px] py-5 px-3 shadow-xl self-start'>
@@ -84,7 +84,7 @@ const SummaryCard = () => {
         </div>
       </div>
 
-      {reservations.services && reservations.services.length > 0 && (
+      {reservations[0].services && reservations[0].services.length > 0 && (
         <div className='flex flex-col mb-5'>
           <span className='font-semibold mb-4 text-[15px]'>Extras:</span>
           {rooms.map((room, index) => (

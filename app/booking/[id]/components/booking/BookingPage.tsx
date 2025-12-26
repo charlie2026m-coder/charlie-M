@@ -8,6 +8,7 @@ import { Room } from "@/types/types"
 import { Service } from "@/types/apaleo"
 import { RoomOffer } from "@/types/offers"
 import { useBookingStore } from "@/store/useBookingStore"
+import { useStore } from "@/store/useStore"
 import { calculateNights, getType } from "@/lib/utils"
 
 const BookingPage = ({
@@ -26,11 +27,14 @@ const BookingPage = ({
   const { from, to, adults, children, rooms, filledRooms, extras } = params
   const setRooms = useBookingStore(state => state.setRooms)
   const setRoomDetails = useBookingStore(state => state.setRoomDetails)
-  const isRefundable = useBookingStore(state => state.isRefundable)
   const setParams = useBookingStore(state => state.setParams)
+  const clearBooking = useBookingStore(state => state.clearBooking)
+  const bookingId = useBookingStore(state => state.bookingId)
+  const setBookingId = useBookingStore(state => state.setBookingId)
+  const setValue = useStore(state => state.setValue)
   
   const nights = calculateNights(from as string, to as string)
-  const planType = getType(nights, isRefundable)
+  const planType = getType(nights, true)
   const mainRoom = rooms.find(room => room.code === planType) || rooms[0]
 
   useEffect(() => {
@@ -38,17 +42,43 @@ const BookingPage = ({
       useBookingStore.persist.rehydrate()
     }
     
-    // Check and initialize rooms immediately after hydration
-    const currentRooms = useBookingStore.getState().rooms
-    if (!currentRooms || currentRooms.length === 0) {
-      setRooms(filledRooms)
+    // Create unique identifier for current booking parameters
+    const currentBookingId = `${mainRoom?.id || mainRoom?.code}-${from}-${to}-${adults}-${children}`
+    
+    if (bookingId && bookingId !== currentBookingId) {
+      clearBooking()
+      setValue(1, 'bookingPage')
+      setRooms(filledRooms) // Set new rooms immediately
+    } else {
+      // Initialize rooms if empty (first load)
+      const currentRooms = useBookingStore.getState().rooms
+      if (!currentRooms || currentRooms.length === 0) {
+        setRooms(filledRooms)
+      }
     }
-  }, [filledRooms, setRooms])
+    
+    // Update booking ID
+    setBookingId(currentBookingId)
+  }, [from, to, adults, children, bookingId])
 
   useEffect(() => {
-    setParams({ from, to, nights })
-    setRoomDetails(mainRoom)
-  }, [isRefundable]) // Only when isRefundable changes
+    if (!useBookingStore.persist.hasHydrated()) {
+      return // Wait for hydration to complete
+    }
+    
+    const currentBookingId = `${mainRoom?.id || mainRoom?.code}-${from}-${to}-${adults}-${children}`
+    const storedRoomDetails = useBookingStore.getState().roomDetails
+    const storedBookingId = useBookingStore.getState().bookingId
+    
+    if (storedBookingId === currentBookingId && storedRoomDetails) {
+      // Same booking - keep stored roomDetails
+      setParams({ from, to, nights })
+    } else {
+      // New booking - set new roomDetails
+      setParams({ from, to, nights })
+      setRoomDetails(mainRoom)
+    }
+  }, [from, to, nights, mainRoom])
 
   return (
     <>  

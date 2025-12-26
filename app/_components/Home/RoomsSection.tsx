@@ -6,7 +6,6 @@ import { getApaleoRooms } from '@/services/getApaleoRooms'
 
 const RoomsSection = async () => {
   const rooms = await getApaleoRooms()
-  console.log(rooms, 'apaleo rooms xxxx')
   // Show fallback UI if no rooms available (e.g., API error)
   if ('error' in rooms || !rooms || rooms.length === 0) {
     return <ErrorCard link='/' isSingleRoom={false} />

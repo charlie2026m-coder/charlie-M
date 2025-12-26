@@ -23,7 +23,7 @@ interface StoreState {
   bookingPage: number;
 
   setValue: (
-    value:number | DateRange | Guests | MainFilter | PriceFilter | BedSizeFilter , 
+    value:string |number | DateRange | Guests | MainFilter | PriceFilter | BedSizeFilter , 
     key: string
   ) => void;
 }

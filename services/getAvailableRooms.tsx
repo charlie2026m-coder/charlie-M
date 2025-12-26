@@ -7,14 +7,17 @@ import { roomsDetails } from '@/content/RoomsDetails';
 const propId = process.env.APALEO_PROPERTY_ID;
 
 
-const getAvailableRoomsInternal = async (from?: string, to?: string, guests?: number) => {
+const getAvailableRoomsInternal = async (from?: string, to?: string, guests: number = 1) => {
   if (!propId) throw new Error('Property ID is required. Set APALEO_PROPERTY_ID in .env');
   
   const arrival = from || dayjs().format('YYYY-MM-DD');
   const departure = to || dayjs().add(1, 'day').format('YYYY-MM-DD');
-  try {
-      const response = await Fetch<OfferResponse>(`/booking/v1/offers?propertyId=${propId}&arrival=${arrival}&departure=${departure}&channelCode=Direct&adults=${guests}`).then(res => res.offers);
+  const guestsCount = (guests && guests > 1) ? 2 : 1;
 
+  try {
+      const response = await Fetch<OfferResponse>(`/booking/v1/offers?propertyId=${propId}&arrival=${arrival}&departure=${departure}&channelCode=Direct&adults=${guestsCount}`).then(res => res.offers);
+      
+      //availableUnits
       const nights = calculateNights(from as string, to as string);
       const type = nights > 7  ? 'LONG_STAY' : 'BAR_WEB';
 
@@ -37,7 +40,11 @@ const getAvailableRoomsInternal = async (from?: string, to?: string, guests?: nu
           maxPersons: roomDetails?.maxPersons || 1,
         };
       });
-      return formattedRooms as RoomOffer[];
+      const availableRooms = guests < 2 ? formattedRooms : formattedRooms.filter(room => {
+        const volume = room.maxPersons * room.availableUnits;
+        return volume >= guests;
+      });
+      return availableRooms as RoomOffer[];
   } catch (e: any) {
     console.error('Get Rooms error:', e.message);
     // Return error object instead of empty array
