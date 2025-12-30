@@ -1,25 +1,18 @@
 import { Button } from '../ui/button'
 import PhotoSlider from './PhotoSlider'
 import Link from 'next/link'
-import {  RoomGroup } from '@/types/apaleo'
+import {  SimpleRoom } from '@/types/offers'
 import Price from '../ui/price'
 import RoomParamsRow from '../ui/RoomParamsRow'
 
 const RoomCard = ({ 
   item,
 }: { 
-  item: RoomGroup
+  item: SimpleRoom
 }) => {
-  const images = [
-    '/images/room1.webp',
-    '/images/room2.webp',
-    '/images/room3.webp',
-    '/images/room2.webp',
-    '/images/room.webp',
-  ]
   return (
     <div className='w-full flex flex-col rounded-[40px] bg-white overflow-hidden shadow-lg h-full'>
-      <PhotoSlider height={260} images={images} />
+      <PhotoSlider height={260} images={item.images} />
       <div className='flex flex-col p-4 pb-6 h-full'>
         <h2 className='text-xl font-medium jakarta mb-3'>{item.name}</h2>
         <RoomParamsRow attributes={item.attributes } maxPersons={item.maxPersons} size={item.size} />

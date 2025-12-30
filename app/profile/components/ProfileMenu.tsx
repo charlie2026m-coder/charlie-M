@@ -8,15 +8,15 @@ import { cn } from '@/lib/utils'
 import SlideMenu from './SlideMenu'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
 import ReservationIdDialog from './ReservationIdDialog'
 import Logout from './Logout'
+import { useProfileStore, ReservationFilter } from '@/store/useProfile'
 
 
 const ProfileMenu = () => {
   const pathname = usePathname()
   const { profile } = useProfile()
-  const [activeResTab, setActiveResTab] = useState('All')
+  const { reservationFilter, setReservationFilter } = useProfileStore()
 
 
   const tabs = [
@@ -30,7 +30,7 @@ const ProfileMenu = () => {
     },
   ]
 
-  const resTabs = ['All', 'Ongoing', 'Upcoming', 'Completed', 'Cancelled' ] as const
+  const resTabs = ['All', 'Ongoing', 'Upcoming', 'Completed', 'Canceled' ] as const
 
   return (
     <CustomCard className=" col-span-1 self-start shadow-lg">
@@ -47,29 +47,33 @@ const ProfileMenu = () => {
           : <PiCalendarBlankFill className={cn('size-5', isActive ? 'text-white' : 'text-blue')} />
         
         return (
-          <Link
-            href={href}
-            key={tab.value} 
-            className={cn(
-              'flex items-center p-2.5 rounded-[16px] gap-2 w-full cursor-pointer transition-all duration-300',
-              isActive 
-                ? 'bg-black text-white hover:bg-black/80' 
-                : 'hover:bg-light-bg'
-            )} 
-          >
-            {icon} {tab.label}
-            {(tab.value === '/reservations') && (
-              <TiArrowSortedDown className={cn('size-5 ml-auto', isActive ? 'text-white' : 'text-brown')} />
+          <div key={tab.label} className='flex flex-col gap-2'>
+            <Link
+              href={href}
+              className={cn(
+                'flex items-center p-2.5 rounded-[16px] gap-2 w-full cursor-pointer transition-all duration-300',
+                isActive 
+                  ? 'bg-black text-white hover:bg-black/80' 
+                  : 'hover:bg-light-bg'
+              )} 
+            >
+              {icon} {tab.label}
+              {(tab.value === '/reservations') && (
+                <TiArrowSortedDown className={cn('size-5 ml-auto transition-all duration-300', isActive ? 'text-white rotate-180 ' : 'text-blue')} />
+              )}
+            </Link>
+            {tab.value === '/reservations' && (
+              <SlideMenu 
+                isActive={(isActive && tab.value === '/reservations' && pathname === '/profile/reservations')}
+                sections={resTabs.map(tab => tab.toString())}
+                activeSection={reservationFilter}
+                onSectionClick={(title) => setReservationFilter(title as ReservationFilter)}
+              />
             )}
-          </Link>
+          </div>
         )
       })}
 
-      <SlideMenu 
-        sections={resTabs.map(tab => tab.toString())}
-        activeSection={activeResTab}
-        onSectionClick={(title) => setActiveResTab(title)}
-      />
 
       <ReservationIdDialog />
 

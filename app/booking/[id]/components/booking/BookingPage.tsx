@@ -1,3 +1,4 @@
+'use client'
 import { useEffect } from "react";
 import PhotoGallery from "@/app/rooms/[id]/components/PhotoGallery"
 import RoomContent from "@/app/rooms/[id]/components/RoomContent"
@@ -38,51 +39,46 @@ const BookingPage = ({
   const mainRoom = rooms.find(room => room.code === planType) || rooms[0]
 
   useEffect(() => {
+    if (typeof window === 'undefined') return // Skip SSR
+    
     if (!useBookingStore.persist.hasHydrated()) {
       useBookingStore.persist.rehydrate()
+      return
     }
     
-    // Create unique identifier for current booking parameters
     const currentBookingId = `${mainRoom?.id || mainRoom?.code}-${from}-${to}-${adults}-${children}`
     
     if (bookingId && bookingId !== currentBookingId) {
       clearBooking()
       setValue(1, 'bookingPage')
-      setRooms(filledRooms) // Set new rooms immediately
-    } else {
-      // Initialize rooms if empty (first load)
+      setRooms(filledRooms)
+      setBookingId(currentBookingId)
+    } else if (!bookingId) {
+      setBookingId(currentBookingId)
       const currentRooms = useBookingStore.getState().rooms
       if (!currentRooms || currentRooms.length === 0) {
         setRooms(filledRooms)
       }
     }
-    
-    // Update booking ID
-    setBookingId(currentBookingId)
-  }, [from, to, adults, children, bookingId])
+  }, [from, to, adults, children, mainRoom?.id, mainRoom?.code])
 
   useEffect(() => {
-    if (!useBookingStore.persist.hasHydrated()) {
-      return // Wait for hydration to complete
-    }
+    if (typeof window === 'undefined') return // Skip SSR
+    if (!useBookingStore.persist.hasHydrated()) return
     
     const currentBookingId = `${mainRoom?.id || mainRoom?.code}-${from}-${to}-${adults}-${children}`
     const storedRoomDetails = useBookingStore.getState().roomDetails
     const storedBookingId = useBookingStore.getState().bookingId
     
-    if (storedBookingId === currentBookingId && storedRoomDetails) {
-      // Same booking - keep stored roomDetails
-      setParams({ from, to, nights })
-    } else {
-      // New booking - set new roomDetails
+    if (storedBookingId !== currentBookingId || !storedRoomDetails) {
       setParams({ from, to, nights })
       setRoomDetails(mainRoom)
     }
-  }, [from, to, nights, mainRoom])
+  }, [from, to, adults, children, mainRoom?.id, mainRoom?.code])
 
   return (
     <>  
-      <PhotoGallery />
+      <PhotoGallery images={mainRoom?.images || []} />
       <div className='grid grid-cols-1  lg:grid-cols-3 mb-[30px]'>
         <div className='col-span-1 lg:col-span-2 flex flex-col lg:pr-10'>
           <RoomContent room={mainRoom} />

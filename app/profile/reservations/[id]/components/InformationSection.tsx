@@ -1,4 +1,21 @@
+'use client'
 import InfoCard from './InfoCard'
+
+const InformationSection = () => {
+  return (
+    <div className='px-3 lg:px-[30px]'>
+      <h3 className='font-semibold text-mute text-[40px] mb-8'>Information</h3>
+      <div className='grid grid-cols-2 lg:grid-cols-3 gap-x-4 lg:gap-x-10  gap-y-5'>
+        {infoItems.map((item) => (
+          <InfoCard key={item.id} card={item} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export default InformationSection
+
 
 const infoItems = [
   {
@@ -48,19 +65,3 @@ const infoItems = [
   },
  
 ]
-
-const InformationSection = () => {
-  return (
-    <div className='px-3 lg:px-[30px]'>
-      <h3 className='font-semibold text-mute text-[40px] mb-8'>Information</h3>
-      <div className='grid grid-cols-2 lg:grid-cols-3 gap-x-4 lg:gap-x-10  gap-y-5'>
-        {infoItems.map((item) => (
-          <InfoCard key={item.id} card={item} />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-export default InformationSection
-

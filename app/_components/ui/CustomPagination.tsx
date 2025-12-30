@@ -36,12 +36,12 @@ export function CustomPagination({
 
   const pageNumbers = getPageNumbers()
 
-  const buttonBaseClass = "flex size-[36px] items-center justify-center rounded-full border transition-colors font-semibold text-sm"
+  const buttonBaseClass = "flex size-[36px] items-center justify-center cursor-pointer rounded-full border transition-colors font-semibold text-sm"
   const pageButtonClass = "border-blue text-dark hover:bg-blue/10"
   const activeButtonClass = "border-blue bg-blue text-white"
 
   return (
-    <nav className="flex items-center justify-center">
+    <nav className="flex items-center justify-center mt-auto">
       <div className="flex items-center gap-2">
         
           

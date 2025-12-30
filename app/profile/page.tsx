@@ -43,14 +43,9 @@ export default function Profile() {
   // Load profile data into form when available
   useEffect(() => {
     if (profile) {
-      // Split name into first and last name
-      const nameParts = (profile.name || '').split(' ');
-      const firstName = nameParts[0] || '';
-      const lastName = nameParts.slice(1).join(' ') || '';
-
       reset({
-        name: firstName,
-        last_name: lastName,
+        name: profile.name || '',
+        last_name: profile.last_name || '',
         email: profile.email || '',
         phone: profile.mobile || '',
       });
@@ -68,10 +63,6 @@ export default function Profile() {
   }
 
   const onSubmit = async (data: GuestDetailsFormData) => {
-    // Combine first and last name
-    const fullName = `${data.name} ${data.last_name}`.trim();
-
-
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(data.email)) {
@@ -79,9 +70,9 @@ export default function Profile() {
       return;
     }
 
-    
     await updateMutation.mutateAsync({
-      name: fullName,
+      name: data.name,
+      last_name: data.last_name,
       email: data.email,
       mobile: data.phone,
     });
@@ -103,7 +94,7 @@ export default function Profile() {
   return (
     <div className='px-[30px] flex flex-col'>
       <form onSubmit={(e) => e.preventDefault()}>
-        <h3 className="flex gap-2 items-center font-semibold text-2xl mb-9"><Dot size={15} color='blue'/>Profile</h3>
+        <h3 className="flex gap-2 items-center font-semibold text-2xl mb-9">Profile</h3>
         <div className='grid  lg:grid-cols-2 gap-8 mb-5'>
           <div className='relative flex flex-col gap-1 '>
             <CustomInput 

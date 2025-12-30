@@ -1,11 +1,18 @@
 import { NextResponse } from "next/server"
 import { getOrRefreshToken } from "@/services/Request"
+import { createSupabaseServerClient } from "@/lib/supabase-server"
+import { Booking } from "@/types/booking"
 
 const APALEO_API_URL = 'https://api.apaleo.com'
 
+interface ApaleoBookingResponse {
+  id: string
+  reservationIds: { id: string }[]
+}
+
 export async function POST(request: Request) {
   try {
-    const booking = await request.json()
+    const booking: Booking = await request.json()
 
     // Get Apaleo token
     const token = await getOrRefreshToken()
@@ -22,8 +29,6 @@ export async function POST(request: Request) {
     })
 
 
-    console.log(response, 'XXX_RESPONSE')
-
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
       console.error('Apaleo API error:', response.status, errorData)
@@ -38,8 +43,31 @@ export async function POST(request: Request) {
       )
     }
 
-    const data = await response.json()
-    return NextResponse.json(data, { status: 201 })
+    const apaleoData: ApaleoBookingResponse = await response.json()
+
+    // Save reservations to Supabase
+    try {
+      const supabase = await createSupabaseServerClient()
+      const primaryGuest = booking.reservations[0]?.primaryGuest
+      
+      if (primaryGuest && apaleoData.id && apaleoData.reservationIds) {
+        // Create an array of reservations to insert
+        const reservationsToInsert = apaleoData.reservationIds.map(reservation => ({
+          reservation_id: reservation.id,
+          booking_id: apaleoData.id,
+          last_name: primaryGuest.lastName,
+          email: primaryGuest.email,
+        }));
+
+        // Insert all reservations
+        await supabase.from('reservations').insert(reservationsToInsert);
+      }
+    } catch (supabaseError) {
+      console.error('Failed to save reservations to Supabase:', supabaseError)
+      // Don't fail the whole request if Supabase fails
+    }
+
+    return NextResponse.json(apaleoData, { status: 201 })
     
   } catch (error) {
     console.error('Create booking error:', error)

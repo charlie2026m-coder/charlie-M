@@ -1,4 +1,3 @@
-'use client'
 import { FaArrowLeft } from "react-icons/fa6";
 import Link from 'next/link';
 
@@ -6,12 +5,15 @@ import UpgradeSection from './components/UpgradeSection';
 import MainInfo from './components/MainInfo';
 import AddExtras from './components/AddExtras';
 import InformationSection from "./components/InformationSection";
-import { useParams } from "next/navigation";
-import { reservations } from "@/content/content";
-const ReservationPage = () => {
-  const { id } = useParams();
-  const reservation = reservations.find((reservation) => reservation.id === Number(id));
+import { getReservationById } from "@/services/getReservation";
+import { bookingStatuses } from "@/types/types";
 
+const ReservationPage = async ({ params }: { params: { id: string } }) => {
+  const { id } = await params;
+  const reservation = await getReservationById(id);
+  const isActive = reservation?.status === bookingStatuses.Confirmed || reservation?.status === bookingStatuses.InHouse;
+  const isUpcoming = reservation?.status === bookingStatuses.Confirmed;
+  
   return (
     <div className='flex flex-col flex-1'>
       <Link href='/profile/reservations'>
@@ -20,8 +22,8 @@ const ReservationPage = () => {
         </div>
       </Link>
       <MainInfo reservation={reservation} />
-      <UpgradeSection />
-      <AddExtras />
+      {isUpcoming && <UpgradeSection />}
+      {isActive && <AddExtras />}
       <InformationSection />
       
     </div>

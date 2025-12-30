@@ -11,11 +11,9 @@ import {
 const PhotoSlider = ({
   height,
   images,
-  category = 'Category A'
 }: {
   height: number
   images: string[]
-  category?: string
 }) => {
   const [api, setApi] = useState<CarouselApi>()
   const [current, setCurrent] = useState(0)
@@ -32,6 +30,10 @@ const PhotoSlider = ({
     })
   }, [api])
 
+  const handlePhotoClick = () => {
+    api?.scrollNext()
+  }
+
   return (
     <div className="relative">
       <Carousel 
@@ -46,7 +48,11 @@ const PhotoSlider = ({
         <CarouselContent>
           {images.map((image, index) => (
             <CarouselItem key={index}>
-              <div className="relative w-full overflow-hidden " style={{ height: `${height}px` }}>
+              <div 
+                className="relative w-full overflow-hidden cursor-pointer" 
+                style={{ height: `${height}px` }}
+                onClick={handlePhotoClick}
+              >
                 <Image 
                   src={image} 
                   alt={`Photo ${index + 1}`} 
@@ -77,19 +83,18 @@ const PhotoSlider = ({
             ))
           }
 
-          // Вычисляем окно из 3 точек с центрированием активной точки
-          let startIndex
-          if (current === 0) {
+          let startIndex = 0
+          
+          if (current <= 1) {
             startIndex = 0
-          } else if (current >= count - 1) {
+          } else if (current >= count - 2) {
             startIndex = count - maxDots
           } else {
-            startIndex = current - 1
+            startIndex = current - 2
           }
 
-          return Array.from({ length: Math.min(maxDots, count) }).map((_, i) => {
+          return Array.from({ length: maxDots }).map((_, i) => {
             const slideIndex = startIndex + i
-            if (slideIndex >= count) return null
             
             return (
               <button

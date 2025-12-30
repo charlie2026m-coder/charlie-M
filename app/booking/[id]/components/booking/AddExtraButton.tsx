@@ -39,6 +39,7 @@ const AddExtraButton = ({extra}:{extra: Service}) => {
           id: extra.id,
           pricingType: extra.pricingType,
           pricingUnit: extra.pricingUnit,
+          daysOfWeek: extra.daysOfWeek,
         }
         const hasExtra = currentExtras.some(e => e.id === extra.id)
         if (!hasExtra) {

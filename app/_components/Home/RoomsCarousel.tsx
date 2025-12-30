@@ -7,11 +7,11 @@ import {
   CarouselItem,
 } from '../ui/carousel'
 import RoomCard from './RoomCard'
-import type { RoomGroup } from '@/types/apaleo'
+import type { SimpleRoom } from '@/types/offers'
 export function RoomsCarousel({
   items,
 }: {
-  items: RoomGroup[]  
+  items: SimpleRoom[]  
 }) {
   const [api, setApi] = React.useState<CarouselApi>()
   const [current, setCurrent] = React.useState(0)

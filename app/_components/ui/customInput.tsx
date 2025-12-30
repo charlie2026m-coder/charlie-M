@@ -6,7 +6,6 @@ import { MdLock } from "react-icons/md";
 import { useState } from "react";
 import { IoEyeSharp, IoEyeOffSharp } from "react-icons/io5";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
 import { BsFillTelephoneFill } from "react-icons/bs";
 import { BiSolidIdCard } from "react-icons/bi";
 import { FaGlobeAsia } from "react-icons/fa";
@@ -39,7 +38,7 @@ function CustomInput<T extends FieldValues>({
     email: <TbMailFilled className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-blue" />,
     password: <MdLock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-blue" />,
     name: <FaUser className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-blue" />,
-    booking: <Image className="absolute left-3 top-1/2 -translate-y-1/2 size-6" src="/images/booking-icon-input.png" alt="booking" width={24} height={24} />,
+    booking: <h1 className="absolute left-3 top-1/2 -translate-y-1/2  text-blue text-2xl font-bold">B.</h1>,
     phone: <BsFillTelephoneFill className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-blue" />,
     id: <BiSolidIdCard className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-blue" />,
     nationality: <FaGlobeAsia className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-blue" />,

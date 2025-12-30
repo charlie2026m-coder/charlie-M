@@ -9,7 +9,7 @@ import { GuestDetailsFormData, guestDetailsSchema } from '@/types/schemas'
 import { useStore } from '@/store/useStore'
 import { useCreateBooking } from '@/app/hooks/useCreateBooking'
 
-const GuestDetailsForm = () => {
+const GuestDetailsForm = () => {  
   const defaultValues = {name: '', last_name: '', email: '', phone: ''}
   const { register,  handleSubmit,  formState: { errors },  reset,  } = useForm<GuestDetailsFormData>({ resolver: zodResolver(guestDetailsSchema),  defaultValues,})
 

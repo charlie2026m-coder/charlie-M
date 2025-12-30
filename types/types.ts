@@ -4,7 +4,7 @@ export enum bookingStatuses {
   Confirmed = "Confirmed",
   InHouse = "InHouse",
   CheckedOut = "CheckedOut",
-  Cancelled = "Cancelled",
+  Canceled = "Canceled",
   NoShow = "NoShow",
 }
 
@@ -33,7 +33,7 @@ export interface Params extends Guests {
 }
 
 
-export type RoomExtra = Omit<Service, 'description' | 'daysOfWeek'>;
+export type RoomExtra = Omit<Service, 'description'>;
 
 export interface Room {
   id: string;

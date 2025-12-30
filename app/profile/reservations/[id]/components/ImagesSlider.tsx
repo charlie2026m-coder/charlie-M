@@ -29,16 +29,16 @@ const ImagesSlider = ({ images }: { images: string[] }) => {
           className='w-full h-[280px] object-cover rounded-4xl cursor-pointer' 
           onClick={nextPhoto}
         />
-        <div onClick={prevPhoto} className='absolute left-0 top-0 bottom-0 w-10 md:w-20 bg-light1/50 hover:bg-gray-200/50 flex items-center justify-center  rounded-l-4xl'>
-          <IoChevronBack className='size-10 cursor-pointer text-black'  />
+        <div onClick={prevPhoto} className='absolute left-0 top-0 bottom-0 w-10 md:w-20 bg-gradient-to-l from-transparent to-black/50 hover:to-black/70 flex items-center justify-start pl-2 rounded-l-4xl transition-all'>
+          <IoChevronBack className='size-10 cursor-pointer text-white'  />
         </div>
-        <div onClick={nextPhoto} className='absolute right-0 top-0 bottom-0 w-10 md:w-20 bg-light1/50 hover:bg-gray-200/50 flex items-center justify-center rounded-r-4xl'>
-          <IoChevronForward className='size-10 cursor-pointer text-black'  />
+        <div onClick={nextPhoto} className='absolute right-0 top-0 bottom-0 w-10 md:w-20 bg-gradient-to-r from-transparent to-black/50 hover:to-black/70 flex items-center justify-end pr-2 rounded-r-4xl transition-all'>
+          <IoChevronForward className='size-10 cursor-pointer text-white'  />
         </div>
       </div>
 
-      <div className='flex items-center justify-between w-full'>
-        <div className='text-xl px-5 pb-5 mx-auto'>
+      <div className='flex items-center justify-between w-full mt-2'>
+        <div className='text-sm px-5 text-dark  mx-auto'>
           {(showImages || 0) + 1} / {images.length}
         </div>
       </div>

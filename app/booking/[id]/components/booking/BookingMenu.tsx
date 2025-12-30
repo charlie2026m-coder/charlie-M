@@ -33,7 +33,7 @@ const BookingMenu = ({
     const updateExtras = room.extras?.map(extra => {
       return {
         ...extra,
-        totalPrice: getExtraPrice(extra, room.adults + room.children, nights),
+        totalPrice: getExtraPrice(extra, room.adults + room.children, nights, from as string, to as string),
       }
     })
     return {
@@ -43,13 +43,13 @@ const BookingMenu = ({
   })
 
 
-
   const flatExtras = updatedRooms.flatMap(room => room.extras || [])
   const getText = (days: number) => days === 1 ? 'night' : 'nights'
 
   //calculate total price for rooms and extras
   const roomsTotalPrice = rooms.reduce((acc, _) => acc + price, 0)
   const extrasTotalPrice = flatExtras.reduce((acc, extra) => acc + extra.totalPrice, 0)
+  
   const tax = TAX_RATE
   const totalPrice = roomsTotalPrice + extrasTotalPrice + tax
  

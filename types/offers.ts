@@ -84,6 +84,7 @@ interface TaxDetail {
 }
 
 export interface RoomOffer extends Offer {
+  images: string[];
   code: string;
   id: string;
   name: string;
@@ -94,4 +95,18 @@ export interface RoomOffer extends Offer {
   currency: string;
   maxPersons: number;
   averagePrice: number;
+}
+
+// Simple room type for displaying room cards (without full Apaleo offer data)
+export interface SimpleRoom {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  type: string;
+  images: string[];
+  maxPersons: number;
+  attributes: string[];
+  size: number;
+  price: number;
 }

@@ -10,36 +10,42 @@ import { RoomDetailsButton } from './RoomDetails';
 import StatusBadge from '@/app/_components/ui/StatusBadge';
 import { bookingStatuses } from '@/types/types';
 import { cn } from '@/lib/utils';
+
+
 const MainInfo = ({ reservation }: { reservation: any } ) => {
   const from = dayjs(reservation.arrival).format('ddd D MMM YYYY');
   const to = dayjs(reservation.departure).format('ddd D MMM YYYY');
+  const isCancelled = reservation.status === bookingStatuses.Canceled;
+  const isConfirmed = reservation.status === bookingStatuses.Confirmed;
+  const isInHouse = reservation.status === bookingStatuses.InHouse;
+  const isCheckedOut = reservation.status === bookingStatuses.CheckedOut;
   return (
     <div className='grid lg:grid-cols-2 gap-4 pb-6 px-3 lg:px-[30px]'>
     <div>
       <div className='flex  gap-3 mb-5'>
         <h2 className='text-[26px]  jakarta font-bold'>{reservation.name}</h2>
-        {reservation.status === bookingStatuses.Cancelled && <StatusBadge status={bookingStatuses.Cancelled} className='h-[35px] items-center justify-center' />}
+        {reservation.status === bookingStatuses.Canceled && <StatusBadge status={bookingStatuses.Canceled} className='h-[35px] items-center justify-center' />}
       </div>
       <div className='flex items-center gap-3 text-mute text-sm mb-3'>
         Check-in:
-        <span className={cn(reservation.status === bookingStatuses.Cancelled && 'text-red-500')}>{from} 15:00 - 00:00</span>
+        <span className={cn(reservation.status === bookingStatuses.Canceled && 'text-red-500')}>{from} 15:00 - 00:00</span>
       </div>
       <div className='flex items-center gap-3 text-mute text-sm mb-5'>
         Check-out:
-        <span className={cn(reservation.status === bookingStatuses.Cancelled && 'text-red-500')}>{to} 11:00</span>
+        <span className={cn(reservation.status === bookingStatuses.Canceled && 'text-red-500')}>{to} 11:00</span>
       </div>
       <div className='flex flex-col w-full lg:w-4/5 gap-3'>
-        {!reservation.isCheckin && <CheckinButton />}
+        {!reservation.isCheckin && !isCancelled && <CheckinButton />}
         {reservation.code && (<RoomCode roomNumber={reservation.roomNumber} code={reservation.code} />)}
-        {(reservation.status === bookingStatuses.CheckedOut || reservation.status === bookingStatuses.Cancelled) && (<BookAgainButton />)}
+        {(isCheckedOut || isCancelled) && (<BookAgainButton reservation={reservation} />)}
         <ReservationButton reservation={reservation} />
         <RoomDetailsButton reservation={reservation} />
-        {(reservation.status === bookingStatuses.Confirmed || reservation.status === bookingStatuses.InHouse) && (<ExtendButton />)}
+        {(isConfirmed || isInHouse) && !isCancelled && (<ExtendButton />)}
       </div>  
     </div>
 
     <div className='flex flex-col rounded-lg shadow-lg self-start'>
-      <Image src={reservation.image} alt={reservation.name} width={430} height={230} className='w-full h-[230px] object-cover rounded-t-2xl' />
+      <Image src={reservation.images?.[0] || '/images/room1.webp'} alt={reservation.name} width={430} height={230} className='w-full h-[230px] object-cover rounded-t-2xl' />
       <div className='flex justify-between items-center px-3 py-5'>
         <div className='flex flex-col gap-2 w-1/2 lg:w-2/5'>
           <h4 className='font-semibold'>Location</h4>

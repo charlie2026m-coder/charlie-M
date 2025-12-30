@@ -13,7 +13,7 @@ import { useStore } from '@/store/useStore';
 import { UrlParams } from '@/types/apaleo';
 
 
-const CheckInForm = ({ className = '', params }: { className?: string, params: UrlParams }) => {
+const CheckInForm = ({ className = '', params }: { className?: string, params?: UrlParams }) => {
   const { dateRange, guests, setValue } = useStore();
   const router = useRouter();
   const [openCalendar, setOpenCalendar] = useState(false);

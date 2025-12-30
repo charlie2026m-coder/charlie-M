@@ -6,6 +6,8 @@ import { MdDownload } from "react-icons/md";
 import { useState } from "react";
 import Link from "next/link";
 import CodeModal from "./CodeModal";
+import dayjs from "dayjs";
+import { Reservation } from "@/types/apaleo";
 
 export const AddExtrasButton = () => {
   return (
@@ -30,11 +32,25 @@ export const DetailsButton = ({id}: {id: string}) => {
   )
 }
 
-export const BookAgainButton = () => {
+export const BookAgainButton = ({ reservation }: { reservation: Reservation }) => {
+  const tomorrow = dayjs().add(1, 'day');
+  const arrivalDate = dayjs(reservation.arrival);
+  
+  // If arrival date is before tomorrow, use tomorrow/day after tomorrow
+  const from = arrivalDate.isBefore(tomorrow) 
+    ? tomorrow.format('YYYY-MM-DD')
+    : arrivalDate.format('YYYY-MM-DD');
+    
+  const to = arrivalDate.isBefore(tomorrow)
+    ? tomorrow.add(1, 'day').format('YYYY-MM-DD')
+    : dayjs(reservation.departure).format('YYYY-MM-DD');
+    
   return (
-    <Button variant='outline' className='h-[30px] text-sm'><FaCalendar className='size-4' /> Book Again </Button>
+    <Link href={`/rooms/${reservation.unitGroup.id}?from=${from}&to=${to}`} className="">
+      <Button variant='outline' className='h-[35px] text-sm px-5 gap-2 w-full justify-start'><FaCalendar />Book Again </Button>
+    </Link> 
   )
-}
+} 
 
 export const InvoiceButton = () => {
   return (

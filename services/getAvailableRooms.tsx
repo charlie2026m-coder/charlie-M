@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import { cache } from 'react';
 import { OfferResponse, RoomOffer } from '@/types/offers';
 import { calculateNights } from '@/lib/utils';
-import { roomsDetails } from '@/content/RoomsDetails';
+import { getRoomsDetails } from './getRoomsDetails';
 const propId = process.env.APALEO_PROPERTY_ID;
 
 
@@ -24,12 +24,14 @@ const getAvailableRoomsInternal = async (from?: string, to?: string, guests: num
       const fillteredRooms = response.filter(room => {
         return room.ratePlan.code.includes(type);
       });
+      const roomsDetails = await getRoomsDetails();
 
       const formattedRooms = fillteredRooms.map(room => {
         const roomDetails = roomsDetails.find(item => item.id === room.unitGroup.id);
 
         return {
           ...room,
+          images: roomDetails?.photos || [],
           id: room.unitGroup.id,
           name: room.unitGroup.name,
           description: room.unitGroup.description,
@@ -37,7 +39,7 @@ const getAvailableRoomsInternal = async (from?: string, to?: string, guests: num
           currency: room.totalGrossAmount.currency,
           attributes: roomDetails?.attributes || [],
           size: roomDetails?.size || 0,
-          maxPersons: roomDetails?.maxPersons || 1,
+          maxPersons: roomDetails?.max_persons || 1,
         };
       });
       const availableRooms = guests < 2 ? formattedRooms : formattedRooms.filter(room => {

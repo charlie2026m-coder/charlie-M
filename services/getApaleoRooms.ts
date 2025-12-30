@@ -2,7 +2,8 @@ import { Fetch } from './Request';
 import dayjs from 'dayjs';
 import { ratePlanResponse, rateResponse, UnitGroupsResponse } from '@/types/apaleo';
 import { cache } from 'react';
-import { roomsDetails } from '@/content/RoomsDetails';
+import { getRoomsDetails } from './getRoomsDetails';
+import { SimpleRoom } from '@/types/offers';
 const propId = process.env.APALEO_PROPERTY_ID;
 
 // Get all rate plans with prices (cached per request)
@@ -48,9 +49,9 @@ const getApaleoRoomPriceInternal = async (from: string, to: string) => {
 export const getApaleoRoomPrice = cache(getApaleoRoomPriceInternal);
 
 // Get all rooms (cached per request)
-const getApaleoRoomsInternal = async (from?: string, to?: string) => {
+const getApaleoRoomsInternal = async (from?: string, to?: string): Promise<SimpleRoom[] | { error: string }> => {
   if (!propId) throw new Error('Property ID is required. Set APALEO_PROPERTY_ID in .env');
-
+  const roomsDetails = await getRoomsDetails();
   const today = from || dayjs().format('YYYY-MM-DD');
   const tomorrow = to || dayjs().add(1, 'day').format('YYYY-MM-DD');
   try {
@@ -62,7 +63,8 @@ const getApaleoRoomsInternal = async (from?: string, to?: string) => {
       const rooms = unitGroups.map(item => {
         return {
           ...item.unitGroup,
-          maxPersons: roomsDetails.find(room => room.id === item.unitGroup.id)?.maxPersons || 1,
+          images: roomsDetails.find(room => room.id === item.unitGroup.id)?.photos || [],
+          maxPersons: roomsDetails.find(room => room.id === item.unitGroup.id)?.max_persons || 1,
           attributes: roomsDetails.find(room => room.id === item.unitGroup.id)?.attributes || [],
           size: roomsDetails.find(room => room.id === item.unitGroup.id)?.size || 0,
           price: getUnitPrices.find(plan => plan.unitGroupId === item.unitGroup.id)?.price || 0,

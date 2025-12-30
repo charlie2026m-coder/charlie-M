@@ -3,10 +3,8 @@ import { Fetch } from './Request';
 import { cache } from 'react';
 
 // Get all services/extras from Apaleo
-const fetchExtras = async (propertyId?: string): Promise<Service[]> => {
-  if (!propertyId) {
-    propertyId = process.env.APALEO_PROPERTY_ID;
-  }
+const fetchExtras = async (): Promise<Service[]> => {
+  const propertyId = process.env.APALEO_PROPERTY_ID;
 
   if (!propertyId) {
     throw new Error('Property ID is required. Set APALEO_PROPERTY_ID in .env');
@@ -27,6 +25,7 @@ const fetchExtras = async (propertyId?: string): Promise<Service[]> => {
         daysOfWeek: item.availability.daysOfWeek,
       }
     }));
+
 
     return  response;
   } catch (error: any) {

@@ -30,7 +30,7 @@ const SummaryCard = () => {
     const updateExtras = room.extras?.map(extra => {
       return {
         ...extra,
-        totalPrice: getExtraPrice(extra, room.adults + room.children, nights),
+        totalPrice: getExtraPrice(extra, room.adults + room.children, nights, reservations[0].arrival, reservations[0].departure),
       }
     })
     return {

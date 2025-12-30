@@ -5,18 +5,11 @@ import { RiSofaFill } from "react-icons/ri";
 import ImagesSlider from './ImagesSlider'
 import RoomParamsRow from '@/app/_components/ui/RoomParamsRow'
 import Amenities from './Amenities'
+import { Reservation } from "@/types/apaleo";
 
-export const RoomDetailsButton = ({ reservation }: { reservation: any }) => {
-  const images = [
-    '/images/room1.webp',
-    '/images/room2.webp',
-    '/images/room3.webp',
-    '/images/room1.webp',
-    '/images/room2.webp',
-    '/images/room3.webp',
-    '/images/room1.webp',
-    '/images/room2.webp',
-  ]
+export const RoomDetailsButton = ({ reservation }: { reservation: Reservation }) => {
+  const images = reservation.images || [];
+  console.log(reservation, 'reservation');
   return (
     <>
       <Dialog>
@@ -33,13 +26,12 @@ export const RoomDetailsButton = ({ reservation }: { reservation: any }) => {
               <span>Friedrichstraße 33, 10969 Berlin</span>
             </div>
           <ImagesSlider images={images} />
-          <div className='flex flex-col lg:flex-row gap-2 lg:items-center mb-5'>
-            <div className='flex px-2.5 rounded-full border border-red py-1 text-sm w-fit'>Category A</div>
-            <RoomParamsRow attributes={reservation.attributes} maxPersons={reservation.maxPersons} size={reservation.size} />
+          <div className='flex flex-col lg:flex-row gap-2 lg:items-center my-5'>
+            <RoomParamsRow attributes={reservation.attributes || []} maxPersons={reservation.guests || 0} size={reservation.size || 0} />
           </div>
           <Amenities />
           <p className='text-mute text-sm mt-5'>
-            { reservation.description }
+            {reservation.unitGroup.description}
           </p>
         </DialogContent>
       </Dialog>

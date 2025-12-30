@@ -5,7 +5,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { UrlParams } from "@/types/apaleo"
 import { Room, RoomExtra } from "@/types/types"
 import { RoomOffer } from "@/types/offers"
-import { Booking } from "@/types/booking";
 
 export function cn(...inputs: ClassValue[]) {return twMerge(clsx(inputs))}
 export const getDate = (date: Date) => {return date?dayjs(date).format('YYYY-MM-DD'): undefined}
@@ -59,30 +58,38 @@ export const getPriceData = ({ params, room }: {params: UrlParams, room: RoomOff
 
 
 export function sortGuestsByRooms(
-    maxAdults: number,
-    maxChildren: number,
-    adults: number,
-    children: number,
-    dateRange: {from: string, to: string}
-  ) {
-  const rooms: { id: string; adults: number; children: number, from: string, to: string}[] = [];
-  let remainingAdults = adults;
-  let remainingChildren = children;
+  adults: number,
+  children: number,
+  from: string,
+  to: string
+): Room[] {
+  const rooms: Room[] = [];
 
-  while (remainingAdults > 0 || remainingChildren > 0) {
-    const roomAdults = Math.min(maxAdults, remainingAdults);
-    const roomChildren = maxChildren > 0 ? Math.min(maxChildren, remainingChildren) : 0;
+  const pushRoom = (a: number, c: number) =>
+    rooms.push({ id: uuidv4(), adults: a, children: c, from, to });
 
-    rooms.push({
-      id: uuidv4(),
-      adults: roomAdults,
-      children: roomChildren,
-      from: dateRange.from,
-      to: dateRange.to,
-    });
+  // 1 взрослый + 1 ребёнок
+  const mixed = Math.min(adults, children);
+  for (let i = 0; i < mixed; i++) pushRoom(1, 1);
 
-    remainingAdults -= roomAdults;
-    remainingChildren -= roomChildren;
+  adults -= mixed;
+  children -= mixed;
+
+  // по 2 взрослых
+  while (adults >= 2) {
+    pushRoom(2, 0);
+    adults -= 2;
+  }
+
+  // по 2 детей (если вдруг)
+  while (children >= 2) {
+    pushRoom(0, 2);
+    children -= 2;
+  }
+
+  // остатки
+  if (adults || children) {
+    pushRoom(adults, children);
   }
 
   return rooms;
@@ -91,24 +98,58 @@ export function sortGuestsByRooms(
 export const getExtraPrice = (
   extra:  RoomExtra, 
   guests: number,
-  nights: number
+  nights: number,
+  from: string,
+  to: string
 ) => {
   const pricingUnit = extra.pricingUnit;
   const price = extra.price;
   const pricingType = extra.pricingType;
+  const daysOfWeek = extra.daysOfWeek || [];
 
   const units: Record<string, number> = {
     "Person": guests,
     "Room": 1,
   }
 
-  const types = {
-    "Daily": nights,
-    "Departure": 1,
-    "Arrival": 1,
+  // If no days specified, service is available all days
+  if (daysOfWeek.length === 0) {
+    const types = {
+      "Daily": nights,
+      "Departure": 1,
+      "Arrival": 1,
+    }
+    return units[pricingUnit] * types[pricingType] * price;
   }
 
-  return units[pricingUnit] * types[pricingType] * price;
+  // Calculate applicable days based on pricing type
+  let applicableDays = 0;
+
+  if (pricingType === "Daily") {
+    // Count nights where the day of week is in daysOfWeek
+    const fromDate = new Date(from);
+    for (let i = 0; i < nights; i++) {
+      const currentDate = new Date(fromDate);
+      currentDate.setDate(fromDate.getDate() + i);
+      const dayName = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
+      
+      if (daysOfWeek.includes(dayName)) {
+        applicableDays++;
+      }
+    }
+  } else if (pricingType === "Arrival") {
+    // Check if arrival day is in daysOfWeek
+    const arrivalDate = new Date(from);
+    const arrivalDay = arrivalDate.toLocaleDateString('en-US', { weekday: 'long' });
+    applicableDays = daysOfWeek.includes(arrivalDay) ? 1 : 0;
+  } else if (pricingType === "Departure") {
+    // Check if departure day is in daysOfWeek
+    const departureDate = new Date(to);
+    const departureDay = departureDate.toLocaleDateString('en-US', { weekday: 'long' });
+    applicableDays = daysOfWeek.includes(departureDay) ? 1 : 0;
+  }
+
+  return units[pricingUnit] * applicableDays * price;
 }
 
 export const extraTooltip = (extra: RoomExtra) => {

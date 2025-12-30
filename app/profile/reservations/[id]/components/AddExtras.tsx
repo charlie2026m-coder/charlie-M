@@ -1,3 +1,4 @@
+'use client'
 import ExtraCard from "@/app/booking/[id]/components/booking/ExtraCard"
 import { useState } from "react"
 import { Service } from "@/types/apaleo"
@@ -25,12 +26,3 @@ const [selected, setSelected] = useState<Service[]>([])
 }
 
 export default UpgradeRoom
-
-const extras = [
-  { image: '/images/extra-1.png', title: 'Extra Bed', price: 10, id: 1 },
-  { image: '/images/extra-2.png', title: 'Extra Bed', price: 10, id: 2 },
-  { image: '/images/extra-3.png', title: 'Extra Bed', price: 10, id: 3 },
-  { image: '/images/extra-1.png', title: 'Extra Bed', price: 50, id: 4 },
-  { image: '/images/extra-2.png', title: 'Extra Bed', price: 30, id: 5 },
-  { image: '/images/extra-3.png', title: 'Extra Bed', price: 20, id: 6 },
-]

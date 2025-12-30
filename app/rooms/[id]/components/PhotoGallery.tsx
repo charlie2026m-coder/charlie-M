@@ -5,23 +5,8 @@ import Image from 'next/image'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/app/_components/ui/dialog";
 import { IoChevronBack, IoChevronForward } from "react-icons/io5";
 
-const PhotoGallery = () => {
+const PhotoGallery = ({ images }: { images: string[] }) => {
   const [showImages, setShowImages] = useState<null | number>(null);
-
-  const images = [
-    '/images/room1.webp',
-    '/images/room2.webp',
-    '/images/room3.webp',
-    '/images/room2.webp',
-    '/images/room3.webp',
-    '/images/room2.webp',
-      '/images/room3.webp',
-    '/images/room2.webp',
-    '/images/room3.webp',
-    '/images/room2.webp',
-    '/images/room3.webp',
-    '/images/room2.webp',
-  ]
 
   const nextPhoto = () => {
     if (showImages === images.length - 1 || showImages === null) return

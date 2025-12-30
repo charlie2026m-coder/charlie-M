@@ -65,6 +65,9 @@ export async function Fetch<T>(
     ...(options?.body && { body: JSON.stringify(options.body) }),
   });
   
+  // Handle 204 No Content - return empty object/array
+  if (response.status === 204) return {} as T;
+
   if (!response.ok) {
     throw new Error(`Apaleo API error: ${response.status}`);
   }

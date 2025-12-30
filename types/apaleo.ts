@@ -115,6 +115,15 @@ export interface ServiceDetails {
     daysOfWeek: string[];
   };
 }
+
+export interface ServicesPaidDetails {
+  service: ServiceDetails;
+  dates: any[];
+  totalAmount: {
+    grossAmount: number;
+    currency: string;
+  }
+}
 type PricingType = "Arrival" | "Departure" | "Daily" ;
 export interface ServicesResponse {
   services: ServiceDetails[];
@@ -198,11 +207,14 @@ export interface Commission {
 }
 
 export interface Reservation {
+  attributes?: string[];
+  size?: number;
   arrival: string;
   departure: string;
   adults: number;
   childrenAges?: number[];
   guestComment?: string;
+  images?: string[];
   channelCode: string;
   primaryGuest: Guest;
   guaranteeType: string;
@@ -222,6 +234,90 @@ export interface BookingPayload {
   transactionReference: string;
 }
 
+//_____________________________RESERVATION RESPONSE
+export interface CancellationFee {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  dueDateTime: string;
+}
+
+export interface NoShowFee {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  fee: Money;
+}
+
+export interface PayableAmount {
+  guest: Money;
+}
+
+export interface Property {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+}
+
+export interface RatePlan {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  isSubjectToCityTax: boolean;
+}
+
+export interface UnitGroup {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  type: string;
+}
+
+export interface TaxDetail {
+  vatType: string;
+  vatPercent: number;
+  net: Money;
+  gross: Money;
+}
+
+export interface ApaleoReservationResponse {
+  id: string;
+  bookingId: string;
+  adults: number;
+  childrenAges?: number[];
+  arrival: string;
+  departure: string;
+  status: string;
+  channelCode: string;
+  guaranteeType: string;
+  created: string;
+  modified: string;
+  balance: Money;
+  totalGrossAmount: Money;
+  payableAmount: PayableAmount;
+  cancellationFee: CancellationFee;
+  noShowFee: NoShowFee;
+  primaryGuest: Guest;
+  property: Property;
+  ratePlan: RatePlan;
+  unitGroup: UnitGroup;
+  taxDetails: TaxDetail[];
+  hasCityTax: boolean;
+  isOpenForCharges: boolean;
+  isPreCheckedIn: boolean;
+  allFoliosHaveInvoice: boolean;
+}
+
+export interface Reservation extends ApaleoReservationResponse {
+  name: string;
+  image: string;
+  guests: number;
+}
 
 //_____________________________OFFERS
 
