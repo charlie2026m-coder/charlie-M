@@ -26,15 +26,11 @@ stages:
   image:
     name: node_semantic_release
   stage: release
-  variables:
-    GITLAB_TOKEN: $GITLAB_TOKEN
   script:
     - semantic-release
 
 #Stages Development
 Create semantic release:
-  variables:
-    GITLAB_TOKEN: $GITLAB_TOKEN
   rules:
     - if: $CI_COMMIT_MESSAGE =~ /\[ci upload\]/
       when: never
