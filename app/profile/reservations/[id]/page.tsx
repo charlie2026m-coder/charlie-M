@@ -6,11 +6,13 @@ import MainInfo from './components/MainInfo';
 import AddExtras from './components/AddExtras';
 import InformationSection from "./components/InformationSection";
 import { getReservationById } from "@/services/getReservation";
+import { getApaleoExtras } from "@/services/getExtras";
 import { bookingStatuses } from "@/types/types";
 
 const ReservationPage = async ({ params }: { params: { id: string } }) => {
   const { id } = await params;
   const reservation = await getReservationById(id);
+  const extras = await getApaleoExtras();
   const isActive = reservation?.status === bookingStatuses.Confirmed || reservation?.status === bookingStatuses.InHouse;
   const isUpcoming = reservation?.status === bookingStatuses.Confirmed;
   
@@ -23,7 +25,7 @@ const ReservationPage = async ({ params }: { params: { id: string } }) => {
       </Link>
       <MainInfo reservation={reservation} />
       {isUpcoming && <UpgradeSection />}
-      {isActive && <AddExtras />}
+      {isActive && <AddExtras extras={extras} />}
       <InformationSection />
       
     </div>

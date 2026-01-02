@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
@@ -69,6 +69,35 @@ export async function GET(request: Request) {
         
         if (updateError) {
           console.error('Failed to sync email to profiles:', updateError);
+        }
+
+        // Save consent for registration (GDPR compliance)
+        try {
+          const headersList = await headers()
+          const ip = 
+            headersList.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+            headersList.get('x-real-ip') || 
+            'unknown'
+
+          const { data: existingConsent } = await supabase
+            .from('consents')
+            .select('id')
+            .eq('user_id', data.user.id)
+            .eq('consent_type', 'registration')
+            .single()
+
+          if (!existingConsent) {
+            await supabase.from('consents').insert({
+              user_id: data.user.id,
+              consent_type: 'registration',
+              consent_given: true,
+              ip_address: ip,
+              privacy_policy_version: '1.0',
+              consent_date: new Date().toISOString(),
+            })
+          }
+        } catch (consentError) {
+          console.error('Failed to save consent:', consentError)
         }
         
         return NextResponse.redirect(`${requestUrl.origin}/profile?email_confirmed=true`);

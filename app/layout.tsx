@@ -4,6 +4,7 @@ import "./globals.css";
 import { ReactQueryProvider } from "./providers";
 import Header from "./_components/header/Header";
 import Footer from "./_components/footer/Footer";
+import CookieBanner from "./_components/CookieBanner";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           </div>
           <main className="flex-1 relative z-10">{children}</main>
           <Footer/>
+          <CookieBanner />
           <Toaster position="top-left" richColors/>
         </ReactQueryProvider>
       </body>

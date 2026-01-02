@@ -96,6 +96,12 @@ const LoginForm = ({ setFormType }: { setFormType: (type: contentType ) => void 
       </form>
       <Divider />
       <SocialMediaButtons setFormType={setFormType} />
+      <div className="mt-4 text-center text-sm text-mute " >
+        Don't have an account? 
+        <button onClick={() => setFormType('signup')} className="text-blue hover:text-black underline cursor-pointer pl-1">
+          Sign Up
+        </button>
+      </div>
     </div>
   );
 };

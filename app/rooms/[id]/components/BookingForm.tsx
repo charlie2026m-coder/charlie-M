@@ -24,7 +24,6 @@ const BookingForm = ({ id, room, params }: { id: string, room: RoomOffer , param
 
   const [guests, setGuests] = useState({adults: parseInt(params?.adults || guestsStore?.adults.toString() || '1'), children: parseInt(params?.children || guestsStore?.children.toString() || '0')});
   const { priceText, nightsText } = getPriceData({ params, room })
-
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: dateRangeStore.from || (params.from ? dayjs(params.from).toDate() : undefined),
     to: dateRangeStore.to || (params.to ? dayjs(params.to).toDate() : undefined),

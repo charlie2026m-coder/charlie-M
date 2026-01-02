@@ -1,10 +1,40 @@
--- Drop existing triggers and functions
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-DROP TRIGGER IF EXISTS on_auth_user_updated ON auth.users;
-DROP TRIGGER IF EXISTS on_profile_updated ON public.profiles;
-DROP FUNCTION IF EXISTS public.handle_new_user();
-DROP FUNCTION IF EXISTS public.handle_user_updated();
-DROP FUNCTION IF EXISTS public.handle_updated_at();
+-- ============================================
+-- PROFILES TABLE WITH TRIGGERS
+-- Creates user profiles table and auto-sync with auth.users
+-- ============================================
+
+-- Create profiles table
+CREATE TABLE public.profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  name TEXT,
+  last_name TEXT,
+  email TEXT,
+  mobile TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable RLS (Row Level Security)
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+-- Policy: users can view only their own profile
+CREATE POLICY "Users can view own profile" 
+  ON public.profiles FOR SELECT 
+  USING (auth.uid() = id);
+
+-- Policy: users can update only their own profile
+CREATE POLICY "Users can update own profile" 
+  ON public.profiles FOR UPDATE 
+  USING (auth.uid() = id);
+
+-- Policy: allows profile creation by user or system/trigger
+CREATE POLICY "Allow profile creation"
+  ON public.profiles FOR INSERT 
+  WITH CHECK (auth.uid() = id OR auth.uid() IS NULL);
+
+-- ============================================
+-- TRIGGERS AND FUNCTIONS
+-- ============================================
 
 -- Function to automatically create profile on user registration
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -86,7 +116,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Trigger for user updates (sync email, name, phone from auth.users to profiles)
+-- Trigger for user updates
 CREATE TRIGGER on_auth_user_updated
   AFTER UPDATE ON auth.users
   FOR EACH ROW
@@ -106,28 +136,4 @@ CREATE TRIGGER on_profile_updated
   BEFORE UPDATE ON public.profiles
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_updated_at();
-
--- Sync existing profiles with auth.users data (one-time update for existing users)
-UPDATE public.profiles p
-SET 
-  name = CASE 
-    WHEN u.raw_user_meta_data->>'last_name' IS NOT NULL THEN 
-      COALESCE(u.raw_user_meta_data->>'name', p.name)
-    WHEN position(' ' in COALESCE(u.raw_user_meta_data->>'name', '')) > 0 THEN
-      split_part(COALESCE(u.raw_user_meta_data->>'name', ''), ' ', 1)
-    ELSE 
-      COALESCE(u.raw_user_meta_data->>'name', p.name)
-  END,
-  last_name = CASE 
-    WHEN u.raw_user_meta_data->>'last_name' IS NOT NULL THEN 
-      u.raw_user_meta_data->>'last_name'
-    WHEN position(' ' in COALESCE(u.raw_user_meta_data->>'name', '')) > 0 THEN
-      substring(COALESCE(u.raw_user_meta_data->>'name', '') from position(' ' in COALESCE(u.raw_user_meta_data->>'name', '')) + 1)
-    ELSE 
-      p.last_name
-  END,
-  email = u.email,
-  mobile = COALESCE(u.raw_user_meta_data->>'phone', p.mobile)
-FROM auth.users u
-WHERE p.id = u.id;
 

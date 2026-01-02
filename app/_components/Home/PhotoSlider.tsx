@@ -19,6 +19,10 @@ const PhotoSlider = ({
   const [current, setCurrent] = useState(0)
   const [count, setCount] = useState(0)
 
+  // Use placeholder if no images
+  const displayImages = images && images.length > 0 ? images : ['/images/image-placeholder.webp']
+  const hasImages = images && images.length > 0
+
   useEffect(() => {
     if (!api) return
 
@@ -31,7 +35,9 @@ const PhotoSlider = ({
   }, [api])
 
   const handlePhotoClick = () => {
-    api?.scrollNext()
+    if (hasImages) {
+      api?.scrollNext()
+    }
   }
 
   return (
@@ -40,22 +46,22 @@ const PhotoSlider = ({
         className="w-full relative" 
         setApi={setApi}
         opts={{
-          loop: true,
+          loop: hasImages,
           watchDrag: false,
         }}
       >
  
         <CarouselContent>
-          {images.map((image, index) => (
+          {displayImages.map((image, index) => (
             <CarouselItem key={index}>
               <div 
-                className="relative w-full overflow-hidden cursor-pointer" 
+                className={`relative w-full overflow-hidden ${hasImages ? 'cursor-pointer' : ''}`}
                 style={{ height: `${height}px` }}
                 onClick={handlePhotoClick}
               >
                 <Image 
                   src={image} 
-                  alt={`Photo ${index + 1}`} 
+                  alt={hasImages ? `Photo ${index + 1}` : 'No image available'} 
                   fill
                   className="object-cover"
                 />
@@ -65,8 +71,9 @@ const PhotoSlider = ({
         </CarouselContent>
       </Carousel>
 
-      {/* Pagination Dots */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center justify-center gap-[6px]">
+      {/* Pagination Dots - only show if there are actual images */}
+      {hasImages && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center justify-center gap-[6px]">
         {(() => {
           const maxDots = 5
           
@@ -108,7 +115,8 @@ const PhotoSlider = ({
             )
           })
         })()}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

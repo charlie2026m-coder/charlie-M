@@ -18,7 +18,7 @@ interface IParams {
 
 const RoomPage = async ({ params, searchParams }: IParams) => {
   const { id } = await params
-  const { from, to, adults, children = '1' } = await searchParams
+  const { from, to, adults, children } = await searchParams
   
   const rooms = await getSingleRoom(id, from, to)
   if ('error' in rooms) return <ErrorCard isSingleRoom={true} link='/rooms' />

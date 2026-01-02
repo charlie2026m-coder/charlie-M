@@ -61,35 +61,41 @@ export function sortGuestsByRooms(
   adults: number,
   children: number,
   from: string,
-  to: string
+  to: string,
+  maxPersons: number
 ): Room[] {
   const rooms: Room[] = [];
+  let remainingAdults = adults;
+  let remainingChildren = children;
 
   const pushRoom = (a: number, c: number) =>
     rooms.push({ id: uuidv4(), adults: a, children: c, from, to });
 
-  // 1 взрослый + 1 ребёнок
-  const mixed = Math.min(adults, children);
-  for (let i = 0; i < mixed; i++) pushRoom(1, 1);
+  // Распределяем гостей, пока есть кто размещать
+  while (remainingAdults > 0 || remainingChildren > 0) {
+    let roomAdults = 0;
+    let roomChildren = 0;
 
-  adults -= mixed;
-  children -= mixed;
+    // Сначала заполняем взрослыми
+    if (remainingAdults > 0) {
+      roomAdults = Math.min(remainingAdults, maxPersons);
+      remainingAdults -= roomAdults;
+    }
 
-  // по 2 взрослых
-  while (adults >= 2) {
-    pushRoom(2, 0);
-    adults -= 2;
-  }
+    // Добавляем детей, если есть место
+    const availableSpace = maxPersons - roomAdults;
+    if (availableSpace > 0 && remainingChildren > 0) {
+      roomChildren = Math.min(remainingChildren, availableSpace);
+      remainingChildren -= roomChildren;
+    }
 
-  // по 2 детей (если вдруг)
-  while (children >= 2) {
-    pushRoom(0, 2);
-    children -= 2;
-  }
+    // Если в комнате нет гостей (не должно быть), добавляем детей
+    if (roomAdults === 0 && roomChildren === 0 && remainingChildren > 0) {
+      roomChildren = Math.min(remainingChildren, maxPersons);
+      remainingChildren -= roomChildren;
+    }
 
-  // остатки
-  if (adults || children) {
-    pushRoom(adults, children);
+    pushRoom(roomAdults, roomChildren);
   }
 
   return rooms;

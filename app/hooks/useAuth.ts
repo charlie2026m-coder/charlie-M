@@ -64,7 +64,7 @@ export const useRegister = () => {
       } else {
         toast.success('Account created successfully!', { id: 'register' });
         setTimeout(() => {
-          router.push('/');
+          router.push('/profile');
           router.refresh();
         }, 500);
       }
@@ -92,8 +92,10 @@ export const useLogout = () => {
     },
     onSuccess: () => {
       toast.success('Logged out successfully', { id: 'logout' });
-      router.push('/');
-      router.refresh();
+      // Force full page reload to ensure auth state is cleared in header
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 500);
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Logout failed', { id: 'logout' });
@@ -203,6 +205,43 @@ export const useSetPassword = () => {
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to set password');
+    },
+  });
+};
+
+// Delete account mutation
+export const useDeleteAccount = () => {
+  const router = useRouter();
+
+  return useMutation({
+    mutationFn: async () => {
+      const response = await fetch('/api/account/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete account');
+      }
+
+      return data;
+    },
+    onMutate: () => {
+      toast.loading('Deleting your account...', { id: 'delete-account' });
+    },
+    onSuccess: () => {
+      toast.success('Your account has been deleted successfully', { id: 'delete-account' });
+      // Force full page reload to ensure auth state is cleared
+      setTimeout(() => {
+        window.location.href = '/?account_deleted=true';
+      }, 1000);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to delete account', { id: 'delete-account' });
     },
   });
 };

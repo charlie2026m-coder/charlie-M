@@ -21,7 +21,7 @@ const BookingPage = async ({ params, searchParams }: IParams) => {
   const rooms = await getSingleRoom(id, from, to)
   const extras = await getApaleoExtras()
   if ('error' in rooms) return <ErrorCard isSingleRoom={true} link='/rooms' />
-  const filledRooms = sortGuestsByRooms(Number(adults), Number(children), from, to)
+  const filledRooms = sortGuestsByRooms(Number(adults), Number(children), from, to, rooms[0].maxPersons)
   return (
     <section className='container px-4 md:px-10 xl:px-[100px] pt-8'>
       <Steps />

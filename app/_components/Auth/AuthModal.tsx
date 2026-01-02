@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/app/_compon
 import { Button } from "../ui/button";
 import { useState } from "react";
 import LoginForm from "./LoginForm";
-// import RegisterForm from "./RegisterForm";
+import RegisterForm from "./RegisterForm";
 import Success from "./Success";
 import ForgotPassword from "./ForgotPassword";
 import ReservationForm from "./ReservationForm";
@@ -38,7 +38,7 @@ const  AuthModal = ({ type = 'signin', className }: { type: contentType, classNa
 
         {/* Showe content based on chosen form type */}
         {formType === 'signin' && <LoginForm setFormType={setFormType} />}
-        {/* {formType === 'signup' && <RegisterForm setFormType={setFormType} />} */}
+        {formType === 'signup' && <RegisterForm setFormType={setFormType} />}
         {formType === 'forgot' && <ForgotPassword setFormType={setFormType} />}
 
 

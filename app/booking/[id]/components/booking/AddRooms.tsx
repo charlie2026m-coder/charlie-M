@@ -87,7 +87,7 @@ const AddRooms = ({ filledRooms }: { filledRooms: Room[] }) => {
             </div>
             <div className='flex px-2 gap-2 items-center'>
               <BsCalendar2Fill className='size-5 cursor-pointer self-center text-blue' /> {dayjs(room.from).format('DD MMM YYYY')} - {dayjs(room.to).format('DD MMM YYYY')}
-              <FiEdit2 className='size-5 cursor-pointer self-center ml-auto' onClick={() => handleEditRoom(room.id)} />
+              {/* <FiEdit2 className='size-5 cursor-pointer self-center ml-auto' onClick={() => handleEditRoom(room.id)} /> */}
             </div>
 
           </div>

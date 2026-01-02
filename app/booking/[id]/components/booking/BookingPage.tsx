@@ -49,16 +49,15 @@ const BookingPage = ({
     const currentBookingId = `${mainRoom?.id || mainRoom?.code}-${from}-${to}-${adults}-${children}`
     
     if (bookingId && bookingId !== currentBookingId) {
+      // Параметры изменились - очищаем и заполняем заново
       clearBooking()
       setValue(1, 'bookingPage')
       setRooms(filledRooms)
       setBookingId(currentBookingId)
     } else if (!bookingId) {
+      // Первая загрузка - всегда устанавливаем новые параметры
       setBookingId(currentBookingId)
-      const currentRooms = useBookingStore.getState().rooms
-      if (!currentRooms || currentRooms.length === 0) {
-        setRooms(filledRooms)
-      }
+      setRooms(filledRooms)
     }
   }, [from, to, adults, children, mainRoom?.id, mainRoom?.code])
 

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { headers } from "next/headers"
 import { getOrRefreshToken } from "@/services/Request"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { Booking } from "@/types/booking"
@@ -49,6 +50,7 @@ export async function POST(request: Request) {
     try {
       const supabase = await createSupabaseServerClient()
       const primaryGuest = booking.reservations[0]?.primaryGuest
+      const { data: { user } } = await supabase.auth.getUser()
       
       if (primaryGuest && apaleoData.id && apaleoData.reservationIds) {
         // Create an array of reservations to insert
@@ -61,6 +63,27 @@ export async function POST(request: Request) {
 
         // Insert all reservations
         await supabase.from('reservations').insert(reservationsToInsert);
+
+        // Save consent record if consent was given
+        if (booking.consent) {
+          const headersList = await headers()
+          const ip = 
+            headersList.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+            headersList.get('x-real-ip') || 
+            'unknown'
+
+          const consentData = {
+            user_id: user?.id || null,
+            booking_id: apaleoData.id,
+            consent_type: 'booking',
+            consent_given: true,
+            ip_address: ip,
+            privacy_policy_version: '1.0',
+            consent_date: new Date().toISOString(),
+          }
+
+          await supabase.from('consents').insert(consentData)
+        }
       }
     } catch (supabaseError) {
       console.error('Failed to save reservations to Supabase:', supabaseError)

@@ -3,11 +3,13 @@ import { useForm } from 'react-hook-form';
 import { useRegister } from '@/app/hooks/useAuth';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '../ui/button';
+import { Checkbox } from '../ui/checkbox';
 import CustomInput from '../ui/customInput';
 import Divider from './divider';
 import SocialMediaButtons from './SocialMediaButtons';
 import { registerSchema, type RegisterFormData } from '@/types/schemas';
 import { contentType } from './AuthModal';
+import Link from 'next/link';
 
 
 const RegisterForm = ({ setFormType }: { setFormType: (type: contentType ) => void }) => {
@@ -19,18 +21,30 @@ const RegisterForm = ({ setFormType }: { setFormType: (type: contentType ) => vo
     handleSubmit,
     watch,
     formState: { errors, isValid },
+    setValue: setFormValue,
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     mode: 'onChange',
+    defaultValues: {
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      consent: false,
+    },
   });
 
   const email = watch('email');
   const password = watch('password');
   const confirmPassword = watch('confirmPassword');
+  const consent = watch('consent');
 
   useEffect(() => {
-    if (Object.keys(errors).length > 0) {
-      const errorMessages = Object.entries(errors)
+    // Exclude consent error from general error message (it has its own display)
+    const errorEntries = Object.entries(errors).filter(([field]) => field !== 'consent');
+    
+    if (errorEntries.length > 0) {
+      const errorMessages = errorEntries
         .map(([field, error]) => error?.message)
         .filter(Boolean)
         .join(', ');
@@ -38,7 +52,7 @@ const RegisterForm = ({ setFormType }: { setFormType: (type: contentType ) => vo
     } else {
       setError(null);
     }
-  }, [errors, email, password, confirmPassword]);
+  }, [errors, email, password, confirmPassword, consent]);
 
   const onSubmit = async (data: RegisterFormData) => {
     setError(null);
@@ -68,7 +82,7 @@ const RegisterForm = ({ setFormType }: { setFormType: (type: contentType ) => vo
           register={register} 
           name="name" 
           type="text" 
-          placeholder="Last Name" 
+          placeholder="Full Name" 
           icon="name" 
         />
         <CustomInput 
@@ -96,10 +110,40 @@ const RegisterForm = ({ setFormType }: { setFormType: (type: contentType ) => vo
           isError={!!errors.confirmPassword} 
         />
 
+        <div className='pt-2'>
+          <div className='flex items-start gap-3'>
+            <Checkbox
+              size='sm'
+              id='consent-register'
+              checked={consent}
+              onCheckedChange={(checked) => {
+                setFormValue('consent', checked === true, { shouldValidate: true })
+              }}
+              className={errors.consent ? 'border-red' : ''}
+            />
+            <label 
+              htmlFor='consent-register' 
+              className='text-sm text-dark cursor-pointer leading-relaxed'
+              onClick={() => setFormValue('consent', !consent, { shouldValidate: true })}
+            >
+              I agree to the{' '}
+              <Link 
+                href='/privacy-policy' 
+                target='_blank'
+                className='text-blue underline hover:text-blue/80'
+                onClick={(e) => e.stopPropagation()}
+              >
+                Privacy Policy
+              </Link>
+            </label>
+          </div>
+          
+        </div>
+
         <Button
           type="submit"
-          disabled={registerMutation.isPending || !isValid}
-          className="w-full h-12 rounded-full bg-brown hover:bg-brown/80 text-white font-medium !mb-0"
+          disabled={registerMutation.isPending || !isValid || !consent}
+          className="w-full h-12 rounded-full bg-blue hover:bg-blue/80 text-white font-medium !mb-0"
         >
           {registerMutation.isPending ? 'Loading...' : 'Sign Up'}
         </Button>
@@ -108,9 +152,9 @@ const RegisterForm = ({ setFormType }: { setFormType: (type: contentType ) => vo
 
       <Divider />
       <SocialMediaButtons setFormType={setFormType} />
-      <div className="mt-[30px] text-center" >
+      <div className="mt-4 text-center text-dark" >
         Already have an account? 
-        <button onClick={() => setFormType('signin')} className="text-gray hover:text-black underline cursor-pointer pl-1">
+        <button onClick={() => setFormType('signin')} className="text-blue  underline cursor-pointer pl-1">
           Login
         </button>
       </div>

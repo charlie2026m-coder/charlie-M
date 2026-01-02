@@ -1,4 +1,8 @@
--- Create admins table
+-- ============================================
+-- ADMINS TABLE
+-- Admin users management
+-- ============================================
+
 CREATE TABLE IF NOT EXISTS public.admins (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email TEXT UNIQUE NOT NULL,
@@ -8,11 +12,6 @@ CREATE TABLE IF NOT EXISTS public.admins (
 
 -- Enable RLS
 ALTER TABLE public.admins ENABLE ROW LEVEL SECURITY;
-
--- Drop existing policies if they exist
-DROP POLICY IF EXISTS "Allow public read access to admins" ON public.admins;
-DROP POLICY IF EXISTS "Allow admins to insert admins" ON public.admins;
-DROP POLICY IF EXISTS "Allow admins to delete admins" ON public.admins;
 
 -- Policy: Everyone can check if someone is admin (needed for other policies)
 CREATE POLICY "Allow public read access to admins"
@@ -47,7 +46,15 @@ CREATE POLICY "Allow admins to delete admins"
 -- Create index on email for faster lookups
 CREATE INDEX IF NOT EXISTS admins_email_idx ON public.admins(email);
 
--- Insert initial admin (ЗАМЕНИ НА СВОЙ EMAIL!)
+-- ============================================
+-- INSERT YOUR ADMIN EMAIL HERE!
+-- ============================================
 INSERT INTO public.admins (email, role) 
-VALUES ('admin@charliemhouse.com', 'super_admin')
+VALUES ('charlie2026m@gmail.com', 'super_admin')
 ON CONFLICT (email) DO NOTHING;
+
+-- Uncomment and add your email:
+-- INSERT INTO public.admins (email, role) 
+-- VALUES ('your-email@gmail.com', 'admin')
+-- ON CONFLICT (email) DO NOTHING;
+

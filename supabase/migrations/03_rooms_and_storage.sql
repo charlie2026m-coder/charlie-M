@@ -1,4 +1,8 @@
--- Create rooms table
+-- ============================================
+-- ROOMS TABLE
+-- Hotel rooms management
+-- ============================================
+
 CREATE TABLE IF NOT EXISTS public.rooms (
   id TEXT PRIMARY KEY,
   group_name TEXT NOT NULL,
@@ -12,12 +16,6 @@ CREATE TABLE IF NOT EXISTS public.rooms (
 
 -- Enable RLS (Row Level Security)
 ALTER TABLE public.rooms ENABLE ROW LEVEL SECURITY;
-
--- Drop existing policies if they exist
-DROP POLICY IF EXISTS "Allow public read access to rooms" ON public.rooms;
-DROP POLICY IF EXISTS "Allow admins to insert rooms" ON public.rooms;
-DROP POLICY IF EXISTS "Allow admins to update rooms" ON public.rooms;
-DROP POLICY IF EXISTS "Allow admins to delete rooms" ON public.rooms;
 
 -- Policy: Everyone can read rooms
 CREATE POLICY "Allow public read access to rooms"
@@ -77,16 +75,13 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Drop trigger if exists
-DROP TRIGGER IF EXISTS update_rooms_updated_at ON public.rooms;
-
 -- Create trigger to auto-update updated_at
 CREATE TRIGGER update_rooms_updated_at
   BEFORE UPDATE ON public.rooms
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
--- Insert initial data
+-- Insert initial room data from Apaleo
 INSERT INTO public.rooms (id, group_name, attributes, max_persons, size) VALUES
   ('CMH-SGB', 'Single Room with Balcony', ARRAY['balcony', 'single'], 1, 11),
   ('CMH-BUQ', 'Business Room with Queen Size Bed', ARRAY['queen'], 2, 14),
@@ -101,3 +96,65 @@ INSERT INTO public.rooms (id, group_name, attributes, max_persons, size) VALUES
   ('CMH-STKB', 'Standard Room with King Size Bed and Balcony', ARRAY['balcony', 'king'], 2, 11),
   ('CMH-BUKT', 'Business Room with King Size Bed and Terrace', ARRAY['terrace', 'king'], 2, 15)
 ON CONFLICT (id) DO NOTHING;
+
+-- ============================================
+-- STORAGE BUCKET FOR ROOM PHOTOS
+-- ============================================
+
+-- Create storage bucket for room photos
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('room-photos', 'room-photos', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Policy: Anyone can view room photos
+CREATE POLICY "Allow public read access to room photos"
+  ON storage.objects
+  FOR SELECT
+  USING (bucket_id = 'room-photos');
+
+-- Policy: Only admins can upload room photos
+CREATE POLICY "Allow admins to upload room photos"
+  ON storage.objects
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    bucket_id = 'room-photos'
+    AND EXISTS (
+      SELECT 1 FROM public.admins
+      WHERE email = auth.jwt() ->> 'email'
+    )
+  );
+
+-- Policy: Only admins can update room photos
+CREATE POLICY "Allow admins to update room photos"
+  ON storage.objects
+  FOR UPDATE
+  TO authenticated
+  USING (
+    bucket_id = 'room-photos'
+    AND EXISTS (
+      SELECT 1 FROM public.admins
+      WHERE email = auth.jwt() ->> 'email'
+    )
+  )
+  WITH CHECK (
+    bucket_id = 'room-photos'
+    AND EXISTS (
+      SELECT 1 FROM public.admins
+      WHERE email = auth.jwt() ->> 'email'
+    )
+  );
+
+-- Policy: Only admins can delete room photos
+CREATE POLICY "Allow admins to delete room photos"
+  ON storage.objects
+  FOR DELETE
+  TO authenticated
+  USING (
+    bucket_id = 'room-photos'
+    AND EXISTS (
+      SELECT 1 FROM public.admins
+      WHERE email = auth.jwt() ->> 'email'
+    )
+  );
+

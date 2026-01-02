@@ -6,6 +6,8 @@ export interface Booking {
     phone: string;
   },
 
+  consent?: boolean; // GDPR consent flag
+
   reservations: {
     arrival: string;
     departure: string;

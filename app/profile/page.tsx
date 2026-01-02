@@ -1,19 +1,21 @@
 'use client'
-import Dot from "@/app/_components/ui/dot";
 import CustomInput from "@/app/_components/ui/customInput";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { GuestDetailsFormData,  guestDetailsSchema } from "@/types/schemas";
 import { Button } from "@/app/_components/ui/button";
 import { useProfile } from "@/app/hooks/useProfile";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import PasswordForm from "./components/PasswordForm";
+import DeleteAccountModal from "./components/DeleteAccountModal";
 
 export default function Profile() {
   const { profile, updateMutation } = useProfile();
   const searchParams = useSearchParams();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
   // Profile form
   const {
     register,
@@ -177,6 +179,35 @@ export default function Profile() {
       </div>)
     }
     <PasswordForm />
+
+    {/* Danger Zone */}
+    <div className='mt-12 pt-8 border-t border-gray-200'>
+      <h3 className='text-xl font-semibold text-red mb-3'>Danger Zone</h3>
+      <div className='bg-red/5 border border-red/20 rounded-2xl p-5'>
+        <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-4'>
+          <div>
+            <h4 className='font-semibold text-gray-900 mb-1'>Delete Account</h4>
+            <p className='text-sm text-gray-600'>
+              Permanently delete your account and all associated data. This action cannot be undone.
+            </p>
+          </div>
+          <Button
+            type='button'
+            variant='outline'
+            onClick={() => setShowDeleteModal(true)}
+            className='h-11 px-6 rounded-full border-red text-red hover:bg-red hover:text-white transition-colors whitespace-nowrap'
+          >
+            Delete Account
+          </Button>
+        </div>
+      </div>
+    </div>
+
+    {/* Delete Account Modal */}
+    <DeleteAccountModal
+      isOpen={showDeleteModal}
+      onClose={() => setShowDeleteModal(false)}
+    />
     </div>
   )
 }

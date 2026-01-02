@@ -22,6 +22,10 @@ const PasswordForm = () => {
     reset: resetPasswordForm,
   } = useForm<SetPasswordFormData>({
     resolver: zodResolver(setPasswordSchema),
+    defaultValues: {
+      newPassword: '',
+      confirmPassword: '',
+    },
   })
 
   const onSubmitPassword = async (data: SetPasswordFormData) => {
