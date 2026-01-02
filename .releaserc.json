@@ -1,0 +1,72 @@
+{
+    "branches": ["dev"],
+    "tagFormat": "v${version}",
+    "plugins": [
+      [
+        "@semantic-release/commit-analyzer",
+        {
+          "preset": "conventionalcommits",
+          "releaseRules": [
+            { "type": "refactor", "release": "patch" },
+            { "type": "feat", "release": "minor" },
+            { "type": "fix", "release": "patch" },
+            { "type": "docs", "release": "patch" },
+            { "type": "chore", "release": "patch" },
+            { "type": "perf", "release": "minor" },
+            { "type": "style", "release": "patch" },
+            { "type": "test", "release": "patch" },
+            { "type": "build", "release": "major" },
+            { "type": "ci", "release": "patch" },
+            { "type": "revert", "release": "patch" }
+          ]
+        }
+      ],
+      [
+        "@semantic-release/exec",
+        {
+          "verifyReleaseCmd": "echo SEMANTIC_VERSION=${nextRelease.version} > release.env"
+        }
+      ],
+      [
+        "@semantic-release/release-notes-generator",
+        {
+          "preset": "conventionalcommits",
+          "presetConfig": {
+            "types": [
+              { "type": "feat", "section": "Features" },
+              { "type": "fix", "section": "Bug Fixes" },
+              { "type": "refactor", "section": "Refactoring" },
+              { "type": "perf", "section": "Performance improvements" }
+            ]
+          }
+        }
+      ],
+      [
+        "@semantic-release/changelog",
+        {
+          "changelogFile": "./CHANGELOG.md"
+        }
+      ],
+      [
+        "@semantic-release/npm",
+        {
+          "npmPublish": true,
+          "tarballDir": "dist",
+          "pkgRoot": "./",
+          "pkgFiles": ["package.json", "README.md", "CHANGELOG.md", "package-lock.json"]
+        }
+      ],
+      [
+        "@semantic-release/git",
+        {
+          "assets": [
+            "./CHANGELOG.md", 
+            "package.json", 
+            "package-lock.json"
+          ],
+          "message": "chore(release): ${lastRelease.version} → ${nextRelease.version} [ci upload]"
+        }
+      ]
+    ]
+  }
+  
