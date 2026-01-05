@@ -1,12 +1,12 @@
 'use client';
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Link, usePathname } from "@/navigation";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 
 const Navigation = () => {
   const pathname = usePathname();
   const t = useTranslations();
+  
   const navigation = [
     {
       label: t('header.rooms_link'),
@@ -24,7 +24,7 @@ const Navigation = () => {
       label: 'FAQ',
       href: "/faq",
     }
-  ]
+  ];
 
   return (
     <nav className="hidden md:flex items-center 2xl:w-1/4 justify-between">

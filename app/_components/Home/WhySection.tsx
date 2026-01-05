@@ -2,20 +2,49 @@ import Image from 'next/image'
 import { LuCircleCheckBig } from "react-icons/lu";
 import { IoCalendarOutline } from "react-icons/io5";
 import { BsChatDots } from "react-icons/bs";
+import { getTranslations } from 'next-intl/server'
 
-const WhySection = () => {
+const WhySection = async ({ locale }: { locale: string }) => {
+  const t = await getTranslations({ locale })
 
+  const cards = [
+    {
+      title: t('home.point_1'),
+      text: t('home.point_1_text'),
+      icon: <LuCircleCheckBig className={icon} />
+  
+    },
+    {
+      title: t('home.point_2'),
+      text: t('home.point_2_text'),
+      icon: <Image src='/images/lock-icon.svg' className='object-cover size-6' width={24} alt='lock-image' height={24}/>
+    },
+    {
+      title: t('home.point_3'),
+      text: t('home.point_3_text'),
+      icon: <IoCalendarOutline className={icon} />
+  
+    },
+  
+    {
+      title: t('home.point_4'),
+      text: t('home.point_4_text'),
+      icon: <BsChatDots className={icon} />
+  
+    },
+  ]
+  
   const Texts = () => {
     return (
       <div className='py-9 px-5 mb-5 rounded-xl bg-blue/20 flex flex-col items-center justify-center font-semibold text-[20px] md:text-[26px] text-dark'>
-        <p>Staying with us is designed to be easy, comfortable, and completely in your control.</p>
-        <p>With our fully digital process, you move at your own pace — from arrival to checkout.</p>
+        <p className='text-center'>{t('home.concept_subtitle')}</p>
+        <p className='text-center'>{t('home.concept_subtitle_2')}</p>
       </div>
     )
   }
   return (
     <div className='w-full flex flex-col pb-[85px]'>
-      <h2 className='font-medium text-3xl md:text-[40px] mb-12'>A New Way to Stay</h2>
+      <h2 className='font-medium text-3xl md:text-[40px] mb-12'>{t('home.concept_title')}</h2>
       <div className='hidden md:block'>
         <Texts />
       </div>
@@ -57,29 +86,3 @@ export default WhySection;
 
 
 const icon = 'size-6'
-const cards = [
-  {
-    title: "Online check-in",
-    text: "no reception, no waiting.",
-    icon: <LuCircleCheckBig className={icon} />
-
-  },
-  {
-    title: "Room access via smart code ",
-    text: "simple, secure, and always at hand.",
-    icon: <Image src='/images/lock-icon.svg' className='object-cover size-6' width={24} alt='lock-image' height={24}/>
-  },
-  {
-    title: "Privacy & independence",
-    text: "a calm stay without unnecessary interruptions.",
-    icon: <IoCalendarOutline className={icon} />
-
-  },
-
-  {
-    title: "Instant support",
-    text: "quick help via chat whenever you need it.",
-    icon: <BsChatDots className={icon} />
-
-  },
-]

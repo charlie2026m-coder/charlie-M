@@ -1,18 +1,29 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import createMiddleware from 'next-intl/middleware';
+import { locales } from './i18n';
+
+// Create i18n middleware
+const intlMiddleware = createMiddleware({
+  locales: locales as unknown as string[],
+  defaultLocale: 'en',
+  localePrefix: 'as-needed', // English without prefix, German with /de
+  localeDetection: false // Disable automatic locale detection from browser
+});
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   
-  // Create response
-  let response = NextResponse.next();
+  // Skip i18n for admin panel entirely - no locale routing for admin
+  if (pathname.startsWith('/admin')) {
+    return NextResponse.next();
+  }
   
-  // Set locale header for next-intl (read from cookie or default to 'en')
-  const locale = request.cookies.get('NEXT_LOCALE')?.value || 'en';
-  response.headers.set('x-locale', locale);
+  // Apply i18n middleware for all other routes
+  const response = intlMiddleware(request);
   
-  // Check if route needs auth protection
-  if (pathname.startsWith('/profile')) {
+  // Check if route needs auth protection (only for user-facing routes)
+  if (pathname.match(/^\/(de\/)?profile/)) {
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -22,9 +33,7 @@ export async function middleware(request: NextRequest) {
             return request.cookies.getAll()
           },
           setAll(cookiesToSet: Array<{ name: string; value: string; options: CookieOptions }>) {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              response.cookies.set(name, value, options)
-            })
+            // Can't set cookies on intl middleware response
           },
         },
       }
@@ -44,7 +53,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Match all pathnames except for system files
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // Match all pathnames EXCEPT admin, api and system files
+    '/((?!admin|api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
-}
+};

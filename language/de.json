@@ -5,14 +5,30 @@
   "sign_in_btn": "Anmelden",
   "sign_out_btn": "Abmelden",
   "sign_up_btn": "Registrieren",
+  "view_all_btn": "Alle anzeigen",
 
+  "home":{
+    "rooms_title": "Wählen Sie Ihr Zimmer",
+    "rooms_subtitle": "Ihr perfektes Zimmer, nur einen Klick entfernt.",
+    "concept_title": "Ein neuer Weg zu bleiben",
+    "concept_subtitle": "Unser Aufenthalt ist auf Ihre Bedürfnisse ausgerichtet und vollständig digital.",
+    "concept_subtitle_2": "Mit unserem vollständig digitalen Prozess können Sie sich selbstständig bewegen — von Ankunft bis Abchecken.",
+    "point_1": "Online Einchecken",
+    "point_1_text": "keine Empfang, keine Wartezeit.",
+    "point_2": "Zugang zu Ihrem Zimmer via Smart-Code",
+    "point_2_text": "einfach, sicher und immer verfügbar.",
+    "point_3": "Privatsphäre & Unabhängigkeit",
+    "point_3_text": "ein entspannter Aufenthalt ohne unnötige Unterbrechungen.",
+    "point_4": "Instant Support",
+    "point_4_text": "schnelle Hilfe via Chat, wann immer Sie es benötigen."
+  },
   "header": {
     "rooms_link": "Zimmer",
     "location_link": "Standort",
     "about_us_link": "Über uns",
     "open_profile_link": "Profil öffnen",
-    "dear_guest": "Guten Tag"
-
+    "dear_guest": "Guten Tag",
+    "my_account_link": "Mein Konto"
   }
 }
 

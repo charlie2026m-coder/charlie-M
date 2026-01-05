@@ -3,9 +3,10 @@ import { FaLocationDot } from "react-icons/fa6";
 import { FaBus } from "react-icons/fa";
 import { BiSolidPlaneAlt } from "react-icons/bi";
 import { FaWalking } from "react-icons/fa";
+import { getTranslations } from 'next-intl/server'
 
-
-const VibeSection = () => {
+const VibeSection = async ({ locale }: { locale: string }) => {
+  const t = await getTranslations({ locale })
   return (
     <div className='bg-light1 w-full flex flex-col relative'>
       <Image 

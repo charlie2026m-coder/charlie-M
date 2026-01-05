@@ -1,5 +1,5 @@
 'use client';
-import Link from "next/link"
+import { Link } from "@/navigation"
 import { Button } from "../ui/button"
 import Language from "./Language"
 import AuthModal from "../Auth/AuthModal"
@@ -13,27 +13,28 @@ import { useState } from "react";
 import { Drawer, DrawerContent, DrawerTitle } from "../ui/drawer"
 import { useProfile } from "@/app/hooks/useProfile";
 // import SignOut from "../Auth/SignOut"
-
-const MobileMenu = () => {
+import { useTranslations } from "next-intl";
+const MobileMenu = ({ locale }: { locale: string }) => {
   const { profile } = useProfile(); 
+  const t = useTranslations();
   const [open, setOpen] = useState(false)
   const { user, loading } = useAuth();
 
   const links = [
     {
-      label: 'Rooms',
+      label: t('header.rooms_link'),
       href: '/rooms',
     },
     {
-      label: 'Concept',
+      label: t('header.about_us_link'),
       href: '/concept',
     },
     {
-      label: 'Location',
+      label: t('header.location_link'),
       href: '/location',
     },
     {
-      label: 'FAQ',
+      label: "FAQ",
       href: '/faq',
     },
   ]
@@ -72,18 +73,18 @@ const MobileMenu = () => {
           </div>
           <div className='flex flex-col gap-6 w-full mb-6 border-b border-0.5 border-brown pb-6 flex-1'> 
             <Link href='/rooms' className='w-full' onClick={() => setOpen(false)}>
-              <Button className='w-full h-[55px]'> Book Now </Button>
+              <Button className='w-full h-[55px]'> {t('book_now_btn')} </Button>
             </Link>
             {!loading && !user && (<>
               <Link href='/rooms' className='w-full' onClick={() => setOpen(false)}>
-                <Button variant='outline' className='w-full h-[55px] text-white border-white'> Check In</Button>
+                <Button variant='outline' className='w-full h-[55px] text-white border-white'> {t('check_in_btn')} </Button>
               </Link>
               <AuthModal  type="signin" className='w-full h-[55px] text-white border-white' />
             </>)}
 
             {!loading && user &&
               <Link href="/profile" className="flex flex-col items-center mt-auto" onClick={() => setOpen(false)}>
-                <h3 className="text-[18px] text-white">My Account</h3>
+                <h3 className="text-[18px] text-white"> {t('header.my_account_link')} </h3>
                 <span className=" text-blue">{profile?.name || 'Dear guest'}</span>
               </Link>
             }

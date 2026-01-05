@@ -1,16 +1,16 @@
 import Image from "next/image"
 import Navigation from "./Navigation"
-import Link from "next/link"
+import { Link } from "@/navigation"
 import AuthBlock from "./AuthBlock"
 import { Button } from "../ui/button"
 import MobileMenu from "./MobileMenu";
 
-const Header = () => {
+const Header = ({ locale }: { locale: string }) => {
   return (
     <header className="w-full  bg-white shadow-lg z-20">
       <section className="container px-4  xl:px-[100px] py-3 flex items-center ">
-        <MobileMenu />
-        <Link href="/">
+        <MobileMenu locale={locale} />
+        <Link href="/" locale={locale as 'en' | 'de'}>
           <Image 
             src="/images/Logo.svg" 
             alt="logo" 
