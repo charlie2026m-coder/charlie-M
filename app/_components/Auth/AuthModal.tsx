@@ -8,12 +8,14 @@ import Success from "./Success";
 import ForgotPassword from "./ForgotPassword";
 import ReservationForm from "./ReservationForm";
 import { cn } from '@/lib/utils'
+import { useTranslations } from "next-intl";
 
 export type contentType = 'signin' | 'signup' | 'confirm' | 'pass' | 'forgot' | 'resetPassword' | 'login' | 'success' | 'reservation';
 
 //I created one modal for all operations with auth :) so depends of steps I show different content
 //initial type we set via props and show trigger button like login or sign up
 const  AuthModal = ({ type = 'signin', className }: { type: contentType, className?: string }) => {
+  const t = useTranslations();
   const [isOpen, setIsOpen] = useState(false);
   const [formType, setFormType] = useState<contentType>(type);
 
@@ -27,8 +29,8 @@ const  AuthModal = ({ type = 'signin', className }: { type: contentType, classNa
       <DialogTrigger asChild>
         {
           type === 'signin' 
-            ?<Button variant="outline" className={className}>Login</Button>
-            :<button className={cn(className, "text-lg text-brown hover:text-brown/50 cursor-pointer px-2")}>Sign Up</button>
+            ?<Button variant="outline" className={className}>{t('sign_in_btn')}</Button>
+            :<button className={cn(className, "text-lg text-brown hover:text-brown/50 cursor-pointer px-2")}>{t('sign_up_btn')}</button>
         }
       </DialogTrigger>
       <DialogContent className="!max-w-[600px] px-4 md:px-15 xl:px-25 w-[95%] gap-0  py-[50px] rounded-3xl bg-white">

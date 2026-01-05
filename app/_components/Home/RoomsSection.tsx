@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Button } from '../ui/button'
 import { RoomsCarousel } from './RoomsCarousel'
-import ErrorCard from '@/app/rooms/components/ErrorCard'
+ import ErrorCard from '../../rooms/components/ErrorCard'
 import { getApaleoRooms } from '@/services/getApaleoRooms'
 
 const RoomsSection = async () => {

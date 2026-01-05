@@ -1,0 +1,18 @@
+{
+  
+  "book_now_btn": "Jetzt buchen",
+  "check_in_btn": "Einchecken",
+  "sign_in_btn": "Anmelden",
+  "sign_out_btn": "Abmelden",
+  "sign_up_btn": "Registrieren",
+
+  "header": {
+    "rooms_link": "Zimmer",
+    "location_link": "Standort",
+    "about_us_link": "Über uns",
+    "open_profile_link": "Profil öffnen",
+    "dear_guest": "Guten Tag"
+
+  }
+}
+

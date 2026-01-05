@@ -1,7 +1,6 @@
 'use client';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { I18nProvider } from '@/lib/i18n/i18n';
 import { AuthProvider } from '@/lib/auth-provider';
 
 export function ReactQueryProvider({ children }: React.PropsWithChildren) {
@@ -10,7 +9,7 @@ export function ReactQueryProvider({ children }: React.PropsWithChildren) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 60 * 1000, // 1 minute
+            staleTime: 60 * 1000,
             refetchOnWindowFocus: false,
           },
         },
@@ -20,10 +19,7 @@ export function ReactQueryProvider({ children }: React.PropsWithChildren) {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <I18nProvider>
           {children}
-
-        </I18nProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

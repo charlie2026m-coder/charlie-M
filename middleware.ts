@@ -1,59 +1,50 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-/**
- * Middleware for route protection
- * Checks for active session before allowing access to protected pages
- */
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  })
+  const pathname = request.nextUrl.pathname;
+  
+  // Create response
+  let response = NextResponse.next();
+  
+  // Set locale header for next-intl (read from cookie or default to 'en')
+  const locale = request.cookies.get('NEXT_LOCALE')?.value || 'en';
+  response.headers.set('x-locale', locale);
+  
+  // Check if route needs auth protection
+  if (pathname.startsWith('/profile')) {
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll()
+          },
+          setAll(cookiesToSet: Array<{ name: string; value: string; options: CookieOptions }>) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              response.cookies.set(name, value, options)
+            })
+          },
+        },
+      }
+    )
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet: Array<{ name: string; value: string; options: CookieOptions }>) {
-          cookiesToSet.forEach(({ name, value }) => {
-            request.cookies.set(name, value)
-          })
-          supabaseResponse = NextResponse.next({
-            request,
-          })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
-        },
-      },
+    const { data: { session } } = await supabase.auth.getSession()
+
+    if (!session) {
+      const redirectUrl = new URL('/', request.url)
+      redirectUrl.searchParams.set('auth', 'signin')
+      return NextResponse.redirect(redirectUrl)
     }
-  )
-
-  // Check session
-  const { data: { session }, error } = await supabase.auth.getSession()
-
-  // If no session, redirect to home
-  if (!session || error) {
-    const redirectUrl = new URL('/', request.url)
-    // Add auth param to show sign in modal (optional)
-    redirectUrl.searchParams.set('auth', 'signin')
-    return NextResponse.redirect(redirectUrl)
   }
 
-  return supabaseResponse
+  return response
 }
 
-/**
- * Defines which routes the middleware applies to
- * Protecting only profile page (booking is accessible without auth)
- */
 export const config = {
   matcher: [
-    '/profile/:path*',
+    // Match all pathnames except for system files
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
-

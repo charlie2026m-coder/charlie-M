@@ -1,13 +1,19 @@
 {
+  
+  "book_now_btn": "Book Now",
+  "check_in_btn": "Check In",
+
+  "sign_in_btn": "Sign In",
+  "sign_out_btn": "Sign Out",
+  "sign_up_btn": "Sign Up",
+
   "header": {
-    "rooms": "Rooms",
-    "why-charlie": "Why Charlie M",
-    "location": "Location"
-  },
-  "privacyPolicy": {
-    "title": "Privacy Policy",
-    "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-    "lastUpdated": "Last updated 24 Oct 2024"
+    "rooms_link": "Rooms",
+    "location_link": "Location",
+    "about_us_link": "About Us",
+    "open_profile_link": "Open profile",
+    "dear_guest": "Dear guest"
+
   }
 }
 
