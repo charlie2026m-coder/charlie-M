@@ -1,0 +1,19 @@
+# Charlie M Hotel - Robots.txt
+
+# Allow all search engines
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /profile/
+Disallow: /booking/*/payment
+Disallow: /reset-password
+Disallow: /_next/
+Disallow: /auth/
+
+# Crawl-delay for all bots (optional, helps with server load)
+Crawl-delay: 1
+
+# Sitemap
+Sitemap: https://charlie-m.de/sitemap.xml
+

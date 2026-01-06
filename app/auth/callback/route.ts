@@ -7,19 +7,23 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get('code');
   const error = requestUrl.searchParams.get('error');
   const error_description = requestUrl.searchParams.get('error_description');
+  
+  // Get locale from cookie or default to 'en'
+  const cookieStore = await cookies();
+  const localeCookie = cookieStore.get('NEXT_LOCALE')?.value || 'en';
+  const localePrefix = localeCookie === 'en' ? '' : `/${localeCookie}`;
 
   // Handle OAuth errors
   if (error) {
     console.error('Auth callback error:', error, error_description);
     return NextResponse.redirect(
-      `${requestUrl.origin}/?error=${encodeURIComponent(error_description || error)}`
+      `${requestUrl.origin}${localePrefix}/?error=${encodeURIComponent(error_description || error)}`
     );
   }
 
   // Exchange code for session
   if (code) {
     try {
-      const cookieStore = await cookies();
       const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -42,7 +46,7 @@ export async function GET(request: Request) {
       if (exchangeError) {
         console.error('Code exchange error:', exchangeError);
         return NextResponse.redirect(
-          `${requestUrl.origin}/?error=${encodeURIComponent(exchangeError.message)}`
+          `${requestUrl.origin}${localePrefix}/?error=${encodeURIComponent(exchangeError.message)}`
         );
       }
 
@@ -50,7 +54,7 @@ export async function GET(request: Request) {
       const next = requestUrl.searchParams.get('next');
       
       if (next?.includes('/reset-password')) {
-        return NextResponse.redirect(`${requestUrl.origin}/reset-password`);
+        return NextResponse.redirect(`${requestUrl.origin}${localePrefix}/reset-password`);
       }
 
       // Check if this is email confirmation
@@ -100,18 +104,18 @@ export async function GET(request: Request) {
           console.error('Failed to save consent:', consentError)
         }
         
-        return NextResponse.redirect(`${requestUrl.origin}/profile?email_confirmed=true`);
+        return NextResponse.redirect(`${requestUrl.origin}${localePrefix}/profile?email_confirmed=true`);
       }
       
-      return NextResponse.redirect(next || `${requestUrl.origin}/profile`);
+      return NextResponse.redirect(next || `${requestUrl.origin}${localePrefix}/profile`);
     } catch (err) {
       console.error('Unexpected error during code exchange:', err);
       return NextResponse.redirect(
-        `${requestUrl.origin}/?error=Authentication failed`
+        `${requestUrl.origin}${localePrefix}/?error=Authentication failed`
       );
     }
   }
 
   // No code provided - redirect to home
-  return NextResponse.redirect(`${requestUrl.origin}/profile`);
+  return NextResponse.redirect(`${requestUrl.origin}${localePrefix}/profile`);
 }

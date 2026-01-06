@@ -1,6 +1,62 @@
 import { MdShield } from "react-icons/md";
-import Image from "next/image";
 import Content from "./components/Content";
+import type { Metadata } from 'next';
+
+type Props = {
+  params: Promise<{ locale: string }>;
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await Promise.resolve(params);
+  const isGerman = locale === 'de';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://charlie-m.de";
+  
+  const canonicalUrl = isGerman ? `${siteUrl}/de/privacy-policy` : `${siteUrl}/privacy-policy`;
+
+  const metadata = {
+    en: {
+      title: 'Privacy Policy | Charlie M Hotel Berlin',
+      description: 'Read Charlie M Hotel privacy policy. Learn how we collect, use, and protect your personal data in compliance with GDPR and data protection regulations.',
+    },
+    de: {
+      title: 'Datenschutzerklärung | Charlie M Hotel Berlin',
+      description: 'Lesen Sie die Datenschutzerklärung des Charlie M Hotels. Erfahren Sie, wie wir Ihre personenbezogenen Daten gemäß DSGVO und Datenschutzbestimmungen erheben, verwenden und schützen.',
+    }
+  };
+
+  const currentMeta = isGerman ? metadata.de : metadata.en;
+
+  return {
+    title: currentMeta.title,
+    description: currentMeta.description,
+    
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+      }
+    },
+    
+    openGraph: {
+      title: currentMeta.title,
+      description: currentMeta.description,
+      url: canonicalUrl,
+      siteName: 'Charlie M Hotel',
+      locale: isGerman ? 'de_DE' : 'en_US',
+      type: 'website',
+    },
+    
+    alternates: {
+      canonical: canonicalUrl,
+      languages: {
+        en: `${siteUrl}/privacy-policy`,
+        de: `${siteUrl}/de/privacy-policy`
+      }
+    }
+  };
+}
 
 export default function PrivacyPolicy() {
 
@@ -17,7 +73,7 @@ export default function PrivacyPolicy() {
         <p className='w-4/5 text-center text-dark text-sm inter'>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
       </div>
 
-      <Content type='privacyPolicy' />
+      <Content />
     </section>
   )
 }

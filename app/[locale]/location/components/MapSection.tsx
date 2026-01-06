@@ -33,7 +33,10 @@ export default function MapSection({
 
 
   return (
-    <>
+    <section>
+      <h2 className='sr-only'>
+        Nearby Attractions
+      </h2>
       {isLoaded ? (
         <GoogleMap
           mapContainerStyle={{
@@ -66,7 +69,7 @@ export default function MapSection({
       ) : (
         <div className="text-white text-center flex items-center justify-center">Loading map...</div>
       )}
-    </>
+    </section>
   );
 }
 

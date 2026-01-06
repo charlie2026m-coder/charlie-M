@@ -5,7 +5,7 @@ import { IoIosArrowUp } from 'react-icons/io'
 import { IoIosArrowDown } from 'react-icons/io'
 import { cn } from '@/lib/utils'
 import { Button } from '@/app/_components/ui/button'
-import DetailsDialog from './DetailsDialog'
+// import DetailsDialog from './DetailsDialog'
 import { amenities } from '@/content/content'
 
 const Amenities = ({ isTitle = true }: { isTitle?: boolean }) => {
@@ -36,14 +36,17 @@ const AmenityButton = ({ item }: { item: {
   description: string;
 
 } }) => {
-  const [isOpen, setIsOpen] = useState(false)
+  // const [isOpen, setIsOpen] = useState(false)
   return (
     <>
-      <Button className='flex items-center bg-blue/40 rounded-full px-2.5 group !h-7 items-center gap-1' onClick={() => setIsOpen(!isOpen)}>
+      <Button 
+        className='flex items-center bg-blue/40 rounded-full px-2.5 group !h-7 items-center gap-1' 
+        // onClick={() => setIsOpen(!isOpen)}
+      >
         <Image className='size-[15px]' src={item.icon} alt={item.title} width={15} height={15} />
         <span className=''>{item.title}</span>
       </Button>
-      <DetailsDialog title={item.title} image={item.imageUrl} description={item.description} open={isOpen} setOpen={setIsOpen} />
+      {/* <DetailsDialog title={item.title} image={item.imageUrl} description={item.description} open={isOpen} setOpen={setIsOpen} /> */}
     </>
   )
 }

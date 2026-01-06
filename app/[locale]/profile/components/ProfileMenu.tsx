@@ -6,8 +6,7 @@ import { PiCalendarBlankFill } from "react-icons/pi";
 import { TiArrowSortedDown } from "react-icons/ti";
 import { cn } from '@/lib/utils'
 import SlideMenu from './SlideMenu'
-import { Link } from '@/navigation'
-import { usePathname } from 'next/navigation'
+import { Link, usePathname } from '@/navigation' // Use localized usePathname
 import ReservationIdDialog from './ReservationIdDialog'
 import Logout from './Logout'
 import { useProfileStore, ReservationFilter } from '@/store/useProfile'

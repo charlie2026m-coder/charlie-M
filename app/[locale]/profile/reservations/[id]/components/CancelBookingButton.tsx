@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogHeader } from 
 import { useCancelReservation } from "@/app/hooks/useReservations";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/navigation"; // Use localized router
 
 interface CancelBookingButtonProps {
   reservationId: string;

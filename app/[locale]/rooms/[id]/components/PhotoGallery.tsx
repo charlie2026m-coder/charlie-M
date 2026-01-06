@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/app/_components/ui/dialog";
 import { IoChevronBack, IoChevronForward } from "react-icons/io5";
 
-const PhotoGallery = ({ images }: { images: string[] }) => {
+const PhotoGallery = ({ images, roomName }: { images: string[]; roomName?: string }) => {
   const [showImages, setShowImages] = useState<null | number>(null);
 
   // Check if there are no images
@@ -45,7 +45,7 @@ const PhotoGallery = ({ images }: { images: string[] }) => {
         <Image 
           onClick={() => setShowImages(0)}
           src={images[0]} 
-          alt='room' 
+          alt={roomName ? `${roomName} at Charlie M Hotel Berlin - main view` : 'Hotel room at Charlie M Hotel Berlin'} 
           width={600} 
           height={460} 
           className='w-full h-full max-h-[260px] md:max-h-[360px] lg:max-h-[460px] object-cover transition-transform duration-500 ease-out cursor-pointer group-hover:scale-110' 
@@ -58,7 +58,14 @@ const PhotoGallery = ({ images }: { images: string[] }) => {
       <div className='lg:col-span-1 grid grid-cols-2 gap-4 relative'>
         {images.slice(1, 5).map((image, index) => (
           <div key={index} className='col-span-1 group rounded-[30px] overflow-hidden'>
-            <Image onClick={() => setShowImages(index)} src={image} alt='room' width={300} height={222} className='w-full h-[126px] md:h-[222px] object-cover transition-transform duration-500 ease-out cursor-pointer group-hover:scale-110' />
+            <Image 
+              onClick={() => setShowImages(index)} 
+              src={image} 
+              alt={roomName ? `${roomName} - view ${index + 2}` : `Hotel room view ${index + 2}`} 
+              width={300} 
+              height={222} 
+              className='w-full h-[126px] md:h-[222px] object-cover transition-transform duration-500 ease-out cursor-pointer group-hover:scale-110' 
+            />
           </div>
         ))}
       </div>
@@ -70,7 +77,7 @@ const PhotoGallery = ({ images }: { images: string[] }) => {
           <div className='flex items-center gap-2 w-full relative select-none'>
             <Image 
               src={images[showImages || 0]} 
-              alt='room' 
+              alt={roomName ? `${roomName} - detailed view ${(showImages || 0) + 1}` : `Hotel room detailed view ${(showImages || 0) + 1}`} 
               width={720} 
               height={440} 
               className='max-h-[calc(80vh-140px)] w-full object-cover rounded-4xl cursor-pointer' 

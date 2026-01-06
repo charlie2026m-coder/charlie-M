@@ -8,14 +8,33 @@ import Header from '@/app/_components/header/Header';
 import Footer from '@/app/_components/footer/Footer';
 import CookieBanner from '@/app/_components/CookieBanner';
 import { Toaster } from 'sonner';
+import type { Metadata } from 'next';
 
 type Props = {
   children: ReactNode;
   params: Promise<{ locale: string }>;
 };
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://charlie-m.de";
+
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await Promise.resolve(params);
+  
+  const languages: Record<string, string> = {
+    en: `${siteUrl}`,
+    de: `${siteUrl}/de`
+  };
+
+  return {
+    alternates: {
+      canonical: locale === 'en' ? siteUrl : `${siteUrl}/${locale}`,
+      languages: languages
+    }
+  };
 }
 
 export default async function LocaleLayout({

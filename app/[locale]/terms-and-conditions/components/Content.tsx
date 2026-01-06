@@ -2,10 +2,10 @@
 import Section from "../components/Section";
 import Menu from "../components/Menu";
 import { useState, useEffect, useRef } from "react";
-import { privacyPolicy } from "@/content/privacy-policy";  
+import { termsAndConditions } from "@/content/terms-and-conditions";  
 
 export default function Content() {
-  const content = privacyPolicy.en.content
+  const content = termsAndConditions.en.content
   const [activeSection, setActiveSection] = useState<string>(getSectionId(content[0].title))
   const isUserScrollingRef = useRef(false)
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -43,8 +43,10 @@ export default function Content() {
   const handleScrollToSection = (title: string) => {
     const sectionId = getSectionId(title)
     
+    // Сразу обновляем активную секцию (для ползунка)
     setActiveSection(sectionId)
     
+    // Блокируем IntersectionObserver
     isUserScrollingRef.current = true
     
     // Прокручиваем к элементу с плавной анимацией
@@ -58,6 +60,7 @@ export default function Content() {
       const duration = 800 // длительность анимации в мс
       let startTime: number | null = null
 
+      // Easing функция для плавности (ease-in-out)
       const easeInOutCubic = (t: number): number => {
         return t < 0.5 
           ? 4 * t * t * t 
@@ -80,6 +83,7 @@ export default function Content() {
       requestAnimationFrame(animation)
     }
 
+    // Через 1 секунду разблокируем IntersectionObserver
     if (scrollTimeoutRef.current) {
       clearTimeout(scrollTimeoutRef.current)
     }
@@ -94,6 +98,7 @@ export default function Content() {
         <div className="col-span-1 lg:col-span-2">
           {content.map((item, index) => (
             <Section 
+              index={index}
               key={index}
               id={getSectionId(item.title)}
               title={item.title}

@@ -5,15 +5,15 @@ import Image from "next/image";
 import MapComponent from "./MapComponent";
 const LocationSection = () => {
   return (
-    <div className='px-4 md:px-10 xl:px-[100px] py-10 xl:py-20 grid grid-cols-1 md:grid-cols-2 container'>
+    <section className='px-4 md:px-10 xl:px-[100px] py-10 xl:py-20 grid grid-cols-1 md:grid-cols-2 container'>
       <div className='flex flex-col mb-[50px] md:mb-0'>
-        <div className='flex items-center text-mute font-semibold text-[30px] md:text-[40px] mb-8'>
-          Location      
-        </div>
+        <h1 className='flex items-center text-mute font-semibold text-[30px] md:text-[40px] mb-8'>
+          Hotel Location
+        </h1>
         <div className='flex flex-col gap-5 '>
-          <div className='flex bg-white items-center rounded-4xl p-3  text-xl'>
+          <address className='flex bg-white items-center rounded-4xl p-3  text-xl not-italic'>
             <FaLocationDot size={24} className='mr-2 text-black' /> Friedrichstraße 33, 10969 Berlin
-          </div>
+          </address>
           <div className='flex bg-white gap-3 flex-col xl:flex-row xl:items-center rounded-4xl p-3 py-2.5  md:text-xl'>
             <div className='flex items-center'>
               <FaBus size={24} className='mr-2 text-black' /> Central Station (Hbf):
@@ -23,7 +23,7 @@ const LocationSection = () => {
                 <FaBus className='size-6 text-black' /> 40 min
               </div>
               <div className='text-black flex min-w-[115px] w-1/2 flex justify-center  md:w-full items-center gap-1 bg-blue rounded-full px-2 py-2 h-8 '>
-                <Image src='/images/taxi-icon.svg' alt='taxi' width={24} height={24} className='size-[24px]' />
+                <Image src='/images/taxi-icon.svg' alt='Taxi transportation' width={24} height={24} className='size-[24px]' />
                 35 min
               </div>
             </div>
@@ -37,7 +37,7 @@ const LocationSection = () => {
                 <FaBus  className='size-6 text-black' /> 40 min
               </div>
               <div className='text-black flex min-w-[115px] w-1/2 flex justify-center  md:w-full items-center gap-1 bg-blue rounded-full px-2 py-2 h-8 '>
-                <Image src='/images/taxi-icon.svg' alt='taxi' width={24} height={24} className='size-[24px]' />
+                <Image src='/images/taxi-icon.svg' alt='Taxi transportation' width={24} height={24} className='size-[24px]' />
                 35 min
               </div>
             </div>
@@ -46,6 +46,7 @@ const LocationSection = () => {
       </div>
 
       <div className=' md:pl-[50px] h-[210px] lg:h-auto'>
+        <h2 className='sr-only'>Hotel location on map</h2>
         <MapComponent 
           width="100%" 
           height="100%" 
@@ -53,7 +54,7 @@ const LocationSection = () => {
           markerSize={80}
         />
       </div>
-    </div>
+    </section>
   )
 }
 

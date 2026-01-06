@@ -11,9 +11,11 @@ import {
 const PhotoSlider = ({
   height,
   images,
+  roomName,
 }: {
   height: number
   images: string[]
+  roomName?: string
 }) => {
   const [api, setApi] = useState<CarouselApi>()
   const [current, setCurrent] = useState(0)
@@ -61,7 +63,7 @@ const PhotoSlider = ({
               >
                 <Image 
                   src={image} 
-                  alt={hasImages ? `Photo ${index + 1}` : 'No image available'} 
+                  alt={hasImages ? (roomName ? `${roomName} - view ${index + 1}` : `Hotel room view ${index + 1}`) : 'No image available'} 
                   fill
                   className="object-cover"
                 />
