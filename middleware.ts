@@ -14,8 +14,8 @@ const intlMiddleware = createMiddleware({
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   
-  // Skip i18n for admin panel entirely - no locale routing for admin
-  if (pathname.startsWith('/admin')) {
+  // Skip i18n for admin panel and auth routes - no locale routing needed
+  if (pathname.startsWith('/admin') || pathname.startsWith('/auth')) {
     return NextResponse.next();
   }
   
@@ -53,7 +53,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Match all pathnames EXCEPT admin, api and system files
-    '/((?!admin|api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // Match all pathnames EXCEPT admin, api, auth and system files
+    '/((?!admin|api|auth|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
