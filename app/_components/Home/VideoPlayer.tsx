@@ -129,7 +129,7 @@ export default function VideoPlayer({ videoSrc, posterSrc, className = '', showT
         />
       )}
 
-      <div className={`absolute top-0 left-0 right-0 bottom-0 ${isPlaying ? '' : 'bg-black/50'} transition-all duration-300 pointer-events-none`}/>
+      <div className={`absolute top-0 -left-1 -right-1 bottom-0 ${isPlaying ? '' : 'bg-white/20'} transition-all duration-300 pointer-events-none`}/>
       
       {!isPlaying && showTitle && <>
       <div className='flex flex-col items-center justify-center absolute top-[30px] w-full px-6 gap-3'>

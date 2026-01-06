@@ -5,7 +5,7 @@ const PosterSection = () => {
   return (
     <div className="w-full mb-[85px] relative">
       <VideoPlayer 
-        videoSrc="https://www.youtube.com/watch?v=_Yhyp-_hX2s&list=RD_Yhyp-_hX2s&start_radio=1" 
+        videoSrc="https://www.youtube.com/watch?v=bFofCeeQWas&list=RDbFofCeeQWas&start_radio=1" 
         className="aspect-video w-full h-[670px] md:h-[510px]" 
         showTitle={true}
       />
