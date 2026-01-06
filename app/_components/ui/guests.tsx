@@ -7,6 +7,7 @@ import { Input } from "./input"
 import { ChevronDown, ChevronUp } from "lucide-react"
 import { Separator } from "./separator"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 const ButtonIcon = ({ onClick, symbol, disabled }: { onClick: () => void, symbol: '+' | '-', disabled?: boolean }) => {
   return (
@@ -36,6 +37,7 @@ export function Guests({
   className?: string
 }) {
   const [open, setOpen] = React.useState(false)
+  const t = useTranslations()
 
   const guestsText = `${value.adults + value.children} Guest${value.adults + value.children !== 1 ? 's' : ''}`
   
@@ -76,7 +78,7 @@ export function Guests({
         <div className="flex flex-col gap-4">
           {/* Adults */}
           <div className="flex items-center justify-between ">
-            <div className="font-semibold text-black">Adults</div>
+            <div className="font-semibold text-black">{t('guests.adults')}</div>
 
             <div className="flex items-center gap-2">
               <ButtonIcon onClick={() => setValue({ ...value, adults: Math.max(1, value.adults - 1) })} symbol='-' disabled={value.adults <= 1} />
@@ -97,7 +99,7 @@ export function Guests({
           {/* Children */}
           <div className="flex flex-col ">
             <div className="flex items-center justify-between">
-              <div className="font-semibold text-black">Children</div>
+              <div className="font-semibold text-black">{t('guests.children')}</div>
 
               <div className="flex items-center gap-2">
                 <ButtonIcon onClick={() => setValue({ ...value, children: Math.max(0, value.children - 1) })} disabled={value.children <= 0} symbol='-' />
@@ -112,7 +114,13 @@ export function Guests({
               </div>
             </div>
             
-            <div className="text-black/30 text-[12px]">from 0 to 8 years</div>
+            <div className="text-black/30 text-[12px]">{t('guests.children_age_note')}</div>
+            
+            {value.children > 0 && (
+              <div className="text-blue text-[12px] mt-1 font-medium">
+                {t('guests.crib_fee_note')}
+              </div>
+            )}
           </div>
         </div>
       </PopoverContent>

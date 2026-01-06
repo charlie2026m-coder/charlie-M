@@ -6,8 +6,8 @@ interface Guests {
   children: number;
 }
 export type MainFilter = 'balcony' | 'terrace' | 'shared' | undefined;
-export type PriceFilter = 'Cheapest' | 'Expensive';
 export type BedSizeFilter = 'king' | 'queen' | 'single' | undefined;
+export type RoomTypeFilter = 'single' | 'standart' | 'business' | 'superior' | undefined;
 
 interface StoreState {
   dateRange: {
@@ -16,14 +16,14 @@ interface StoreState {
   };
   guests: Guests;
 
-  priceFilter: PriceFilter;
+  priceFilter: boolean;
   filter: MainFilter;
   bedSizeFilter: BedSizeFilter;
-
+  roomTypeFilter: RoomTypeFilter;
   bookingPage: number;
 
   setValue: (
-    value:string |number | DateRange | Guests | MainFilter | PriceFilter | BedSizeFilter , 
+    value:string |number | DateRange | Guests | MainFilter | BedSizeFilter | RoomTypeFilter | boolean , 
     key: string
   ) => void;
 }
@@ -36,8 +36,8 @@ export const useStore = create<StoreState>((set) => ({
   //rooms filters
   filter: undefined,
   bedSizeFilter: undefined,
-  priceFilter: 'Cheapest',
-
+  priceFilter: false,
+  roomTypeFilter: undefined,
   //booking steps
   bookingPage: 1,
 

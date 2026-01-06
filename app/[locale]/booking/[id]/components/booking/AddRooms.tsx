@@ -4,13 +4,10 @@ import { Guests } from '@/app/_components/ui/guests'
 import { Button } from '@/app/_components/ui/button'
 import { useBookingStore } from '@/store/useBookingStore'
 import { HiOutlineTrash } from "react-icons/hi2";
-import { FiEdit2 } from "react-icons/fi";
-import { BsCalendar2Fill } from "react-icons/bs";
-import dayjs from 'dayjs';
 import { Room } from '@/types/types'
 
 
-const AddRooms = ({ filledRooms }: { filledRooms: Room[] }) => {
+const AddRooms = ({ filledRooms, availableUnits }: { filledRooms: Room[], availableUnits: number }) => {
   const rooms = useBookingStore(state => state.rooms)
   const roomDetails = useBookingStore(state => state.roomDetails)
   const setRooms = useBookingStore(state => state.setRooms)
@@ -60,12 +57,14 @@ const AddRooms = ({ filledRooms }: { filledRooms: Room[] }) => {
     // setState will be updated by useEffect when rooms changes
   }
 
+  const leftRooms = availableUnits - state.length
 
   return (
     <div className='flex flex-col gap-4 py-6 pb-4 border-b border-gray mb-4'>
       {state.map((room, index) =>{
+        const isLast = index === state.length - 1;
         return (  
-          <div key={room.id} className='flex flex-col  gap-2 border-b pb-4 border-gray'>
+          <div key={room.id} className={`flex flex-col gap-2  border-gray ${isLast ? '' : 'border-b'}`}>
             <div className='flex gap-2 mb-3 items-center'>
               <Image 
                 src={'/images/room1.webp'} 
@@ -85,15 +84,11 @@ const AddRooms = ({ filledRooms }: { filledRooms: Room[] }) => {
               }
               {state.length > 1 && <HiOutlineTrash className='size-6 cursor-pointer text-red-700 self-center' onClick={() => handleRemoveRoom(room.id)} />}
             </div>
-            <div className='flex px-2 gap-2 items-center'>
-              <BsCalendar2Fill className='size-5 cursor-pointer self-center text-blue' /> {dayjs(room.from).format('DD MMM YYYY')} - {dayjs(room.to).format('DD MMM YYYY')}
-              {/* <FiEdit2 className='size-5 cursor-pointer self-center ml-auto' onClick={() => handleEditRoom(room.id)} /> */}
-            </div>
 
           </div>
         )
       })}
-      <Button variant="outline" className='w-full' onClick={addRoom}>+ Add Room</Button>  
+      {leftRooms > 0 && <Button variant="outline" className='w-full' onClick={addRoom}>+ Add Room ({leftRooms} left)</Button>}
     </div>
   )
 }

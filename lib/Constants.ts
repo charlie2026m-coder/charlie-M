@@ -1,5 +1,5 @@
 // Tax
-export const TAX_RATE = 0;
+export const TAX_RATE = 7.5;
 export const PHONE_NUMBER = "+5 077 6764 8570 "
 // Hotel Information
 export const HOTEL_INFO = {

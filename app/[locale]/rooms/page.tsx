@@ -105,19 +105,14 @@ const RoomsPage = async ({ searchParams } : Props) => {
 
       <p className='text-[15px] text-dark inter font-[400] mb-7'> Our rooms at Charlie M are designed to feel inviting from the moment you arrive. Modern interiors, great beds, and thoughtful amenities create a calm space to unwind after a day in the city. Each room category has its own character — from private balconies to shared terraces — so you can choose the one that fits your stay.</p>
 
-      <div className="w-full mb-[30px] md:mb-[85px] relative">
-      <VideoPlayer 
-        videoSrc="https://www.youtube.com/watch?v=_Yhyp-_hX2s&list=RD_Yhyp-_hX2s&start_radio=1" 
-        className="aspect-video w-full h-[670px] md:h-[510px]" 
-      />
+
       <CheckInForm 
-        className="absolute bottom-8 md:bottom-[-60px] left-1/2 -translate-x-1/2 w-[90%] max-w-[1200px]"
+        className="w-full mb-5 md:mb-10 "
         params={{ from, to, adults, children }}  
       />
-    </div>
       <Filters />
       <FiltersMobile />
-      <Amenities />
+      {/* <Amenities /> */}
       <RoomsList rooms={rooms} params={{ from, to, adults, children }} />
     </section>
   )

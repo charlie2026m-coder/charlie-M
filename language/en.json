@@ -31,7 +31,12 @@
     "open_profile_link": "Open profile",
     "dear_guest": "Dear guest",
     "my_account_link": "My Account"
-
+  },
+  "guests": {
+    "adults": "Adults",
+    "children": "Children",
+    "children_age_note": "up to 3 years old",
+    "crib_fee_note": "Crib is charged extra"
   }
 }
 

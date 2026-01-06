@@ -1,16 +1,17 @@
 'use client'
+import { formatReservations, calculateNights, extraTooltip, getExtraPrice } from '@/lib/utils';
 import { useBookingStore } from '@/store/useBookingStore'
-import { Button } from "@/app/_components/ui/button";
-import Price from "@/app/_components/ui/price";
 import { BiSolidLike } from "react-icons/bi";
 import { UrlParams } from "@/types/apaleo";
-import { formatReservations, calculateNights, extraTooltip, getExtraPrice } from '@/lib/utils';
-import AddRooms from './AddRooms';
+import { RoomOffer } from '@/types/offers';
 import { TAX_RATE } from '@/lib/Constants';
 import { useStore } from '@/store/useStore';
+import { Button } from "@/app/_components/ui/button";
 import { Room } from '@/types/types';
-import { RoomOffer } from '@/types/offers';
 import CustomTooltip from '@/app/_components/ui/CustomTooltip';
+import ChangeDate from './ChangeDate';
+import AddRooms from './AddRooms';
+import Price from "@/app/_components/ui/price";
 
 const BookingMenu = ({
   rooms: roomsOffers,
@@ -50,8 +51,8 @@ const BookingMenu = ({
   const roomsTotalPrice = rooms.reduce((acc, _) => acc + price, 0)
   const extrasTotalPrice = flatExtras.reduce((acc, extra) => acc + extra.totalPrice, 0)
   
-  const tax = TAX_RATE
-  const totalPrice = roomsTotalPrice + extrasTotalPrice + tax
+  const taxPrice = roomsTotalPrice * TAX_RATE / 100
+  const totalPrice = roomsTotalPrice + extrasTotalPrice + taxPrice
  
 
   const goNext = () => {
@@ -70,7 +71,8 @@ const BookingMenu = ({
 
   return (
     <div className='flex flex-col bg-white rounded-[20px] py-5 px-3 shadow-xl'>
-      <AddRooms filledRooms={filledRooms} />
+      <ChangeDate arrival={roomsOffers[0].arrival} departure={roomsOffers[0].departure} />
+      <AddRooms filledRooms={filledRooms} availableUnits={roomsOffers[0].availableUnits} />
 
       <div className='flex flex-col'>
         <span className='font-semibold mb-1.5 '>Price:</span>
@@ -83,8 +85,8 @@ const BookingMenu = ({
             </div>
           ))}
           <div  className='flex items-center gap-2 inter text-sm text-dark mt-2'>
-            <span>Tax:</span>
-            <span className='text-bale font-semibold ml-auto'>€ {TAX_RATE}</span>
+            <span>City tax:</span>
+            <span className='text-bale font-semibold ml-auto'>€ {taxPrice.toFixed(2)}</span>
           </div>
         </div>
         {flatExtras.length > 0 && <>

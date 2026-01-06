@@ -13,7 +13,7 @@ const RoomsList = ({
   rooms: RoomOffer[],
   params: UrlParams 
 }) => {
-  const { filter, priceFilter, bedSizeFilter } = useStore()
+  const { filter, priceFilter, bedSizeFilter, roomTypeFilter } = useStore()
   const [currentPage, setCurrentPage] = useState(0)
   const [roomsPerPage, setRoomsPerPage] = useState(6)
   // Adjust rooms per page based on screen size
@@ -37,7 +37,7 @@ const RoomsList = ({
   const filteredRooms = useMemo(() => {
     let filtered = rooms;
     
-    if(priceFilter === 'Cheapest') {
+    if(priceFilter) {
       filtered = filtered.sort((a, b) => a.price - b.price)
     } else {
       filtered = filtered.sort((a, b) => b.price - a.price)
@@ -60,9 +60,12 @@ const RoomsList = ({
     if(bedSizeFilter === 'single') {
       filtered = filtered.filter((room) => (room.attributes?.includes('single')))
     }
+    if(roomTypeFilter) {
+      filtered = filtered.filter((room) => room.name.toLowerCase().includes(roomTypeFilter.toLowerCase()))
+    }
 
     return filtered;
-  }, [rooms, priceFilter, filter, bedSizeFilter])
+  }, [rooms, priceFilter, filter, bedSizeFilter, roomTypeFilter])
 
   // Reset to first page when filters or rooms per page change
   useEffect(() => {
@@ -81,7 +84,7 @@ const RoomsList = ({
     <div className='flex flex-col gap-[30px] mb-[30px]'>
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'> 
         {displayedRooms.map((room) => (
-          <RoomCard 
+          <RoomCard
             params={params}
             key={room.id} 
             room={room}

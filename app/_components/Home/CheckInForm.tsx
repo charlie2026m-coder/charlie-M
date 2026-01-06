@@ -18,6 +18,7 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
   const router = useRouter();
   const [openCalendar, setOpenCalendar] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [dateError, setDateError] = useState(false);
   const nextMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
 
   useEffect(() => {
@@ -45,10 +46,17 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!dateRange?.from || !dateRange?.to) return;
+    
+    const hasDateError = !dateRange?.from || !dateRange?.to;
+    setDateError(hasDateError);
+    
+    if (hasDateError) {
+      return;
+    }
+    
     const queryString = getPath({
-      from: getDate(dateRange?.from),
-      to: getDate(dateRange?.to),
+      from: getDate(dateRange.from!),
+      to: getDate(dateRange.to!),
       adults: guests.adults.toString(),
       children: guests.children.toString(),
     });
@@ -99,7 +107,13 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
           <DateInput 
             value={dateRange || undefined}
             open={openCalendar}
-            onOpenChange={setOpenCalendar}
+            onOpenChange={(open) => {
+              setOpenCalendar(open);
+              if (open && dateError) {
+                setDateError(false);
+              }
+            }}
+            isError={dateError}
           >
             <div className='flex flex-col md:flex-row gap-2  pb-2 '>
               <Calendar 
@@ -107,7 +121,12 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
                 mode="range"  
                 captionLayout="label"
                 selected={dateRange}
-                onSelect={(date) => setValue(date as DateRange, 'dateRange')}
+                onSelect={(date) => {
+                  setValue(date as DateRange, 'dateRange');
+                  if (date?.from && date?.to && dateError) {
+                    setDateError(false);
+                  }
+                }}
                 month={currentMonth}
                 onMonthChange={handlePrimaryMonthChange}
                 disabled={{ 
@@ -120,7 +139,12 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
                 mode="range"  
                 captionLayout="label"
                 selected={dateRange}
-                onSelect={(date) => setValue(date as DateRange, 'dateRange')}
+                onSelect={(date) => {
+                  setValue(date as DateRange, 'dateRange');
+                  if (date?.from && date?.to && dateError) {
+                    setDateError(false);
+                  }
+                }}
                 month={nextMonth}
                 onMonthChange={handleSecondaryMonthChange}
                 disabled={{ 
@@ -147,18 +171,16 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
         </label>
       </section>
         <button
-          disabled={!dateRange?.from || !dateRange?.to}
-          className={cn('h-[100px]  cursor-pointer w-[110px] hidden  md:flex items-center justify-center rounded-r-[30px]  transition-all duration-300 bg-blue hover:bg-blue/80')}
+          className={cn('h-[100px] cursor-pointer w-[110px] hidden md:flex items-center justify-center rounded-r-[30px] transition-all duration-300 bg-blue hover:bg-blue/80')}
           type='submit'
         >
-          <RiSearchLine className='text-mute text-[40px]  ' />
+          <RiSearchLine className='text-mute text-[40px]' />
         </button>
         <button
-          disabled={!dateRange?.from || !dateRange?.to}
-          className={cn('py-3 text-lg text-mute gap-2 mt-2 font-bold cursor-pointer md:hidden flex items-center justify-center rounded-b-[30px]  transition-all duration-300 bg-blue hover:bg-blue/80')}
+          className={cn('py-3 text-lg text-mute gap-2 mt-2 font-bold cursor-pointer md:hidden flex items-center justify-center rounded-b-[30px] transition-all duration-300 bg-blue hover:bg-blue/80')}
           type='submit'
         >
-          <RiSearchLine className='text-mute text-[25px]  ' /> Check Availability
+          <RiSearchLine className='text-mute text-[25px]' /> Check Availability
         </button>
     </form>
   );

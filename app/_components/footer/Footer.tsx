@@ -8,7 +8,7 @@ import { FaLocationDot } from "react-icons/fa6";
 import { TbMailFilled } from "react-icons/tb";
 import Navigation from "./Navigation";
 import Contacts from "./Contacts";
-import { usePathname } from "next/navigation";
+import { usePathname, Link } from "@/navigation";
 
 export default function Footer() {
   const pathname = usePathname();
@@ -60,7 +60,7 @@ export default function Footer() {
     }
   };
 
-  const isHomePage = pathname === '/';
+  const isHomePage = pathname === '/' || pathname === '/de';
 
   return (
     <footer className={`w-full relative z-0 ${isHomePage && 'bg-light1'}`}>
@@ -68,13 +68,15 @@ export default function Footer() {
         <div className="container px-4 xl:!px-[100px] flex flex-col items-center ">
           <div className="grid grid-cols-1 lg:grid-cols-4 w-full items-center py-[60px] gap-8 border-b border-white/40">
             <div className="flex items-center col-span-1 mx-auto">
-              <Image 
-                src="/images/Logo.svg" 
-                alt="logo" 
-                width={235} 
-                height={151} 
-                className="w-[235px] h-[151px]"
-              />
+              <Link href="/">
+                <Image 
+                  src="/images/Logo.svg" 
+                  alt="logo" 
+                  width={235} 
+                  height={151} 
+                  className="w-[235px] h-[151px]"
+                />
+              </Link>
             </div>
 
             <div className="flex flex-col items-start justify-center col-span-2 mx-auto w-full">

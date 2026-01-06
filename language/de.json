@@ -29,6 +29,12 @@
     "open_profile_link": "Profil öffnen",
     "dear_guest": "Guten Tag",
     "my_account_link": "Mein Konto"
+  },
+  "guests": {
+    "adults": "Erwachsene",
+    "children": "Kinder",
+    "children_age_note": "bis zu 3 Jahren",
+    "crib_fee_note": "Kinderbett wird zusätzlich berechnet"
   }
 }
 

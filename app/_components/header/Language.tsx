@@ -3,6 +3,7 @@ import { useState, useTransition } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { useLocale } from 'next-intl';
 import { useRouter, usePathname } from '@/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '../ui/button';
 
 type Locale = 'en' | 'de';
@@ -11,6 +12,7 @@ export default function Language() {
   const locale = useLocale() as Locale;
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -25,8 +27,10 @@ export default function Language() {
     setOpen(false);
     
     startTransition(() => {
-      // Use push instead of replace to trigger full navigation
-      router.push(pathname, { locale: newLocale });
+      // Preserve query parameters when switching language
+      const queryString = searchParams.toString();
+      const newPath = queryString ? `${pathname}?${queryString}` : pathname;
+      router.push(newPath, { locale: newLocale });
     });
   };
 

@@ -1,7 +1,7 @@
 import { FaFacebookF, FaYoutube } from 'react-icons/fa'
 import { AiFillInstagram } from 'react-icons/ai'
 import Image from 'next/image'
-import Link from 'next/link'
+import { Link } from '@/navigation'
 
 const Contacts = () => {
   const paymentMethods = [

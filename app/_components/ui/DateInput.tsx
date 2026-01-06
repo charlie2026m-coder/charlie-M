@@ -20,12 +20,14 @@ export function DateInput({
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
   className = '',
+  isError = false,
 }: {
   children?: React.ReactNode,
   value?: DateRange | undefined,
   open?: boolean,
   onOpenChange?: (open: boolean) => void,
   className?: string,
+  isError?: boolean,
 }) {
   const [internalOpen, setInternalOpen] = useState(false)  
   // Use controlled state if provided, otherwise use internal state
@@ -43,7 +45,10 @@ export function DateInput({
               id="date"
               value={formattedValue}
               placeholder={'Choose date'}
-              className="rounded-full h-10 px-3 border-brown cursor-pointer"
+              className={cn(
+                "rounded-full h-10 px-3 border-brown cursor-pointer",
+                isError && "!border-red-500 focus:border-red-500 !ring-red-500/20 focus:ring-red-500"
+              )}
               readOnly
               onKeyDown={(e) => {
                 if (e.key === "ArrowDown") {
@@ -57,7 +62,7 @@ export function DateInput({
               variant="ghost"
               className="absolute top-1/2 right-2 size-6 -translate-y-1/2 pointer-events-none"
             >
-              <BsCalendar2 className="size-4 text-brown" />
+              <BsCalendar2 className={cn("size-4 text-brown", isError && "text-red-500")} />
             </Button>
           </div>
         </PopoverTrigger>
