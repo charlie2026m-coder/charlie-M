@@ -4,7 +4,7 @@ import ReservationsTable from './components/Table'
 import { useEffect, useState } from 'react'
 
 const Reservations = () => {
-  const { reservationFilter } = useProfileStore()
+  const { reservationFilter } = useProfileStore() 
   const [isGuestMode, setIsGuestMode] = useState(false)
   
   useEffect(() => {

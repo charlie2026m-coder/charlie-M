@@ -1,10 +1,9 @@
 'use client';
-import { Link, usePathname } from "@/navigation";
+import { Link } from "@/navigation";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 
-const Navigation = () => {
-  const pathname = usePathname();
+const Navigation = ({isWhite = false}: {isWhite?: boolean}) => {
   const t = useTranslations();
   
   const navigation = [
@@ -27,14 +26,14 @@ const Navigation = () => {
   ];
 
   return (
-    <nav className="hidden md:flex items-center 2xl:w-1/4 justify-between">
+    <nav className="hidden md:flex items-center 2xl:w-1/4 gap-6 justify-between">
       {navigation.map((item) => (
         <Link 
           key={item.href}
           href={item.href}
           className={cn(
-            "transition-colors border-b-4 border-transparent py-1 hover:text-black/50 mx-1",
-            pathname === item.href ? "font-medium border-blue" : ""
+            "transition-colors border-b-4 border-transparent py-1  mx-1",
+            isWhite ? "text-white hover:underline" : "text-black hover:text-black/50",
           )}
         >
           {item.label}

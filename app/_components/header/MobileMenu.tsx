@@ -2,7 +2,6 @@
 import { Link } from "@/navigation"
 import { Button } from "../ui/button"
 import Language from "./Language"
-import AuthModal from "../Auth/AuthModal"
 import { useAuth } from "@/lib/auth-provider"
 import Image from "next/image"
 import { FaFacebookF, FaYoutube } from 'react-icons/fa'
@@ -12,9 +11,10 @@ import { XIcon } from "lucide-react";
 import { useState } from "react";
 import { Drawer, DrawerContent, DrawerTitle } from "../ui/drawer"
 import { useProfile } from "@/app/hooks/useProfile";
-// import SignOut from "../Auth/SignOut"
 import { useTranslations } from "next-intl";
-const MobileMenu = ({ locale }: { locale: string }) => {
+import { cn } from "@/lib/utils";
+
+const MobileMenu = ({ locale, isWhite = false }: { locale: string, isWhite?: boolean }) => {
   const { profile } = useProfile(); 
   const t = useTranslations();
   const [open, setOpen] = useState(false)
@@ -41,7 +41,7 @@ const MobileMenu = ({ locale }: { locale: string }) => {
 
   return (
   <>
-    <TbMenu2 className='size-8 md:hidden mr-3' onClick={()=> setOpen(true)} />
+    <TbMenu2 className={cn('size-8 md:hidden mr-3', isWhite ? 'text-white' : 'text-black')} onClick={()=> setOpen(true)} />
     
     <Drawer open={open} onOpenChange={setOpen} direction="left">
       <DrawerTitle className='hidden'>Mobile Menu</DrawerTitle>
@@ -79,7 +79,9 @@ const MobileMenu = ({ locale }: { locale: string }) => {
               <Link href='/rooms' className='w-full' onClick={() => setOpen(false)}>
                 <Button variant='outline' className='w-full h-[55px] text-white border-white'> {t('check_in_btn')} </Button>
               </Link>
-              <AuthModal  type="signin" className='w-full h-[55px] text-white border-white' />
+              <Link href='/login' className='w-full' onClick={() => setOpen(false)}>
+                <Button variant='outline' className='w-full h-[55px] text-white border-white'> {t('sign_in_btn')} </Button>
+              </Link>
             </>)}
 
             {!loading && user &&

@@ -41,6 +41,10 @@ export function DateInput({
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <div className="relative flex gap-2">
+            <div className='flex  gap-2 text-xs absolute -top-2 left-5 bg-white px-1'>
+              <div className='pr-2 border-r border-black '>Check In  </div>
+              <div >Check out</div>
+            </div>
             <Input
               id="date"
               value={formattedValue}
@@ -60,7 +64,7 @@ export function DateInput({
             <Button
               id="date-picker"
               variant="ghost"
-              className="absolute top-1/2 right-2 size-6 -translate-y-1/2 pointer-events-none"
+              className="absolute top-1/2 right-0 size-6 -translate-y-1/2 pointer-events-none"
             >
               <BsCalendar2 className={cn("size-4 text-brown", isError && "text-red-500")} />
             </Button>

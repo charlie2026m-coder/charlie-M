@@ -2,8 +2,7 @@
 import { useState } from 'react'
 import { Checkbox } from "@/app/_components/ui/checkbox"
 import { Label } from "@/app/_components/ui/label"
-import { CustomSelect } from "@/app/_components/ui/CustomSelect"
-import { BedSizeFilter, MainFilter } from "@/store/useStore"
+import { BedSizeFilter, MainFilter, RoomTypeFilter } from "@/store/useStore"
 import {  IoFilter } from "react-icons/io5";
 import { Button } from "@/app/_components/ui/button"
 import { Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerTitle, } from "@/app/_components/ui/drawer"
@@ -11,22 +10,26 @@ import { IoClose } from "react-icons/io5";
 import { cn } from '@/lib/utils'
 import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
 import { useStore } from '@/store/useStore'
-
+import { FaSortAmountDown, FaSortAmountUp } from "react-icons/fa";
 
 const FiltersMobile = () => {
-  const { filter, bedSizeFilter, priceFilter, setValue } = useStore()
+  const { filter, bedSizeFilter, priceFilter, roomTypeFilter, setValue } = useStore()
   const [openDrawer, setOpenDrawer] = useState(false)
 
   const clearFilters = () => {
     setValue(undefined, 'filter')
-    setValue('single', 'bedSizeFilter')
-    setValue('Cheapest', 'priceFilter')
+    setValue(undefined, 'bedSizeFilter')
+    setValue(undefined, 'roomTypeFilter')
+    setValue(false, 'priceFilter')
   }
   const setFilter = (value: MainFilter) => {
     setValue(filter === value ? undefined : value, 'filter')
   }
   const setBedSizeFilter = (value: BedSizeFilter) => {
     setValue(bedSizeFilter === value ? undefined : value, 'bedSizeFilter')
+  }
+  const setRoomTypeFilter = (value: RoomTypeFilter) => {
+    setValue(roomTypeFilter === value ? undefined : value, 'roomTypeFilter')
   }
     return (
     <>
@@ -35,15 +38,9 @@ const FiltersMobile = () => {
           <IoFilter className='size-5' />
           Filters
         </Button>
-        <div className='flex items-center gap-1 font-bold'>
-          Sort by Price: 
-          <CustomSelect 
-            options={['Cheapest', 'Expensive']} 
-            placeholder="Select price filter" 
-            value={priceFilter} 
-            onChange={(value) => setValue(value, 'priceFilter')} 
-            className='w-[120px]'
-          />
+        <div className='flex gap-2 cursor-pointer items-center border rounded-full p-2 px-4 self-end ml-auto' onClick={() => setValue(!priceFilter, 'priceFilter')}>
+          <h2 className='text-lg '>Price</h2>
+          {priceFilter ? <FaSortAmountDown className='size-5' /> : <FaSortAmountUp className='size-5' />}
         </div>
       </div>
 
@@ -58,7 +55,18 @@ const FiltersMobile = () => {
             <IoClose className='size-8 cursor-pointer' onClick={() => setOpenDrawer(false)} />
           </div>
           <div className='flex flex-col gap-5 p-5 overflow-y-auto flex-1'>
-          <CategoryFilter title="Categories">
+          <CategoryFilter title="Room Type">
+            <div className='flex flex-col gap-5'>
+              {typeFilters.map((item) => (
+                <div key={item.value} className='flex items-center gap-3'>
+                  <Checkbox id={item.value} checked={roomTypeFilter === item.value} onCheckedChange={() => setRoomTypeFilter(item.value as RoomTypeFilter)} />
+                  <Label htmlFor={item.value} className='text-[17px] font-[400] inter'>{item.label}</Label>
+                </div>
+              ))}
+            </div>
+          </CategoryFilter>
+
+          <CategoryFilter title="Balcony or terrace">
             <div className='flex flex-col gap-5'>
               {filters.map((item) => (
                 <div key={item.value} className='flex items-center gap-3'>
@@ -91,6 +99,25 @@ const FiltersMobile = () => {
   )
 }
 
+const typeFilters = [
+  {
+    label: 'Single',
+    value: 'single'
+  },
+  {
+    label: 'Standard',
+    value: 'standard'
+  },
+  {
+    label: 'Business',
+    value: 'business'
+  },
+  {
+    label: 'Superior',
+    value: 'superior'
+  },
+]
+
 const filters = [
   {
     label: 'Balcony',
@@ -105,21 +132,18 @@ const filters = [
     value: 'shared'
   },
 ]
+
 const bedsFilter = [
   {
-    label: '90/200',
-    value: ''
+    label: 'Single',
+    value: 'single'
   },
   {
-    label: '120/200',
-    value: ''
-  },
-  {
-    label: '140/200',
+    label: 'Queen',
     value: 'queen'
   },
   {
-    label: '160/200',
+    label: 'King',
     value: 'king'
   },
 ]

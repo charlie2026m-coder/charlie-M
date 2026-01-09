@@ -1,15 +1,14 @@
-import { Link } from "@/navigation";
 import { useProfile } from "@/app/hooks/useProfile";
 import { useTranslations } from "next-intl";
-
-export default function ProfileInfo() {
+import { cn } from "@/lib/utils";
+export default function ProfileInfo({ isWhite = false }: { isWhite?: boolean }) {
   const t = useTranslations();
   const { profile } = useProfile();
 
+  const forstLetter = profile?.name?.charAt(0);
   return (
-    <div className="flex flex-col">
-      <span className="text-[18px] md:text-[13px] text-white md:text-black">{profile?.name || t('header.dear_guest')}</span>
-      <Link href="/profile" className="text-xs text-blue md:text-brown hover:text-brown/50">{t('header.open_profile_link')}</Link>
+    <div className={cn("flex items-center justify-center border size-10 rounded-full cursor-pointer group", isWhite ? "border-white bg-white text-transparent" : "border-black  text-black")}>
+      <span className={cn("group-hover:scale-140 transition-all duration-300")}>{forstLetter}</span>
     </div>
-  );
+  )
 }

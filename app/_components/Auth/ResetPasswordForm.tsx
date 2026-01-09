@@ -4,12 +4,15 @@ import CustomInput from "../ui/customInput"
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ResetPasswordFormData, resetPasswordSchema } from "@/types/schemas";
 import { Button } from "../ui/button";
-import { contentType } from "./AuthModal";
 import { useUpdatePassword } from "@/app/hooks/useAuth";
+import Success from "./Success";
+import { useRouter } from "@/navigation";
 
-const ResetPasswordForm = ({ setFormType }: { setFormType: (type: contentType ) => void }) => {
+const ResetPasswordForm = () => {
   const [error, setError] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
   const updatePasswordMutation = useUpdatePassword();
+  const router = useRouter();
 
   const {
     register,
@@ -37,12 +40,16 @@ const ResetPasswordForm = ({ setFormType }: { setFormType: (type: contentType ) 
     setError(null);
     try {
       await updatePasswordMutation.mutateAsync(data.password);
-      setFormType('success');
+      setShowSuccess(true);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to save password';
       setError(errorMessage);
     }
   };
+  
+  if (showSuccess) {
+    return <Success type='passSuccess' onClose={() => router.push('/login')} />;
+  }
   
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 relative mb-[30px]">

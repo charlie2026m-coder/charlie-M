@@ -4,10 +4,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '../ui/button';
 import CustomInput from '../ui/customInput';
 import { forgotPasswordSchema, type ForgotPasswordFormData } from '@/types/schemas';
-import { contentType } from './AuthModal';
 import { useForgotPassword } from '@/app/hooks/useAuth';
+import { Link } from '@/navigation';
 
-const ForgotPassword = ({ setFormType }: { setFormType: (type: contentType ) => void }) => {
+const ForgotPassword = () => {
   const [error, setError] = useState<string | null>(null);
   const forgotPasswordMutation = useForgotPassword();
   
@@ -39,7 +39,6 @@ const ForgotPassword = ({ setFormType }: { setFormType: (type: contentType ) => 
     setError(null);
     try {
       await forgotPasswordMutation.mutateAsync(data.email);
-      setFormType('pass');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to send reset link';
       setError(errorMessage);
@@ -66,9 +65,9 @@ const ForgotPassword = ({ setFormType }: { setFormType: (type: contentType ) => 
 
       <div className="mt-[30px] text-center" >
         Remember password? 
-        <button onClick={() => setFormType('signin')} className="text-blue hover:text-black underline cursor-pointer pl-1">
+        <Link href="/login" className="text-blue hover:text-black underline cursor-pointer pl-1">
           Login
-        </button>
+        </Link>
       </div>
     </div>
   );

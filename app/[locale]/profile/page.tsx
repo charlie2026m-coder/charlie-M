@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import PasswordForm from "./components/PasswordForm";
 import DeleteAccountModal from "./components/DeleteAccountModal";
 import { useRouter } from "@/navigation";
+import { supabase } from "@/lib/supabase";
+import { useProfileStore } from "@/store/useProfile";
 
 export default function Profile() {
   const { profile, updateMutation } = useProfile();
@@ -18,6 +20,7 @@ export default function Profile() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isGuestMode, setIsGuestMode] = useState(false);
   const router = useRouter();
+  const { clearGuestMode } = useProfileStore();
 
   useEffect(() => {
     setIsGuestMode(localStorage.getItem('guestMode') === 'true');
@@ -102,6 +105,12 @@ export default function Profile() {
 
   // Guest mode view
   if (isGuestMode) {
+    const handleCreateAccount = async () => {
+      clearGuestMode();
+      await supabase.auth.signOut();
+      router.push('/signup');
+    };
+
     return (
       <div className='flex flex-col flex-1 px-3 lg:px-[30px] items-center justify-center min-h-[500px]'>
         <div className='max-w-md text-center'>
@@ -112,7 +121,7 @@ export default function Profile() {
 
           <Button 
             variant="outline"
-            onClick={() => router.push('/?auth=signin')}
+            onClick={handleCreateAccount}
             className='w-full h-12 mt-3'
           >
             Сreate account

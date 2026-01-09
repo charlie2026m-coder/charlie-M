@@ -1,14 +1,9 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import { Play, Pause } from 'lucide-react';
-import Dot from '../ui/dot';
-
 interface VideoPlayerProps {
   videoSrc: string;
   posterSrc?: string;
   className?: string;
-  showTitle?: boolean;
 }
 
 // Helper to detect video type from URL
@@ -36,132 +31,53 @@ function getVimeoId(url: string): string | null {
   return match ? match[1] : null;
 }
 
-export default function VideoPlayer({ videoSrc, posterSrc, className = '', showTitle = false }: VideoPlayerProps) {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [showControls, setShowControls] = useState(true);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-
+export default function VideoPlayer({ videoSrc, posterSrc, className = '' }: VideoPlayerProps) {
   const videoType = getVideoType(videoSrc);
-
-  const togglePlay = () => {
-    if (videoType === 'direct' && videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
-    } else if (videoType === 'youtube' && iframeRef.current) {
-      // For YouTube iframe API
-      const message = isPlaying ? '{"event":"command","func":"pauseVideo","args":""}' : '{"event":"command","func":"playVideo","args":""}';
-      iframeRef.current.contentWindow?.postMessage(message, '*');
-      setIsPlaying(!isPlaying);
-    } else if (videoType === 'vimeo' && iframeRef.current) {
-      // For Vimeo iframe API
-      const message = isPlaying ? '{"method":"pause"}' : '{"method":"play"}';
-      iframeRef.current.contentWindow?.postMessage(message, '*');
-      setIsPlaying(!isPlaying);
-    }
-  };
-
-  const handleVideoClick = () => {
-    if (videoType === 'direct') {
-      togglePlay();
-    }
-  };
-
-  const handleVideoPlay = () => {
-    setIsPlaying(true);
-    setShowControls(false);
-  };
-
-  const handleVideoPause = () => {
-    setIsPlaying(false);
-    setShowControls(true);
-  };
-
-  const handleVideoEnded = () => {
-    setIsPlaying(false);
-    setShowControls(true);
-  };
 
   // Generate embed URL for YouTube/Vimeo
   const getEmbedUrl = () => {
     if (videoType === 'youtube') {
       const videoId = getYouTubeId(videoSrc);
-      return videoId ? `https://www.youtube.com/embed/${videoId}?enablejsapi=1&controls=0&modestbranding=1&rel=0` : '';
+      // Loop requires playlist parameter with same video ID
+      // All controls disabled, no user interaction allowed
+      // Additional parameters to hide all YouTube UI elements on load
+      return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}&controls=0&modestbranding=1&rel=0&mute=1&disablekb=1&fs=0&iv_load_policy=3&showinfo=0&cc_load_policy=0&playsinline=1&enablejsapi=1&start=0` : '';
     }
     if (videoType === 'vimeo') {
       const videoId = getVimeoId(videoSrc);
-      return videoId ? `https://player.vimeo.com/video/${videoId}?api=1&controls=0` : '';
+      // background=1 hides all controls and makes it autoplay/loop
+      return videoId ? `https://player.vimeo.com/video/${videoId}?autoplay=1&loop=1&muted=1&background=1&api=1` : '';
     }
     return '';
   };
 
   return (
-    <div 
-      className={`relative w-full rounded-[40px] overflow-hidden ${className}`}
-      onMouseEnter={() => setShowControls(true)}
-      onMouseLeave={() => isPlaying && setShowControls(false)}
-    >
+    <div className={`relative w-full overflow-hidden ${className}`}>
       {videoType === 'direct' ? (
         <video
-          ref={videoRef}
-          className="w-full h-full object-cover cursor-pointer"
+          className="w-full h-full object-cover pointer-events-none"
           poster={posterSrc}
-          onClick={handleVideoClick}
-          onPlay={handleVideoPlay}
-          onPause={handleVideoPause}
-          onEnded={handleVideoEnded}
           playsInline
+          muted
+          autoPlay
+          loop
+          style={{ pointerEvents: 'none' }}
         >
           <source src={videoSrc} type="video/mp4" />
           Your browser does not support the video tag.
         </video>
       ) : (
-        <iframe
-          ref={iframeRef}
-          className="w-full h-full object-cover"
-          src={getEmbedUrl()}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
-      )}
-
-      <div className={`absolute top-0 -left-1 -right-1 bottom-0 ${isPlaying ? '' : 'bg-white/20'} transition-all duration-300 pointer-events-none`}/>
-      
-      {!isPlaying && showTitle && <>
-      <div className='flex flex-col items-center justify-center absolute top-[30px] w-full px-6 gap-3'>
-        <h1 className='text-4xl md:text-5xl lg:text-6xl text-white font-[700] text-center jakarta'>Charlie M - Your Berlin story starts here</h1>
-        <h1 className='text-xl md:text-2xl lg:text-4xl text-white font-[700]  jakarta hidden md:flex items-center gap-4 justify-center'>Fully automated stay <Dot size={14} color="gold" /> Central of Berlin </h1>
-      </div>
-      </>}
-
-      {/* Custom Play Button Overlay */}
-      <button
-        onClick={togglePlay}
-        className={
-          `absolute cursor-pointer top-1/3 md:top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-[130px] rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center shadow-xl transition-all duration-300 hover:scale-110 hover:opacity-100 
-          ${isPlaying ? 'opacity-0' : 'opacity-100'}`
-        }
-        aria-label={isPlaying ? 'Pause video' : 'Play video'}
-      >
-         {isPlaying ? <Pause 
-            className="size-10 text-white ml-1 transition-transform" 
-            fill="currentColor"
+        <div className="relative w-full h-full overflow-hidden">
+          <iframe
+            className="w-full h-full object-cover pointer-events-none absolute top-0 left-0"
+            src={getEmbedUrl()}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen={false}
+            style={{ pointerEvents: 'none' }}
+            frameBorder="0"
           />
-          :<Play 
-          className="size-10 text-white ml-1 transition-transform" 
-          fill="currentColor"
-        />}
-      </button>
-
-      {/* Gradient overlay for better button visibility */}
-      <div className={`absolute inset-0 bg-gradient-to-t from-black/30 to-transparent transition-opacity duration-300 pointer-events-none ${
-        showControls && !isPlaying ? 'opacity-100' : 'opacity-0'
-      }`} />
+        </div>
+      )}
     </div>
   );
 }
-

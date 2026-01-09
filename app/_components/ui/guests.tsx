@@ -50,6 +50,9 @@ export function Guests({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <div className="relative flex gap-2">
+          <div className='flex  gap-2 text-xs absolute -top-2 left-5 bg-white px-1'>
+            Guests
+          </div>
           <Input
             value={guestsText}
             placeholder="Guests"
