@@ -7,11 +7,13 @@ import MobileMenu from "./MobileMenu";
 import ViberNumber from "./ViberNumber"
 import Language from "./Language"
 import { cn } from "@/lib/utils"
+import { Suspense } from "react"
+
 const Header = ({ locale, isWhite = false }: { locale: string, isWhite?: boolean }) => {
   return (
         <header className={cn('w-full', !isWhite && 'bg-white shadow-lg ')}>
           <section className="container px-4  xl:px-[100px] py-3 flex items-center ">
-            <MobileMenu locale={locale} isWhite={isWhite} />
+            <MobileMenu isWhite={isWhite} />
             <Link href="/" locale={locale as 'en' | 'de'}>
               <Image 
                 src={isWhite ? "/images/logo-white.svg" : "/images/Logo.svg"} 
@@ -29,7 +31,9 @@ const Header = ({ locale, isWhite = false }: { locale: string, isWhite?: boolean
               </div>
               <AuthBlock isWhite={isWhite} />
               <div className="hidden md:block">
-                <Language isWhite={isWhite} />
+                <Suspense fallback={<div className="w-10 h-10" />}>
+                  <Language isWhite={isWhite} />
+                </Suspense>
               </div>
 
               {/* for mobile version */}

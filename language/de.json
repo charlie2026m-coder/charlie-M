@@ -8,19 +8,231 @@
   "view_all_btn": "Alle anzeigen",
 
   "home":{
-    "rooms_title": "Wählen Sie Ihr Zimmer",
+    "rooms_title": "Zimmer auswählen",
     "rooms_subtitle": "Ihr perfektes Zimmer, nur einen Klick entfernt.",
-    "concept_title": "Ein neuer Weg zu bleiben",
-    "concept_subtitle": "Unser Aufenthalt ist auf Ihre Bedürfnisse ausgerichtet und vollständig digital.",
-    "concept_subtitle_2": "Mit unserem vollständig digitalen Prozess können Sie sich selbstständig bewegen — von Ankunft bis Abchecken.",
-    "point_1": "Online Einchecken",
-    "point_1_text": "keine Empfang, keine Wartezeit.",
-    "point_2": "Zugang zu Ihrem Zimmer via Smart-Code",
-    "point_2_text": "einfach, sicher und immer verfügbar.",
-    "point_3": "Privatsphäre & Unabhängigkeit",
-    "point_3_text": "ein entspannter Aufenthalt ohne unnötige Unterbrechungen.",
-    "point_4": "Instant Support",
-    "point_4_text": "schnelle Hilfe via Chat, wann immer Sie es benötigen."
+    "location_title": "Standort",
+    "location_subtitle": "Unser Hotel ist die perfekte Wahl für alle, die in Berlin am Herzen der Stadt wohnen möchten.",
+
+    "concept_title": "Concept",
+    "concept_h_1": "Reisen sollten einfach sein",
+    "concept_p_1": "— von digitalem Einchecken bis zu Zugang via Smart-Code und einer Empfangsfreien Einrichtung.",
+    "concept_h_2": "Mit sorgfältig designeten Zimmern",
+    "concept_h_2_1": "responsive 24/7 digitalen Support",
+    "concept_p_2": ", wird Ihr Aufenthalt glatt, modern und entspannend unkompliziert.",
+
+    "concept_it_1": "Online Einchecken",
+    "concept_ip_1": "keine Empfang, keine Wartezeit.",
+    "concept_it_2": "Zugang zu Ihrem Zimmer via Smart-Code",
+    "concept_ip_2": "einfach, sicher und immer verfügbar.",
+    "concept_it_3": "Privatsphäre & Unabhängigkeit",
+    "concept_ip_3": "ein entspannter Aufenthalt ohne unnötige Unterbrechungen.",
+    "concept_it_4": "Instant Support",
+    "concept_ip_4": "schnelle Hilfe via Chat, wann immer Sie es benötigen.",
+
+    "concept_ip_1_text": "Mit unserem Online-Eincheck-System können Sie die Empfang vollständig überspringen",
+    "concept_ip_2_text": "Ein persönlicher Code sorgt für eine reibungslose und sichere Registrierung",
+    "concept_ip_3_text": "Wir verstehen, dass Ihre Zeit wertvoll ist. Genießen Sie einen reibungslosen und kontaktfreien Aufenthalt mit uns",
+    "concept_ip_4_text": "Unser intelligentes Bot-Team steht Ihnen für alle Fragen zur Verfügung",
+
+    "experience_title": "Charlie M Erfahrungen",
+    "items": [
+      {
+        "title": "Co-Working Space",
+        "text": "Ein ruhiger Platz zum Fokussieren, vollständig mit einem Kaffeeautomaten ausgestattet.",
+        "content": "Ein ruhiger Bereich, der für Fokussierung ausgestattet ist und einen Kaffeeautomaten enthält."
+      },
+      
+      {
+        "title": "Luggage Lockers",
+        "text": "Frische Handtücher, Toilettenartikel & Zimmerbedarf jederzeit verfügbar.",
+        "content": "Mit unserem Online-Eincheck-System können Sie die Empfang vollständig überspringen"
+      },
+      
+      {
+        "title": "Self-Service Closet",
+        "text": "Frische Handtücher, Toilettenartikel & Zimmerbedarf jederzeit verfügbar.",
+        "content": "Ein Selbstbedienungs-Schrank mit frischen Handtüchern, Toilettenartikeln und Zimmerbedarf, der jederzeit verfügbar ist."
+      },
+      
+      {
+        "title": "Laundry Room",
+        "text": "Waschen & trocknen, wann immer Sie es benötigen.",
+        "content":"Eine vollständig ausgestattete Wasch- und Trockenraum, in dem Sie Ihre Kleidung jederzeit waschen und trocknen können."
+      },
+
+      {
+        "title": "In-Room Coffee Machine",
+        "text": "Kaffeezellen für Ihren Aufenthalt enthalten.",
+        "content":"Eine schicke Kaffeeautomat im Zimmer mit kostenlosen Kaffeezellen für Ihren gesamten Aufenthalt."
+      },
+      
+      {
+        "title": "Fast WiFi",
+        "text": "Zuverlässige hochgeschwindigkeits-Verbindung im gesamten Gebäude.",
+        "content":"Bleiben Sie mit schneller, zuverlässiger WiFi im gesamten Gebäude verbunden."
+      }
+    ],
+    "personalize_title": "Ihr Aufenthalt anpassen",
+    "personalize_items": [
+      {
+        "title": "Parkplatz",
+        "text": "Privat auf dem Gelände parken (maximal 10 Parkplätze)"
+      },
+      {
+        "title": "Frühstück",
+        "text": "Frische Frühstücksoptionen von unseren Partnern neben dem Co-Working-Raum"
+      },
+      {
+        "title": "Zusätzliche Reinigung",
+        "text": "Zusätzliche Zimmerräumung während Ihres Aufenthalts"
+      },
+      {
+        "title": "Frühe Eincheckung und späte Auscheckung",
+        "text": "Kommen Sie früher und stellen Sie sich entspannt ein oder verlängern Sie Ihre Abreise und entspannen Sie sich länger"
+      },
+      {
+        "title": "Haustiere",
+        "text": "Nehmen Sie Ihr pelziges Freundchen mit — wir sind glücklich, wenn wir sie auch beherbergen!"
+      }
+    ],
+
+
+    "design_title": "Für Ihren Aufenthalt designet",
+    "design_items": [
+      {
+        "text": "Room",
+        "image_1": "Lobby",
+        "image_2": "Rooms"
+      },
+      {
+        "text": "Room",
+        "image_1": "Lobby",
+        "image_2": "Rooms"
+      },
+      {
+        "text": "Room",
+        "image_1": "Lobby",
+        "image_2": "Rooms"
+      },
+      {
+        "text": "Room",
+        "image_1": "Lobby",
+        "image_2": "Rooms"
+      },
+      {
+        "text": "Room",
+        "image_1": "Lobby",
+        "image_2": "Rooms"
+      }
+    ],
+
+    "faq_title": "Frequently Asked Questions",
+    "faq_categories": [
+      {
+        "title": "Check-in & Access",
+        "items": [
+          {
+            "title": "How does the online check-in work?",
+            "p": [
+              "At Charlie M, the online check-in is a quick digital step that makes your arrival completely smooth and contactless.",
+              "After you book, we'll send you a link where you can securely confirm your details and complete the mandatory registration. This allows us to verify your identity, prepare your stay, and activate your personal access PIN.",
+              "<strong>Once your online check-in is finished, your PIN will be sent to you on the day of your arrival. You'll receive it by email and Whatsapp, and it will give you access to both the building and your room.</strong>",
+              "Because we don't have a reception on-site, the online check-in must be completed before you arrive — otherwise we won't be able to generate your access code"
+            ]
+          },
+          {
+            "title": "When will I receive my access PIN?",
+            "p": [
+              "Your access PIN is generated only after you complete the online check-in. You'll receive it on the day of arrival by email and Whatsapp, typically by early afternoon. This PIN is needed to enter both the building and your room."
+            ]
+          },
+          {
+            "title": "Which doors can I open with my PIN?",
+            "p": [
+              "Your personal PIN gives you access to everything you need during your stay. With this code, you can open the main entrance, your room door, the laundry room, and the luggage locker room. No keys or cards needed—just one PIN for all areas."
+            ]
+          },
+          {
+            "title": "Can I store my luggage in the hotel?",
+            "p": [
+              "We offer secure free luggage lockers in the building where you can store your bags before check-in or after check-out. If no lockers are available at the moment, you'll find a nearby alternative at Stasher Luggage Storage, Friedrichstraße 56, 10117 Berlin."
+            ]
+          }
+        ]
+      },
+      {
+        "title": "During Your Stay",
+        "items": [
+          {
+            "title": "How do I contact support if I need help?",
+            "p": [
+              "If you need help at any time, our team is available 24/7. You can send us a message on WhatsApp, or call us directly by phone. We're always here to support you during your stay."
+            ]
+          },
+          {
+            "title": "How often is my apartment cleaned?",
+            "p": [
+              "Your apartment is thoroughly cleaned and prepared before your arrival. For stays longer than 7 nights, we offer a complimentary weekly cleaning. If you'd like an additional refresh at any time, you can book an extra cleaning for X."
+            ]
+          },
+          {
+            "title": "Where can I get fresh towels and extra amenities?",
+            "p": [
+              "You're welcome to take fresh towels and extra amenities from our Essentials Closet whenever you like. It's available and free for you at all times."
+            ]
+          },
+          {
+            "title": "Is smoking allowed?",
+            "p": [
+              "Smoking inside the room is strictly forbidden. It's only allowed on private balconies or on the shared terrace. If your room doesn't include these outdoor spaces, please smoke outside the building."
+            ]
+          },
+          {
+            "title": "Can I do my laundry in the hotel?",
+            "p": [
+              "Absolutely. A guest laundry room is available on-site, so you can wash your clothes whenever you need."
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Extra Services",
+        "items": [
+          {
+            "title": "Which extra services are available at the hotel?",
+            "p": [
+              "We offer several extra services to make your stay even more comfortable, including breakfast, parking, early check-in, late check-out, and special packages. You can book any of these extras directly on our website or simply add them to your existing reservation."
+            ]
+          },
+          {
+            "title": "Are pets allowed?",
+            "p": [
+              "Yes, pets are welcome! We charge a one-time fee of X for the entire stay, and your fluffy friend can enjoy the trip with you."
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Booking adjustments",
+        "items": [
+          {
+            "title": "How do I change or cancel my reservation?",
+            "p": [
+              "If you booked directly through the Charlie M website, you can easily change or cancel your reservation in your guest account.",
+              "For flexible rates, any eligible refund will be automatically returned to your original payment method.",
+              "If your booking was made through a partner platform (such as Booking.com, Airbnb, or Expedia), please make any changes or cancellations directly on that platform. Refunds will also be handled by the provider you booked with."
+            ]
+          },
+          {
+            "title": "When can I receive my invoice?",
+            "p": [
+              "You can receive your invoice after your stay. As soon as you check out, your invoice will be available for download or can be sent to you upon request."
+            ]
+          }
+        ]
+      }
+    ]
+
   },
   "header": {
     "rooms_link": "Zimmer",

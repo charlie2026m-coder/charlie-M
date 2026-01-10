@@ -115,7 +115,7 @@ export default async function RootLayout({ children, params }: Props) {
           `
         }} />
       </head>
-      <body className={`${inter.variable} ${plusJakartaSans.variable} antialiased bg-light-bg flex flex-col min-h-screen relative`} style={{ overscrollBehaviorY: 'none', overscrollBehavior: 'none' }}>
+      <body className={`${inter.variable} ${plusJakartaSans.variable} antialiased flex flex-col min-h-screen relative`} style={{ overscrollBehaviorY: 'none', overscrollBehavior: 'none' }}>
         {/* JSON-LD for Google */}
         <Script
           id="hotel-schema"

@@ -13,8 +13,9 @@ import { Drawer, DrawerContent, DrawerTitle } from "../ui/drawer"
 import { useProfile } from "@/app/hooks/useProfile";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
+import { Suspense } from "react";
 
-const MobileMenu = ({ locale, isWhite = false }: { locale: string, isWhite?: boolean }) => {
+const MobileMenu = ({ isWhite = false }: { isWhite?: boolean }) => {
   const { profile } = useProfile(); 
   const t = useTranslations();
   const [open, setOpen] = useState(false)
@@ -97,7 +98,9 @@ const MobileMenu = ({ locale, isWhite = false }: { locale: string, isWhite?: boo
             <li className="flex size-10 rounded-full bg-blue items-center justify-center"><FaYoutube className='size-6' /></li>
           </ul>
  
-          <Language /> 
+          <Suspense fallback={<div className="w-10 h-10" />}>
+            <Language /> 
+          </Suspense>
         </div>
       </DrawerContent>
     </Drawer>

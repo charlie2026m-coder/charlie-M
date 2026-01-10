@@ -2,7 +2,7 @@ import Image from 'next/image'
 import { infoCardsContent } from '@/content/content'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/app/_components/ui/dialog'
 import { useState } from 'react'
-import CardContent from '@/app/[locale]/concept/components/CardContent'
+import CardContent from './CardContent'
 
 const InfoCard = ({ card }: { card: { id: number, title: string, image: string }}) => {
   const [open,setOpen] = useState(false)

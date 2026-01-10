@@ -1,5 +1,5 @@
 import { Button } from '@/app/_components/ui/button'
-import PhotoSlider from '@/app/_components/Home/PhotoSlider'
+import PhotoSlider from '@/app/[locale]/home/components/PhotoSlider'
 import { Link } from '@/navigation'
 import { getPath } from '@/lib/utils'
 import { UrlParams } from '@/types/apaleo'
