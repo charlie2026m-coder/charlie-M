@@ -10,11 +10,21 @@ import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import PasswordForm from "./components/PasswordForm";
 import DeleteAccountModal from "./components/DeleteAccountModal";
+import { useRouter } from "@/navigation";
+import { supabase } from "@/lib/supabase";
+import { useProfileStore } from "@/store/useProfile";
 
 export default function Profile() {
   const { profile, updateMutation } = useProfile();
   const searchParams = useSearchParams();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isGuestMode, setIsGuestMode] = useState(false);
+  const router = useRouter();
+  const { clearGuestMode } = useProfileStore();
+
+  useEffect(() => {
+    setIsGuestMode(localStorage.getItem('guestMode') === 'true');
+  }, []);
 
   // Profile form
   const {
@@ -92,6 +102,34 @@ export default function Profile() {
   const isLoading = updateMutation.isPending;
   // Check if any form has changes
   const hasChanges = isProfileDirty;
+
+  // Guest mode view
+  if (isGuestMode) {
+    const handleCreateAccount = async () => {
+      clearGuestMode();
+      await supabase.auth.signOut();
+      router.push('/signup');
+    };
+
+    return (
+      <div className='flex flex-col flex-1 px-3 lg:px-[30px] items-center justify-center min-h-[500px]'>
+        <div className='max-w-md text-center'>
+          <h2 className='text-2xl font-semibold mb-4'>Create an Account</h2>
+          <p className='text-gray-600 mb-6'>
+            Sign up to access your profile, manage your bookings, and enjoy all features.
+          </p>
+
+          <Button 
+            variant="outline"
+            onClick={handleCreateAccount}
+            className='w-full h-12 mt-3'
+          >
+            Сreate account
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className='px-[30px] flex flex-col'>

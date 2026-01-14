@@ -23,18 +23,15 @@ const BookingPage = async ({ params, searchParams }: IParams) => {
   if ('error' in rooms) return <ErrorCard isSingleRoom={true} link='/rooms' />
   const filledRooms = sortGuestsByRooms(Number(adults), Number(children), from, to, rooms[0].maxPersons)
   return (
-    <section className='container px-4 md:px-10 xl:px-[100px] pt-8'>
-      <Steps />
-      <StepsContent 
-        rooms={rooms} 
-        extras={extras}
-        from={from} 
-        to={to} 
-        adults={adults || '1'} 
-        children={children || '0'} 
-        filledRooms={filledRooms} 
-      />
-    </section>
+    <StepsContent 
+      rooms={rooms} 
+      extras={extras}
+      from={from} 
+      to={to} 
+      adults={adults || '1'} 
+      children={children || '0'} 
+      filledRooms={filledRooms} 
+    />
   )
 }
 

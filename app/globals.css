@@ -3,7 +3,17 @@
 
 @custom-variant dark (&:is(.dark *));
 
+html {
+  scroll-behavior: smooth;
+}
+
+#rooms, #location, #concept, #faq {
+  scroll-margin-top: 150px;
+}
+
 @theme inline {
+
+  --breakpoint-xxs: 380px;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -141,7 +151,7 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-white text-foreground;
   }
 }
 

@@ -55,19 +55,43 @@ const PhotoGallery = ({ images, roomName }: { images: string[]; roomName?: strin
         </div>
       </div>
 
-      <div className='lg:col-span-1 grid grid-cols-2 gap-4 relative'>
-        {images.slice(1, 5).map((image, index) => (
-          <div key={index} className='col-span-1 group rounded-[30px] overflow-hidden'>
-            <Image 
-              onClick={() => setShowImages(index)} 
-              src={image} 
-              alt={roomName ? `${roomName} - view ${index + 2}` : `Hotel room view ${index + 2}`} 
-              width={300} 
-              height={222} 
-              className='w-full h-[126px] md:h-[222px] object-cover transition-transform duration-500 ease-out cursor-pointer group-hover:scale-110' 
-            />
+      {/* Right side - changes based on photo count */}
+      <div className='lg:col-span-1 relative h-full'>
+        {/* 2-4 photos: photos in a row */}
+        {(images.length >= 2 && images.length <= 4) && (
+          <div className='flex flex-row gap-4 h-full max-h-[260px] md:max-h-[360px] lg:max-h-[460px]'>
+            {images.slice(1, 4).map((image, index) => (
+              <div key={index} className='group rounded-[30px] overflow-hidden flex-1'>
+                <Image 
+                  onClick={() => setShowImages(index + 1)} 
+                  src={image} 
+                  alt={roomName ? `${roomName} - view ${index + 2}` : `Hotel room view ${index + 2}`} 
+                  width={600} 
+                  height={460} 
+                  className='w-full h-full object-cover transition-transform duration-500 ease-out cursor-pointer group-hover:scale-110' 
+                />
+              </div>
+            ))}
           </div>
-        ))}
+        )}
+
+        {/* 5+ photos: standard grid 2x2 */}
+        {images.length >= 5 && (
+          <div className='grid grid-cols-2 gap-4 h-full max-h-[260px] md:max-h-[360px] lg:max-h-[460px]'>
+            {images.slice(1, 5).map((image, index) => (
+              <div key={index} className='col-span-1 group rounded-[30px] overflow-hidden'>
+                <Image 
+                  onClick={() => setShowImages(index + 1)} 
+                  src={image} 
+                  alt={roomName ? `${roomName} - view ${index + 2}` : `Hotel room view ${index + 2}`} 
+                  width={300} 
+                  height={222} 
+                  className='w-full h-[126px] md:h-[222px] object-cover transition-transform duration-500 ease-out cursor-pointer group-hover:scale-110' 
+                />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
       <Dialog open={showImages !== null} onOpenChange={() =>setShowImages(null)}>
         <DialogContent className='px-5 md:px-12 rounded-4xl w-full max-w-[95%] lg:max-w-[80%] max-h-[80vh] flex flex-col '>

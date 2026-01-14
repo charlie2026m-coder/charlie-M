@@ -43,12 +43,10 @@ const SummaryCard = () => {
   const flatExtras = updatedRooms.flatMap(room => room.extras || [])
   const getText = (days: number) => days === 1 ? 'night' : 'nights'
   //calculate total price for rooms and extras
-  const extrasTotalPrice = flatExtras.reduce((acc, extra) => acc + extra.totalPrice, 0)
-
-
-  const tax = TAX_RATE
   const roomsTotalPrice = rooms.reduce((acc, _) => acc + roomPrice, 0)
-  const totalPrice = roomsTotalPrice + extrasTotalPrice + tax
+  const extrasTotalPrice = flatExtras.reduce((acc, extra) => acc + extra.totalPrice, 0)
+  const taxPrice = roomsTotalPrice * TAX_RATE / 100
+  const totalPrice = roomsTotalPrice + extrasTotalPrice + taxPrice
 
   return (
     <div className='flex flex-col bg-white rounded-[20px] py-5 px-3 shadow-xl self-start col-span-1'>
@@ -80,20 +78,24 @@ const SummaryCard = () => {
               </div>
             </div>
           ))}
-          
+          <div className='flex items-center gap-2 inter text-sm text-dark mt-2'>
+            <span>City tax:</span>
+            <span className='text-bale font-semibold ml-auto'>€ {taxPrice.toFixed(2)}</span>
+          </div>
         </div>
       </div>
 
       {reservations[0].services && reservations[0].services.length > 0 && (
         <div className='flex flex-col mb-5'>
           <span className='font-semibold mb-4 text-[15px]'>Extras:</span>
-          {rooms.map((room, index) => (
+          {updatedRooms.map((room, index) => (
             room.extras && room.extras.length > 0 && (
               <div key={room.id} className='flex flex-col gap-1 mb-2'>
                 {room.extras.map((extra) => (
                   <div key={extra.id} className='flex items-center gap-2 inter text-sm text-dark'>
                     <span className='truncate'>Room {index + 1} - {extra.name}</span>
                     <span className='text-bale font-semibold ml-auto'>
+                      € {extra.totalPrice}
                     </span>
                   </div>
                 ))}
@@ -103,10 +105,6 @@ const SummaryCard = () => {
           <div className='flex items-center justify-between gap-2 inter text-sm text-dark mb-2'>
             <span>Total:</span>
             <span className='text-bale font-semibold'>€ {extrasTotalPrice.toFixed(2)}</span>
-          </div>
-          <div className='flex items-center gap-2 inter text-sm text-dark mt-2'>
-            <span>Tax:</span>
-            <span className='text-bale font-semibold ml-auto'>€ {TAX_RATE}</span>
           </div>
         </div>
       )}

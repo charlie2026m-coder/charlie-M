@@ -1,16 +1,19 @@
 "use client";
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useId } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { useLocale } from 'next-intl';
 import { useRouter, usePathname } from '@/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '../ui/button';
-
+import { ImEarth } from "react-icons/im";
+import { cn } from '@/lib/utils';
 type Locale = 'en' | 'de';
 
-export default function Language() {
+export default function Language({ isWhite = false }: { isWhite?: boolean }) {
   const locale = useLocale() as Locale;
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -25,8 +28,10 @@ export default function Language() {
     setOpen(false);
     
     startTransition(() => {
-      // Use push instead of replace to trigger full navigation
-      router.push(pathname, { locale: newLocale });
+      // Preserve query parameters when switching language
+      const queryString = searchParams.toString();
+      const newPath = queryString ? `${pathname}?${queryString}` : pathname;
+      router.push(newPath, { locale: newLocale });
     });
   };
 
@@ -34,11 +39,11 @@ export default function Language() {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button 
-          className="flex items-center gap-1 cursor-pointer w-[45px] justify-between xl:ml-4 text-white md:text-black"
+          className="flex items-center gap-1 cursor-pointer w-10 items-center justify-center xl:ml-4"
           disabled={isPending}
+          suppressHydrationWarning
         >
-          <span className="rubik font-light">{locale === "en" ? "ENG" : "GER"}</span>
-          <div className={`border-6 border-brown border-b-transparent border-r-transparent border-l-transparent ${open ? 'rotate-180 -translate-y-1' : 'translate-y-1'}`}></div>
+          <ImEarth className={cn('size-5', isWhite ? 'text-white' : 'text-black')} />
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0 overflow-hidden" align="end">

@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { UrlParams } from "@/types/apaleo"
 import { Room, RoomExtra } from "@/types/types"
 import { RoomOffer } from "@/types/offers"
+import { RATE_PLANS } from "./Constants";
 
 export function cn(...inputs: ClassValue[]) {return twMerge(clsx(inputs))}
 export const getDate = (date: Date) => {return date?dayjs(date).format('YYYY-MM-DD'): undefined}
@@ -71,31 +72,28 @@ export function sortGuestsByRooms(
   const pushRoom = (a: number, c: number) =>
     rooms.push({ id: uuidv4(), adults: a, children: c, from, to });
 
-  // Распределяем гостей, пока есть кто размещать
-  while (remainingAdults > 0 || remainingChildren > 0) {
-    let roomAdults = 0;
-    let roomChildren = 0;
+  while (remainingAdults > 0) {
+    const roomAdults = Math.min(remainingAdults, maxPersons);
+    remainingAdults -= roomAdults;
+    
+    pushRoom(roomAdults, 0);
+  }
 
-    // Сначала заполняем взрослыми
-    if (remainingAdults > 0) {
-      roomAdults = Math.min(remainingAdults, maxPersons);
-      remainingAdults -= roomAdults;
+  // Если есть дети, но нет взрослых, создаем комнату для детей
+  if (rooms.length === 0 && remainingChildren > 0) {
+    pushRoom(0, remainingChildren);
+    remainingChildren = 0;
+  }
+
+  // Распределяем детей по существующим комнатам
+  if (remainingChildren > 0 && rooms.length > 0) {
+    let roomIndex = 0;
+    while (remainingChildren > 0 && roomIndex < rooms.length) {
+      const childrenToAdd = Math.min(remainingChildren, Math.ceil(remainingChildren / (rooms.length - roomIndex)));
+      rooms[roomIndex].children = childrenToAdd;
+      remainingChildren -= childrenToAdd;
+      roomIndex++;
     }
-
-    // Добавляем детей, если есть место
-    const availableSpace = maxPersons - roomAdults;
-    if (availableSpace > 0 && remainingChildren > 0) {
-      roomChildren = Math.min(remainingChildren, availableSpace);
-      remainingChildren -= roomChildren;
-    }
-
-    // Если в комнате нет гостей (не должно быть), добавляем детей
-    if (roomAdults === 0 && roomChildren === 0 && remainingChildren > 0) {
-      roomChildren = Math.min(remainingChildren, maxPersons);
-      remainingChildren -= roomChildren;
-    }
-
-    pushRoom(roomAdults, roomChildren);
   }
 
   return rooms;
@@ -196,16 +194,16 @@ export const getPriceType = (arrival: string , departure: string, isNonRef?: boo
 }
 
 export const getType = (nights: number, isRefundable: boolean) => {
-  if(nights > 7) {
-    return 'LONG_STAY_WEB'
-  }
+  // if(nights > 7) {
+  //   return RATE_PLANS.LONG_STAY;
+  // }
   if(!isRefundable) {
-    return 'NON_REF_WEB'
+    return RATE_PLANS.NON_REFUNDABLE;
   }
-  if(nights > 7 && !isRefundable) {
-    return 'LONG_STAY_NON_REF_WEB'
-  }
-  return 'BAR_WEB'
+  // if(nights > 7 && !isRefundable) {
+  //   return RATE_PLANS.LONG_STAY;
+  // }
+  return RATE_PLANS.STANDARD;
 }
 
 

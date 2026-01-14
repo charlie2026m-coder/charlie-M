@@ -4,12 +4,12 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { locales } from '@/i18n';
 import { ReactQueryProvider } from '@/app/providers';
-import Header from '@/app/_components/header/Header';
+import StickyHeader from '@/app/_components/header/StickyHeader';
 import Footer from '@/app/_components/footer/Footer';
 import CookieBanner from '@/app/_components/CookieBanner';
 import { Toaster } from 'sonner';
 import type { Metadata } from 'next';
-
+import Discount from '@/app/_components/ui/Discount';
 type Props = {
   children: ReactNode;
   params: Promise<{ locale: string }>;
@@ -53,10 +53,10 @@ export default async function LocaleLayout({
   return (
     <NextIntlClientProvider key={locale} messages={messages} locale={locale}>
       <ReactQueryProvider>
-        <div className='z-11'>
-          <Header locale={locale} />
-        </div>
-        <main className="flex-1 relative z-10">{children}</main>
+        <Discount />
+
+        <StickyHeader locale={locale} />
+        <main className="flex-1">{children}</main>
         <Footer/>
         <CookieBanner />
         <Toaster position="top-left" richColors/>

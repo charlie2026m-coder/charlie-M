@@ -10,12 +10,18 @@ import { Link, usePathname } from '@/navigation' // Use localized usePathname
 import ReservationIdDialog from './ReservationIdDialog'
 import Logout from './Logout'
 import { useProfileStore, ReservationFilter } from '@/store/useProfile'
+import { useState, useEffect } from 'react'
 
 
 const ProfileMenu = () => {
   const pathname = usePathname()
   const { profile } = useProfile()
   const { reservationFilter, setReservationFilter } = useProfileStore()
+  const [isGuestMode, setIsGuestMode] = useState(false)
+
+  useEffect(() => {
+    setIsGuestMode(localStorage.getItem('guestMode') === 'true')
+  }, [])
 
 
   const tabs = [
@@ -57,11 +63,11 @@ const ProfileMenu = () => {
               )} 
             >
               {icon} {tab.label}
-              {(tab.value === '/reservations') && (
+              {(tab.value === '/reservations' && !isGuestMode) && (
                 <TiArrowSortedDown className={cn('size-5 ml-auto transition-all duration-300', isActive ? 'text-white rotate-180 ' : 'text-blue')} />
               )}
             </Link>
-            {tab.value === '/reservations' && (
+            {tab.value === '/reservations' && !isGuestMode && (
               <SlideMenu 
                 isActive={(isActive && tab.value === '/reservations' && pathname === '/profile/reservations')}
                 sections={resTabs.map(tab => tab.toString())}

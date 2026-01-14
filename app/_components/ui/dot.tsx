@@ -8,6 +8,7 @@ export default function Dot({size, color, className}: {size: number, color: stri
     red: '#923D4F',
     black: '#000000',
     gold: '#D3C393',
+    white: '#FFFFFF',
   }
   const colorValue = colorMap[color as keyof typeof colorMap]; 
   return (

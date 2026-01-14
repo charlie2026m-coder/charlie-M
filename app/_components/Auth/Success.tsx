@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { Button } from "../ui/button";
 
-const Success = ({type = 'pass', onClose}: {type: 'pass' | 'confirm' | 'passSuccess', onClose: () => void}) => {
+const Success = ({type = 'pass', onClose}: {type: 'pass' | 'confirm' | 'passSuccess', onClose?: () => void}) => {
   const image = type === 'passSuccess' ? '/images/password-success.svg' : '/images/reset-pass-man.svg';
   return (
     <div className="flex flex-col items-center justify-center">

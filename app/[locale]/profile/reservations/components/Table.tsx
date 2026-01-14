@@ -9,15 +9,62 @@ import { useReservations } from '@/app/hooks/useReservations'
 import { useProfileStore } from '@/store/useProfile'
 import { Spinner } from '@/app/_components/ui/spinner'
 import { Reservation } from '@/types/apaleo'
+import { useQuery } from '@tanstack/react-query'
+import { supabase } from '@/lib/supabase'
 
 const ITEMS_PER_PAGE = 3
 
 const ReservationsTable = () => {
   const [currentPage, setCurrentPage] = useState(0)
   const page = currentPage + 1 // Convert 0-based to 1-based
-  const { reservationFilter } = useProfileStore()
+  const { reservationFilter, guestBooking } = useProfileStore()
   
-  const { data, isLoading, isError, isFetching } = useReservations(page, reservationFilter)
+  // Check if we're in guest mode
+  const [isGuestMode, setIsGuestMode] = useState(false)
+  const [guestBookingId, setGuestBookingId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const guestMode = localStorage.getItem('guestMode')
+    const bookingId = localStorage.getItem('guestBookingId')
+    setIsGuestMode(guestMode === 'true')
+    setGuestBookingId(bookingId)
+  }, [])
+
+  // Always call both hooks (Rules of Hooks)
+  const normalQuery = useReservations(page, reservationFilter)
+  
+  const guestQuery = useQuery({
+    queryKey: ['guestReservations', guestBookingId],
+    queryFn: async () => {
+      if (!guestBooking) return { count: 0, reservations: [] }
+      
+      // Get room details from Supabase
+      const { data: roomsData } = await supabase
+        .from('rooms')
+        .select('*')
+        .order('id', { ascending: true })
+      
+      // Format reservations from booking with room details
+      const reservations = (guestBooking.reservations || []).map((reservation: any) => {
+        const room = roomsData?.find((r: any) => r.id === reservation.unitGroup?.id)
+        return {
+          ...reservation,
+          name: reservation.unitGroup?.name || '',
+          images: room?.photos || [],
+          guests: reservation.adults + (reservation.childrenAges?.length || 0),
+        }
+      })
+      
+      return {
+        count: reservations.length,
+        reservations: reservations
+      }
+    },
+    enabled: isGuestMode && !!guestBookingId && !!guestBooking,
+  })
+
+  // Use guest query data if in guest mode, otherwise use normal reservations
+  const { data, isLoading, isError, isFetching } = isGuestMode ? guestQuery : normalQuery
   // Reset page to 0 when filter changes
   useEffect(() => {
     setCurrentPage(0)
