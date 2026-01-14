@@ -35,22 +35,23 @@ const ConceptSlider = ({ items, activeIndex = 0, height = 638 }: ConceptSliderPr
         direction="vertical"
         slidesPerView={1}
         spaceBetween={32}
-        mousewheel={true}
+        mousewheel={false}
         speed={1000}
+        allowTouchMove={false}
         modules={[Mousewheel, Pagination]}
         onSwiper={setSwiperInstance}
         className="h-full"
       >
         {items.map((item, index) => (
           <SwiperSlide key={index}>
-            <div className='relative w-full h-full rounded-[50px] overflow-hidden'>
+            <div className='relative w-full h-full rounded-[50px] overflow-hidden group'>
               <Image 
                 src={item.image} 
                 alt={`Concept ${index + 1}`} 
                 fill
-                className="object-cover"
+                className="object-cover object-top transition-transform duration-500 ease-out group-hover:scale-110"
               />
-              <div className='absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent' />
+              <div className='absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent' />
               <div className='absolute bottom-0 left-0 right-0 py-10 px-12 text-white z-10'>
                 <p className='text-[20px] text-[#F7F5F2]'>{item.imageText}</p>
               </div>

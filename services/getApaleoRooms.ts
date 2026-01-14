@@ -4,6 +4,7 @@ import { ratePlanResponse, rateResponse, UnitGroupsResponse } from '@/types/apal
 import { cache } from 'react';
 import { getRoomsDetails } from './getRoomsDetails';
 import { SimpleRoom } from '@/types/offers';
+import { RATE_PLANS } from '@/lib/Constants';
 const propId = process.env.APALEO_PROPERTY_ID;
 
 // Get all rate plans with prices (cached per request)
@@ -14,7 +15,7 @@ const getApaleoRoomPriceInternal = async (from: string, to: string) => {
   try {
     // Get all rate plans for the property
     const pricePlans = await Fetch<ratePlanResponse>(`/rateplan/v1/rate-plans`)
-    .then(res  => res.ratePlans.filter(item => item.code === 'BAR_WEB'))
+    .then(res  => res.ratePlans.filter(item => item.code === RATE_PLANS.STANDARD))
       .then(res => res.map(item => ({
         id: item.id, 
         unitGroupId: item.unitGroup.id

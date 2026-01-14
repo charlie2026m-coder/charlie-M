@@ -18,8 +18,8 @@ const RoomCard = ({
           <RoomParamsRow attributes={item.attributes } maxPersons={item.maxPersons} size={item.size} />
           <div className='text-mute mb-5 mt-auto'>per night from</div>
 
-        <div className='flex items-center gap-8 justify-between w-full'>
-          <Price price={item.price.toFixed(2)} className='h-[50px]' />
+        <div className='flex xxs:flex-row flex-col items-center gap-2 md:gap-8 justify-between w-full'>
+          <Price price={item.price.toFixed(2)} className='h-[50px] w-full xs:w-auto' />
           <Link href={`/rooms/${item.id}`} className='w-full '>  
             <Button variant='outline' className='h-[50px] w-full'>Book Now</Button>
           </Link>

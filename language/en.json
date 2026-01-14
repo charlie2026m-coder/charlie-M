@@ -16,6 +16,7 @@
     "location_subtitle": "Our hotel is the perfect choice for those who want to stay in the center of Berlin.",
 
     "concept_title": "Concept",
+    "concept_mobile_title": "Charlie M Concept",
 
     "concept_h_1": "Travel should feel easy",
     "concept_p_1": "— from digital check-in to keyless access and a reception-free setup.",
@@ -36,6 +37,7 @@
     "concept_ip_2_text": "Using a personalized code ensures a seamless and secure registration",
     "concept_ip_3_text": "We understand that your time is valuable. Enjoy a seamless and contact-free stay with us",
     "concept_ip_4_text": "Our smart bot is ready to assist you with any questions",
+
 
 
     "experience_title": "Charlie M Experience",
@@ -98,6 +100,7 @@
 
 
     "design_title": "Designed for your stay",
+    "design_description": "Every space at Charlie M is designed with your stay in mind. From the layout to the details, everything is considered to make your time here feel comfortable, easy, and well put together.",
     "design_items": [
       {
         "text": "Every space at Charlie M is designed with your stay in mind. From the layout to the details, everything is considered to make your time here feel comfortable, easy, and well put together.",

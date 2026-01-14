@@ -32,16 +32,16 @@ const PersonalizeSection = async ({ locale }: { locale: string }) => {
     },
   ]
   return (
-    <div className='flex flex-col container px-4 xl:px-[100px] py-20'>
-      <Header title={t('home.personalize_title')} size='md' />
-      <div className='flex flex-wrap gap-x-4 gap-y-10 justify-center mt-20'>
+    <div className='flex flex-col container px-4 xl:px-[100px]  lg:py-20'>
+      <Header title={t('home.personalize_title')} />
+      <div className='flex flex-wrap md:gap-x-4 gap-5 md:gap-y-10 md:justify-center mt-5 lg:mt-20'>
         {items.map((item) => (
-          <div key={item.title} className='flex w-[400px] flex-col items-center text-mute gap-3'>
-            <h3 className='flex gap-2 text-[20px] font-bold  justify-center text-center'>
-              <Image src={item.icon} alt={item.title} width={27} height={27} className='object-cover size-7' />
+          <div key={item.title} className='flex w-[400px] flex-col md:items-center text-mute gap-3'>
+            <h3 className='flex gap-2 md:text-[20px] font-bold md:justify-center text-center'>
+              <Image src={item.icon} alt={item.title} width={27} height={27} className='object-cover size-5 md:size-7' />
               {item.title}
             </h3>
-            <p className='text-[15px] text-center w-3/4'>{item.text}</p>
+            <p className='text-[15px] md:text-center w-full md:w-3/4'>{item.text}</p>
           </div>
         ))}
       </div>

@@ -5,6 +5,7 @@ import { GoArrowLeft, GoArrowRight } from "react-icons/go";
 import { Button } from "@/app/_components/ui/button";
 import { useState } from "react";
 import Image from "next/image";
+import DesignSlider from "./components/DesignSlider";
 
 const DesignSection = ({ locale }: { locale: string }) => {
   const t = useTranslations()
@@ -55,13 +56,25 @@ const DesignSection = ({ locale }: { locale: string }) => {
     setActiveItem((prev) => (prev === items.length - 1 ? 0 : prev + 1))
   }
 
-  return (
-    <div className='flex flex-col container px-4 xl:px-[100px] py-20'>
-      <Header title={t('home.design_title')} size='md' />
+  // Prepare slider items for mobile (flatten all images with titles)
+  const sliderItems = items.flatMap(item => [
+    { image: item.image_1, title: item.image_title_1 },
+    { image: item.image_2, title: item.image_title_2 }
+  ])
 
-      <div className='pt-20 grid grid-cols-3 gap-8'>
-        <div className='flex flex-col pb-25 justify-end'>
-          <p className='text-[#6E6E6E] inter text-[17px] leading-[31px]'>{items[activeItem].text}</p>
+  return (
+    <div className='flex flex-col container px-4 xl:px-[100px] py-5 lg:py-20'>
+      <Header title={t('home.design_title')}/>
+      <p className='text-[#6E6E6E] inter text-[14px] text-center'>
+        {t('home.design_description')}
+      </p>
+
+      <DesignSlider items={sliderItems} />
+
+      <div className='hidden lg:grid pt-4 lg:pt-20 grid-cols-3 gap-8'>
+        
+        <div className='flex flex-col  justify-between'>
+          <p className='text-[#6E6E6E] inter text-[17px] leading-[31px]'>{t('home.design_items.0.text')}</p>
           <nav className='flex items-center gap-8 mt-8'>
             <Button 
               variant="outline" 
@@ -103,7 +116,6 @@ const DesignSection = ({ locale }: { locale: string }) => {
           <p className="text-center text-mute font-bold text-[25px]">{items[activeItem].image_title_2}</p>
         </div>
       </div>
-
     </div>
   )
 }

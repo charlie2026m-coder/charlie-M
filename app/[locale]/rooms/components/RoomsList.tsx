@@ -13,7 +13,7 @@ const RoomsList = ({
   rooms: RoomOffer[],
   params: UrlParams 
 }) => {
-  const { filter, priceFilter, bedSizeFilter, roomTypeFilter } = useStore()
+  const { filter, priceFilter, bedSizeFilter, roomTypeFilter, childBedFilter, guests } = useStore()
   const [currentPage, setCurrentPage] = useState(0)
   const [roomsPerPage, setRoomsPerPage] = useState(6)
   // Adjust rooms per page based on screen size
@@ -63,9 +63,13 @@ const RoomsList = ({
     if(roomTypeFilter) {
       filtered = filtered.filter((room) => room.name.toLowerCase().includes(roomTypeFilter.toLowerCase()))
     }
+    // Filter by child bed checkbox OR if children are selected in guests
+    if(childBedFilter || guests.children > 0) {
+      filtered = filtered.filter((room) => room.attributes?.includes('kids'))
+    }
 
     return filtered;
-  }, [rooms, priceFilter, filter, bedSizeFilter, roomTypeFilter])
+  }, [rooms, priceFilter, filter, bedSizeFilter, roomTypeFilter, childBedFilter, guests.children])
 
   // Reset to first page when filters or rooms per page change
   useEffect(() => {

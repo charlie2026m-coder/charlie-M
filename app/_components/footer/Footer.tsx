@@ -2,40 +2,33 @@
 import Line from "./Line";
 import Image from "next/image";
 import MapWindow from "./MapWindow";
-import { FaPhone } from "react-icons/fa";
-import { IoLogoWhatsapp } from "react-icons/io";
-import { FaLocationDot } from "react-icons/fa6";
-import { TbMailFilled } from "react-icons/tb";
 import Navigation from "./Navigation";
 import Contacts from "./Contacts";
 import { usePathname, Link } from "@/navigation";
-
+import { PHONE_NUMBER, EMAIL } from "@/lib/Constants";
+import { cn } from "@/lib/utils";
 export default function Footer() {
   const pathname = usePathname();
   const contacts = [
     {
       type: "phone",
-      icon: <FaPhone color={'#9EC2DD'} size={20}/>,
-      label: "+5 077 6764 8570",
-      value: "+50776764857",
+      label: PHONE_NUMBER,
+      value: PHONE_NUMBER,
     },
     {
       type: "email",
-      icon: <TbMailFilled color={'#9EC2DD'} size={20}/>,
-      label: "info@charlie.com",
-      value: "info@charlie-m.com",
-    },
-    {
-      type: "whatsapp",
-      icon: <IoLogoWhatsapp color={'#9EC2DD'} size={20}/>,
-      label: "WhatsApp Chat Support (24/7)",
-      value: "+50776764857", 
+      label: EMAIL,
+      value: EMAIL,
     },
     {
       type: "location",
-      icon: <FaLocationDot color={'#9EC2DD'} size={20}/>,
       label: "Friedrichstraße 33, 10969 Berlin",
       value: "https://maps.app.goo.gl/v21VbyU2o6WZWJFo7",
+    },
+    {
+      type: "whatsapp",
+      label: "WhatsApp Chat Support (24/7)",
+      value: PHONE_NUMBER, 
     },
   ];
 
@@ -63,47 +56,64 @@ export default function Footer() {
   const isHomePage = pathname === '/' || pathname === '/de';
 
   return (
-    <footer className={`w-full relative z-0 ${isHomePage && 'bg-light1'}`}>
-      <section className="w-full rounded-t-4xl bg-mute">
+    <footer className={`w-full relative z-0 bg-mute`}>
         <div className="container px-4 xl:!px-[100px] flex flex-col items-center ">
-          <div className="grid grid-cols-1 lg:grid-cols-4 w-full items-center py-[60px] gap-8 border-b border-white/40">
-            <div className="flex items-center col-span-1 mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-4 w-full items-center pt-[30px] lg:pt-[50px] md:pb-8  md:border-b border-white/40">
+            <div className="flex flex-col items-center col-span-1 h-full">
               <Link href="/">
                 <Image 
                   src="/images/Logo.svg" 
                   alt="logo" 
-                  width={235} 
-                  height={151} 
-                  className="w-[235px] h-[151px]"
+                  width={180} 
+                  height={150} 
+                  className="w-[124px] lg:w-[180px] h-[83px] lg:h-[150px] object-contain mb-5"
                 />
               </Link>
+              <span className='text-[#E0E0E0] font-bold text-[17px] mt-auto mb-2.5 uppercase'>Modern stays - Berlin days</span>
+              <span className='text-[#E0E0E0] text-[15px]'>Fully automated stay</span>
+
+              {isHomePage && <div className="flex md:hidden my-6 w-full">
+                <Navigation />
+              </div>}
             </div>
 
-            <div className="flex flex-col items-start justify-center col-span-2 mx-auto w-full">
+
+            <div className="flex flex-col md:items-center md:justify-center col-span-2 w-full">
               <span className="text-white font-semibold text-2xl mb-5">Contacts:</span>
-              <div className="flex flex-col md:flex-row md:items-center gap-6 w-full">
-                <div className="map-isolated" style={{ isolation: 'isolate', zIndex: 1 }}>
-                  <MapWindow width="226px" height="226px" />
-                </div>
-                <ul className="flex flex-col gap-6 text-white">
+              <div className="flex flex-row md:items-center justify-between md:justify-center gap-6 w-full">
+                <ul className="flex md:hidden flex-col gap-1 text-white justify-center pl-0 mb-6 md:mb-0">
                   {contacts.map((contact, index) => (
                     <li 
                       key={index}
                       onClick={() => handleContactClick(contact.type, contact.value)}
-                      className="flex items-center gap-2.5 cursor-pointer hover:text-blue transition-colors"
+                      className={cn("cursor-pointer text-sm md:text-base ", index === 3 && "font-bold text-blue")}
                     >
-                      {contact.icon}
+                      <span>{contact.label}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="map-isolated w-[94px] h-[94px] md:w-[226px] md:h-[186px]" style={{ isolation: 'isolate', zIndex: 1 }}>
+                  <MapWindow width="100%" height="100%" isFullscreen={false} />
+                </div>
+                <ul className="hidden md:flex flex-col gap-6 text-white justify-center">
+                  {contacts.map((contact, index) => (
+                    <li 
+                      key={index}
+                      onClick={() => handleContactClick(contact.type, contact.value)}
+                      className={cn("cursor-pointer ", index === 3 && "font-bold text-blue")}
+                    >
                       <span>{contact.label}</span>
                     </li>
                   ))}
                 </ul>
               </div>
             </div>
-            <Navigation />
+            {isHomePage && <div className="hidden md:flex my-6 w-full">  
+              <Navigation />
+            </div>}
           </div>
           <Contacts />
         </div>
-      </section>
       <Line />
     </footer>
   );

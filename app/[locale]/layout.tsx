@@ -9,8 +9,7 @@ import Footer from '@/app/_components/footer/Footer';
 import CookieBanner from '@/app/_components/CookieBanner';
 import { Toaster } from 'sonner';
 import type { Metadata } from 'next';
-import { RiCloseLargeLine } from "react-icons/ri";
-
+import Discount from '@/app/_components/ui/Discount';
 type Props = {
   children: ReactNode;
   params: Promise<{ locale: string }>;
@@ -54,6 +53,8 @@ export default async function LocaleLayout({
   return (
     <NextIntlClientProvider key={locale} messages={messages} locale={locale}>
       <ReactQueryProvider>
+        <Discount />
+
         <StickyHeader locale={locale} />
         <main className="flex-1">{children}</main>
         <Footer/>

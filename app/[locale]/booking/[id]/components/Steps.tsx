@@ -32,8 +32,8 @@ export default Steps;
 
 const Item = ({ active, index, title }: { active: boolean, index: number, title: string }) => {
   return (
-    <div className={cn('flex flex-col items-center gap-2 w-[120px] z-10 sm:bg-light-bg', active && 'font-[500]')}>
-      <div className={cn('size-[51px] z-20 bg-light-bg rounded-full flex items-center justify-center border border-brown', active && 'bg-blue border-blue')}>{index}</div>
+    <div className={cn('flex flex-col items-center gap-2 w-[120px] z-10 sm:bg-white', active && 'font-[500]')}>
+      <div className={cn('size-[51px] z-20 bg-white rounded-full flex items-center justify-center border border-brown', active && 'bg-blue border-blue')}>{index}</div>
       {title}
     </div>
   )

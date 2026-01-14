@@ -14,6 +14,7 @@
     "location_subtitle": "Unser Hotel ist die perfekte Wahl für alle, die in Berlin am Herzen der Stadt wohnen möchten.",
 
     "concept_title": "Concept",
+    "concept_mobile_title": "Charlie M Concept",
     "concept_h_1": "Reisen sollten einfach sein",
     "concept_p_1": "— von digitalem Einchecken bis zu Zugang via Smart-Code und einer Empfangsfreien Einrichtung.",
     "concept_h_2": "Mit sorgfältig designeten Zimmern",
@@ -98,6 +99,7 @@
 
 
     "design_title": "Für Ihren Aufenthalt designet",
+    "design_description": "Jeder Platz bei Charlie M ist für Ihren Aufenthalt gedacht. Von der Anordnung bis zu den Details, alles ist so konzipiert, dass Ihr Aufenthalt angenehm, einfach und gut zusammenpasst.",
     "design_items": [
       {
         "text": "Room",
@@ -129,104 +131,104 @@
     "faq_title": "Frequently Asked Questions",
     "faq_categories": [
       {
-        "title": "Check-in & Access",
+        "title": "Check-in & Zugang",
         "items": [
           {
-            "title": "How does the online check-in work?",
+            "title": "Wie funktioniert der Online-Check-in?",
             "p": [
-              "At Charlie M, the online check-in is a quick digital step that makes your arrival completely smooth and contactless.",
-              "After you book, we'll send you a link where you can securely confirm your details and complete the mandatory registration. This allows us to verify your identity, prepare your stay, and activate your personal access PIN.",
-              "<strong>Once your online check-in is finished, your PIN will be sent to you on the day of your arrival. You'll receive it by email and Whatsapp, and it will give you access to both the building and your room.</strong>",
-              "Because we don't have a reception on-site, the online check-in must be completed before you arrive — otherwise we won't be able to generate your access code"
+              "Bei Charlie M ist der Online-Check-in ein schneller digitaler Schritt, der Ihre Ankunft vollständig reibungslos und kontaktlos macht.",
+              "Nach Ihrer Buchung senden wir Ihnen einen Link, über den Sie Ihre Daten sicher bestätigen und die obligatorische Registrierung abschließen können. So können wir Ihre Identität überprüfen, Ihren Aufenthalt vorbereiten und Ihre persönliche Zugangs-PIN aktivieren.",
+              "**Sobald Ihr Online-Check-in abgeschlossen ist, wird Ihnen Ihre PIN am Tag Ihrer Ankunft zugesendet. Sie erhalten sie per E-Mail und WhatsApp, und sie gibt Ihnen Zugang zum Gebäude und zu Ihrem Zimmer.**",
+              "Da wir keine Rezeption vor Ort haben, muss der Online-Check-in vor Ihrer Ankunft abgeschlossen werden – andernfalls können wir Ihren Zugangscode nicht generieren."
             ]
           },
           {
-            "title": "When will I receive my access PIN?",
+            "title": "Wann erhalte ich meine Zugangs-PIN?",
             "p": [
-              "Your access PIN is generated only after you complete the online check-in. You'll receive it on the day of arrival by email and Whatsapp, typically by early afternoon. This PIN is needed to enter both the building and your room."
+              "Ihre Zugangs-PIN wird erst generiert, nachdem Sie den Online-Check-in abgeschlossen haben. Sie erhalten sie am Ankunftstag per E-Mail und WhatsApp, normalerweise am frühen Nachmittag. Diese PIN wird benötigt, um sowohl das Gebäude als auch Ihr Zimmer zu betreten."
             ]
           },
           {
-            "title": "Which doors can I open with my PIN?",
+            "title": "Welche Türen kann ich mit meiner PIN öffnen?",
             "p": [
-              "Your personal PIN gives you access to everything you need during your stay. With this code, you can open the main entrance, your room door, the laundry room, and the luggage locker room. No keys or cards needed—just one PIN for all areas."
+              "Ihre persönliche PIN gibt Ihnen Zugang zu allem, was Sie während Ihres Aufenthalts benötigen. Mit diesem Code können Sie den Haupteingang, Ihre Zimmertür, den Waschraum und den Gepäckraum öffnen. Keine Schlüssel oder Karten nötig – nur eine PIN für alle Bereiche."
             ]
           },
           {
-            "title": "Can I store my luggage in the hotel?",
+            "title": "Kann ich mein Gepäck im Hotel aufbewahren?",
             "p": [
-              "We offer secure free luggage lockers in the building where you can store your bags before check-in or after check-out. If no lockers are available at the moment, you'll find a nearby alternative at Stasher Luggage Storage, Friedrichstraße 56, 10117 Berlin."
+              "Wir bieten sichere, kostenlose Gepäckschließfächer im Gebäude, in denen Sie Ihre Taschen vor dem Check-in oder nach dem Check-out aufbewahren können. Wenn momentan keine Schließfächer verfügbar sind, finden Sie eine nahegelegene Alternative bei Stasher Luggage Storage, Friedrichstraße 56, 10117 Berlin."
             ]
           }
         ]
       },
       {
-        "title": "During Your Stay",
+        "title": "Während Ihres Aufenthalts",
         "items": [
           {
-            "title": "How do I contact support if I need help?",
+            "title": "Wie kontaktiere ich den Support, wenn ich Hilfe benötige?",
             "p": [
-              "If you need help at any time, our team is available 24/7. You can send us a message on WhatsApp, or call us directly by phone. We're always here to support you during your stay."
+              "Wenn Sie jederzeit Hilfe benötigen, ist unser Team 24/7 erreichbar. Sie können uns eine Nachricht auf WhatsApp senden oder uns direkt telefonisch anrufen. Wir sind immer für Sie da, um Sie während Ihres Aufenthalts zu unterstützen."
             ]
           },
           {
-            "title": "How often is my apartment cleaned?",
+            "title": "Wie oft wird meine Wohnung gereinigt?",
             "p": [
-              "Your apartment is thoroughly cleaned and prepared before your arrival. For stays longer than 7 nights, we offer a complimentary weekly cleaning. If you'd like an additional refresh at any time, you can book an extra cleaning for X."
+              "Ihre Wohnung wird vor Ihrer Ankunft gründlich gereinigt und vorbereitet. Bei Aufenthalten von mehr als 7 Nächten bieten wir eine kostenlose wöchentliche Reinigung. Wenn Sie zu jeder Zeit eine zusätzliche Auffrischung wünschen, können Sie eine zusätzliche Reinigung für X buchen."
             ]
           },
           {
-            "title": "Where can I get fresh towels and extra amenities?",
+            "title": "Wo kann ich frische Handtücher und zusätzliche Ausstattung bekommen?",
             "p": [
-              "You're welcome to take fresh towels and extra amenities from our Essentials Closet whenever you like. It's available and free for you at all times."
+              "Sie können jederzeit frische Handtücher und zusätzliche Ausstattung aus unserem Essentials Closet nehmen. Es steht Ihnen jederzeit kostenlos zur Verfügung."
             ]
           },
           {
-            "title": "Is smoking allowed?",
+            "title": "Ist Rauchen erlaubt?",
             "p": [
-              "Smoking inside the room is strictly forbidden. It's only allowed on private balconies or on the shared terrace. If your room doesn't include these outdoor spaces, please smoke outside the building."
+              "Rauchen im Zimmer ist strengstens verboten. Es ist nur auf privaten Balkonen oder auf der gemeinsamen Terrasse erlaubt. Wenn Ihr Zimmer keine dieser Außenbereiche umfasst, rauchen Sie bitte außerhalb des Gebäudes."
             ]
           },
           {
-            "title": "Can I do my laundry in the hotel?",
+            "title": "Kann ich im Hotel Wäsche waschen?",
             "p": [
-              "Absolutely. A guest laundry room is available on-site, so you can wash your clothes whenever you need."
+              "Absolut. Ein Gäste-Waschraum ist vor Ort verfügbar, sodass Sie Ihre Wäsche jederzeit waschen können, wenn Sie es benötigen."
             ]
           }
         ]
       },
       {
-        "title": "Extra Services",
+        "title": "Zusätzliche Leistungen",
         "items": [
           {
-            "title": "Which extra services are available at the hotel?",
+            "title": "Welche zusätzlichen Leistungen sind im Hotel verfügbar?",
             "p": [
-              "We offer several extra services to make your stay even more comfortable, including breakfast, parking, early check-in, late check-out, and special packages. You can book any of these extras directly on our website or simply add them to your existing reservation."
+              "Wir bieten verschiedene zusätzliche Leistungen, um Ihren Aufenthalt noch komfortabler zu gestalten, darunter Frühstück, Parkplatz, früher Check-in, später Check-out und spezielle Pakete. Sie können alle diese Extras direkt auf unserer Website buchen oder einfach zu Ihrer bestehenden Reservierung hinzufügen."
             ]
           },
           {
-            "title": "Are pets allowed?",
+            "title": "Sind Haustiere erlaubt?",
             "p": [
-              "Yes, pets are welcome! We charge a one-time fee of X for the entire stay, and your fluffy friend can enjoy the trip with you."
+              "Ja, Haustiere sind willkommen! Wir erheben eine einmalige Gebühr von X für den gesamten Aufenthalt, und Ihr flauschiger Freund kann die Reise mit Ihnen genießen."
             ]
           }
         ]
       },
       {
-        "title": "Booking adjustments",
+        "title": "Buchungsänderungen",
         "items": [
           {
-            "title": "How do I change or cancel my reservation?",
+            "title": "Wie kann ich meine Reservierung ändern oder stornieren?",
             "p": [
-              "If you booked directly through the Charlie M website, you can easily change or cancel your reservation in your guest account.",
-              "For flexible rates, any eligible refund will be automatically returned to your original payment method.",
-              "If your booking was made through a partner platform (such as Booking.com, Airbnb, or Expedia), please make any changes or cancellations directly on that platform. Refunds will also be handled by the provider you booked with."
+              "Wenn Sie direkt über die Charlie M-Website gebucht haben, können Sie Ihre Reservierung ganz einfach in Ihrem Gästekonto ändern oder stornieren.",
+              "Bei flexiblen Preisen wird jede berechtigte Rückerstattung automatisch an Ihre ursprüngliche Zahlungsmethode zurückgegeben.",
+              "Wenn Ihre Buchung über eine Partnerplattform (wie Booking.com, Airbnb oder Expedia) erfolgt ist, nehmen Sie bitte Änderungen oder Stornierungen direkt auf dieser Plattform vor. Rückerstattungen werden auch vom Anbieter bearbeitet, bei dem Sie gebucht haben."
             ]
           },
           {
-            "title": "When can I receive my invoice?",
+            "title": "Wann kann ich meine Rechnung erhalten?",
             "p": [
-              "You can receive your invoice after your stay. As soon as you check out, your invoice will be available for download or can be sent to you upon request."
+              "Sie können Ihre Rechnung nach Ihrem Aufenthalt erhalten. Sobald Sie ausgecheckt sind, steht Ihre Rechnung zum Download bereit oder kann Ihnen auf Anfrage zugesendet werden."
             ]
           }
         ]

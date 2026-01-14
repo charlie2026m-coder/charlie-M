@@ -4,6 +4,7 @@ import { cache } from 'react';
 import { OfferResponse, RoomOffer } from '@/types/offers';
 import { calculateNights } from '@/lib/utils';
 import { getRoomsDetails } from './getRoomsDetails';
+import { RATE_PLANS } from '@/lib/Constants';
 const propId = process.env.APALEO_PROPERTY_ID;
 
 
@@ -19,7 +20,8 @@ const getAvailableRoomsInternal = async (from?: string, to?: string, guests: num
       
       //availableUnits
       const nights = calculateNights(from as string, to as string);
-      const type = nights > 7  ? 'LONG_STAY' : 'BAR_WEB';
+      // const type = nights > 7  ? RATE_PLANS.LONG_STAY : RATE_PLANS.STANDARD;
+      const type = RATE_PLANS.STANDARD;
 
       const fillteredRooms = response.filter(room => {
         return room.ratePlan.code.includes(type);

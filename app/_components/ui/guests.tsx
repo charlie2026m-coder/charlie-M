@@ -44,19 +44,21 @@ export function Guests({
   // Вычисляем реальные лимиты с учетом maxPersons
   const totalGuests = value.adults + value.children;
   const canAddAdult = maxPersons ? totalGuests < maxPersons && value.adults < maxAdults : value.adults < maxAdults;
-  const canAddChild = maxPersons ? totalGuests < maxPersons && value.children < maxChildren : value.children < maxChildren;
+  const canAddChild = maxPersons 
+    ? totalGuests < maxPersons && value.children < maxChildren && value.children < 5
+    : value.children < maxChildren && value.children < 5;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <div className="relative flex gap-2">
-          <div className='flex  gap-2 text-xs absolute -top-2 left-5 bg-white px-1'>
+        <div className="relative flex gap-2" suppressHydrationWarning>
+          <div className='hidden md:flex  gap-2 text-xs absolute -top-2 left-5 bg-white px-1'>
             Guests
           </div>
           <Input
             value={guestsText}
             placeholder="Guests"
-            className={cn("rounded-full h-10 px-3 pr-10 border-brown cursor-pointer", className)}
+            className={cn("rounded-full h-10 px-3 pr-4 md:pr-10 border-white shadow-none text-sm md:text-base md:border-black  cursor-pointer", className)}
             readOnly
           />
           <div className="absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none">

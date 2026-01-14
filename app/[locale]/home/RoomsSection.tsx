@@ -1,5 +1,3 @@
-import { Link } from '@/navigation'
-import { Button } from '../../_components/ui/button'
 import { RoomsCarousel } from '@/app/[locale]/home/components/RoomsCarousel'
 import { getApaleoRooms } from '@/services/getApaleoRooms'
 import ErrorCard from '@/app/[locale]/rooms/components/ErrorCard'
@@ -20,9 +18,6 @@ const RoomsSection = async ({ locale }: { locale: string }) => {
       <Header title={t('home.rooms_title')} />
       <span className='w-full text-dark text-lg text-center mb-12'>{t('home.rooms_subtitle')}</span>
       <RoomsCarousel items={rooms} />
-      <Link href='/rooms' className='block md:hidden mt-5 '>
-          <Button variant='outline' className='px-[45px] !h-[48px] w-full'>{t('view_all_btn')}</Button>
-        </Link>
     </div>
   )
 }

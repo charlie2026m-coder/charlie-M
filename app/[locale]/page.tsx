@@ -87,6 +87,7 @@ export default async function Home({ params }: Props) {
         <DesignSection locale={locale} />
         <FAQSection />
         <ReviewsSection />
+        {/* <InstagramSection /> */}
       </section>
   );
 }

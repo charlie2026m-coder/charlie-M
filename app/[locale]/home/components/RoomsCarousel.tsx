@@ -36,30 +36,43 @@ export function RoomsCarousel({
   const buttonClassName = "size-18 rounded-full  border text-mute border-mute flex items-center justify-center transition-opacity hover:opacity-50 disabled:opacity-50 disabled:cursor-not-allowed"
 
   return (
-    <div className="container flex items-center px-4 xl:px-0 ">
-      <div className="hidden xl:flex w-[92px] items-center justify-center shrink-0 ">
-        <button
-          onClick={() => api?.scrollPrev()}
-          disabled={!canScrollPrev}
-          className={buttonClassName}
-          aria-label="Previous slide"
-        >
-          <GoArrowLeft className="size-8" />
-        </button>
+    <>
+      <div className="container flex items-center px-2 xl:px-0 ">
+        <div className="hidden xl:flex w-[92px] items-center justify-center shrink-0 ">
+          <button
+            onClick={() => api?.scrollPrev()}
+            disabled={!canScrollPrev}
+            className={buttonClassName}
+            aria-label="Previous slide"
+          >
+            <GoArrowLeft className="size-8" />
+          </button>
+        </div>
+
+        <div className="flex-1 relative min-w-0 ">
+          <Carousel className="w-full" setApi={setApi}>
+            <CarouselContent className="-ml-4 pb-8 xl:pb-[90px] px-2">
+              {items.map((item) => (
+                <CarouselItem key={item.id} className="pl-4 basis-[85%] md:basis-1/2 xl:basis-1/3 shrink-0">
+                  <RoomCard item={item} />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+          </Carousel>
+        </div>
+        <div className="hidden xl:flex w-[92px] items-center justify-center shrink-0">
+          <button
+            onClick={() => api?.scrollNext()}
+            disabled={!canScrollNext}
+            className={buttonClassName}
+            aria-label="Next slide"
+          >
+            <GoArrowRight className="size-8 " />
+          </button>
+        </div>
       </div>
-
-      <div className="flex-1 relative min-w-0 ">
-        <Carousel className="w-full" setApi={setApi}>
-          <CarouselContent className="-ml-4 pb-[90px] px-2">
-            {items.map((item) => (
-              <CarouselItem key={item.id} className="pl-4 basis-full md:basis-1/2 lg:basis-1/3 shrink-0">
-                <RoomCard item={item} />
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-        </Carousel>
-
-        <div className="xl:hidden absolute left-0 top-1/2 -translate-y-1/2 z-10">
+      <div className="flex items-center justify-center gap-5 mb-15">
+        <div className="xl:hidden ">
           <button
             onClick={() => api?.scrollPrev()}
             disabled={!canScrollPrev}
@@ -70,7 +83,7 @@ export function RoomsCarousel({
           </button>
         </div>
 
-        <div className="xl:hidden absolute right-0 top-1/2 -translate-y-1/2 z-10">
+        <div className="xl:hidden ">
           <button
             onClick={() => api?.scrollNext()}
             disabled={!canScrollNext}
@@ -81,17 +94,6 @@ export function RoomsCarousel({
           </button>
         </div>
       </div>
-
-      <div className="hidden xl:flex w-[92px] items-center justify-center shrink-0">
-        <button
-          onClick={() => api?.scrollNext()}
-          disabled={!canScrollNext}
-          className={buttonClassName}
-          aria-label="Next slide"
-        >
-          <GoArrowRight className="size-8 " />
-        </button>
-      </div>
-    </div>
+    </>
   )
 }

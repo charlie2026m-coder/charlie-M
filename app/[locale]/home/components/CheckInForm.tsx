@@ -97,11 +97,10 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
     <form
       onSubmit={handleSubmit}
       data-checkin-form="original"
-      className={cn('flex flex-col md:flex-row  w-full max-w-[900px] bg-white py-3 rounded-[30px] items-center pr-6', className )}
+      className={cn('flex flex-row pl-3 md:pl-8 gap-2 md:gap-8  w-full max-w-[900px] bg-white p-3 rounded-full items-center', className )}
     >
-      <section className='flex flex-col md:flex-row px-8 gap-8 w-full'>
 
-        <label className='w-full md:max-w-3/5'>
+        <label className='w-full max-w-3/5'>
           <DateInput 
             value={dateRange || undefined}
             open={openCalendar}
@@ -155,29 +154,20 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
                {getNights()}
             </div>}
             <div className='grid grid-cols-2 gap-2 md:hidden'>
-              <Button onClick={resetForm} className='w-full' variant='outline'>Cancel</Button>
-              <Button onClick={()=> setOpenCalendar(false)} className='w-full'>Apply</Button>
+              <Button onClick={resetForm} className='w-full text-sm md:text-base h-10' variant='outline'>Cancel</Button>
+              <Button onClick={()=> setOpenCalendar(false)} className='w-full text-sm md:text-base h-10'>Apply</Button>
             </div>
           </DateInput>
        </label>
-        <Separator orientation="horizontal" className=' md:hidden'/>
-
-        <label className='w-full md:max-w-2/5'>
+        <label className='w-full max-w-2/5 border-l md:border-none'>
           <Guests setValue={(value) => setValue(value, 'guests')} value={guests} />
         </label>
-      </section>
         <Button
-          className={cn('cursor-pointer size-15 hidden md:flex items-center justify-center rounded-full transition-all duration-300 bg-blue hover:bg-blue/80')}
+          className={cn('cursor-pointer size-10  md:size-15 flex items-center justify-center rounded-full transition-all duration-300 bg-blue hover:bg-blue/80')}
           type='submit'
           size="icon"
         >
-          <RiSearchLine className='text-mute size-8' />
-        </Button>
-        <Button
-          className={cn('py-3 text-lg text-mute gap-2 mt-2 font-bold cursor-pointer md:hidden flex items-center justify-center rounded-b-[30px] transition-all duration-300 bg-blue hover:bg-blue/80')}
-          type='submit'
-        >
-          <RiSearchLine className='text-mute text-[25px]' /> Check Availability
+          <RiSearchLine className='text-mute size-5 md:size-8' />
         </Button>
     </form>
   );

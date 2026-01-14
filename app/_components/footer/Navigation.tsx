@@ -11,19 +11,19 @@ export default function Navigation() {
   const navigation = [
     {
       label: t('header.rooms_link'),
-      href: isHomePage ? "/#rooms" : "/rooms",
+      href: "/#rooms"
     },
     {
       label: t('header.location_link'),
-      href: isHomePage ? "/#location" : "/location",
+      href: "/#location"
     },
     {
       label: t('header.about_us_link'),
-      href: isHomePage ? "/#concept" : "/concept",
+      href: "/#concept"  
     },
     {
       label: 'FAQ',
-      href: isHomePage ? "/#faq" : "/faq",
+      href: "/#faq" 
     },
   ]
 
@@ -39,15 +39,15 @@ export default function Navigation() {
   };
 
   return (
-    <nav className="flex col-span-1 flex-col md:flex-row lg:flex-col md:mx-auto">
+    <nav className="flex col-span-1 flex-col md:flex-col md:mx-auto w-full">
       <span className="text-white font-semibold text-2xl mb-5 md:mb-0 lg:mb-5 mr-6">Links:</span>
-      <div className="flex flex-col md:flex-row lg:flex-col  gap-4">{navigation.map((item) => (
+      <div className="flex flex-row lg:flex-col  gap-4 w-full justify-between">{navigation.map((item) => (
         <Link 
           key={item.href} 
           href={item.href}
           onClick={(e) => handleClick(e, item.href)}
           className={cn(
-            "transition-colors border-b-4 border-transparent py-1 text-white w-fit",
+            "transition-colors border-b-4 border-transparent py-1 text-white w-fit font-bold md:font-base",
             pathname === item.href || pathname === `/de${item.href}` ? "font-medium border-blue" : ""
           )}
         >

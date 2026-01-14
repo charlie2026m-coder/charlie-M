@@ -12,7 +12,7 @@ const RoomParamsRow = ({ attributes, maxPersons, size }: { attributes: string[],
 
   
   return (
-    <div className='flex items-center gap-2'>
+    <div className='flex items-center gap-2 mb-3 flex-wrap'>
       <span className='text-dark text-sm flex items-center gap-1'> <BsFillPersonFill className='size-5 text-blue' />{maxPersons} Max.</span>
       <SlSizeFullscreen className='size-4 text-blue' />
       <span className='text-dark text'>{size}m²</span>

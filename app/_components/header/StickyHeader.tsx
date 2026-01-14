@@ -33,8 +33,13 @@ const StickyHeader = ({ locale, isWhite = false }: StickyHeaderProps) => {
             return;
           }
           
-          // If scroll < 100, never show menu - just return
-          if (scrollY < 400 && !isAtTop) {
+          // Check if discount banner is visible
+          const isDiscountClosed = sessionStorage.getItem('discountBannerClosed');
+          const showThreshold = 400; // Minimum scroll to show header
+          const hideThreshold = isDiscountClosed ? 0 : 60; // If discount open, hide earlier at 60px
+          
+          // If scroll < showThreshold, never show menu - just return
+          if (scrollY < showThreshold && scrollY > hideThreshold) {
             lastScrollY.current = scrollY;
             ticking = false;
             return;
@@ -42,7 +47,7 @@ const StickyHeader = ({ locale, isWhite = false }: StickyHeaderProps) => {
           
           lastScrollY.current = scrollY;
           
-          if (isAtTop) {
+          if (scrollY <= hideThreshold) {
             if (isVisible && !isFading) {
               setIsFading(true);
               setOpacity(0);

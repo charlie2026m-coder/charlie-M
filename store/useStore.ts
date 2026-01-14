@@ -20,6 +20,7 @@ interface StoreState {
   filter: MainFilter;
   bedSizeFilter: BedSizeFilter;
   roomTypeFilter: RoomTypeFilter;
+  childBedFilter: boolean;
   bookingPage: number;
 
   setValue: (
@@ -38,6 +39,7 @@ export const useStore = create<StoreState>((set) => ({
   bedSizeFilter: undefined,
   priceFilter: false,
   roomTypeFilter: undefined,
+  childBedFilter: false,
   //booking steps
   bookingPage: 1,
 

@@ -1,11 +1,9 @@
 'use client';
-import { Link } from "@/navigation"
+import { Link, usePathname } from "@/navigation"
 import { Button } from "../ui/button"
 import Language from "./Language"
 import { useAuth } from "@/lib/auth-provider"
 import Image from "next/image"
-import { FaFacebookF, FaYoutube } from 'react-icons/fa'
-import { AiFillInstagram } from 'react-icons/ai'
 import { TbMenu2 } from "react-icons/tb";
 import { XIcon } from "lucide-react";
 import { useState } from "react";
@@ -14,43 +12,59 @@ import { useProfile } from "@/app/hooks/useProfile";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Suspense } from "react";
+import ViberNumber from "./ViberNumber";
 
 const MobileMenu = ({ isWhite = false }: { isWhite?: boolean }) => {
   const { profile } = useProfile(); 
   const t = useTranslations();
   const [open, setOpen] = useState(false)
   const { user, loading } = useAuth();
+  const pathname = usePathname();
+  
+  const isHomePage = pathname === '/';
 
   const links = [
     {
       label: t('header.rooms_link'),
-      href: '/rooms',
+      href: '/#rooms',
     },
     {
       label: t('header.about_us_link'),
-      href: '/concept',
+      href: '/#concept',
     },
     {
       label: t('header.location_link'),
-      href: '/location',
+      href: '/#location',
     },
     {
       label: "FAQ",
-      href: '/faq',
+      href: '/#faq',
     },
   ]
+
+  const handleLinkClick = (href: string) => {
+    setOpen(false);
+    
+    if (isHomePage) {
+      const sectionId = href.replace('/#', '');
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  }
 
   return (
   <>
     <TbMenu2 className={cn('size-8 md:hidden mr-3', isWhite ? 'text-white' : 'text-black')} onClick={()=> setOpen(true)} />
     
     <Drawer open={open} onOpenChange={setOpen} direction="left">
-      <DrawerTitle className='hidden'>Mobile Menu</DrawerTitle>
-      <DrawerContent className='p-0 border-none bg-mute min-w-full h-full rounded-[16px]'>
+      <DrawerTitle className='hidden' suppressHydrationWarning>Mobile Menu</DrawerTitle>
+      <DrawerContent className='p-0 border-none bg-white min-w-full h-full rounded-r-[30px]'>
         <div className='flex flex-col items-center py-5 px-3 h-full'>
           <XIcon 
             onClick={()=> setOpen(false)}
-            className='absolute top-5 size-10 left-3 text-white' 
+            className='absolute top-5 size-10 right-3 ' 
           /> 
           <Link href="/">
             <Image 
@@ -59,29 +73,33 @@ const MobileMenu = ({ isWhite = false }: { isWhite?: boolean }) => {
               width={163} 
               height={104} 
               priority
-              className="w-[163px] h-[104px] mb-[26px]" 
+              className="w-[163px] h-[104px] mb-10" 
             />
           </Link>
-          <div className='flex flex-col gap-5 items-center mb-9'>
-            {links.map(item =>(
-              <Link 
-                key={item.href} 
-                href={item.href} 
-                className='text-[18px] text-white'
-                onClick={() => setOpen(false)}
-              >{item.label}</Link>
-            ))}
-          </div>
-          <div className='flex flex-col gap-6 w-full mb-6 border-b border-0.5 border-brown pb-6 flex-1'> 
+            <ViberNumber className='mb-10' />
+
+          {isHomePage && (
+            <div className='flex flex-col gap-5 items-center pb-10 gap-6'>
+              {links.map(item =>(
+                <Link 
+                  key={item.href} 
+                  href={item.href} 
+                  className='text-[18px]'
+                  onClick={() => handleLinkClick(item.href)}
+                >{item.label}</Link>
+              ))}
+            </div>
+          )}
+          <div className='flex flex-col gap-6 w-4/5 pb-6'> 
             <Link href='/rooms' className='w-full' onClick={() => setOpen(false)}>
               <Button className='w-full h-[55px]'> {t('book_now_btn')} </Button>
             </Link>
             {!loading && !user && (<>
-              <Link href='/rooms' className='w-full' onClick={() => setOpen(false)}>
-                <Button variant='outline' className='w-full h-[55px] text-white border-white'> {t('check_in_btn')} </Button>
-              </Link>
               <Link href='/login' className='w-full' onClick={() => setOpen(false)}>
-                <Button variant='outline' className='w-full h-[55px] text-white border-white'> {t('sign_in_btn')} </Button>
+                <Button variant='outline' className='w-full h-[55px] '> {t('sign_in_btn')} </Button>
+              </Link>
+              <Link href='/rooms' className='w-full' onClick={() => setOpen(false)}>
+                <Button variant='outline' className='w-full h-[55px] border-none'> {t('check_in_btn')} </Button>
               </Link>
             </>)}
 
@@ -92,13 +110,8 @@ const MobileMenu = ({ isWhite = false }: { isWhite?: boolean }) => {
               </Link>
             }
           </div>
-          <ul className="flex gap-5 text-black mb-6">
-            <li className="flex size-10 rounded-full bg-blue items-center justify-center"><FaFacebookF className='size-6' /></li>
-            <li className="flex size-10 rounded-full bg-blue items-center justify-center"><AiFillInstagram className='size-6' /></li>
-            <li className="flex size-10 rounded-full bg-blue items-center justify-center"><FaYoutube className='size-6' /></li>
-          </ul>
  
-          <Suspense fallback={<div className="w-10 h-10" />}>
+          <Suspense fallback={<div className="size-10" />}>
             <Language /> 
           </Suspense>
         </div>

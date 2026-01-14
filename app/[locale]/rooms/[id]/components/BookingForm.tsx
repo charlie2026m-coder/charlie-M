@@ -76,47 +76,39 @@ const BookingForm = ({ id, room, params }: { id: string, room: RoomOffer , param
     router.push(`/booking/${id}?${queryString}`);
   };
   return (
-    <div className='sticky top-10 flex flex-col bg-white rounded-[20px] px-5 pt-[25px] w-full pb-10'>
+    <div className='sticky shadow-xl top-10 flex flex-col bg-white border md:border-none rounded-[20px] px-5 pt-[25px] w-full pb-10'>
       <h3 className='font-semibold text-2xl text-center mb-3'>BOOK</h3>
       <div className='flex justify-between mb-1 gap-2'>
         <div className='text-brown flex items-center gap-1'>Per {currentNightsText} from </div>
         <div className='text-xl min-w-[80px] self-end text-center rounded-full bg-green/15 font-[700] text-green px-2.5 py-2'>€{currentPrice}</div>
       </div>
-      <div className='text-blue flex items-center gap-1 my-4'><BsFillPersonFill className='size-4 text-blue' />{currentPriceText}</div>
+      <div className='text-blue flex items-center gap-1 my-4 mb-10'><BsFillPersonFill className='size-4 text-blue' />{currentPriceText}</div>
 
       <div className='flex flex-col gap-5 w-full mb-5'>
-        <label className='w-full'>
-          <div className='flex font-medium mb-2 gap-2 h-5 '>
-            <div className=' pr-2 border-r-2 border-black pb-1'>Check In</div>
-            <div className='pb-1'>Check out</div>
-          </div>
-          <DateInput 
-            value={dateRange || undefined}
-            open={openCheckIn}
-            onOpenChange={setOpenCheckIn}
-            className="max-w-[350px]"
-          >
-            <Calendar 
-              required={false}
-              mode="range"  
-              captionLayout="label"
-              selected={dateRange}
-              onSelect={(date) => {
-                setDateRange(date as DateRange);
-                if (date?.from && date?.to) {
-                  setValue(date as DateRange, 'dateRange');
-                }
-              }}
-              disabled={{ before: new Date() }}
-            />
-          </DateInput>
-        </label>
+        <DateInput 
+          value={dateRange || undefined}
+          open={openCheckIn}
+          onOpenChange={setOpenCheckIn}
+          className="w-full md:max-w-[350px] "
+          inputStyle="border-mute"
+        >
+          <Calendar 
+            required={false}
+            mode="range"  
+            captionLayout="label"
+            selected={dateRange}
+            onSelect={(date) => {
+              setDateRange(date as DateRange);
+              if (date?.from && date?.to) {
+                setValue(date as DateRange, 'dateRange');
+              }
+            }}
+            disabled={{ before: new Date() }}
+          />
+        </DateInput>
 
         <Separator orientation="horizontal" />
-        <label className='w-full'>
-          <div className='font-medium mb-2'>Guests</div>
-          <Guests setValue={setGuests} value={guests} />
-        </label>
+        <Guests setValue={setGuests} value={guests} className="border-mute" />
       </div>
       <Button className='w-full' onClick={handleBookNow}>Book Now</Button>
     </div>

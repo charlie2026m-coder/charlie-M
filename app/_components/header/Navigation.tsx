@@ -7,23 +7,24 @@ const Navigation = ({isWhite = false}: {isWhite?: boolean}) => {
   const t = useTranslations();
   const pathname = usePathname();
   const isHomePage = pathname === '/' || pathname === '/de';
-  
+  if(!isHomePage) return null;
+
   const navigation = [
     {
       label: t('header.rooms_link'),
-      href: isHomePage ? '/#rooms' : '/rooms',
+      href: '/#rooms' 
     },
     {
       label: t('header.location_link'),
-      href: isHomePage ? "/#location" : "/location",
+      href: "/#location"
     },
     {
       label: t('header.about_us_link'),
-      href: isHomePage ? "/#concept" : "/concept",
+      href: "/#concept" 
     },
     {
       label: 'FAQ',
-      href: isHomePage ? "/#faq" : "/faq",
+      href: "/#faq" 
     }
   ];
 

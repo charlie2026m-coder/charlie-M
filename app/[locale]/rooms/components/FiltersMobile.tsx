@@ -45,7 +45,7 @@ const FiltersMobile = () => {
       </div>
 
       <Drawer open={openDrawer} onOpenChange={setOpenDrawer} direction="left">
-        <DrawerTitle className='hidden'>Filters</DrawerTitle>
+        <DrawerTitle className='hidden' suppressHydrationWarning>Filters</DrawerTitle>
         <DrawerContent className='rounded-r-[16px] overflow-hidden p-0 border-none bg-white min-w-[90%] flex flex-col h-full'>
           <div className='bg-black text-white px-5 py-3 flex justify-between items-center shrink-0'>
             <div className='text-[20px] font-bold flex gap-2 items-center'>

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useId } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { useLocale } from 'next-intl';
 import { useRouter, usePathname } from '@/navigation';
@@ -41,6 +41,7 @@ export default function Language({ isWhite = false }: { isWhite?: boolean }) {
         <button 
           className="flex items-center gap-1 cursor-pointer w-10 items-center justify-center xl:ml-4"
           disabled={isPending}
+          suppressHydrationWarning
         >
           <ImEarth className={cn('size-5', isWhite ? 'text-white' : 'text-black')} />
         </button>
