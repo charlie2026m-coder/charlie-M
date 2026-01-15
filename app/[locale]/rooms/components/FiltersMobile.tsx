@@ -5,7 +5,7 @@ import { Label } from "@/app/_components/ui/label"
 import { BedSizeFilter, MainFilter, RoomTypeFilter } from "@/store/useStore"
 import {  IoFilter } from "react-icons/io5";
 import { Button } from "@/app/_components/ui/button"
-import { Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerTitle, } from "@/app/_components/ui/drawer"
+import { Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerTitle, VisuallyHidden } from "@/app/_components/ui/drawer"
 import { IoClose } from "react-icons/io5";
 import { cn } from '@/lib/utils'
 import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
@@ -45,8 +45,10 @@ const FiltersMobile = () => {
       </div>
 
       <Drawer open={openDrawer} onOpenChange={setOpenDrawer} direction="left">
-        <DrawerTitle className='hidden' suppressHydrationWarning>Filters</DrawerTitle>
         <DrawerContent className='rounded-r-[16px] overflow-hidden p-0 border-none bg-white min-w-[90%] flex flex-col h-full'>
+          <VisuallyHidden>
+            <DrawerTitle>Filters</DrawerTitle>
+          </VisuallyHidden>
           <div className='bg-black text-white px-5 py-3 flex justify-between items-center shrink-0'>
             <div className='text-[20px] font-bold flex gap-2 items-center'>
               <IoFilter className='size-5' />

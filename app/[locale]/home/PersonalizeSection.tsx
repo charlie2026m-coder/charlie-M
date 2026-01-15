@@ -21,14 +21,14 @@ const PersonalizeSection = async ({ locale }: { locale: string }) => {
       icon: '/images/clean-icon.svg'
     },
     {
-      title: t('home.personalize_items.4.title'),
-      text: t('home.personalize_items.4.text'),
-      icon: '/images/pets-icon.svg'
-    },
-    {
       title: t('home.personalize_items.3.title'),
       text: t('home.personalize_items.3.text'),
       icon: '/images/checkin-icon.svg' 
+    },
+    {
+      title: t('home.personalize_items.4.title'),
+      text: t('home.personalize_items.4.text'),
+      icon: '/images/pets-icon.svg'
     },
   ]
   return (

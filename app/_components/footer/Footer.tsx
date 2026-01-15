@@ -58,8 +58,9 @@ export default function Footer() {
   return (
     <footer className={`w-full relative z-0 bg-mute`}>
         <div className="container px-4 xl:!px-[100px] flex flex-col items-center ">
-          <div className="grid grid-cols-1 lg:grid-cols-4 w-full items-center pt-[30px] lg:pt-[50px] md:pb-8  md:border-b border-white/40">
-            <div className="flex flex-col items-center col-span-1 h-full">
+          <div className="flex flex-col w-full md:flex-row md:justify-between items-center pt-[30px] lg:pt-[50px] md:pb-8  md:border-b border-white/40">
+
+            <div className="flex flex-col items-center md:items-start col-span-1 h-full w-full md:w-1/4">
               <Link href="/">
                 <Image 
                   src="/images/Logo.svg" 
@@ -78,8 +79,8 @@ export default function Footer() {
             </div>
 
 
-            <div className="flex flex-col md:items-center md:justify-center col-span-2 w-full">
-              <span className="text-white font-semibold text-2xl mb-5">Contacts:</span>
+            <div className="flex flex-col md:justify-center">
+              <span className="text-white  font-semibold text-2xl mb-5">Contacts:</span>
               <div className="flex flex-row md:items-center justify-between md:justify-center gap-6 w-full">
                 <ul className="flex md:hidden flex-col gap-1 text-white justify-center pl-0 mb-6 md:mb-0">
                   {contacts.map((contact, index) => (
@@ -108,9 +109,9 @@ export default function Footer() {
                 </ul>
               </div>
             </div>
-            {isHomePage && <div className="hidden md:flex my-6 w-full">  
+            {isHomePage ? <div className="hidden md:flex my-6 w-full md:w-1/4 ">  
               <Navigation />
-            </div>}
+            </div> : <div className="hidden md:flex my-6 w-full md:w-1/4 " />}
           </div>
           <Contacts />
         </div>

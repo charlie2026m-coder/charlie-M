@@ -38,16 +38,7 @@ const DesignSlider = ({ items }: { items: DesignItem[] }) => {
   return (
     <>
       <div className="container flex items-center px-2 xl:px-0 lg:hidden pt-8">
-        <div className="hidden xl:flex w-[92px] items-center justify-center shrink-0">
-          <button
-            onClick={() => api?.scrollPrev()}
-            disabled={!canScrollPrev}
-            className={buttonClassName}
-            aria-label="Previous slide"
-          >
-            <GoArrowLeft className="size-8" />
-          </button>
-        </div>
+        
 
         <div className="flex-1 relative min-w-0">
           <Carousel 
@@ -78,19 +69,10 @@ const DesignSlider = ({ items }: { items: DesignItem[] }) => {
           </Carousel>
         </div>
 
-        <div className="hidden xl:flex w-[92px] items-center justify-center shrink-0">
-          <button
-            onClick={() => api?.scrollNext()}
-            disabled={!canScrollNext}
-            className={buttonClassName}
-            aria-label="Next slide"
-          >
-            <GoArrowRight className="size-8" />
-          </button>
-        </div>
+        
       </div>
 
-      <div className="flex items-center justify-center gap-5 mb-15 lg:hidden">
+      <div className="flex items-center justify-center gap-5 mb-5 md:mb-15 lg:hidden">
         <div className="xl:hidden">
           <button
             onClick={() => api?.scrollPrev()}

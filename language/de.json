@@ -99,30 +99,25 @@
 
 
     "design_title": "Für Ihren Aufenthalt designet",
-    "design_description": "Jeder Platz bei Charlie M ist für Ihren Aufenthalt gedacht. Von der Anordnung bis zu den Details, alles ist so konzipiert, dass Ihr Aufenthalt angenehm, einfach und gut zusammenpasst.",
+    "design_description": "Jeder Platz bei Charlie M ist für Ihren Aufenthalt gedacht. Von der Anordnung bis zu den Details, alles ist so konzipiert, dass Ihr Aufenthalt angenehm, einfach und gut zusammenpasst. Ruhige, einladende Details formen den Aufenthalt. Materialien, Licht und Fluss kommen gemeinsam still und zärtlich zusammen, um Plätze zu schaffen, an denen Sie sich entspannen, einstellen und einfach wohlfühlen können.",
     "design_items": [
       {
-        "text": "Room",
         "image_1": "Lobby",
         "image_2": "Rooms"
       },
       {
-        "text": "Room",
         "image_1": "Lobby",
         "image_2": "Rooms"
       },
       {
-        "text": "Room",
         "image_1": "Lobby",
         "image_2": "Rooms"
       },
       {
-        "text": "Room",
         "image_1": "Lobby",
         "image_2": "Rooms"
       },
       {
-        "text": "Room",
         "image_1": "Lobby",
         "image_2": "Rooms"
       }

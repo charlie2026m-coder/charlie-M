@@ -59,11 +59,11 @@ const FAQSection = () => {
         <div className='hidden lg:block col-span-4 '>
           <FAQList items={faqPoints} onActiveIndexChange={handleActiveIndexChange} />
         </div>
-        <div className='lg:hidden grid grid-cols-2 col-span-1 gap-2'>
+        <div className='lg:hidden grid xxs:grid-cols-2 col-span-1 gap-2'>
           {faqPoints.map((item, index) => (
             <div 
               key={item.title} 
-              className={cn('flex items-center font-bold text-sm px-5 py-2.5 border rounded-full cursor-pointer text-center justify-center', activeFAQ === item.title && 'bg-light-bg')}
+              className={cn('flex items-center font-bold text-sm py-2.5 border rounded-full cursor-pointer text-center justify-center', activeFAQ === item.title && 'bg-light-bg')}
               onClick={() => handleActiveIndexChange(index)}  
             >
               {item.title}

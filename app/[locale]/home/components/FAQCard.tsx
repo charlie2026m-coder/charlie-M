@@ -24,7 +24,7 @@ const FAQCard = ({ question, items, active, setActiveTab, index }: FAQCardProps)
           active ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
         }`}
       >
-        <div className={cn("overflow-hidden border-t border-mute ", active && 'mt-2')}>
+        <div className={cn("overflow-hidden border-t border-[#E0E0E0] ", active && 'mt-2')}>
           {items.map((item, index) => (
             <p className="mt-2.5 text-xs" key={index}>
               {item.split('**').map((part, i) => 

@@ -39,9 +39,9 @@ export default function Navigation() {
   };
 
   return (
-    <nav className="flex col-span-1 flex-col md:flex-col md:mx-auto w-full">
+    <nav className="flex flex-col md:mx-auto w-full">
       <span className="text-white font-semibold text-2xl mb-5 md:mb-0 lg:mb-5 mr-6">Links:</span>
-      <div className="flex flex-row lg:flex-col  gap-4 w-full justify-between">{navigation.map((item) => (
+      <div className="flex flex-row md:flex-col  gap-4 w-full justify-between">{navigation.map((item) => (
         <Link 
           key={item.href} 
           href={item.href}
