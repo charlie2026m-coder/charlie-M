@@ -75,7 +75,7 @@ export function DateInput({
           </div>
         </PopoverTrigger>
         <PopoverContent
-          className={cn(className, "overflow-hidden  rounded-[20px] bg-white p-2 flex flex-col w-[350px] md:w-[660px]")}
+          className={cn(className, "overflow-hidden  rounded-[20px] bg-white p-2 flex flex-col w-[350px] lg:w-[660px]")}
           align="center"
           side="top"
           sideOffset={10}

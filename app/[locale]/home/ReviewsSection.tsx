@@ -64,7 +64,7 @@ const ReviewsSection = () => {
           </div>
         </div>
 
-        <div className="flex items-center justify-center gap-5 mb-15">
+        <div className="flex items-center justify-center gap-5 mb-5 md:mb-15">
           <button
             onClick={() => api?.scrollPrev()}
             disabled={!canScrollPrev}

@@ -112,7 +112,7 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
             }}
             isError={dateError}
           >
-            <div className='flex flex-col md:flex-row gap-2  pb-2 '>
+            <div className='flex flex-col lg:flex-row gap-2 pb-2 '>
               <Calendar 
                 required={false}
                 mode="range"  
@@ -130,8 +130,9 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
                   before: new Date() 
                 }}
               />
-              <Separator orientation="vertical" className='!h-auto' />
+              <Separator orientation="vertical" className='!h-auto hidden lg:block' />
               <Calendar 
+                className='hidden lg:block'
                 required={false}
                 mode="range"  
                 captionLayout="label"

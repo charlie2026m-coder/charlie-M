@@ -7,7 +7,7 @@ import Image from "next/image"
 import { TbMenu2 } from "react-icons/tb";
 import { XIcon } from "lucide-react";
 import { useState } from "react";
-import { Drawer, DrawerContent, DrawerTitle } from "../ui/drawer"
+import { Drawer, DrawerContent, DrawerTitle, VisuallyHidden } from "../ui/drawer"
 import { useProfile } from "@/app/hooks/useProfile";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
@@ -59,8 +59,10 @@ const MobileMenu = ({ isWhite = false }: { isWhite?: boolean }) => {
     <TbMenu2 className={cn('size-8 md:hidden mr-3', isWhite ? 'text-white' : 'text-black')} onClick={()=> setOpen(true)} />
     
     <Drawer open={open} onOpenChange={setOpen} direction="left">
-      <DrawerTitle className='hidden' suppressHydrationWarning>Mobile Menu</DrawerTitle>
       <DrawerContent className='p-0 border-none bg-white min-w-full h-full rounded-r-[30px]'>
+        <VisuallyHidden>
+          <DrawerTitle>Mobile Menu</DrawerTitle>
+        </VisuallyHidden>
         <div className='flex flex-col items-center py-5 px-3 h-full'>
           <XIcon 
             onClick={()=> setOpen(false)}

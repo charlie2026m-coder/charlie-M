@@ -78,11 +78,11 @@
     "personalize_items": [
       {
         "title": "Parking",
-        "text": "Private on-site parking (maximum 10 parking places)"
+        "text": "Private on-site parking"
       },
       {
         "title": "Breakfast",
-        "text": "Fresh breakfast options  from our partners next to co-working space"
+        "text": "Fresh breakfast options from our partners"
       },
       {
         "title": "Additional Cleaning",
@@ -100,30 +100,25 @@
 
 
     "design_title": "Designed for your stay",
-    "design_description": "Every space at Charlie M is designed with your stay in mind. From the layout to the details, everything is considered to make your time here feel comfortable, easy, and well put together.",
+    "design_description": "Every space at Charlie M is designed with your stay in mind. From the layout to the details, everything is considered to make your time here feel comfortable, easy, and well put together.Calm, welcoming details shape the experience. Materials, light, and flow come together quietly, creating places where you can slow down, settle in, and simply feel good during your stay.",
     "design_items": [
       {
-        "text": "Every space at Charlie M is designed with your stay in mind. From the layout to the details, everything is considered to make your time here feel comfortable, easy, and well put together.",
         "image_1": "Lobby",
         "image_2": "Rooms"
       },
       {
-        "text": "Room2",
         "image_1": "Lobby",
         "image_2": "Rooms"
       },
       {
-        "text": "Room3",
         "image_1": "Lobby",
         "image_2": "Rooms"
       },
       {
-        "text": "Room4",
         "image_1": "Lobby",
         "image_2": "Rooms"
       },
       {
-        "text": "Room5",
         "image_1": "Lobby",
         "image_2": "Rooms"
       }

@@ -30,7 +30,7 @@ const Discount = () => {
         <div />
         <span>Get the best rate direct with us</span>
         <RiCloseLargeLine 
-          className='size-6 cursor-pointer hover:opacity-70 transition-opacity' 
+          className='size-6 text-white/50 cursor-pointer hover:text-white transition-opacity' 
           onClick={handleClose}
         />
       </div>

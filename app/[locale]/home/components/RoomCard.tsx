@@ -21,7 +21,7 @@ const RoomCard = ({
         <div className='flex xxs:flex-row flex-col items-center gap-2 md:gap-8 justify-between w-full'>
           <Price price={item.price.toFixed(2)} className='h-[50px] w-full xs:w-auto' />
           <Link href={`/rooms/${item.id}`} className='w-full '>  
-            <Button variant='outline' className='h-[50px] w-full'>Book Now</Button>
+            <Button variant='outline' className='h-[50px] w-full hover:bg-mute hover:text-white active:bg-mute active:text-white'>Book Now</Button>
           </Link>
         </div>
       </div>
