@@ -1,6 +1,6 @@
 import { Button } from '@/app/_components/ui/button'
 import PhotoSlider from './PhotoSlider'
-import Link from 'next/link'
+import { Link } from '@/navigation'
 import {  SimpleRoom } from '@/types/offers'
 import Price from '@/app/_components/ui/price'
 import RoomParamsRow from '@/app/_components/ui/RoomParamsRow'
@@ -14,7 +14,9 @@ const RoomCard = ({
     <div className='w-full flex flex-col rounded-[40px] bg-white overflow-hidden shadow-lg h-full'>
       <PhotoSlider height={260} images={item.images} roomName={item.name} />
       <div className='flex flex-col p-4 pb-6 h-full'>
-        <h2 className='text-xl font-medium jakarta mb-3'>{item.name}</h2>
+        <Link href={`/rooms/${item.id}`}>
+          <h2 className='text-xl font-medium jakarta mb-3 hover:text-blue transition-colors cursor-pointer'>{item.name}</h2>
+        </Link>
           <RoomParamsRow attributes={item.attributes } maxPersons={item.maxPersons} size={item.size} />
           <div className='text-mute mb-5 mt-auto'>per night from</div>
 

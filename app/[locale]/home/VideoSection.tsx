@@ -14,7 +14,7 @@ const VideoSection = ({ locale }: { locale: string }) => {
         videoSrc="https://sbohsfnalbugtasmzemo.supabase.co/storage/v1/object/public/videos/video.mp4" 
         className="aspect-video w-full h-[calc(100vh-44px)] max-h-[480px] lg:max-h-[800px] col-start-1 row-start-1" 
       />
-      <div className='flex flex-col col-start-1 row-start-1 bg-black/50 items-center pb-8 z-10 px-4'>
+      <div className='flex flex-col col-start-1 row-start-1 bg-black/50 items-center pb-20 z-10 px-4'>
         <Header locale={locale} isWhite={true} />
         <h1 className='text-white text-3xl md:text-5xl font-bold jakarta text-center mb-4 md:mb-2.5 mt-auto'>Charlie M - Your Berlin story starts here</h1>
         

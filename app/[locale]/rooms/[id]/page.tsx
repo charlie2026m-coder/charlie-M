@@ -140,7 +140,7 @@ const RoomPage = async ({ params, searchParams }: IParams) => {
       <div className='grid grid-cols-1  lg:grid-cols-3 xl:grid-cols-4 gap-y-10 md:gap-10 mb-[30px]'>
 
         <div className='col-span-2 xl:col-span-3 flex flex-col'>
-           <RoomContent room={room} />
+           <RoomContent room={room} isRoomInfo={true} />
             <Availability 
               id={id}
               from={from}

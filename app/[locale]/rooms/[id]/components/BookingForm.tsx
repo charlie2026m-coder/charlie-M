@@ -23,14 +23,14 @@ const BookingForm = ({ id, room, params }: { id: string, room: RoomOffer , param
   const setValue = useStore(state => state.setValue);
 
   const [guests, setGuests] = useState({adults: parseInt(params?.adults || guestsStore?.adults.toString() || '1'), children: parseInt(params?.children || guestsStore?.children.toString() || '0')});
-  const { priceText, nightsText } = getPriceData({ params, room })
+  const { priceText } = getPriceData({ params, room })
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: dateRangeStore.from || (params.from ? dayjs(params.from).toDate() : undefined),
     to: dateRangeStore.to || (params.to ? dayjs(params.to).toDate() : undefined),
   });
   const [currentPrice, setCurrentPrice] = useState(room.price)
   const [currentPriceText, setCurrentPriceText] = useState(priceText)
-  const [currentNightsText, setCurrentNightsText] = useState(nightsText)
+  const [dateError, setDateError] = useState(false)
 
   useEffect(() => {
     if (params.from && params.to) {
@@ -49,7 +49,7 @@ const BookingForm = ({ id, room, params }: { id: string, room: RoomOffer , param
     
     if (!fromDate || !toDate) return;
     
-    const { priceText: newPriceText, nightsText: newNightsText } = getPriceData({ 
+    const { priceText: newPriceText } = getPriceData({ 
       params: {
         from: fromDate,
         to: toDate,
@@ -61,12 +61,15 @@ const BookingForm = ({ id, room, params }: { id: string, room: RoomOffer , param
 
     setCurrentPrice(room.price);
     setCurrentPriceText(newPriceText);
-    setCurrentNightsText(newNightsText);
   }, [dateRange?.from, dateRange?.to, guests, room]);
 
 
   const handleBookNow = () => {
-    if (!dateRange?.from || !dateRange?.to) return;
+    if (!dateRange?.from || !dateRange?.to) {
+      setDateError(true);
+      return;
+    }
+    setDateError(false);
     const queryString = getPath({ 
       from: getDate(dateRange?.from), 
       to: getDate(dateRange?.to), 
@@ -79,33 +82,40 @@ const BookingForm = ({ id, room, params }: { id: string, room: RoomOffer , param
     <div className='sticky shadow-xl top-10 flex flex-col bg-white border md:border-none rounded-[20px] px-5 pt-[25px] w-full pb-10'>
       <h3 className='font-semibold text-2xl text-center mb-3'>BOOK</h3>
       <div className='flex justify-between mb-1 gap-2'>
-        <div className='text-brown flex items-center gap-1'>Per {currentNightsText} from </div>
+        <div className='text-brown flex items-center gap-1'>Total</div>
         <div className='text-xl min-w-[80px] self-end text-center rounded-full bg-green/15 font-[700] text-green px-2.5 py-2'>€{currentPrice}</div>
       </div>
-      <div className='text-blue flex items-center gap-1 my-4 mb-10'><BsFillPersonFill className='size-4 text-blue' />{currentPriceText}</div>
+      <div className='text-mute flex items-center gap-1 my-4 mb-10'><BsFillPersonFill className='size-4 text-mute' />{currentPriceText}</div>
 
       <div className='flex flex-col gap-5 w-full mb-5'>
-        <DateInput 
-          value={dateRange || undefined}
-          open={openCheckIn}
-          onOpenChange={setOpenCheckIn}
-          className="w-full md:max-w-[350px] "
-          inputStyle="border-mute"
-        >
-          <Calendar 
-            required={false}
-            mode="range"  
-            captionLayout="label"
-            selected={dateRange}
-            onSelect={(date) => {
-              setDateRange(date as DateRange);
-              if (date?.from && date?.to) {
-                setValue(date as DateRange, 'dateRange');
-              }
-            }}
-            disabled={{ before: new Date() }}
-          />
-        </DateInput>
+        <div className='flex flex-col gap-1'>
+          <DateInput 
+            value={dateRange || undefined}
+            open={openCheckIn}
+            onOpenChange={setOpenCheckIn}
+            className="w-full md:max-w-[350px] "
+            inputStyle={dateError ? "border-red" : "border-mute"}
+            isError={dateError}
+          >
+            <Calendar 
+              required={false}
+              mode="range"  
+              captionLayout="label"
+              selected={dateRange}
+              onSelect={(date) => {
+                setDateRange(date as DateRange);
+                if (date?.from && date?.to) {
+                  setValue(date as DateRange, 'dateRange');
+                  setDateError(false);
+                }
+              }}
+              disabled={{ before: new Date() }}
+            />
+          </DateInput>
+          {dateError && (
+            <span className='text-red-500 text-sm pl-1'>Please select  dates</span>
+          )}
+        </div>
 
         <Separator orientation="horizontal" />
         <Guests setValue={setGuests} value={guests} className="border-mute" />

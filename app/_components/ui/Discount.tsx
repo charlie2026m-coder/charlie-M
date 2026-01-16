@@ -28,7 +28,7 @@ const Discount = () => {
     <div className='w-full flex items-center bg-mute text-white'>
       <div className='container flex items-center justify-between p-2.5'>
         <div />
-        <span>Get the best rate direct with us</span>
+        <span>Get the best rate directly with us</span>
         <RiCloseLargeLine 
           className='size-6 text-white/50 cursor-pointer hover:text-white transition-opacity' 
           onClick={handleClose}

@@ -53,10 +53,7 @@ export default function ConceptList({ items, onActiveIndexChange }: ConceptListP
   }, [])
 
   return (
-    <div className='flex flex-col border-r-2 border-blue '>
-      <h3 className='text-[40px] font-[500] text-mute mb-5'>
-        Charlie M Concept
-      </h3>
+    <div className='flex flex-col border-r-2 border-blue'>
       <div ref={containerRef} className='flex flex-col gap-5 relative'> 
         <div 
           className='absolute -right-0.5  -translate-y-1/2 transition-all duration-500 ease-out'

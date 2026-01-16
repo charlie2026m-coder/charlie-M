@@ -113,10 +113,6 @@ const SummaryCard = () => {
         <span className='font-semibold text-lg'>Total price:</span>
         <Price price={totalPrice.toFixed(2)} />
       </div>
-      <div className='flex justify-center p-1 bg-[#FFC10733] rounded-full text-[#D78426]'>
-        <BiSolidLike className='size-6 text-[#D78426]' />
-        -10% cheaper than on booking.com 
-      </div> 
     </div>
   )
 }

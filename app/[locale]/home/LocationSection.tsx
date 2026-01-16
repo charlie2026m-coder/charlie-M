@@ -26,7 +26,7 @@ const LocationSection = () => {
 
   
   return (
-    <div id="location" className='w-full flex flex-col container px-4 xl:px-[100px] pb-10 lg:pb-30'>
+    <div id="location" className='w-full flex flex-col container px-4 xl:px-[100px] pb-10 '>
       <Header title={t('location_title')} />
       <span className='w-full text-dark text-lg text-center '>{t('location_subtitle')}</span>
       <div className='w-full relative flex justify-between pt-5 lg:pt-20 flex-col lg:flex-row transition-all duration-500'>
