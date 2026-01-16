@@ -244,6 +244,32 @@
     "children": "Kinder",
     "children_age_note": "bis zu 3 Jahren",
     "crib_fee_note": "Kinderbett wird zusätzlich berechnet"
+  },
+  "imprint": {
+    "title": "Angaben gemäß § 5 TMG",
+    "company": "MBoutique GmbH & Co. KG",
+    "address_line1": "Nazarethkirchstraße 51",
+    "address_line2": "13347 Berlin",
+    "address_line3": "Deutschland",
+    "represented_by": "Vertreten durch:",
+    "general_partner": "Die persönlich haftende Gesellschafterin:",
+    "general_partner_name": "MBoutique Verwaltungs GmbH",
+    "managing_directors": "Geschäftsführer der persönlich haftenden Gesellschafterin:",
+    "director1": "David Prajs",
+    "director2": "Simon Schmargon",
+    "contact": "Kontakt:",
+    "email_label": "E-Mail:",
+    "commercial_register": "Registereintrag:",
+    "registered_with": "Eingetragen im Handelsregister",
+    "register_court": "Registergericht: Amtsgericht Berlin-Charlottenburg",
+    "register_number": "Handelsregisternummer:",
+    "register_number_value": "HRA 61578 B",
+    "vat_id": "Umsatzsteuer-ID:",
+    "vat_id_description": "Umsatzsteuer-Identifikationsnummer gemäß § 27a UStG:",
+    "vat_id_value": "DE361014687",
+    "responsible_content": "Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV:",
+    "dispute_resolution": "Streitbeilegung:",
+    "dispute_resolution_text": "Die MBoutique GmbH & Co. KG ist bereit, an einem Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen, sofern dies gesetzlich vorgesehen oder im Einzelfall sachgerecht ist."
   }
 }
 
