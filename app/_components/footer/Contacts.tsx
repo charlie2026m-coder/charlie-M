@@ -43,7 +43,8 @@ const Contacts = () => {
       <div className='flex flex-col md:flex-row w-full pb-10 md:items-center gap-6 pt-5 border-t md:border-t-0 md:pt-0'>
         <div>
           <Link href="/privacy-policy" className="text-white text-sm pr-4 border-r border-white hover:text-blue transition-colors">Privacy Policy</Link>
-          <Link href="/terms-and-conditions" className="text-white text-sm pl-4 hover:text-blue transition-colors">Terms and Conditions</Link>
+          <Link href="/terms-and-conditions" className="text-white text-sm px-4 border-r border-white hover:text-blue transition-colors">Terms and Conditions</Link>
+          <Link href="/imprint" className="text-white text-sm pl-4 hover:text-blue transition-colors">Imprint</Link>
         </div>
         <span className="text-white text-sm md:ml-auto">© Charlie M. All Rights Reserved.</span>
       </div>
