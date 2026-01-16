@@ -1,14 +1,13 @@
 'use client'
-import GuestDetailsForm from "./payment/GuestDetailsForm"
+import { useState } from 'react'
 import SummaryCard from "./booking/SummaryCard"
-import PaymentForm from "./payment/PaymentCard" 
-import { useStore } from "@/store/useStore"
 import BookingPage from "./booking/BookingPage"
 import { Room } from "@/types/types"
 import { RoomOffer } from "@/types/offers"
 import { Service } from "@/types/apaleo"
 import SuccessSection from "./payment/SuccessSection"
 import GuestInfo from "./guestInfo/GuestInfo"
+import Steps from "./Steps"
 
 const StepsContent = ({
   rooms,
@@ -27,22 +26,25 @@ const StepsContent = ({
   children: string
   filledRooms: Room[] 
 }) => {
-  const bookingPage = useStore(state => state.bookingPage)
+  const [bookingPage, setBookingPage] = useState(1)
 
-  if(bookingPage === 1) {
-    return (
-      <BookingPage params={{ from, to, adults, children, rooms, filledRooms, extras }}/>
-    )
-  }
-  if(bookingPage === 2) {
-    return <GuestInfo />
-  }
-  if(bookingPage === 3) {
-    return <div className='grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-10 pb-[30px]'>
-      <SuccessSection />   
-      {/* <PaymentForm /> */}
-    <SummaryCard /></div>
-  }
+  return (
+    <>
+      <Steps bookingPage={bookingPage} setBookingPage={setBookingPage} />
+      {bookingPage === 1 && (
+        <BookingPage params={{ from, to, adults, children, rooms, filledRooms, extras }} setBookingPage={setBookingPage}/>
+      )}
+      {bookingPage === 2 && (
+        <GuestInfo setBookingPage={setBookingPage} />
+      )}
+      {bookingPage === 3 && (
+        <div className='grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-10 pb-[30px]'>
+          <SuccessSection setBookingPage={setBookingPage} />   
+          {/* <PaymentForm /> */}
+        <SummaryCard /></div>
+      )}
+    </>
+  )
 }
 
 export default StepsContent

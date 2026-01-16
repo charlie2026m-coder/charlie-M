@@ -64,7 +64,7 @@ const ConceptSection = () => {
       <MobileConcept items={conceptItems} title={t('concept_mobile_title')} />
       <div className='hidden lg:grid grid-cols-[53fr_47fr] gap-5 pb-30 border-b border-[#E0E0E0] '>
         <ConceptList items={conceptItems} onActiveIndexChange={handleActiveIndexChange} />
-        <ConceptSlider items={conceptItems} activeIndex={activeIndex} height={578} />
+        <ConceptSlider items={conceptItems} activeIndex={activeIndex} height={500} />
       </div>
       <div className='border-b w-full mt-5 lg:hidden'/>
     </div>

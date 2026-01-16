@@ -11,9 +11,9 @@ export default function Footer() {
   const pathname = usePathname();
   const contacts = [
     {
-      type: "phone",
-      label: PHONE_NUMBER,
-      value: PHONE_NUMBER,
+      type: "whatsapp",
+      label: "WhatsApp Chat Support 24/7",
+      value: PHONE_NUMBER, 
     },
     {
       type: "email",
@@ -21,14 +21,14 @@ export default function Footer() {
       value: EMAIL,
     },
     {
+      type: "phone",
+      label: "Call: " + PHONE_NUMBER,
+      value: PHONE_NUMBER,
+    },
+    {
       type: "location",
       label: "Friedrichstraße 33, 10969 Berlin",
       value: "https://maps.app.goo.gl/v21VbyU2o6WZWJFo7",
-    },
-    {
-      type: "whatsapp",
-      label: "WhatsApp Chat Support (24/7)",
-      value: PHONE_NUMBER, 
     },
   ];
 
@@ -87,7 +87,7 @@ export default function Footer() {
                     <li 
                       key={index}
                       onClick={() => handleContactClick(contact.type, contact.value)}
-                      className={cn("cursor-pointer text-sm md:text-base ", index === 3 && "font-bold text-blue")}
+                      className={cn("cursor-pointer text-sm md:text-base ", index === 0 && "font-bold text-blue")}
                     >
                       <span>{contact.label}</span>
                     </li>
@@ -101,7 +101,7 @@ export default function Footer() {
                     <li 
                       key={index}
                       onClick={() => handleContactClick(contact.type, contact.value)}
-                      className={cn("cursor-pointer ", index === 3 && "font-bold text-blue")}
+                      className={cn("cursor-pointer ", index === 0 && "font-bold text-blue")}
                     >
                       <span>{contact.label}</span>
                     </li>

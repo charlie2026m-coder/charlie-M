@@ -26,7 +26,7 @@ const Filters = () => {
 
   const getBalconyLabel = () => {
     const selected = filters.find(f => f.value === filter)?.label
-    return selected || 'All'
+    return selected || 'Any'
   }
 
   const getPriceLabel = () => {
@@ -58,7 +58,7 @@ const Filters = () => {
         />
 
         <FilterDropdown
-          label="Room"
+          label="Balcony"
           value={getBalconyLabel()}
           isOpen={balconyOpen}
           onOpenChange={setBalconyOpen}
@@ -103,14 +103,13 @@ const Filters = () => {
             htmlFor="child-bed-mobile" 
             className='text-[15px] inter font-[400] cursor-pointer'
           >
-            Child Bed
+            Baby Bed
           </Label>
         </div>
       </div>
   )
 }
 
-// Reusable Filter Dropdown Component
 interface FilterDropdownProps {
   className?: string
   label: string
@@ -166,7 +165,7 @@ export default Filters
 
 const filters = [
   {
-    label: 'All',
+    label: 'Any',
     value: 'all'
   },
   {

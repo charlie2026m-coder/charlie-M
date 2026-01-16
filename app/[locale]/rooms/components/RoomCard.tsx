@@ -25,7 +25,9 @@ const RoomCard = ({
     <div className='w-full flex flex-col rounded-[40px] bg-white overflow-hidden shadow-lg h-full'>
       <PhotoSlider height={260} images={room.images} roomName={room.name} />
       <div className='flex flex-col p-4 pb-6 h-full'>
-        <h2 className='text-xl font-medium jakarta mb-3'>{roomsNeeded > 1 ? `${roomsNeeded} X ` : ''}{room.name}</h2>
+        <Link href={`/rooms/${room.id}?${queryString}`}>
+          <h2 className='text-xl font-medium jakarta mb-3 hover:text-blue transition-colors cursor-pointer'>{roomsNeeded > 1 ? `${roomsNeeded} X ` : ''}{room.name}</h2>
+        </Link>
         <RoomParamsRow attributes={room.attributes} maxPersons={room.maxPersons} size={room.size} />
         <div className='text-mute mb-5 mt-auto'>per night from</div>
 

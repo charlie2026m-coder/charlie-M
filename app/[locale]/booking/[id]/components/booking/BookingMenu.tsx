@@ -1,11 +1,9 @@
 'use client'
 import { formatReservations, calculateNights, extraTooltip, getExtraPrice } from '@/lib/utils';
 import { useBookingStore } from '@/store/useBookingStore'
-import { BiSolidLike } from "react-icons/bi";
 import { UrlParams } from "@/types/apaleo";
 import { RoomOffer } from '@/types/offers';
 import { TAX_RATE } from '@/lib/Constants';
-import { useStore } from '@/store/useStore';
 import { Button } from "@/app/_components/ui/button";
 import { Room } from '@/types/types';
 import CustomTooltip from '@/app/_components/ui/CustomTooltip';
@@ -17,14 +15,15 @@ const BookingMenu = ({
   rooms: roomsOffers,
   params,
   filledRooms,
+  setBookingPage,
 }: {
   rooms: RoomOffer[]
   params: UrlParams
   filledRooms: Room[]
+  setBookingPage: (page: number) => void
 }) => {
   const { from, to } = params
   const nights = calculateNights(from as string, to as string)
-  const setValue = useStore( state => state.setValue)
   const { setBooking } = useBookingStore()
   const rooms = useBookingStore(state => state.rooms) || roomsOffers
   const roomDetails = useBookingStore(state => state.roomDetails) || roomsOffers[0]
@@ -65,7 +64,7 @@ const BookingMenu = ({
     )
     setBooking({ reservations })
 
-    setValue(2,'bookingPage')
+    setBookingPage(2)
   }
 
 
@@ -115,10 +114,7 @@ const BookingMenu = ({
           <span className='font-semibold text-lg'>Total price:</span>
           <Price price={totalPrice.toFixed(2)} />
       </div>
-      <div className='flex justify-center p-1 bg-[#FFC10733] rounded-full  text-[#D78426] mb-4'>
-        <BiSolidLike className='size-6 text-[#D78426]' />
-        -10% cheaper than on booking.com 
-      </div>
+
       <Button 
         className='w-full h-[55px]'
         onClick={goNext}

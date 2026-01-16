@@ -60,7 +60,7 @@ const DesignSection = ({ locale }: { locale: string }) => {
   return (
     <div className='flex flex-col container px-4 xl:px-[100px] py-5 lg:py-20'>
       <Header title={t('home.design_title')}/>
-      <p className='text-[#6E6E6E] inter text-[14px] text-center'>
+      <p className='text-[#6E6E6E] lg:hidden inter text-[14px] text-center'>
         {t('home.design_description')}
       </p>
 

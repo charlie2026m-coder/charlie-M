@@ -7,16 +7,14 @@ import { Button } from '@/app/_components/ui/button'
 import { Checkbox } from '@/app/_components/ui/checkbox'
 import { useBookingStore } from '@/store/useBookingStore'
 import { GuestDetailsFormData, guestDetailsSchema } from '@/types/schemas'
-import { useStore } from '@/store/useStore'
 import { useCreateBooking } from '@/app/hooks/useCreateBooking'
 import { Link } from '@/navigation'
 
-const GuestDetailsForm = () => {  
+const GuestDetailsForm = ({ setBookingPage }: { setBookingPage: (page: number) => void }) => {  
   const defaultValues = {name: '', last_name: '', email: '', phone: '', consent: false}
   const { register, handleSubmit, formState: { errors }, reset, watch, setValue: setFormValue } = useForm<GuestDetailsFormData>({ resolver: zodResolver(guestDetailsSchema), defaultValues,})
   const consent = watch('consent')
 
-  const setValue = useStore(state => state.setValue)
   const setBooking = useBookingStore(state => state.setBooking)
   const booking = useBookingStore(state => state.booking)
   const createBooking = useCreateBooking()
@@ -184,7 +182,7 @@ const GuestDetailsForm = () => {
           type='button' 
           variant='outline' 
           className='flex-1 max-w-[210px] h-[55px]'
-          onClick={() => setValue(1,'bookingPage')}
+          onClick={() => setBookingPage(1)}
           disabled={createBooking.isPending}
         >Back</Button>
         <Button 

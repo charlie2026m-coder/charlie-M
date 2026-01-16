@@ -9,11 +9,11 @@ import { Room } from "@/types/types"
 import { Service } from "@/types/apaleo"
 import { RoomOffer } from "@/types/offers"
 import { useBookingStore } from "@/store/useBookingStore"
-import { useStore } from "@/store/useStore"
 import { calculateNights, getType } from "@/lib/utils"
 
 const BookingPage = ({
   params,
+  setBookingPage,
 }: {
   params: {
     from: string
@@ -24,6 +24,7 @@ const BookingPage = ({
     filledRooms: Room[]
     extras: Service[]
   }
+  setBookingPage: (page: number) => void
 }) => {
   const { from, to, adults, children, rooms, filledRooms, extras } = params
   const setRooms = useBookingStore(state => state.setRooms)
@@ -32,7 +33,6 @@ const BookingPage = ({
   const clearBooking = useBookingStore(state => state.clearBooking)
   const bookingId = useBookingStore(state => state.bookingId)
   const setBookingId = useBookingStore(state => state.setBookingId)
-  const setValue = useStore(state => state.setValue)
   
   const nights = calculateNights(from as string, to as string)
   const planType = getType(nights, true)
@@ -51,7 +51,7 @@ const BookingPage = ({
     if (bookingId && bookingId !== currentBookingId) {
       // Параметры изменились - очищаем и заполняем заново
       clearBooking()
-      setValue(1, 'bookingPage')
+      setBookingPage(1)
       setRooms(filledRooms)
       setBookingId(currentBookingId)
     } else if (!bookingId) {
@@ -88,7 +88,8 @@ const BookingPage = ({
           <BookingMenu 
             rooms={rooms} 
             params={{ from, to, adults, children }} 
-            filledRooms={filledRooms} 
+            filledRooms={filledRooms}
+            setBookingPage={setBookingPage}
           />
         </div>
       </div>

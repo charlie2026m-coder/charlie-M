@@ -26,9 +26,7 @@ const Header = ({ locale, isWhite = false }: { locale: string, isWhite?: boolean
             </Link>
             <Navigation isWhite={isWhite} />
             <div className='flex items-center ml-auto'>
-              <div className="hidden lg:block">
-                <ViberNumber isWhite={isWhite} />
-              </div>
+              
               <AuthBlock isWhite={isWhite} />
               <div className="hidden md:block">
                 <Suspense fallback={<div className="w-10 h-10" />}>
