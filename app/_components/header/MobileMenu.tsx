@@ -9,14 +9,14 @@ import { XIcon } from "lucide-react";
 import { useState } from "react";
 import { Drawer, DrawerContent, DrawerTitle, VisuallyHidden } from "../ui/drawer"
 import { useProfile } from "@/app/hooks/useProfile";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Suspense } from "react";
-import ViberNumber from "./ViberNumber";
 
 const MobileMenu = ({ isWhite = false }: { isWhite?: boolean }) => {
   const { profile } = useProfile(); 
   const t = useTranslations();
+  const locale = useLocale();
   const [open, setOpen] = useState(false)
   const { user, loading } = useAuth();
   const pathname = usePathname();
@@ -63,7 +63,14 @@ const MobileMenu = ({ isWhite = false }: { isWhite?: boolean }) => {
         <VisuallyHidden>
           <DrawerTitle>Mobile Menu</DrawerTitle>
         </VisuallyHidden>
+       
         <div className='flex flex-col items-center py-5 px-3 h-full'>
+          <label className="flex items-center absolute top-8 left-5">
+            <Suspense fallback={<div className="size-10" />}>
+              {locale === 'en' ? 'ENG' : 'GER'}
+              <span className='opacity-0'><Language /> </span>
+            </Suspense>
+          </label>
           <XIcon 
             onClick={()=> setOpen(false)}
             className='absolute top-5 size-10 right-3 ' 
@@ -78,7 +85,6 @@ const MobileMenu = ({ isWhite = false }: { isWhite?: boolean }) => {
               className="w-[163px] h-[104px] mb-10" 
             />
           </Link>
-            <ViberNumber className='mb-10' />
 
           {isHomePage && (
             <div className='flex flex-col gap-5 items-center pb-10 gap-6'>
@@ -92,7 +98,9 @@ const MobileMenu = ({ isWhite = false }: { isWhite?: boolean }) => {
               ))}
             </div>
           )}
-          <div className='flex flex-col gap-6 w-4/5 pb-6'> 
+
+
+          <div className='flex flex-col gap-6 w-4/5 pb-6 pt-10'> 
             <Link href='/rooms' className='w-full' onClick={() => setOpen(false)}>
               <Button className='w-full h-[55px]'> {t('book_now_btn')} </Button>
             </Link>
@@ -100,22 +108,22 @@ const MobileMenu = ({ isWhite = false }: { isWhite?: boolean }) => {
               <Link href='/login' className='w-full' onClick={() => setOpen(false)}>
                 <Button variant='outline' className='w-full h-[55px] '> {t('sign_in_btn')} </Button>
               </Link>
-              <Link href='/rooms' className='w-full' onClick={() => setOpen(false)}>
-                <Button variant='outline' className='w-full h-[55px] border-none'> {t('check_in_btn')} </Button>
-              </Link>
             </>)}
+            <Link href='/rooms' className='w-full' onClick={() => setOpen(false)}>
+              <Button variant='outline' className='w-full h-[55px] border-none'> {t('check_in_btn')} </Button>
+            </Link>
 
             {!loading && user &&
-              <Link href="/profile" className="flex flex-col items-center mt-auto" onClick={() => setOpen(false)}>
-                <h3 className="text-[18px] text-white"> {t('header.my_account_link')} </h3>
-                <span className=" text-blue">{profile?.name || 'Dear guest'}</span>
+              <Link href="/profile" className="flex gap-2 items-center justify-center font-bold " onClick={() => setOpen(false)}>
+                <div className="size-12 bg-blue rounded-full flex items-center justify-center">
+                  {profile?.name?.charAt(0)}
+                </div>
+                {profile?.name + ' ' + profile?.last_name || 'Dear guest'}
               </Link>
             }
           </div>
  
-          <Suspense fallback={<div className="size-10" />}>
-            <Language /> 
-          </Suspense>
+
         </div>
       </DrawerContent>
     </Drawer>

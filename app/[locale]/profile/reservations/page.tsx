@@ -20,7 +20,7 @@ const Reservations = () => {
   } as const
   
   return (
-    <div className='flex flex-col flex-1 px-3 lg:px-[30px]'>
+    <div className='flex flex-col flex-1  p-3 lg:p-[30px] '>
       <div className='flex items-center gap-2 font-semibold text-2xl mb-5'>
         {isGuestMode ? 'Your Booking' : title[reservationFilter as keyof typeof title]}
       </div>

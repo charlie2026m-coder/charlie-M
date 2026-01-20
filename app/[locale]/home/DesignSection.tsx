@@ -58,35 +58,18 @@ const DesignSection = ({ locale }: { locale: string }) => {
   ])
 
   return (
-    <div className='flex flex-col container px-4 xl:px-[100px] py-5 lg:py-20'>
-      <Header title={t('home.design_title')}/>
+    <div className='flex flex-col container  py-5 lg:py-20 relative'>
+      <Header title={t('home.design_title')} isThin={true} size="md" />
       <p className='text-[#6E6E6E] lg:hidden inter text-[14px] text-center'>
         {t('home.design_description')}
       </p>
 
       <DesignSlider items={sliderItems} />
 
-      <div className='hidden lg:grid pt-4 lg:pt-20 grid-cols-3 gap-8'>
+      <div className='hidden lg:grid pt-4 lg:pt-18 grid-cols-3 gap-8 relative px-4 xl:px-25 pr-25'>
 
-        <div className='flex flex-col  justify-between'>
+        <div className='flex flex-col  justify-center'>
           <p className='text-[#6E6E6E] inter text-[17px] leading-[31px]'>{t('home.design_description')}  </p>
-          <nav className='flex items-center gap-8 mt-8'>
-            <Button 
-              variant="outline" 
-              className='size-[70px] border-mute text-mute'
-              onClick={handlePrevious}
-            >
-              <GoArrowLeft className='size-7' />
-            </Button>
-            <Button 
-              variant="outline" 
-              className='size-[70px] border-mute text-mute'
-              onClick={handleNext}
-            >
-              <GoArrowRight className='size-7' />
-            </Button>
-          </nav>
-
         </div>
 
         <div className="flex flex-col gap-5 items-center">
@@ -110,6 +93,13 @@ const DesignSection = ({ locale }: { locale: string }) => {
           />
           <p className="text-center text-mute font-bold text-[25px]">{items[activeItem].image_title_2}</p>
         </div>
+        <Button 
+          variant="outline" 
+          className='size-[70px] border-mute text-mute absolute right-4 top-1/2 -translate-y-1/2'
+          onClick={handleNext}
+        >
+          <GoArrowRight className='size-7' />
+        </Button>
       </div>
     </div>
   )

@@ -11,8 +11,18 @@ const propId = process.env.APALEO_PROPERTY_ID;
 const getAvailableRoomsInternal = async (from?: string, to?: string, guests: number = 1) => {
   if (!propId) throw new Error('Property ID is required. Set APALEO_PROPERTY_ID in .env');
   
-  const arrival = from || dayjs().format('YYYY-MM-DD');
-  const departure = to || dayjs().add(1, 'day').format('YYYY-MM-DD');
+  let arrival = from || dayjs().format('YYYY-MM-DD');
+  let departure = to || dayjs().add(1, 'day').format('YYYY-MM-DD');
+  
+  // Validate that departure is at least 1 day after arrival
+  if (arrival === departure) {
+    departure = dayjs(arrival).add(1, 'day').format('YYYY-MM-DD');
+  } else if (dayjs(departure).isBefore(dayjs(arrival))) {
+    const temp = arrival;
+    arrival = departure;
+    departure = dayjs(temp).add(1, 'day').format('YYYY-MM-DD');
+  }
+  
   const guestsCount = (guests && guests > 1) ? 2 : 1;
 
   try {

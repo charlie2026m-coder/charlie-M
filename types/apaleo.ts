@@ -138,6 +138,42 @@ export interface Service {
   currency: string;
   pricingType: PricingType;
   daysOfWeek: string[];
+  unlimited: boolean;
+}
+
+//_____________________AVAILABILITY
+export interface AvailabilityService {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+}
+
+export interface AvailabilityBlock {
+  definite: number;
+  tentative: number;
+  picked: number;
+  remaining: number;
+}
+
+export interface AvailabilityServiceItem {
+  service: AvailabilityService;
+  quantity: number;
+  soldCount: number;
+  availableCount: number;
+  serviceDate: string;
+  block: AvailabilityBlock;
+}
+
+export interface AvailabilityTimeSlice {
+  from: string;
+  to: string;
+  services: AvailabilityServiceItem[];
+}
+
+export interface AvailabilityResponse {
+  timeSlices: AvailabilityTimeSlice[];
+  count: number;
 }
 
 //_____________________BOOKING PAYLOAD

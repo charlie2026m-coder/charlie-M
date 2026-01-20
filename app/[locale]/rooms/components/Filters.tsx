@@ -79,7 +79,7 @@ const Filters = () => {
             htmlFor="child-bed" 
             className='text-[15px] inter font-[400] cursor-pointer'
           >
-            Child Bed
+            Baby Bed
           </Label>
         </div>
         <FilterDropdown

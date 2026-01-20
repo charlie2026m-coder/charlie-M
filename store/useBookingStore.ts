@@ -58,7 +58,6 @@ export const useBookingStore = create<BookingState>()(
       setBookingId: (id: string) => set((state) => ({ ...state, bookingId: id })),
 
       rooms: [],
-      //booking process store
       booking: undefined,
       setValue: (value, key) => set((state) => ({ ...state, [key]: value })),
 

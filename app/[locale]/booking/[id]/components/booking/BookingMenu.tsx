@@ -60,9 +60,12 @@ const BookingMenu = ({
       from as string, 
       to as string, 
       roomDetails, 
-      updatedRooms, 
+      updatedRooms as Room[], 
     )
-    setBooking({ reservations })
+    setBooking({ 
+      reservations,
+      totalAmount: Math.round(totalPrice) 
+    })
 
     setBookingPage(2)
   }

@@ -132,7 +132,7 @@ export default function Profile() {
   }
 
   return (
-    <div className='px-[30px] flex flex-col'>
+    <div className='px-[30px] flex flex-col pt-10'>
       <form onSubmit={(e) => e.preventDefault()}>
         <h3 className="flex gap-2 items-center font-semibold text-2xl mb-9">Profile</h3>
         <div className='grid  lg:grid-cols-2 gap-8 mb-5'>

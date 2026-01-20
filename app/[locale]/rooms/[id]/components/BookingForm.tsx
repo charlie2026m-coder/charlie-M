@@ -103,10 +103,28 @@ const BookingForm = ({ id, room, params }: { id: string, room: RoomOffer , param
               captionLayout="label"
               selected={dateRange}
               onSelect={(date) => {
-                setDateRange(date as DateRange);
-                if (date?.from && date?.to) {
-                  setValue(date as DateRange, 'dateRange');
+                if (date?.from && !date?.to) {
+                  const nextDay = new Date(date.from);
+                  nextDay.setDate(nextDay.getDate() + 1);
+                  const newRange = { from: date.from, to: nextDay };
+                  setDateRange(newRange);
+                  setValue(newRange, 'dateRange');
                   setDateError(false);
+                } else if (date?.from && date?.to) {
+                  // Check if same day selected
+                  if (date.from.getTime() === date.to.getTime()) {
+                    const nextDay = new Date(date.from);
+                    nextDay.setDate(nextDay.getDate() + 1);
+                    const newRange = { from: date.from, to: nextDay };
+                    setDateRange(newRange);
+                    setValue(newRange, 'dateRange');
+                  } else {
+                    setDateRange(date as DateRange);
+                    setValue(date as DateRange, 'dateRange');
+                  }
+                  setDateError(false);
+                } else {
+                  setDateRange(date as DateRange);
                 }
               }}
               disabled={{ before: new Date() }}

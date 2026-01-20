@@ -20,7 +20,7 @@ const MainInfo = ({ reservation }: { reservation: any } ) => {
   const isInHouse = reservation.status === bookingStatuses.InHouse;
   const isCheckedOut = reservation.status === bookingStatuses.CheckedOut;
   return (
-    <div className='grid lg:grid-cols-2 gap-4 pb-6 px-3 lg:px-[30px]'>
+    <div className='grid lg:grid-cols-2 gap-4 pb-6 '>
     <div>
       <div className='flex  gap-3 mb-5'>
         <h2 className='text-[26px]  jakarta font-bold'>{reservation.name}</h2>

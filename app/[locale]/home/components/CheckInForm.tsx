@@ -119,9 +119,24 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
                 captionLayout="label"
                 selected={dateRange}
                 onSelect={(date) => {
-                  setValue(date as DateRange, 'dateRange');
-                  if (date?.from && date?.to && dateError) {
-                    setDateError(false);
+                  if (date?.from && !date?.to) {
+                    // Auto-select next day when only from is selected
+                    const nextDay = new Date(date.from);
+                    nextDay.setDate(nextDay.getDate() + 1);
+                    setValue({ from: date.from, to: nextDay }, 'dateRange');
+                    if (dateError) setDateError(false);
+                  } else if (date?.from && date?.to) {
+                    // Check if same day selected
+                    if (date.from.getTime() === date.to.getTime()) {
+                      const nextDay = new Date(date.from);
+                      nextDay.setDate(nextDay.getDate() + 1);
+                      setValue({ from: date.from, to: nextDay }, 'dateRange');
+                    } else {
+                      setValue(date as DateRange, 'dateRange');
+                    }
+                    if (dateError) setDateError(false);
+                  } else {
+                    setValue(date as DateRange, 'dateRange');
                   }
                 }}
                 month={currentMonth}
@@ -138,9 +153,24 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
                 captionLayout="label"
                 selected={dateRange}
                 onSelect={(date) => {
-                  setValue(date as DateRange, 'dateRange');
-                  if (date?.from && date?.to && dateError) {
-                    setDateError(false);
+                  if (date?.from && !date?.to) {
+                    // Auto-select next day when only from is selected
+                    const nextDay = new Date(date.from);
+                    nextDay.setDate(nextDay.getDate() + 1);
+                    setValue({ from: date.from, to: nextDay }, 'dateRange');
+                    if (dateError) setDateError(false);
+                  } else if (date?.from && date?.to) {
+                    // Check if same day selected
+                    if (date.from.getTime() === date.to.getTime()) {
+                      const nextDay = new Date(date.from);
+                      nextDay.setDate(nextDay.getDate() + 1);
+                      setValue({ from: date.from, to: nextDay }, 'dateRange');
+                    } else {
+                      setValue(date as DateRange, 'dateRange');
+                    }
+                    if (dateError) setDateError(false);
+                  } else {
+                    setValue(date as DateRange, 'dateRange');
                   }
                 }}
                 month={nextMonth}

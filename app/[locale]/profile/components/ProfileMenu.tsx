@@ -38,7 +38,7 @@ const ProfileMenu = () => {
   const resTabs = ['All', 'Ongoing', 'Upcoming', 'Completed', 'Canceled' ] as const
 
   return (
-    <CustomCard className=" col-span-1 self-start shadow-lg">
+    <CustomCard className=" col-span-1 self-start border rounded-[40px]  p-3 lg:p-[30px]">
       <h1 className='text-lg pb-5 border-b w-full text-center mb-5'>{profile?.name || ' Jnohn Dou'}</h1>
 
       {tabs.map((tab) => {

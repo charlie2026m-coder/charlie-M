@@ -75,6 +75,7 @@ const GuestDetailsForm = ({ setBookingPage }: { setBookingPage: (page: number) =
         phone: data.phone,
       },
       consent: data.consent, // Include consent flag
+      totalAmount: booking.totalAmount, // Include total amount
       reservations: updatedReservations
     }
     setBooking(bookingModel)

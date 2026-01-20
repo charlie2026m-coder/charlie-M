@@ -8,7 +8,7 @@ const UpgradeRoom = ({ extras }: { extras: Service[] }) => {
   }
 
   return (
-    <div className='px-3 lg:px-[30px]'>
+    <div >
       <div className='flex items-center gap-2 border-b pb-2 mb-5 text-lg font-semibold w-full'>
         Add Extras:
       </div>

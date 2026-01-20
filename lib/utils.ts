@@ -213,9 +213,7 @@ export const formatReservations = (
   roomDetails: RoomOffer, 
   updatedRooms: Room[], 
 ) => {
-  const timeSlices = roomDetails.timeSlices.map(slice => ({
-    ratePlanId: roomDetails.ratePlan.id
-  }))
+  const timeSlices = roomDetails.timeSlices.map(_ => ({ ratePlanId: roomDetails.ratePlan.id }))
 
   const reservations = updatedRooms.map(item =>{
     const childrenAges = item.children > 0 ? Array(item.children).fill(0) as number[] : undefined
@@ -223,7 +221,7 @@ export const formatReservations = (
       arrival: from,
       departure: to,
       adults: item.adults,
-      channelCode: 'Direct' as const,
+      channelCode: 'IBE' as const,
       guaranteeType: 'Prepayment' as const,
       timeSlices,
       services: item.extras?.map(extra => ({

@@ -7,13 +7,14 @@ export interface Booking {
   },
 
   consent?: boolean; // GDPR consent flag
+  totalAmount?: number; // Total price including rooms, extras and tax
 
   reservations: {
     arrival: string;
     departure: string;
     adults: number;
     childrenAges?: number[], // optional maybe
-    channelCode: "Direct",
+    channelCode: "IBE",
 
     primaryGuest?: {
       firstName: string;
