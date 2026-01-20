@@ -42,6 +42,7 @@ export interface Room {
   from: string;
   to: string;
   extras?: RoomExtra[];
+
 }
 
 export interface RoomDetails extends SingleRoom {

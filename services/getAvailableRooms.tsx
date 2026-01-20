@@ -44,7 +44,7 @@ const getAvailableRoomsInternal = async (from?: string, to?: string, guests: num
         return {
           ...room,
           images: roomDetails?.photos || [],
-          id: room.unitGroup.id,
+          id: `${room.unitGroup.id}-${room.ratePlan.id}`, // Unique ID combining unit group and rate plan
           name: room.unitGroup.name,
           description: room.unitGroup.description,
           price: room.totalGrossAmount.amount,

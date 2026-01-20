@@ -147,7 +147,7 @@ const GuestDetailsForm = ({ setBookingPage }: { setBookingPage: (page: number) =
       </div>
 
       <div className='mb-8'>
-        <div className='flex items-start gap-3'>
+        <div className='flex items-center gap-3'>
           <Checkbox
             size='sm'
             id='consent'
@@ -157,11 +157,7 @@ const GuestDetailsForm = ({ setBookingPage }: { setBookingPage: (page: number) =
             }}
             className={errors.consent ? 'border-red' : ''}
           />
-          <label 
-            htmlFor='consent' 
-            className='text-sm text-dark cursor-pointer leading-relaxed'
-            onClick={() => setFormValue('consent', !consent, { shouldValidate: true })}
-          >
+          <div className='text-sm text-dark cursor-pointer leading-relaxed' >
             I agree to the{' '}
             <Link 
               href='/privacy-policy' 
@@ -171,7 +167,7 @@ const GuestDetailsForm = ({ setBookingPage }: { setBookingPage: (page: number) =
             >
               Privacy Policy
             </Link>
-          </label>
+          </div>
         </div>
         {errors.consent && (
           <span className='text-red text-xs mt-1 block pl-10'>{errors.consent.message}</span>

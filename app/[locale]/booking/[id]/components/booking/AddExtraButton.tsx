@@ -32,7 +32,14 @@ const AddExtraButton = ({extra}:{extra: Service}) => {
       
       if (selectedRooms.includes(room.id)) {
         const newExtra = {
-          ...extra,
+          roomId: room.id,
+          currency: extra.currency,
+          price: extra.price,
+          name: extra.name,
+          id: extra.id,
+          pricingType: extra.pricingType,
+          pricingUnit: extra.pricingUnit,
+          daysOfWeek: extra.daysOfWeek,
         }
         const hasExtra = currentExtras.some(e => e.id === extra.id)
         if (!hasExtra) {

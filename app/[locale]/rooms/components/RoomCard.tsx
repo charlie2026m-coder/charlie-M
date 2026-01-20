@@ -20,12 +20,15 @@ const RoomCard = ({
 
   const roomsNeeded = Math.ceil(Number(params.adults || 1) / room.maxPersons);
   const price = roomsNeeded * room.timeSlices[0].totalGrossAmount.amount;
+  
+  // Use unitGroup.id for navigation (original room ID without rate plan)
+  const roomDetailId = room.unitGroup.id;
 
   return (
     <div className='w-full flex flex-col rounded-[40px] bg-white overflow-hidden shadow-lg h-full'>
       <PhotoSlider height={260} images={room.images} roomName={room.name} />
       <div className='flex flex-col p-4 pb-6 h-full'>
-        <Link href={`/rooms/${room.id}?${queryString}`}>
+        <Link href={`/rooms/${roomDetailId}?${queryString}`}>
           <h2 className='text-xl font-medium jakarta mb-3 hover:text-blue transition-colors cursor-pointer'>{roomsNeeded > 1 ? `${roomsNeeded} X ` : ''}{room.name}</h2>
         </Link>
         <RoomParamsRow attributes={room.attributes} maxPersons={room.maxPersons} size={room.size} />
@@ -33,7 +36,7 @@ const RoomCard = ({
 
         <div className='flex xxs:flex-row flex-col items-center gap-2 md:gap-8 justify-between w-full'>
           <Price price={price.toFixed(2)} className='h-[50px] w-full xs:w-auto' />
-          <Link href={`/rooms/${room.id}?${queryString}`} className='w-full'>  
+          <Link href={`/rooms/${roomDetailId}?${queryString}`} className='w-full'>  
             <Button variant='outline' className='h-[50px] w-full active:bg-black active:text-white'>Book Now</Button>
           </Link>
         </div>

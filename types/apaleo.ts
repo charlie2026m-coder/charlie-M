@@ -138,7 +138,7 @@ export interface Service {
   currency: string;
   pricingType: PricingType;
   daysOfWeek: string[];
-  unlimited: boolean;
+  unlimited?: boolean;
 }
 
 //_____________________AVAILABILITY

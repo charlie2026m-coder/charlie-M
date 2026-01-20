@@ -1,7 +1,7 @@
 'use client'
 import { useStore } from "@/store/useStore"
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/_components/ui/popover"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { Check } from "lucide-react"
 import { Checkbox } from "@/app/_components/ui/checkbox"
@@ -131,6 +131,24 @@ const FilterDropdown = ({
   selectedValue, 
   onSelect 
 }: FilterDropdownProps) => {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Server-side and initial client render: show button only
+  if (!mounted) {
+    return (
+      <button className={cn('px-3 py-1 rounded-lg border transition-all', className)} suppressHydrationWarning>
+        <span className='text-[15px] inter'>
+          <span className='text-gray-500'>{label}:</span> <span className='font-[500]'>{value}</span>
+        </span>
+      </button>
+    )
+  }
+
+  // Client-side after mount: show full Popover
   return (
     <Popover open={isOpen} onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>
