@@ -10,16 +10,18 @@ import { Booking } from '@/types/booking';
 
 interface BookingState {
   booking: Booking | undefined;
+  transactionReference: string | null;
   
   roomDetails: RoomOffer | undefined;
   rooms: Room[] ;
 
   isRefundable: boolean;
   params: { from: string; to: string; nights: number; }
-  bookingId: string | undefined; // Identifier for current booking session
+  bookingId: string | undefined;
 
   
   setBooking: (booking: Booking) => void;
+  setTransactionReference: (transactionReference: string) => void;
   setRoomDetails: (roomDetails: RoomOffer) => void;
 
   setIsRefundable: (isRefundable: boolean) => void;
@@ -45,6 +47,9 @@ export const useBookingStore = create<BookingState>()(
     (set) => ({
       roomDetails: undefined,
       setRoomDetails: (roomDetails: RoomOffer) => set((state) => ({ ...state, roomDetails })),
+
+      transactionReference: null,
+      setTransactionReference: (transactionReference: string) => set((state) => ({ ...state, transactionReference })),
 
       isRefundable: true,
       setIsRefundable: (isRefundable: boolean) => set((state) => ({ ...state, isRefundable })),
@@ -86,6 +91,7 @@ export const useBookingStore = create<BookingState>()(
           roomDetails: undefined,
           bookingId: undefined,
           isRefundable: true,
+          transactionReference: null,
         })
       },
     }),

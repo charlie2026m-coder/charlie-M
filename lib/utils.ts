@@ -214,9 +214,15 @@ export const formatReservations = (
   updatedRooms: Room[], 
 ) => {
   const timeSlices = roomDetails.timeSlices.map(_ => ({ ratePlanId: roomDetails.ratePlan.id }))
+  const roomPrice = roomDetails.price || 0
 
   const reservations = updatedRooms.map(item =>{
     const childrenAges = item.children > 0 ? Array(item.children).fill(0) as number[] : undefined
+    
+    // Calculate price for this reservation (room + extras)
+    const extrasPrice = item.extras?.reduce((acc, extra) => acc + (extra.totalPrice || 0), 0) || 0
+    const reservationAmount = roomPrice + extrasPrice
+    
     return {
       arrival: from,
       departure: to,
@@ -227,6 +233,7 @@ export const formatReservations = (
       services: item.extras?.map(extra => ({
         serviceId: extra.id
       })) || [],
+      reservationAmount,
       ...(childrenAges && { childrenAges }),
     }
   })

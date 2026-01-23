@@ -13,7 +13,6 @@ import { calculateNights, getType } from "@/lib/utils"
 
 const BookingPage = ({
   params,
-  setBookingPage,
 }: {
   params: {
     from: string
@@ -24,7 +23,6 @@ const BookingPage = ({
     filledRooms: Room[]
     extras: Service[]
   }
-  setBookingPage: (page: number) => void
 }) => {
   const { from, to, adults, children, rooms, filledRooms, extras } = params
   const setRooms = useBookingStore(state => state.setRooms)
@@ -49,20 +47,17 @@ const BookingPage = ({
     const currentBookingId = `${mainRoom?.id || mainRoom?.code}-${from}-${to}-${adults}-${children}`
     
     if (bookingId && bookingId !== currentBookingId) {
-      // Параметры изменились - очищаем и заполняем заново
       clearBooking()
-      setBookingPage(1)
       setRooms(filledRooms)
       setBookingId(currentBookingId)
     } else if (!bookingId) {
-      // Первая загрузка - всегда устанавливаем новые параметры
       setBookingId(currentBookingId)
       setRooms(filledRooms)
     }
   }, [from, to, adults, children, mainRoom?.id, mainRoom?.code])
 
   useEffect(() => {
-    if (typeof window === 'undefined') return // Skip SSR
+    if (typeof window === 'undefined') return
     if (!useBookingStore.persist.hasHydrated()) return
     
     const currentBookingId = `${mainRoom?.id || mainRoom?.code}-${from}-${to}-${adults}-${children}`
@@ -89,7 +84,6 @@ const BookingPage = ({
             rooms={rooms} 
             params={{ from, to, adults, children }} 
             filledRooms={filledRooms}
-            setBookingPage={setBookingPage}
           />
         </div>
       </div>

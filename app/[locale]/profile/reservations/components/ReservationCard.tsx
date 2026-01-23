@@ -6,7 +6,7 @@ import StatusBadge from '@/app/_components/ui/StatusBadge';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/app/_components/ui/separator';
 import { toast } from 'sonner';
-import { AddExtrasButton, InfoButton, DetailsButton, BookAgainButton, InvoiceButton, CheckinButton } from './Buttons';
+import { InfoButton, DetailsButton, BookAgainButton, InvoiceButton, CheckinButton } from './Buttons';
 import { bookingStatuses } from '@/types/types';
 import { Reservation as ReservationType } from '@/types/apaleo';
 import { Link } from '@/navigation';
@@ -16,10 +16,9 @@ const ReservationCard = ({ reservation }: { reservation: ReservationType,}  ) =>
   const to = dayjs(departure).format('ddd D MMM YYYY');
   const isCancelled = status === bookingStatuses.Canceled;
   const isCompleted = status === bookingStatuses.CheckedOut;
-  const isActive = status === bookingStatuses.Confirmed;
   const isCheckin = false;
-  // const roomNumber = undefined;
-  const code = undefined;
+  const roomNumber = 34;
+  const code = 234323;
   return (
     <div className='flex flex-col lg:flex-row bg-white border rounded-2xl p-3 relative'>
       <Image 
@@ -46,11 +45,10 @@ const ReservationCard = ({ reservation }: { reservation: ReservationType,}  ) =>
           </span>
         </div>
         <div className='flex gap-2.5 xl:items-center flex-col xl:flex-row '>
-          {/* {code && <RoomCode roomNumber={roomNumber} code={code} />} */}
+          {code && <RoomCode roomNumber={roomNumber} code={code} />}
           <div className='flex gap-2 grow flex-col lg:flex-row '>
             {code && <InfoButton />}
             {!isCheckin && !isCancelled  && <CheckinButton />}
-            {isActive && <AddExtrasButton />}
             {(isCompleted || isCancelled) && <BookAgainButton reservation={reservation} />}
             {isCompleted  && <InvoiceButton />}
             <DetailsButton id={id} />

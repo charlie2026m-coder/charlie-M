@@ -139,6 +139,7 @@ export interface Service {
   pricingType: PricingType;
   daysOfWeek: string[];
   unlimited?: boolean;
+  dates?: AvailabilityServiceItem[];
 }
 
 //_____________________AVAILABILITY
@@ -149,20 +150,14 @@ export interface AvailabilityService {
   description: string;
 }
 
-export interface AvailabilityBlock {
-  definite: number;
-  tentative: number;
-  picked: number;
-  remaining: number;
-}
+
 
 export interface AvailabilityServiceItem {
-  service: AvailabilityService;
-  quantity: number;
-  soldCount: number;
   availableCount: number;
+  quantity: number;
+  service: AvailabilityService;
   serviceDate: string;
-  block: AvailabilityBlock;
+  soldCount: number;
 }
 
 export interface AvailabilityTimeSlice {

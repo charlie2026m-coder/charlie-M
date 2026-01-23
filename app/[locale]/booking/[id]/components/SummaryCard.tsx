@@ -1,10 +1,9 @@
 'use client'
 import { useBookingStore } from '@/store/useBookingStore'
 import Price from "@/app/_components/ui/price";
-import { BiSolidLike } from "react-icons/bi";
 import Image from 'next/image';
 import { calculateNights } from '@/lib/utils';
-import { TAX_RATE } from '@/lib/Constants';
+// import { TAX_RATE } from '@/lib/Constants';
 import { BsCalendar2Fill } from 'react-icons/bs';
 import dayjs from 'dayjs';
 import { getExtraPrice } from '@/lib/utils';
@@ -45,8 +44,7 @@ const SummaryCard = () => {
   //calculate total price for rooms and extras
   const roomsTotalPrice = rooms.reduce((acc, _) => acc + roomPrice, 0)
   const extrasTotalPrice = flatExtras.reduce((acc, extra) => acc + extra.totalPrice, 0)
-  const taxPrice = roomsTotalPrice * TAX_RATE / 100
-  const totalPrice = roomsTotalPrice + extrasTotalPrice + taxPrice
+  const totalPrice = roomsTotalPrice + extrasTotalPrice
 
   return (
     <div className='flex flex-col bg-white rounded-[20px] py-5 px-3 shadow-xl self-start col-span-1'>
@@ -80,7 +78,7 @@ const SummaryCard = () => {
           ))}
           <div className='flex items-center gap-2 inter text-sm text-dark mt-2'>
             <span>City tax:</span>
-            <span className='text-bale font-semibold ml-auto'>€ {taxPrice.toFixed(2)}</span>
+            <span className='text-bale font-semibold ml-auto'>7.5%</span>
           </div>
         </div>
       </div>
@@ -95,7 +93,7 @@ const SummaryCard = () => {
                   <div key={extra.id} className='flex items-center gap-2 inter text-sm text-dark'>
                     <span className='truncate'>Room {index + 1} - {extra.name}</span>
                     <span className='text-bale font-semibold ml-auto'>
-                      € {extra.totalPrice}
+                      € {extra.totalPrice.toFixed(2)}
                     </span>
                   </div>
                 ))}

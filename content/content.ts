@@ -1,27 +1,3 @@
-
-type ITypeM = 'privacyPolicy' | 'termsAndConditions'
-interface IContentPAndT {
-  title: string,
-  paragraphs: string[];
-}
-interface IMaterials {
-  privacyPolicy:{
-    title: string;
-    description: string;
-    lastUpdated: string;
-    content: IContentPAndT[]
-  },
-  termsAndConditions:{
-    title: string;
-    description: string;
-    lastUpdated: string;
-    content: IContentPAndT[]
-  },
-
-}
-
-
-
 export const infoCardsContent = [
   { 
     id: 1, 

@@ -3,25 +3,25 @@ import { formatReservations, calculateNights, extraTooltip, getExtraPrice } from
 import { useBookingStore } from '@/store/useBookingStore'
 import { UrlParams } from "@/types/apaleo";
 import { RoomOffer } from '@/types/offers';
-import { TAX_RATE } from '@/lib/Constants';
 import { Button } from "@/app/_components/ui/button";
 import { Room } from '@/types/types';
 import CustomTooltip from '@/app/_components/ui/CustomTooltip';
 import ChangeDate from './ChangeDate';
 import AddRooms from './AddRooms';
 import Price from "@/app/_components/ui/price";
+import { useRouter, useParams } from 'next/navigation';
 
 const BookingMenu = ({
   rooms: roomsOffers,
   params,
   filledRooms,
-  setBookingPage,
 }: {
   rooms: RoomOffer[]
   params: UrlParams
   filledRooms: Room[]
-  setBookingPage: (page: number) => void
 }) => {
+  const router = useRouter()
+  const urlParams = useParams()
   const { from, to } = params
   const nights = calculateNights(from as string, to as string)
   const { setBooking } = useBookingStore()
@@ -50,12 +50,10 @@ const BookingMenu = ({
   const roomsTotalPrice = rooms.reduce((acc, _) => acc + price, 0)
   const extrasTotalPrice = flatExtras.reduce((acc, extra) => acc + extra.totalPrice, 0)
   
-  const taxPrice = roomsTotalPrice * TAX_RATE / 100
-  const totalPrice = roomsTotalPrice + extrasTotalPrice + taxPrice
+  const totalPrice = roomsTotalPrice + extrasTotalPrice
  
 
   const goNext = () => {
-    // Pass existing booking to preserve booker data
     const reservations = formatReservations(
       from as string, 
       to as string, 
@@ -64,10 +62,10 @@ const BookingMenu = ({
     )
     setBooking({ 
       reservations,
-      totalAmount: Math.round(totalPrice) 
+      totalAmount: totalPrice
     })
 
-    setBookingPage(2)
+    router.push(`/${urlParams.locale}/booking/${urlParams.id}/payment`)
   }
 
 
@@ -88,7 +86,7 @@ const BookingMenu = ({
           ))}
           <div  className='flex items-center gap-2 inter text-sm text-dark mt-2'>
             <span>City tax:</span>
-            <span className='text-bale font-semibold ml-auto'>€ {taxPrice.toFixed(2)}</span>
+            <span className='text-bale font-semibold ml-auto'>7.5%</span>
           </div>
         </div>
         {flatExtras.length > 0 && <>
@@ -103,7 +101,7 @@ const BookingMenu = ({
                         Room {index + 1} - {extra.name}
                         <CustomTooltip className='self-center ml-2' text={extraTooltip(extra)}/>
                       </div>
-                      <span className='text-bale font-semibold ml-auto'>€ {extra.totalPrice}</span>
+                      <span className='text-bale font-semibold ml-auto'>€ {extra.totalPrice.toFixed(2)}</span>
                     </div>
                   )
                 })}

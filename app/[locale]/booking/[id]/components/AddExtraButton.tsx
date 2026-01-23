@@ -1,9 +1,12 @@
 import { FaPlus, FaCheck } from "react-icons/fa6";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/app/_components/ui/popover"
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTrigger,
+  DialogTitle,
+  DialogDescription,
+} from "@/app/_components/ui/dialog"
 import { Label } from "@/app/_components/ui/label";
 import { Checkbox } from "@/app/_components/ui/checkbox";
 import { Button } from "@/app/_components/ui/button";
@@ -83,55 +86,60 @@ const AddExtraButton = ({extra}:{extra: Service}) => {
   }, [isOpen])
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
-    <PopoverTrigger asChild>
-      <div className='absolute flex top-2.5 right-2.5 items-center justify-center  rounded transition-all duration-300 cursor-pointer size-10  shadow-lg bg-blue border-blue text-white  '>
-        <FaPlus className='size-6'  />
-      </div>
-    </PopoverTrigger>
-    <PopoverContent className="rounded-xl ">
-      <h4 className='font-semibold mb-3'>{extra.name}</h4>
-      <div className='flex flex-col gap-3 py-3 border-t border-b'>
-        {rooms.map((room, index) => (
-          <div key={room.id} className='flex items-center gap-2 font-semibold cursor-pointer'>
-            <Checkbox 
-              id={room.id}
-              className='size-7' 
-              checked={selectedRooms.includes(room.id)}
-              onCheckedChange={() => handleSelectRoom(room.id)}
-            /> 
-            <Label htmlFor={room.id} className='cursor-pointer'>
-              Room {index + 1}
-            </Label>
-          </div>
-        ))}
-      </div>
-      <div className='flex justify-between items-center pt-3'>
-        <Button 
-          onClick={() => handleCancel()} 
-          variant="outline" 
-          className='h-[45px] w-30'
-          disabled={isDone}
-        >
-          Cancel
-        </Button>
-        <Button 
-          onClick={() => handleAddExtra(selectedRooms)} 
-          className={`h-[45px] w-30 flex items-center justify-center gap-2 `}
-          disabled={isDone}
-        >
-          {isDone ? (
-            <>
-              <FaCheck className='size-4' />
-              Done
-            </>
-          ) : (
-            'Add'
-          )}
-        </Button>
-      </div>
-    </PopoverContent>
-    </Popover>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <div className='absolute flex top-2.5 right-2.5 items-center justify-center rounded transition-all duration-300 cursor-pointer size-10 shadow-lg bg-blue border-blue text-white'>
+          <FaPlus className='size-6' />
+        </div>
+      </DialogTrigger>
+      <DialogContent className="rounded-xl">
+        <DialogHeader>
+          <DialogTitle className='font-semibold'>{extra.name}</DialogTitle>
+        </DialogHeader>
+        {!extra.unlimited && <DialogDescription>
+          Please note, the number of {extra.name} is limited
+        </DialogDescription>}
+        <div className='flex flex-col gap-3 py-3 border-t border-b'>
+          {rooms.map((room, index) => (
+            <div key={room.id} className='flex items-center gap-2 font-semibold cursor-pointer'>
+              <Checkbox 
+                id={room.id}
+                className='size-7' 
+                checked={selectedRooms.includes(room.id)}
+                onCheckedChange={() => handleSelectRoom(room.id)}
+              /> 
+              <Label htmlFor={room.id} className='cursor-pointer'>
+                Room {index + 1}
+              </Label>
+            </div>
+          ))}
+        </div>
+        <div className='flex justify-between items-center pt-3'>
+          <Button 
+            onClick={() => handleCancel()} 
+            variant="outline" 
+            className='h-[45px] w-30'
+            disabled={isDone}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={() => handleAddExtra(selectedRooms)} 
+            className={`h-[45px] w-30 flex items-center justify-center gap-2`}
+            disabled={isDone}
+          >
+            {isDone ? (
+              <>
+                <FaCheck className='size-4' />
+                Done
+              </>
+            ) : (
+              'Add'
+            )}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 

@@ -1,7 +1,7 @@
 // Tax
-export const TAX_RATE = 7.5;
 export const PHONE_NUMBER = "+5 077 6764 8570"
 export const EMAIL = "info@charlie-m.de"
+
 
 export const RATE_PLANS = {
   STANDARD: 'FLEX_WEB', // standard prices for room refundable price that we get to show initial room price

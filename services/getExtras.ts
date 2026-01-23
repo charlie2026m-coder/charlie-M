@@ -46,17 +46,21 @@ const fetchExtras = async (from: string, to: string): Promise<Service[]> => {
     const availability = await Fetch<AvailabilityResponse>(
       `/availability/v1/services?propertyId=${propertyId}&from=${arrival}&to=${departure}`
     ).then(res => res.timeSlices)
-    console.log(availability);
+    
+    const formattedServices = response.map(item => {
+      if(item.unlimited) return item;
 
-    // const formattedServices = response.map(item => {
-    //   // const availabilityItem = availability.find(item => item.service.id === item.id)
+      return {
+        ...item,
+        dates: availability.map(date => date.services.find(service => service.service.id === item.id))
+      }
 
-    //   return {
-    //     ...item,
-    //   }
-    // })
+    })
 
-    // console.log(response, 'extras')
+
+
+    console.log(formattedServices, 'formattedServices')
+    console.log(availability, 'availability')
 
     return  response;
   } catch (error: any) {

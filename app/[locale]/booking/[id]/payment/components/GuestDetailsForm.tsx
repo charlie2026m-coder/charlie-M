@@ -7,20 +7,23 @@ import { Button } from '@/app/_components/ui/button'
 import { Checkbox } from '@/app/_components/ui/checkbox'
 import { useBookingStore } from '@/store/useBookingStore'
 import { GuestDetailsFormData, guestDetailsSchema } from '@/types/schemas'
-import { useCreateBooking } from '@/app/hooks/useCreateBooking'
 import { Link } from '@/navigation'
 
-const GuestDetailsForm = ({ setBookingPage }: { setBookingPage: (page: number) => void }) => {  
+interface GuestDetailsFormProps {
+  onSubmit: (data: GuestDetailsFormData) => void
+  onBack: () => void
+  isLoading?: boolean
+}
+
+const GuestDetailsForm = ({ onSubmit, onBack, isLoading = false }: GuestDetailsFormProps) => {
   const defaultValues = {name: '', last_name: '', email: '', phone: '', consent: false}
-  const { register, handleSubmit, formState: { errors }, reset, watch, setValue: setFormValue } = useForm<GuestDetailsFormData>({ resolver: zodResolver(guestDetailsSchema), defaultValues,})
+  const { register, handleSubmit, formState: { errors }, reset, watch, setValue: setFormValue } = useForm<GuestDetailsFormData>({ 
+    resolver: zodResolver(guestDetailsSchema), 
+    defaultValues,
+  })
   const consent = watch('consent')
-
-  const setBooking = useBookingStore(state => state.setBooking)
   const booking = useBookingStore(state => state.booking)
-  const createBooking = useCreateBooking()
-
   const [isHydrated, setIsHydrated] = useState(false)
-  
 
   useEffect(() => {
     if (!useBookingStore.persist.hasHydrated()) {
@@ -50,39 +53,6 @@ const GuestDetailsForm = ({ setBookingPage }: { setBookingPage: (page: number) =
       })
     }
   }, [booking, reset, isHydrated])
-
-  const onSubmit = (data: GuestDetailsFormData) => {
-    if (!booking || !booking.reservations) {
-      console.error('Booking data is missing')
-      return
-    }
-
-    const updatedReservations = booking.reservations.map(reservation => ({
-      ...reservation,
-      primaryGuest: {
-        ...reservation.primaryGuest,
-        firstName: data.name,
-        lastName: data.last_name,
-        email: data.email,
-        phone: data.phone,
-      }
-    }))
-    const bookingModel = {
-      booker: {
-        firstName: data.name,
-        lastName: data.last_name,
-        email: data.email,
-        phone: data.phone,
-      },
-      consent: data.consent, // Include consent flag
-      totalAmount: booking.totalAmount, // Include total amount
-      reservations: updatedReservations
-    }
-    setBooking(bookingModel)
-
-    //Create booking temporrary
-    createBooking.mutate(bookingModel)
-  }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className='flex flex-col col-span-1 xl:col-span-2'>
@@ -179,15 +149,15 @@ const GuestDetailsForm = ({ setBookingPage }: { setBookingPage: (page: number) =
           type='button' 
           variant='outline' 
           className='flex-1 max-w-[210px] h-[55px]'
-          onClick={() => setBookingPage(1)}
-          disabled={createBooking.isPending}
+          onClick={onBack}
+          disabled={isLoading}
         >Back</Button>
         <Button 
           type='submit' 
           className='flex-1 max-w-[210px] h-[55px]'
-          disabled={createBooking.isPending || !consent}
+          disabled={isLoading || !consent}
         >
-          {createBooking.isPending ? 'Creating Booking...' : 'Continue'}
+          {isLoading ? 'Creating Booking...' : 'Continue'}
         </Button>
       </div>
     </form>

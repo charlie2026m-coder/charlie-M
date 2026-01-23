@@ -1,9 +1,9 @@
-import Steps from './components/Steps'
 import { getSingleRoom } from '@/services/getSingleRoom'
 import {  sortGuestsByRooms } from '@/lib/utils'
-import StepsContent from './components/StepsContent'
+import BookingPage from './components/BookingPage'
 import { getApaleoExtras } from '@/services/getExtras'
 import ErrorCard from '@/app/[locale]/rooms/components/ErrorCard'
+import Steps from './components/Steps'
 
 interface IParams {
   params: Promise<{ id: string }>
@@ -15,7 +15,7 @@ interface IParams {
   }>
 }
 
-const BookingPage = async ({ params, searchParams }: IParams) => {
+const Booking = async ({ params, searchParams }: IParams) => {
   const { id } = await params
   const { from, to, adults, children } = await searchParams
   const rooms = await getSingleRoom(id, from, to)
@@ -27,16 +27,21 @@ const BookingPage = async ({ params, searchParams }: IParams) => {
 
   const filledRooms = sortGuestsByRooms(Number(adults), Number(children), from, to, rooms[0].maxPersons)
   return (
-    <StepsContent 
-      rooms={rooms} 
-      extras={extras}
-      from={from} 
-      to={to} 
-      adults={adults || '1'} 
-      children={children || '0'} 
-      filledRooms={filledRooms} 
-    />
+    <>
+      <Steps currentStep={1} />
+      <BookingPage 
+        params={{ 
+          rooms, 
+          extras,
+          from, 
+          to, 
+          adults: adults || '1', 
+          children: children || '0', 
+          filledRooms 
+        }} 
+      />
+    </>
   )
 }
 
-export default BookingPage
+export default Booking
