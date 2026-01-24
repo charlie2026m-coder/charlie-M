@@ -3,7 +3,7 @@ import { Client, CheckoutAPI, EnvironmentEnum } from "@adyen/api-library";
 
 const client = new Client({
   apiKey: process.env.ADYEN_API_KEY!,
-  environment: EnvironmentEnum.TEST,
+  environment: EnvironmentEnum.LIVE,
 });
 const checkout = new CheckoutAPI(client);
 

@@ -12,6 +12,8 @@ import DesignSection from './home/DesignSection';
 import FAQSection from './home/FAQSection';
 import ReviewsSection from './home/ReviewsSection';
 
+export const dynamic = 'force-dynamic';
+
 type Props = {params: Promise<{ locale: string }>};
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
