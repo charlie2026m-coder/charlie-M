@@ -27,14 +27,16 @@ export function Guests({
   maxPersons,
   setValue, 
   value,
-  className = ''
+  className = '',
+  disableChildren = false
 }: { 
   maxAdults?: number,
   maxChildren?: number,
   maxPersons?: number,
   setValue: (value: { adults: number, children: number }) => void, 
   value: { adults: number, children: number },
-  className?: string
+  className?: string,
+  disableChildren?: boolean
 }) {
   const [open, setOpen] = React.useState(false)
   const t = useTranslations()
@@ -102,26 +104,32 @@ export function Guests({
           <Separator/>
 
           {/* Children */}
-          <div className="flex flex-col ">
+          <div className={`flex flex-col ${disableChildren ? 'opacity-50' : ''}`}>
             <div className="flex items-center justify-between">
               <div className="font-semibold text-black">{t('guests.children')}</div>
 
               <div className="flex items-center gap-2">
-                <ButtonIcon onClick={() => setValue({ ...value, children: Math.max(0, value.children - 1) })} disabled={value.children <= 0} symbol='-' />
+                <ButtonIcon 
+                  onClick={() => !disableChildren && setValue({ ...value, children: Math.max(0, value.children - 1) })} 
+                  disabled={value.children <= 0 || disableChildren} 
+                  symbol='-' 
+                />
                 <span className="font-semibold min-w-[20px] text-center">
                   {value.children}
                 </span>
                 <ButtonIcon 
-                  onClick={() => setValue({ ...value, children: value.children + 1 })} 
+                  onClick={() => !disableChildren && setValue({ ...value, children: value.children + 1 })} 
                   symbol='+' 
-                  disabled={!canAddChild}
+                  disabled={!canAddChild || disableChildren}
                 />
               </div>
             </div>
             
-            <div className="text-black/30 text-[12px]">{t('guests.children_age_note')}</div>
+            <div className="text-black/30 text-[12px]">
+              {disableChildren ? t('guests.children_not_available') : t('guests.children_age_note')}
+            </div>
             
-            {value.children > 0 && (
+            {value.children > 0 && !disableChildren && (
               <div className="text-blue text-[12px] mt-1 font-medium">
                 {t('guests.crib_fee_note')}
               </div>

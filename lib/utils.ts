@@ -43,7 +43,7 @@ export const getPriceData = ({ params, room }: {params: UrlParams, room: RoomOff
   const g = guests === 1 ? 'guest' : 'guests';
   const n = nights === 1 ? 'night' : 'nights';
   const priceText = `${guests} ${g}, ${nights} ${n}, ${roomsNeeded} ${r}`;
-  const priceValue = roomsNeeded * nights * room.price;
+  const priceValue = roomsNeeded * nights * room.totalGrossAmount.amount;
 
   return {
     nightsText: `${nights} ${n}`,
@@ -67,33 +67,20 @@ export function sortGuestsByRooms(
 ): Room[] {
   const rooms: Room[] = [];
   let remainingAdults = adults;
-  let remainingChildren = children;
 
   const pushRoom = (a: number, c: number) =>
     rooms.push({ id: uuidv4(), adults: a, children: c, from, to });
 
+  // Distribute adults across rooms
   while (remainingAdults > 0) {
     const roomAdults = Math.min(remainingAdults, maxPersons);
     remainingAdults -= roomAdults;
-    
     pushRoom(roomAdults, 0);
   }
 
-  // Если есть дети, но нет взрослых, создаем комнату для детей
-  if (rooms.length === 0 && remainingChildren > 0) {
-    pushRoom(0, remainingChildren);
-    remainingChildren = 0;
-  }
-
-  // Распределяем детей по существующим комнатам
-  if (remainingChildren > 0 && rooms.length > 0) {
-    let roomIndex = 0;
-    while (remainingChildren > 0 && roomIndex < rooms.length) {
-      const childrenToAdd = Math.min(remainingChildren, Math.ceil(remainingChildren / (rooms.length - roomIndex)));
-      rooms[roomIndex].children = childrenToAdd;
-      remainingChildren -= childrenToAdd;
-      roomIndex++;
-    }
+  // If no adults but children exist, create one room
+  if (rooms.length === 0 && children > 0) {
+    pushRoom(1, 0);
   }
 
   return rooms;
@@ -214,12 +201,27 @@ export const formatReservations = (
   updatedRooms: Room[], 
 ) => {
   const timeSlices = roomDetails.timeSlices.map(_ => ({ ratePlanId: roomDetails.ratePlan.id }))
-  const roomPrice = roomDetails.price || 0
 
-  const reservations = updatedRooms.map(item =>{
+  // Calculate price for each room based on guest count
+  const calculateRoomPrice = (adultsCount: number) => {
+    const maxPersons = roomDetails.maxPersons || 2;
+    const roomsNeeded = Math.ceil(adultsCount / maxPersons);
+    
+    if (adultsCount === 1) {
+      return roomDetails.price || 0;
+    } else if (adultsCount % 2 === 0) {
+      return roomsNeeded * (roomDetails.priceForTwo || roomDetails.price || 0);
+    } else {
+      const doubleRooms = Math.floor(adultsCount / 2);
+      return (doubleRooms * (roomDetails.priceForTwo || roomDetails.price || 0)) + (roomDetails.price || 0);
+    }
+  };
+
+  const reservations = updatedRooms.map(item => {
     const childrenAges = item.children > 0 ? Array(item.children).fill(0) as number[] : undefined
     
-    // Calculate price for this reservation (room + extras)
+    // Calculate price for this specific room with its guest count
+    const roomPrice = calculateRoomPrice(item.adults);
     const extrasPrice = item.extras?.reduce((acc, extra) => acc + (extra.totalPrice || 0), 0) || 0
     const reservationAmount = roomPrice + extrasPrice
     

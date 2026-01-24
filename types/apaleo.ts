@@ -64,11 +64,15 @@ export interface ratePlanResponse {
   }]
 }
 export interface rateResponse { 
-  rates: [{
+  rates: {
     price: { amount: number; currency: string; };
+    calculatedPrices?: {
+      adults: number; 
+      price: { amount: number; currency: string; }
+    }[];
     from: string;
     to: string;
-  }]
+  }[]
 }
 export interface PricePlan {
   price: number;

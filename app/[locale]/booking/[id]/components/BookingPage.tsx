@@ -22,9 +22,10 @@ const BookingPage = ({
     rooms: RoomOffer[]
     filledRooms: Room[]
     extras: Service[]
+    isKidsBedAvailable?: boolean
   }
 }) => {
-  const { from, to, adults, children, rooms, filledRooms, extras } = params
+  const { from, to, adults, children, rooms, filledRooms, extras, isKidsBedAvailable = true } = params
   const setRooms = useBookingStore(state => state.setRooms)
   const setRoomDetails = useBookingStore(state => state.setRoomDetails)
   const setParams = useBookingStore(state => state.setParams)
@@ -34,7 +35,7 @@ const BookingPage = ({
   
   const nights = calculateNights(from as string, to as string)
   const planType = getType(nights, true)
-  const mainRoom = rooms.find(room => room.code === planType) || rooms[0]
+  const mainRoom = rooms.find(room => room.ratePlan.code === planType) || rooms[0]
 
   useEffect(() => {
     if (typeof window === 'undefined') return // Skip SSR
@@ -44,7 +45,7 @@ const BookingPage = ({
       return
     }
     
-    const currentBookingId = `${mainRoom?.id || mainRoom?.code}-${from}-${to}-${adults}-${children}`
+    const currentBookingId = `${mainRoom?.id || mainRoom?.ratePlan.id}-${from}-${to}-${adults}-${children}`
     
     if (bookingId && bookingId !== currentBookingId) {
       clearBooking()
@@ -54,13 +55,13 @@ const BookingPage = ({
       setBookingId(currentBookingId)
       setRooms(filledRooms)
     }
-  }, [from, to, adults, children, mainRoom?.id, mainRoom?.code])
+  }, [from, to, adults, children, mainRoom?.id, mainRoom?.ratePlan.id])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
     if (!useBookingStore.persist.hasHydrated()) return
     
-    const currentBookingId = `${mainRoom?.id || mainRoom?.code}-${from}-${to}-${adults}-${children}`
+    const currentBookingId = `${mainRoom?.id || mainRoom?.ratePlan.id}-${from}-${to}-${adults}-${children}`
     const storedRoomDetails = useBookingStore.getState().roomDetails
     const storedBookingId = useBookingStore.getState().bookingId
     
@@ -68,7 +69,7 @@ const BookingPage = ({
       setParams({ from, to, nights })
       setRoomDetails(mainRoom)
     }
-  }, [from, to, adults, children, mainRoom?.id, mainRoom?.code])
+  }, [from, to, adults, children, mainRoom?.id, mainRoom?.ratePlan.id])
 
   return (
     <>  
@@ -84,6 +85,7 @@ const BookingPage = ({
             rooms={rooms} 
             params={{ from, to, adults, children }} 
             filledRooms={filledRooms}
+            isKidsBedAvailable={isKidsBedAvailable}
           />
         </div>
       </div>

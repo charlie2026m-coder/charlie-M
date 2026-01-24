@@ -18,13 +18,12 @@ interface IParams {
 const Booking = async ({ params, searchParams }: IParams) => {
   const { id } = await params
   const { from, to, adults, children } = await searchParams
-  const rooms = await getSingleRoom(id, from, to)
+  const rooms = await getSingleRoom(id, from, to, adults)
   let extras = await getApaleoExtras(from, to)
   
   if ('error' in rooms) return <ErrorCard isSingleRoom={true} link='/rooms' />
   const isKidsBedAvailable = rooms[0].attributes.includes('kids')
   if(!isKidsBedAvailable) extras = extras.filter(extra => extra.id !== 'CMH-BAB')
-
   const filledRooms = sortGuestsByRooms(Number(adults), Number(children), from, to, rooms[0].maxPersons)
   return (
     <>
@@ -37,7 +36,8 @@ const Booking = async ({ params, searchParams }: IParams) => {
           to, 
           adults: adults || '1', 
           children: children || '0', 
-          filledRooms 
+          filledRooms,
+          isKidsBedAvailable
         }} 
       />
     </>

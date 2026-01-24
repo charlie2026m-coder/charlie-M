@@ -17,11 +17,19 @@ const RoomCard = ({
 }) => {
 
   const queryString = getPath({ from: params.from, to: params.to, adults: params.adults, children: params.children })
-
-  const roomsNeeded = Math.ceil(Number(params.adults || 1) / room.maxPersons);
-  const price = roomsNeeded * room.timeSlices[0].totalGrossAmount.amount;
+  const adultsCount = Number(params.adults || 1);
+  const roomsNeeded = Math.ceil(adultsCount / room.maxPersons);
   
-  // Use unitGroup.id for navigation (original room ID without rate plan)
+  let price = 0;
+  if (adultsCount === 1) {
+    price = room.oneNightPrice || 0;
+  } else if (adultsCount % 2 === 0) {
+    price = roomsNeeded * (room.oneNightPriceForTwo || room.oneNightPrice || 0);
+  } else {
+    const doubleRooms = Math.floor(adultsCount / 2);
+    price = (doubleRooms * (room.oneNightPriceForTwo || room.oneNightPrice || 0)) + (room.oneNightPrice || 0);
+  }
+  
   const roomDetailId = room.unitGroup.id;
 
   return (
@@ -35,7 +43,7 @@ const RoomCard = ({
         <div className='text-mute mb-5 mt-auto'>per night from</div>
 
         <div className='flex xxs:flex-row flex-col items-center gap-2 md:gap-8 justify-between w-full'>
-          <Price price={price.toFixed(2)} className='h-[50px] w-full xs:w-auto' />
+          <Price price={price} className='h-[50px] w-full xs:w-auto' />
           <Link href={`/rooms/${roomDetailId}?${queryString}`} className='w-full'>  
             <Button variant='outline' className='h-[50px] w-full active:bg-black active:text-white'>Book Now</Button>
           </Link>

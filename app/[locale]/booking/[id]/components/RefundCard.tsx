@@ -14,7 +14,7 @@ const RefundCard = ({ rooms }: { rooms: RoomOffer[] }) => {
   const handleRefundChange = (value: string) => {
     const isRefunable = value === 'true'
     const planType = getType(params.nights, isRefunable)
-    const mainRoom = rooms.find(room => room.code === planType) || rooms[0]
+    const mainRoom = rooms.find(room => room.ratePlan.code === planType) || rooms[0]
     setIsRefundable(isRefunable)
     setRoomDetails(mainRoom)
   }

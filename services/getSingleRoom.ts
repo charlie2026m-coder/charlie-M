@@ -5,9 +5,8 @@ import { OfferResponse, RoomOffer } from '@/types/offers';
 import { getRoomsDetails } from './getRoomsDetails';
 const propId = process.env.APALEO_PROPERTY_ID;
 
-const getSingleRoomInternal = async (roomId: string, from?: string, to?: string) => {
+const getSingleRoomInternal = async (roomId: string, from?: string, to?: string, adults?: string) => {
   if (!propId) throw new Error('Property ID is required. Set APALEO_PROPERTY_ID in .env');
-  
   let arrival = from || dayjs().format('YYYY-MM-DD');
   let departure = to || dayjs().add(1, 'day').format('YYYY-MM-DD');
   
@@ -15,32 +14,44 @@ const getSingleRoomInternal = async (roomId: string, from?: string, to?: string)
   if (arrival === departure) {
     departure = dayjs(arrival).add(1, 'day').format('YYYY-MM-DD');
   } else if (dayjs(departure).isBefore(dayjs(arrival))) {
-    // If departure is before arrival, swap them
     const temp = arrival;
     arrival = departure;
     departure = dayjs(temp).add(1, 'day').format('YYYY-MM-DD');
   }
+  
+  
   try {
     const roomsData = await getRoomsDetails();
-      const response = await Fetch<OfferResponse>(`/booking/v1/offers?propertyId=${propId}&arrival=${arrival}&departure=${departure}&unitGroupIds=${roomId}&channelCode=Direct&adults=1`).then(res => res.offers);
-      const formattedRooms = response.map(room => {
-        const roomDetails = roomsData.find(item => item.id === room.unitGroup.id);
+    const singleRoomResponse = await Fetch<OfferResponse>(`/booking/v1/offers?propertyId=${propId}&arrival=${arrival}&departure=${departure}&unitGroupIds=${roomId}&channelCode=Ibe&adults=1`).then(res => res.offers);
+    
+    // Check if we got any rooms
+    if (!singleRoomResponse || singleRoomResponse.length === 0) {
+      return { error: 'No rooms available for selected dates' };
+    }
+    
+    // Always fetch double room data
+    const doubleRoomResponse = await Fetch<OfferResponse>(`/booking/v1/offers?propertyId=${propId}&arrival=${arrival}&departure=${departure}&unitGroupIds=${roomId}&channelCode=Ibe&adults=2`).then(res => res.offers);
+    
+    const formattedRooms = singleRoomResponse.map(room => {
+      const roomDetails = roomsData.find(item => item.id === room.unitGroup.id);
+      const doubleRoom = doubleRoomResponse.find(dr => dr.unitGroup.id === room.unitGroup.id && dr.ratePlan.id === room.ratePlan.id);
 
-        return {
-          ...room,
-          code: room.ratePlan.code,
-          id: room.unitGroup.id,
-          name: room.unitGroup.name,
-          description: room.unitGroup.description,
-          price: room.totalGrossAmount.amount,
-          currency: room.totalGrossAmount.currency,
-          attributes: roomDetails?.attributes || [],
-          size: roomDetails?.size || 0,
-          maxPersons: roomDetails?.max_persons || 1,
-          averagePrice: room.timeSlices.reduce((acc, slice) => acc + slice.baseAmount.grossAmount, 0) / room.timeSlices.length,
-          images: roomDetails?.photos || [],
-        };
-      });
+      return {
+        ...room,
+        id: room.unitGroup.id,
+        name: room.unitGroup.name,
+        description: room.unitGroup.description,
+        attributes: roomDetails?.attributes || [],
+        size: roomDetails?.size || 0,
+        maxPersons: roomDetails?.max_persons || 1,
+        images: roomDetails?.photos || [],
+        price: room.totalGrossAmount.amount, // Price for 1 guest
+        priceForTwo: doubleRoom?.totalGrossAmount.amount, // Price for 2 guests (only if guests > 1)
+        oneNightPrice: room.timeSlices?.[0]?.totalGrossAmount?.amount || 0,
+        oneNightPriceForTwo: doubleRoom?.timeSlices?.[0]?.totalGrossAmount?.amount, // Only if guests > 1
+        averagePrice: room.timeSlices?.[0]?.totalGrossAmount?.amount || 0,
+      };
+    });
       return formattedRooms as RoomOffer[];
   } catch (e: any) {
     // Return error object instead of empty array

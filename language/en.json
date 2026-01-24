@@ -250,6 +250,7 @@
     "adults": "Adults",
     "children": "Children",
     "children_age_note": "up to 3 years old",
+    "children_not_available": "Children not available for this room",
     "crib_fee_note": "Crib is charged extra"
   },
   "imprint": {

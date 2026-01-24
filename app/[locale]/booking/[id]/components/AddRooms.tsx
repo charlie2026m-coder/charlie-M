@@ -7,7 +7,7 @@ import { HiOutlineTrash } from "react-icons/hi2";
 import { Room } from '@/types/types'
 
 
-const AddRooms = ({ filledRooms, availableUnits }: { filledRooms: Room[], availableUnits: number }) => {
+const AddRooms = ({ filledRooms, availableUnits, isKidsBedAvailable = true }: { filledRooms: Room[], availableUnits: number, isKidsBedAvailable?: boolean }) => {
   const rooms = useBookingStore(state => state.rooms)
   const roomDetails = useBookingStore(state => state.roomDetails)
   const setRooms = useBookingStore(state => state.setRooms)
@@ -46,15 +46,10 @@ const AddRooms = ({ filledRooms, availableUnits }: { filledRooms: Room[], availa
     setRooms(updatedRooms)
   }
 
-  const handleEditRoom = (id: string) => {
-    console.log('Edit room:', id)
-    // TODO: Implement edit room modal/functionality
-  }
 
   const handleRemoveRoom = (id: string) => {
     if (state.length === 1) return
     removeRoom(id)
-    // setState will be updated by useEffect when rooms changes
   }
 
   const leftRooms = availableUnits - state.length
@@ -80,6 +75,7 @@ const AddRooms = ({ filledRooms, availableUnits }: { filledRooms: Room[], availa
                   setValue={(guests) => addGuests(room.id, guests)} 
                   value={room} 
                   className='!max-w-[120px]'
+                  disableChildren={!isKidsBedAvailable}
                 />
               }
               {state.length > 1 && <HiOutlineTrash className='size-6 cursor-pointer text-red-700 self-center' onClick={() => handleRemoveRoom(room.id)} />}

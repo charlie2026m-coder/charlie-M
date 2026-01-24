@@ -5,9 +5,10 @@ import ErrorCard from '@/app/[locale]/rooms/components/ErrorCard'
 import NotFoundCard from './[id]/components/NotFoundCard'
 import { getAvailableRooms } from '@/services/getAvailableRooms'
 import type { Metadata } from 'next'
-import { HOTEL_INFO } from '@/lib/Constants';
+import { HOTEL_INFO, RATE_PLANS } from '@/lib/Constants';
 import StickyCheckInFormRooms from './components/StickyCheckInFormRooms'
-
+import { calculateNights } from '@/lib/utils'
+  
 type Props = {
   params: Promise<{ locale: string }>;
   searchParams: UrlParams;
@@ -94,15 +95,16 @@ const RoomsPage = async ({ searchParams } : Props) => {
   const rooms = await getAvailableRooms(from, to, guests);
   if ('error' in rooms || !rooms) return <ErrorCard />
   if (rooms.length === 0) return <NotFoundCard text='No rooms found' />
-
-
+  const nights = calculateNights(from as string, to as string);
+  const ratePlan = nights > 7  ? RATE_PLANS.LONG_STAY : RATE_PLANS.STANDARD;
+  const standardPriceRooms = rooms.filter(room => room.ratePlan.code.includes(ratePlan))
   return (
     <>
       <StickyCheckInFormRooms params={{ from, to, adults, children }} />
       <Filters />
       {('error' in rooms || !rooms) 
         ? <ErrorCard /> 
-        : <RoomsList rooms={rooms} params={{ from, to, adults, children }} />
+        : <RoomsList rooms={standardPriceRooms} params={{ from, to, adults, children }} />
       }
     </>
   )

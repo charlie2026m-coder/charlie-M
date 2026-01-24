@@ -5,8 +5,8 @@ export const EMAIL = "info@charlie-m.de"
 
 export const RATE_PLANS = {
   STANDARD: 'FLEX_WEB', // standard prices for room refundable price that we get to show initial room price
-  NON_REFUNDABLE: 'NR_WEB', // non refundable prices for room, when we choose non refundable in room info page we use this price
-  LONG_STAY : 'LONG_STAY', // we will use this price in booking more then 7 nights 
+  NON_REFUNDABLE: 'FLEX_WEB7', // non refundable prices for room, when we choose non refundable in room info page we use this price
+  LONG_STAY : 'NR_WEB7', // we will use this price in booking more then 7 nights 
 }
 // Hotel Information
 export const HOTEL_INFO = {

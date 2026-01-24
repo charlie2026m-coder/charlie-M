@@ -7,13 +7,13 @@ import {
   CarouselItem,
 } from '../../../_components/ui/carousel'
 import RoomCard from '@/app/[locale]/home/components/RoomCard'
-import type { SimpleRoom } from '@/types/offers'
+import type { RoomOffer } from '@/types/offers'
 import { GoArrowLeft, GoArrowRight } from "react-icons/go";
 
 export function RoomsCarousel({
   items,
 }: {
-  items: SimpleRoom[]  
+  items: RoomOffer[]  
 }) {
   const [api, setApi] = React.useState<CarouselApi>()
   const [current, setCurrent] = React.useState(0)

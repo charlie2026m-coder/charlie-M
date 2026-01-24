@@ -38,9 +38,9 @@ const RoomsList = ({
     let filtered = rooms;
     
     if(priceFilter) {
-      filtered = filtered.sort((a, b) => a.price - b.price)
+      filtered = filtered.sort((a, b) => a.oneNightPrice - b.oneNightPrice)
     } else {
-      filtered = filtered.sort((a, b) => b.price - a.price)
+      filtered = filtered.sort((a, b) => b.oneNightPrice - a.oneNightPrice)
     }
     if(filter === 'balcony') {
       filtered = filtered.filter((room) => room.attributes?.includes('balcony'))

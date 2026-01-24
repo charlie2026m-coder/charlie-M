@@ -14,8 +14,14 @@ import { useStore } from "@/store/useStore"
 import { RoomOffer } from "@/types/offers"
 import dayjs from "dayjs"
 import { UrlParams } from "@/types/apaleo"
+import { calculateNights } from "@/lib/utils"
+import { RATE_PLANS } from "@/lib/Constants"
 
-const BookingForm = ({ id, room, params }: { id: string, room: RoomOffer , params: UrlParams }) => {
+const BookingForm = ({ id, rooms, params }: { id: string, rooms: RoomOffer[] , params: UrlParams }) => {
+  const nights = calculateNights(params.from as string, params.to as string);
+  const type = nights > 7  ? RATE_PLANS.LONG_STAY : RATE_PLANS.STANDARD;
+  const room = rooms.find(room => room.ratePlan.code.includes(type)) || rooms[0];
+
   const [openCheckIn, setOpenCheckIn] = useState(false);
   const router = useRouter();
   const dateRangeStore = useStore(state => state.dateRange);
@@ -23,12 +29,27 @@ const BookingForm = ({ id, room, params }: { id: string, room: RoomOffer , param
   const setValue = useStore(state => state.setValue);
 
   const [guests, setGuests] = useState({adults: parseInt(params?.adults || guestsStore?.adults.toString() || '1'), children: parseInt(params?.children || guestsStore?.children.toString() || '0')});
-  const { priceText } = getPriceData({ params, room })
+  const { priceText } = getPriceData({ params, room: room })
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: dateRangeStore.from || (params.from ? dayjs(params.from).toDate() : undefined),
     to: dateRangeStore.to || (params.to ? dayjs(params.to).toDate() : undefined),
   });
-  const [currentPrice, setCurrentPrice] = useState(room.price)
+  
+  // Calculate initial price based on guest count
+  const calculatePrice = (adultsCount: number) => {
+    const roomsNeeded = Math.ceil(adultsCount / room.maxPersons);
+    
+    if (adultsCount === 1) {
+      return room.price || room.totalGrossAmount.amount || 0;
+    } else if (adultsCount % 2 === 0) {
+      return roomsNeeded * (room.priceForTwo || room.price || room.totalGrossAmount.amount || 0);
+    } else {
+      const doubleRooms = Math.floor(adultsCount / 2);
+      return (doubleRooms * (room.priceForTwo || room.price || room.totalGrossAmount.amount || 0)) + (room.price || room.totalGrossAmount.amount || 0);
+    }
+  };
+
+  const [currentPrice, setCurrentPrice] = useState(calculatePrice(guests.adults))
   const [currentPriceText, setCurrentPriceText] = useState(priceText)
   const [dateError, setDateError] = useState(false)
 
@@ -59,7 +80,21 @@ const BookingForm = ({ id, room, params }: { id: string, room: RoomOffer , param
       room 
     });
 
-    setCurrentPrice(room.price);
+    // Calculate price based on guest distribution
+    const adultsCount = guests.adults;
+    const roomsNeeded = Math.ceil(adultsCount / room.maxPersons);
+    
+    let totalPrice = 0;
+    if (adultsCount === 1) {
+      totalPrice = room.price || room.totalGrossAmount.amount || 0;
+    } else if (adultsCount % 2 === 0) {
+      totalPrice = roomsNeeded * (room.priceForTwo || room.price || room.totalGrossAmount.amount || 0);
+    } else {
+      const doubleRooms = Math.floor(adultsCount / 2);
+      totalPrice = (doubleRooms * (room.priceForTwo || room.price || room.totalGrossAmount.amount || 0)) + (room.price || room.totalGrossAmount.amount || 0);
+    }
+
+    setCurrentPrice(totalPrice);
     setCurrentPriceText(newPriceText);
   }, [dateRange?.from, dateRange?.to, guests, room]);
 

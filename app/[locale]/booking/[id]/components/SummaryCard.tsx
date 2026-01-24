@@ -41,8 +41,24 @@ const SummaryCard = () => {
 
   const flatExtras = updatedRooms.flatMap(room => room.extras || [])
   const getText = (days: number) => days === 1 ? 'night' : 'nights'
-  //calculate total price for rooms and extras
-  const roomsTotalPrice = rooms.reduce((acc, _) => acc + roomPrice, 0)
+  
+  // Calculate price for each room based on guest count
+  const calculateRoomPrice = (adultsCount: number) => {
+    const maxPersons = roomDetails?.maxPersons || 2;
+    const roomsNeeded = Math.ceil(adultsCount / maxPersons);
+    
+    if (adultsCount === 1) {
+      return roomDetails?.price || 0;
+    } else if (adultsCount % 2 === 0) {
+      return roomsNeeded * (roomDetails?.priceForTwo || roomDetails?.price || 0);
+    } else {
+      const doubleRooms = Math.floor(adultsCount / 2);
+      return (doubleRooms * (roomDetails?.priceForTwo || roomDetails?.price || 0)) + (roomDetails?.price || 0);
+    }
+  };
+
+  // Calculate total price for all rooms based on their guest counts
+  const roomsTotalPrice = rooms.reduce((acc, room) => acc + calculateRoomPrice(room.adults), 0);
   const extrasTotalPrice = flatExtras.reduce((acc, extra) => acc + extra.totalPrice, 0)
   const totalPrice = roomsTotalPrice + extrasTotalPrice
 
@@ -64,18 +80,21 @@ const SummaryCard = () => {
       <div className='flex flex-col'>
         <span className='font-semibold mb-4 text-[15px]'>Price:</span>
         <div className='flex flex-col gap-1 mb-3'>
-          {rooms.map((room, index) => (
-            <div key={room.id} className='flex flex-col gap-1 mb-2'>
-              <div className='flex items-center gap-2 inter text-sm text-dark'>
-                <span className='truncate overflow-hidden whitespace-nowrap'>Room {index + 1}</span>
-                <span>€ {roomDetails?.averagePrice || 0}</span>×<span>{nights} {getText(nights)}</span>
-                <span className='text-bale font-bold text-base ml-auto'>€ {roomPrice}</span>
+          {rooms.map((room, index) => {
+            const roomPrice = calculateRoomPrice(room.adults);
+            return (
+              <div key={room.id} className='flex flex-col gap-1 mb-2'>
+                <div className='flex items-center gap-2 inter text-sm text-dark'>
+                  <span className='truncate overflow-hidden whitespace-nowrap'>Room {index + 1} ({room.adults} {room.adults === 1 ? 'guest' : 'guests'})</span>
+                  <span>€ {roomDetails?.averagePrice || 0}</span>×<span>{nights} {getText(nights)}</span>
+                  <span className='text-bale font-bold text-base ml-auto'>€ {roomPrice}</span>
+                </div>
+                <div className='flex gap-2 text-sm '>
+                  <BsCalendar2Fill className='size-4 cursor-pointer self-center text-blue' /> {dayjs(room.from).format('DD MMM YYYY')} - {dayjs(room.to).format('DD MMM YYYY')}
+                </div>
               </div>
-              <div className='flex gap-2 text-sm '>
-                <BsCalendar2Fill className='size-4 cursor-pointer self-center text-blue' /> {dayjs(room.from).format('DD MMM YYYY')} - {dayjs(room.to).format('DD MMM YYYY')}
-              </div>
-            </div>
-          ))}
+            )
+          })}
           <div className='flex items-center gap-2 inter text-sm text-dark mt-2'>
             <span>City tax:</span>
             <span className='text-bale font-semibold ml-auto'>7.5%</span>
@@ -109,12 +128,10 @@ const SummaryCard = () => {
 
       <div className='flex items-center justify-between mb-3'>
         <span className='font-semibold text-lg'>Total price:</span>
-        <Price price={totalPrice.toFixed(2)} />
+        <Price price={Number(totalPrice.toFixed(2))} />
       </div>
     </div>
   )
 }
 
 export default SummaryCard
-
-const getText = (days: number) => days === 1 ? 'night' : 'nights'

@@ -15,10 +15,12 @@ const BookingMenu = ({
   rooms: roomsOffers,
   params,
   filledRooms,
+  isKidsBedAvailable = true
 }: {
   rooms: RoomOffer[]
   params: UrlParams
   filledRooms: Room[]
+  isKidsBedAvailable?: boolean
 }) => {
   const router = useRouter()
   const urlParams = useParams()
@@ -46,8 +48,23 @@ const BookingMenu = ({
   const flatExtras = updatedRooms.flatMap(room => room.extras || [])
   const getText = (days: number) => days === 1 ? 'night' : 'nights'
 
-  //calculate total price for rooms and extras
-  const roomsTotalPrice = rooms.reduce((acc, _) => acc + price, 0)
+  // Calculate price for each room based on guest count
+  const calculateRoomPrice = (adultsCount: number) => {
+    const maxPersons = roomDetails.maxPersons || 2;
+    const roomsNeeded = Math.ceil(adultsCount / maxPersons);
+    
+    if (adultsCount === 1) {
+      return roomDetails.price || 0;
+    } else if (adultsCount % 2 === 0) {
+      return roomsNeeded * (roomDetails.priceForTwo || roomDetails.price || 0);
+    } else {
+      const doubleRooms = Math.floor(adultsCount / 2);
+      return (doubleRooms * (roomDetails.priceForTwo || roomDetails.price || 0)) + (roomDetails.price || 0);
+    }
+  };
+
+  // Calculate total price for all rooms based on their guest counts
+  const roomsTotalPrice = rooms.reduce((acc, room) => acc + calculateRoomPrice(room.adults), 0);
   const extrasTotalPrice = flatExtras.reduce((acc, extra) => acc + extra.totalPrice, 0)
   
   const totalPrice = roomsTotalPrice + extrasTotalPrice
@@ -72,18 +89,21 @@ const BookingMenu = ({
   return (
     <div className='flex flex-col bg-white rounded-[20px] py-5 px-3 shadow-xl'>
       <ChangeDate arrival={roomsOffers[0].arrival} departure={roomsOffers[0].departure} />
-      <AddRooms filledRooms={filledRooms} availableUnits={roomsOffers[0].availableUnits} />
+      <AddRooms filledRooms={filledRooms} availableUnits={roomsOffers[0].availableUnits} isKidsBedAvailable={isKidsBedAvailable} />
 
       <div className='flex flex-col'>
         <span className='font-semibold mb-1.5 '>Price:</span>
         <div className='flex flex-col gap-1 mb-5'>
-          {rooms.map((_, index) => (
-            <div key={index} className='flex items-center gap-2 inter text-sm text-dark'>
-              <span className=' truncate overflow-hidden whitespace-nowrap '>Room {index + 1}</span>
-              <span>€ {roomDetails.averagePrice}</span>x<span>{nights} {getText(nights)}</span>
-              <span className='text-bale font-semibold ml-auto'>€ {price}</span>
-            </div>
-          ))}
+          {rooms.map((room, index) => {
+            const roomPrice = calculateRoomPrice(room.adults);
+            return (
+              <div key={index} className='flex items-center gap-2 inter text-sm text-dark'>
+                <span className=' truncate overflow-hidden whitespace-nowrap '>Room {index + 1} ({room.adults} {room.adults === 1 ? 'guest' : 'guests'})</span>
+                <span>€ {roomDetails.averagePrice}</span>x<span>{nights} {getText(nights)}</span>
+                <span className='text-bale font-semibold ml-auto'>€ {roomPrice}</span>
+              </div>
+            )
+          })}
           <div  className='flex items-center gap-2 inter text-sm text-dark mt-2'>
             <span>City tax:</span>
             <span className='text-bale font-semibold ml-auto'>7.5%</span>
@@ -113,7 +133,7 @@ const BookingMenu = ({
 
       <div className='flex items-center justify-between mb-3'>
           <span className='font-semibold text-lg'>Total price:</span>
-          <Price price={totalPrice.toFixed(2)} />
+          <Price price={Number(totalPrice.toFixed(2))} />
       </div>
 
       <Button 

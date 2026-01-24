@@ -2,9 +2,7 @@ import { Fetch } from './Request';
 import dayjs from 'dayjs';
 import { cache } from 'react';
 import { OfferResponse, RoomOffer } from '@/types/offers';
-import { calculateNights } from '@/lib/utils';
 import { getRoomsDetails } from './getRoomsDetails';
-import { RATE_PLANS } from '@/lib/Constants';
 const propId = process.env.APALEO_PROPERTY_ID;
 
 
@@ -23,31 +21,28 @@ const getAvailableRoomsInternal = async (from?: string, to?: string, guests: num
     departure = dayjs(temp).add(1, 'day').format('YYYY-MM-DD');
   }
   
-  const guestsCount = (guests && guests > 1) ? 2 : 1;
-
   try {
-      const response = await Fetch<OfferResponse>(`/booking/v1/offers?propertyId=${propId}&arrival=${arrival}&departure=${departure}&channelCode=Direct&adults=${guestsCount}`).then(res => res.offers);
+      const singleRoomResponse = await Fetch<OfferResponse>(`/booking/v1/offers?propertyId=${propId}&arrival=${arrival}&departure=${departure}&channelCode=Ibe&adults=1`).then(res => res.offers);
       
-      //availableUnits
-      const nights = calculateNights(from as string, to as string);
-      // const type = nights > 7  ? RATE_PLANS.LONG_STAY : RATE_PLANS.STANDARD;
-      const type = RATE_PLANS.STANDARD;
-
-      const fillteredRooms = response.filter(room => {
-        return room.ratePlan.code.includes(type);
-      });
+      // Always fetch double room data
+      const doubleRoomResponse = await Fetch<OfferResponse>(`/booking/v1/offers?propertyId=${propId}&arrival=${arrival}&departure=${departure}&channelCode=Ibe&adults=2`).then(res => res.offers);
+      
       const roomsDetails = await getRoomsDetails();
 
-      const formattedRooms = fillteredRooms.map(room => {
+      const formattedRooms = singleRoomResponse.map(room => {
         const roomDetails = roomsDetails.find(item => item.id === room.unitGroup.id);
-
+        const doubleRoom = doubleRoomResponse.find(dr => dr.unitGroup.id === room.unitGroup.id && dr.ratePlan.id === room.ratePlan.id);
+        
         return {
           ...room,
           images: roomDetails?.photos || [],
           id: `${room.unitGroup.id}-${room.ratePlan.id}`, // Unique ID combining unit group and rate plan
           name: room.unitGroup.name,
           description: room.unitGroup.description,
-          price: room.totalGrossAmount.amount,
+          price: room.totalGrossAmount.amount, // Price for 1 guest
+          priceForTwo: doubleRoom?.totalGrossAmount.amount, // Price for 2 guests (only if guests > 1)
+          oneNightPrice: room.timeSlices[0].totalGrossAmount.amount,
+          oneNightPriceForTwo: doubleRoom?.timeSlices[0].totalGrossAmount.amount, // Only if guests > 1
           currency: room.totalGrossAmount.currency,
           attributes: roomDetails?.attributes || [],
           size: roomDetails?.size || 0,
