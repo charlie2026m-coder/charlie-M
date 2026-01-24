@@ -1,20 +1,27 @@
 import { Fetch } from './Request';
 import dayjs from 'dayjs';
-import { ratePlanResponse, rateResponse, UnitGroupsResponse } from '@/types/apaleo';
+import {  ratePlanResponse, UnitGroupsResponse } from '@/types/apaleo';
 import { cache } from 'react';
 import { getRoomsDetails } from './getRoomsDetails';
 import { SimpleRoom } from '@/types/offers';
+import { RATE_PLANS } from '@/lib/Constants';
+import { Rate } from '@/types/ratePlans';
 const propId = process.env.APALEO_PROPERTY_ID;
 
+interface RatesResults {
+  id: string;
+  unitGroupId: string;
+  price: Rate;
+}
 // Get all rate plans with prices (cached per request)
-const getApaleoRoomPriceInternal = async (from: string, to: string) => {
+const getApaleoRoomPriceInternal = async (from: string, to: string): Promise<RatesResults[]> => {
   const today = from ? dayjs(from).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD');
   const tomorrow = to ? dayjs(to).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD');
   
   try {
     // Get all rate plans for the property
     const pricePlans = await Fetch<ratePlanResponse>(`/rateplan/v1/rate-plans`)
-    .then(res  => res.ratePlans.filter(item => item.code === 'BAR_WEB'))
+    .then(res  => res.ratePlans.filter(item => item.code === RATE_PLANS.STANDARD))
       .then(res => res.map(item => ({
         id: item.id, 
         unitGroupId: item.unitGroup.id
@@ -23,14 +30,28 @@ const getApaleoRoomPriceInternal = async (from: string, to: string) => {
 
     const plansWithPrices = await Promise.all(
       pricePlans.map(async (plan) => {
-        const defaultPrice = { ...plan, price: 0 };
+        const defaultPrice: RatesResults = { 
+          ...plan, 
+          price: { 
+            price: { amount: 0, currency: 'EUR' }
+          } 
+        };
 
         try {
-          const priceObject = await Fetch<rateResponse>(`/rateplan/v1/rate-plans/${plan.id}/rates?from=${today}&to=${tomorrow}`)
+          const priceObject = await Fetch<{rates: Rate[], count: number}>(`/rateplan/v1/rate-plans/${plan.id}/rates?from=${today}&to=${tomorrow}`)
             .then(item => item.rates)
-            .then(items => items.map(rate => rate.price));
           if (priceObject.length === 0) return defaultPrice;
-          return {...plan,  price: priceObject[0]?.amount || 0 };
+
+          return {
+            ...plan,  
+            price: { 
+              from: priceObject[0].from,
+              to: priceObject[0].to,
+              price: priceObject[0].price, 
+              calculatedPrices: priceObject[0].calculatedPrices, 
+              restrictions: priceObject[0].restrictions 
+            }
+          };
         } catch (error: any) {
           console.log(error, 'try catch error');
           return defaultPrice;
@@ -45,10 +66,8 @@ const getApaleoRoomPriceInternal = async (from: string, to: string) => {
   }
 };
 
-// Wrap with React cache to deduplicate requests within the same render
 export const getApaleoRoomPrice = cache(getApaleoRoomPriceInternal);
 
-// Get all rooms (cached per request)
 const getApaleoRoomsInternal = async (from?: string, to?: string): Promise<SimpleRoom[] | { error: string }> => {
   if (!propId) throw new Error('Property ID is required. Set APALEO_PROPERTY_ID in .env');
   const roomsDetails = await getRoomsDetails();
@@ -60,6 +79,7 @@ const getApaleoRoomsInternal = async (from?: string, to?: string): Promise<Simpl
 
       const getUnitPrices = await getApaleoRoomPrice(today, tomorrow);
       
+      const defaultPrice: Rate = {price: { amount: 0, currency: 'EUR' }};
       const rooms = unitGroups.map(item => {
         return {
           ...item.unitGroup,
@@ -67,15 +87,13 @@ const getApaleoRoomsInternal = async (from?: string, to?: string): Promise<Simpl
           maxPersons: roomsDetails.find(room => room.id === item.unitGroup.id)?.max_persons || 1,
           attributes: roomsDetails.find(room => room.id === item.unitGroup.id)?.attributes || [],
           size: roomsDetails.find(room => room.id === item.unitGroup.id)?.size || 0,
-          price: getUnitPrices.find(plan => plan.unitGroupId === item.unitGroup.id)?.price || 0,
+          price: getUnitPrices.find(plan => plan.unitGroupId === item.unitGroup.id)?.price || defaultPrice,
         }
       })
 
   
     return rooms;
-    // return [];
   } catch (e: any) {
-    // Return error object instead of empty array
     return { error: e.message || 'Failed to fetch rooms' };
   }
 };

@@ -68,7 +68,24 @@ const Availability = ({ from, to, children, adults, id }: { from?: string, to?: 
             mode="range"  
             captionLayout="label"
             selected={selectedRange}
-            onSelect={setSelectedRange}
+            onSelect={(date) => {
+              if (date?.from && !date?.to) {
+                const nextDay = new Date(date.from);
+                nextDay.setDate(nextDay.getDate() + 1);
+                setSelectedRange({ from: date.from, to: nextDay });
+              } else if (date?.from && date?.to) {
+                // Check if same day selected
+                if (date.from.getTime() === date.to.getTime()) {
+                  const nextDay = new Date(date.from);
+                  nextDay.setDate(nextDay.getDate() + 1);
+                  setSelectedRange({ from: date.from, to: nextDay });
+                } else {
+                  setSelectedRange(date);
+                }
+              } else {
+                setSelectedRange(date);
+              }
+            }}
             disabled={{ before: today }}
             month={currentMonth}
             onMonthChange={handlePrimaryMonthChange}
@@ -81,7 +98,24 @@ const Availability = ({ from, to, children, adults, id }: { from?: string, to?: 
             mode="range"  
             captionLayout="label"
             selected={selectedRange}
-            onSelect={setSelectedRange}
+            onSelect={(date) => {
+              if (date?.from && !date?.to) {
+                const nextDay = new Date(date.from);
+                nextDay.setDate(nextDay.getDate() + 1);
+                setSelectedRange({ from: date.from, to: nextDay });
+              } else if (date?.from && date?.to) {
+                // Check if same day selected
+                if (date.from.getTime() === date.to.getTime()) {
+                  const nextDay = new Date(date.from);
+                  nextDay.setDate(nextDay.getDate() + 1);
+                  setSelectedRange({ from: date.from, to: nextDay });
+                } else {
+                  setSelectedRange(date);
+                }
+              } else {
+                setSelectedRange(date);
+              }
+            }}
             disabled={{ before: today }}
             month={nextMonth}
             onMonthChange={handleSecondaryMonthChange}

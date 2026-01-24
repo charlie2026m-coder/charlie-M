@@ -40,14 +40,14 @@ export const metadata: Metadata = {
     images: ["/images/og-image.jpg"]
   },
   
-  // Robots
+  // Robots - Disabled indexing temporarily
   robots: {
-    index: true,
-    follow: true,
+    index: false,
+    follow: false,
     googleBot: {
-      index: true,
-      follow: true,
-      "max-image-preview": "large",
+      index: false,
+      follow: false,
+      "max-image-preview": "none",
       "max-snippet": -1,
     }
   },
@@ -101,8 +101,21 @@ export default async function RootLayout({ children, params }: Props) {
   };
   
   return (
-    <html lang={locale}>
-      <body className={`${inter.variable} ${plusJakartaSans.variable} antialiased bg-light-bg flex flex-col min-h-screen relative`}>
+    <html lang={locale} style={{ overscrollBehaviorY: 'none' }}>
+      <head>
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            html, body {
+              overscroll-behavior-y: none;
+              overscroll-behavior: none;
+            }
+            body {
+              position: relative;
+            }
+          `
+        }} />
+      </head>
+      <body className={`${inter.variable} ${plusJakartaSans.variable} antialiased flex flex-col min-h-screen relative`} style={{ overscrollBehaviorY: 'none', overscrollBehavior: 'none' }}>
         {/* JSON-LD for Google */}
         <Script
           id="hotel-schema"

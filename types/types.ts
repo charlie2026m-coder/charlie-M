@@ -33,7 +33,9 @@ export interface Params extends Guests {
 }
 
 
-export type RoomExtra = Omit<Service, 'description'>;
+export type RoomExtra = Omit<Service, 'description'> & {
+  totalPrice?: number; // Calculated total price for this extra
+};
 
 export interface Room {
   id: string;
@@ -42,6 +44,7 @@ export interface Room {
   from: string;
   to: string;
   extras?: RoomExtra[];
+
 }
 
 export interface RoomDetails extends SingleRoom {

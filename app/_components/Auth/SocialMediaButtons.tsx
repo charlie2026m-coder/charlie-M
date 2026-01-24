@@ -2,9 +2,8 @@ import { Button } from '../ui/button'
 import { FaApple } from 'react-icons/fa'  
 import { FcGoogle } from 'react-icons/fc'
 import { useOAuthSignIn } from '@/app/hooks/useAuth'
-import { contentType } from './AuthModal';
 
-const SocialMediaButtons = ( { setFormType }: { setFormType: (type: contentType ) => void } ) => {
+const SocialMediaButtons = ({ onReservationClick }: { onReservationClick?: () => void }) => {
   const oauthMutation = useOAuthSignIn();
 
   return (
@@ -12,7 +11,7 @@ const SocialMediaButtons = ( { setFormType }: { setFormType: (type: contentType 
       <Button
         type="button"
         variant="outline"
-        onClick={()=>setFormType('reservation' as contentType)}
+        onClick={onReservationClick}
         className={buttonStyle}
       >
         Continue with Reservation ID

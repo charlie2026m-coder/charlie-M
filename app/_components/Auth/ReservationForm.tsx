@@ -5,14 +5,18 @@ import { Button } from '../ui/button';
 import CustomInput from '../ui/customInput';
 import { useSearchBooking } from '@/app/hooks/useSearchBooking';
 import { toast } from 'sonner';
-
+import { useRouter } from '@/navigation';
 import { type ReservationFormData, reservationSchema } from '@/types/schemas';
 import Image from 'next/image';
+import { supabase } from '@/lib/supabase';
+import { useProfileStore } from '@/store/useProfile';
 
 const ReservationForm = () => {
   const [error, setError] = useState<string | null>(null);
   const [showNotFound, setShowNotFound] = useState(false);
   const searchBooking = useSearchBooking();
+  const router = useRouter();
+  const { setGuestBooking } = useProfileStore();
 
   const {
     register,
@@ -46,10 +50,41 @@ const ReservationForm = () => {
         lastName: data.name,
       },
       {
-        onSuccess: (response) => {
-          toast.success('Booking found!');
-          // Redirect to first reservation
-          console.log(response, 'booking response');
+        onSuccess: async (response) => {
+          try {
+            // Save booking data to store and localStorage
+            setGuestBooking(response.booking);
+            
+            // Save guest mode flag and booking ID to localStorage
+            if (response.booking?.id) {
+              localStorage.setItem('guestMode', 'true');
+              localStorage.setItem('guestBookingId', response.booking.id);
+            }
+            
+            // Check if user is already signed in
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (!session) {
+              // Create anonymous session
+              const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
+              
+              if (authError) {
+                console.error('Error creating anonymous session:', authError);
+                toast.error('Failed to create session');
+                return;
+              }
+              
+              console.log('Anonymous session created:', authData.user?.id);
+            }
+            
+            toast.success('Booking found!');
+            
+            // Redirect to reservations page
+            router.push('/profile/reservations');
+          } catch (error) {
+            console.error('Error in onSuccess:', error);
+            toast.error('Something went wrong');
+          }
         },
         onError: (error) => {
           setShowNotFound(true);

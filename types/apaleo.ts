@@ -64,11 +64,15 @@ export interface ratePlanResponse {
   }]
 }
 export interface rateResponse { 
-  rates: [{
+  rates: {
     price: { amount: number; currency: string; };
+    calculatedPrices?: {
+      adults: number; 
+      price: { amount: number; currency: string; }
+    }[];
     from: string;
     to: string;
-  }]
+  }[]
 }
 export interface PricePlan {
   price: number;
@@ -138,6 +142,37 @@ export interface Service {
   currency: string;
   pricingType: PricingType;
   daysOfWeek: string[];
+  unlimited?: boolean;
+  dates?: AvailabilityServiceItem[];
+}
+
+//_____________________AVAILABILITY
+export interface AvailabilityService {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+}
+
+
+
+export interface AvailabilityServiceItem {
+  availableCount: number;
+  quantity: number;
+  service: AvailabilityService;
+  serviceDate: string;
+  soldCount: number;
+}
+
+export interface AvailabilityTimeSlice {
+  from: string;
+  to: string;
+  services: AvailabilityServiceItem[];
+}
+
+export interface AvailabilityResponse {
+  timeSlices: AvailabilityTimeSlice[];
+  count: number;
 }
 
 //_____________________BOOKING PAYLOAD

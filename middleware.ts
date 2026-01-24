@@ -41,11 +41,11 @@ export async function middleware(request: NextRequest) {
 
     const { data: { session } } = await supabase.auth.getSession()
 
-    if (!session) {
-      const redirectUrl = new URL('/', request.url)
-      redirectUrl.searchParams.set('auth', 'signin')
-      return NextResponse.redirect(redirectUrl)
-    }
+      if (!session) {
+        const locale = pathname.match(/^\/(de|en)/) ? pathname.split('/')[1] : 'en'
+        const redirectUrl = new URL(`/${locale}/login`, request.url)
+        return NextResponse.redirect(redirectUrl)
+      }
   }
 
   return response
@@ -53,7 +53,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Match all pathnames EXCEPT admin, api, auth and system files
-    '/((?!admin|api|auth|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // Match all pathnames EXCEPT admin, api, auth/callback and system files
+    '/((?!admin|api|auth/callback|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

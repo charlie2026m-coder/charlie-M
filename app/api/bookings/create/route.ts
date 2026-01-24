@@ -11,12 +11,30 @@ interface ApaleoBookingResponse {
   reservationIds: { id: string }[]
 }
 
+
 export async function POST(request: Request) {
   try {
     const booking: Booking = await request.json()
 
-    // Get Apaleo token
+    if (booking.transactionReference) {
+      console.log('💳 Transaction reference:', booking.transactionReference)
+    }
+
     const token = await getOrRefreshToken()
+
+    // Add prepaymentAmount to each reservation
+    const bookingPayload = {
+      ...booking,
+      reservations: booking.reservations.map(reservation => ({
+        ...reservation,
+        prepaymentAmount: {
+          amount: reservation.reservationAmount,
+          currency: 'EUR'
+        }
+      }))
+    }
+
+    console.log('📦 Creating booking with payload:', JSON.stringify(bookingPayload, null, 2))
 
     // Create booking in Apaleo
     const response = await fetch(`${APALEO_API_URL}/booking/v1/bookings`, {
@@ -26,7 +44,7 @@ export async function POST(request: Request) {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      body: JSON.stringify(booking),
+      body: JSON.stringify(bookingPayload),
     })
 
 
@@ -45,8 +63,9 @@ export async function POST(request: Request) {
     }
 
     const apaleoData: ApaleoBookingResponse = await response.json()
+    console.log('✅ Booking created successfully:', apaleoData)
 
-    // Save reservations to Supabase
+
     try {
       const supabase = await createSupabaseServerClient()
       const primaryGuest = booking.reservations[0]?.primaryGuest

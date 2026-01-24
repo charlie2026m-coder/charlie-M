@@ -1,3 +1,5 @@
+import { Rate } from "./ratePlans";
+
 export interface OfferResponse {
   offers: Offer[];
   property: any;
@@ -85,16 +87,17 @@ interface TaxDetail {
 
 export interface RoomOffer extends Offer {
   images: string[];
-  code: string;
   id: string;
   name: string;
   description: string;
   attributes: string[];
   size: number;
-  price: number;
-  currency: string;
   maxPersons: number;
-  averagePrice: number;
+  price?: number; // Total price for 1 guest (legacy support)
+  priceForTwo?: number; // Total price for 2 guests
+  oneNightPrice: number; // Price per night for 1 guest
+  oneNightPriceForTwo?: number; // Price per night for 2 guests
+  averagePrice?: number; // Average price per night
 }
 
 // Simple room type for displaying room cards (without full Apaleo offer data)
@@ -108,5 +111,5 @@ export interface SimpleRoom {
   maxPersons: number;
   attributes: string[];
   size: number;
-  price: number;
+  price: Rate;
 }

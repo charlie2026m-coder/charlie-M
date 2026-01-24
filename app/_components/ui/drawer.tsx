@@ -4,6 +4,7 @@ import * as React from "react"
 import { Drawer as DrawerPrimitive } from "vaul"
 
 import { cn } from "@/lib/utils"
+import { VisuallyHidden } from "./visually-hidden"
 
 function Drawer({
   ...props
@@ -132,4 +133,5 @@ export {
   DrawerFooter,
   DrawerTitle,
   DrawerDescription,
+  VisuallyHidden,
 }

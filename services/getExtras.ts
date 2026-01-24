@@ -1,19 +1,34 @@
-import { Service, ServicesResponse } from '@/types/apaleo';
+import { Service, ServicesResponse, AvailabilityResponse } from '@/types/apaleo';
 import { Fetch } from './Request';
 import { cache } from 'react';
+import dayjs from 'dayjs';
 
 // Get all services/extras from Apaleo
-const fetchExtras = async (): Promise<Service[]> => {
+const fetchExtras = async (from: string, to: string): Promise<Service[]> => {
   const propertyId = process.env.APALEO_PROPERTY_ID;
 
   if (!propertyId) {
     throw new Error('Property ID is required. Set APALEO_PROPERTY_ID in .env');
   }
 
+  // Validate dates
+  let arrival = from;
+  let departure = to;
+  
+  if (arrival === departure) {
+    departure = dayjs(arrival).add(1, 'day').format('YYYY-MM-DD');
+  } else if (dayjs(departure).isBefore(dayjs(arrival))) {
+    const temp = arrival;
+    arrival = departure;
+    departure = dayjs(temp).add(1, 'day').format('YYYY-MM-DD');
+  }
+
   try {
     const response = await Fetch<ServicesResponse>(
       `/rateplan/v1/services?propertyId=${propertyId}`
     ).then(res => res.services.map(item =>{
+      const unlimited = !item.availability.hasOwnProperty("quantity")
+
       return {
         id: item.id,
         name: item.name,
@@ -23,9 +38,29 @@ const fetchExtras = async (): Promise<Service[]> => {
         currency: item.defaultGrossPrice?.currency,
         pricingType: item.availability.mode,
         daysOfWeek: item.availability.daysOfWeek,
+        availability: item.availability,
+        unlimited: unlimited,
       }
     }));
 
+    const availability = await Fetch<AvailabilityResponse>(
+      `/availability/v1/services?propertyId=${propertyId}&from=${arrival}&to=${departure}`
+    ).then(res => res.timeSlices)
+    
+    const formattedServices = response.map(item => {
+      if(item.unlimited) return item;
+
+      return {
+        ...item,
+        dates: availability.map(date => date.services.find(service => service.service.id === item.id))
+      }
+
+    })
+
+
+
+    console.log(formattedServices, 'formattedServices')
+    console.log(availability, 'availability')
 
     return  response;
   } catch (error: any) {

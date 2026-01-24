@@ -6,7 +6,7 @@ import ErrorCard from '../components/ErrorCard'
 import Availability from './components/Availability'
 import { calculateNights } from '@/lib/utils'
 import type { Metadata } from 'next'
-
+import { RATE_PLANS } from '@/lib/Constants';
 interface IParams {
   params: Promise<{ id: string; locale: string }>
   searchParams: Promise<{ 
@@ -24,8 +24,7 @@ export async function generateMetadata({ params, searchParams }: IParams): Promi
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://charlie-m.de"
   
   const hasQueryParams = !!(from || to || adults || children)
-  
-  const rooms = await getSingleRoom(id, from, to)
+  const rooms = await getSingleRoom(id, from, to, adults)
   
   if ('error' in rooms) {
     return {
@@ -39,8 +38,8 @@ export async function generateMetadata({ params, searchParams }: IParams): Promi
   }
 
   const nights = calculateNights(from as string, to as string)
-  const type = nights > 7 ? 'LONG_STAY' : 'BAR_WEB'
-  const filteredRooms = rooms.filter(room => room.code.includes(type))
+  const type = nights > 7 ? RATE_PLANS.LONG_STAY : RATE_PLANS.STANDARD;
+  const filteredRooms = rooms.filter(room => room.ratePlan.code.includes(type))
   const room = filteredRooms[0]
   
   const roomName = room?.name || 'Room'
@@ -125,20 +124,16 @@ const RoomPage = async ({ params, searchParams }: IParams) => {
   const { id } = await params
   const { from, to, adults, children } = await searchParams
   
-  const rooms = await getSingleRoom(id, from, to)
+  const rooms = await getSingleRoom(id, from, to, adults)
   if ('error' in rooms) return <ErrorCard isSingleRoom={true} link='/rooms' />
-  const nights = calculateNights(from as string, to as string);
-  const type = nights > 7  ? 'LONG_STAY' : 'BAR_WEB';
-  const filteredRooms = rooms.filter(room => room.code.includes(type));
-  const room = filteredRooms[0]
 
   return (
-    <div className='flex flex-col relative container px-4 md:px-10 xl:px-[100px] pt-10 flex-1'>
-      <PhotoGallery images={room.images} roomName={room.name} />
+    <div className='flex flex-col relative pt-10 flex-1'>
+      <PhotoGallery images={rooms[0].images} roomName={rooms[0].name} />
       <div className='grid grid-cols-1  lg:grid-cols-3 xl:grid-cols-4 gap-y-10 md:gap-10 mb-[30px]'>
 
         <div className='col-span-2 xl:col-span-3 flex flex-col'>
-           <RoomContent room={room} />
+           <RoomContent room={rooms[0]} isRoomInfo={true} />
             <Availability 
               id={id}
               from={from}
@@ -150,7 +145,7 @@ const RoomPage = async ({ params, searchParams }: IParams) => {
         <div className='col-span-1'>
           <BookingForm 
             id={id} 
-            room={room}
+            rooms={rooms}
             params={{ 
               from: from || undefined,
               to: to || undefined, 

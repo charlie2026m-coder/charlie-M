@@ -10,12 +10,18 @@ import { Link, usePathname } from '@/navigation' // Use localized usePathname
 import ReservationIdDialog from './ReservationIdDialog'
 import Logout from './Logout'
 import { useProfileStore, ReservationFilter } from '@/store/useProfile'
+import { useState, useEffect } from 'react'
 
 
 const ProfileMenu = () => {
   const pathname = usePathname()
   const { profile } = useProfile()
   const { reservationFilter, setReservationFilter } = useProfileStore()
+  const [isGuestMode, setIsGuestMode] = useState(false)
+
+  useEffect(() => {
+    setIsGuestMode(localStorage.getItem('guestMode') === 'true')
+  }, [])
 
 
   const tabs = [
@@ -32,7 +38,7 @@ const ProfileMenu = () => {
   const resTabs = ['All', 'Ongoing', 'Upcoming', 'Completed', 'Canceled' ] as const
 
   return (
-    <CustomCard className=" col-span-1 self-start shadow-lg">
+    <CustomCard className=" col-span-1 self-start border rounded-[40px]  p-3 lg:p-[30px]">
       <h1 className='text-lg pb-5 border-b w-full text-center mb-5'>{profile?.name || ' Jnohn Dou'}</h1>
 
       {tabs.map((tab) => {
@@ -57,11 +63,11 @@ const ProfileMenu = () => {
               )} 
             >
               {icon} {tab.label}
-              {(tab.value === '/reservations') && (
+              {(tab.value === '/reservations' && !isGuestMode) && (
                 <TiArrowSortedDown className={cn('size-5 ml-auto transition-all duration-300', isActive ? 'text-white rotate-180 ' : 'text-blue')} />
               )}
             </Link>
-            {tab.value === '/reservations' && (
+            {tab.value === '/reservations' && !isGuestMode && (
               <SlideMenu 
                 isActive={(isActive && tab.value === '/reservations' && pathname === '/profile/reservations')}
                 sections={resTabs.map(tab => tab.toString())}

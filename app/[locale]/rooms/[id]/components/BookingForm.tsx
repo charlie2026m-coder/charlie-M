@@ -14,8 +14,14 @@ import { useStore } from "@/store/useStore"
 import { RoomOffer } from "@/types/offers"
 import dayjs from "dayjs"
 import { UrlParams } from "@/types/apaleo"
+import { calculateNights } from "@/lib/utils"
+import { RATE_PLANS } from "@/lib/Constants"
 
-const BookingForm = ({ id, room, params }: { id: string, room: RoomOffer , params: UrlParams }) => {
+const BookingForm = ({ id, rooms, params }: { id: string, rooms: RoomOffer[] , params: UrlParams }) => {
+  const nights = calculateNights(params.from as string, params.to as string);
+  const type = nights > 7  ? RATE_PLANS.LONG_STAY : RATE_PLANS.STANDARD;
+  const room = rooms.find(room => room.ratePlan.code.includes(type)) || rooms[0];
+
   const [openCheckIn, setOpenCheckIn] = useState(false);
   const router = useRouter();
   const dateRangeStore = useStore(state => state.dateRange);
@@ -23,14 +29,29 @@ const BookingForm = ({ id, room, params }: { id: string, room: RoomOffer , param
   const setValue = useStore(state => state.setValue);
 
   const [guests, setGuests] = useState({adults: parseInt(params?.adults || guestsStore?.adults.toString() || '1'), children: parseInt(params?.children || guestsStore?.children.toString() || '0')});
-  const { priceText, nightsText } = getPriceData({ params, room })
+  const { priceText } = getPriceData({ params, room: room })
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: dateRangeStore.from || (params.from ? dayjs(params.from).toDate() : undefined),
     to: dateRangeStore.to || (params.to ? dayjs(params.to).toDate() : undefined),
   });
-  const [currentPrice, setCurrentPrice] = useState(room.price)
+  
+  // Calculate initial price based on guest count
+  const calculatePrice = (adultsCount: number) => {
+    const roomsNeeded = Math.ceil(adultsCount / room.maxPersons);
+    
+    if (adultsCount === 1) {
+      return room.price || room.totalGrossAmount.amount || 0;
+    } else if (adultsCount % 2 === 0) {
+      return roomsNeeded * (room.priceForTwo || room.price || room.totalGrossAmount.amount || 0);
+    } else {
+      const doubleRooms = Math.floor(adultsCount / 2);
+      return (doubleRooms * (room.priceForTwo || room.price || room.totalGrossAmount.amount || 0)) + (room.price || room.totalGrossAmount.amount || 0);
+    }
+  };
+
+  const [currentPrice, setCurrentPrice] = useState(calculatePrice(guests.adults))
   const [currentPriceText, setCurrentPriceText] = useState(priceText)
-  const [currentNightsText, setCurrentNightsText] = useState(nightsText)
+  const [dateError, setDateError] = useState(false)
 
   useEffect(() => {
     if (params.from && params.to) {
@@ -49,7 +70,7 @@ const BookingForm = ({ id, room, params }: { id: string, room: RoomOffer , param
     
     if (!fromDate || !toDate) return;
     
-    const { priceText: newPriceText, nightsText: newNightsText } = getPriceData({ 
+    const { priceText: newPriceText } = getPriceData({ 
       params: {
         from: fromDate,
         to: toDate,
@@ -59,14 +80,31 @@ const BookingForm = ({ id, room, params }: { id: string, room: RoomOffer , param
       room 
     });
 
-    setCurrentPrice(room.price);
+    // Calculate price based on guest distribution
+    const adultsCount = guests.adults;
+    const roomsNeeded = Math.ceil(adultsCount / room.maxPersons);
+    
+    let totalPrice = 0;
+    if (adultsCount === 1) {
+      totalPrice = room.price || room.totalGrossAmount.amount || 0;
+    } else if (adultsCount % 2 === 0) {
+      totalPrice = roomsNeeded * (room.priceForTwo || room.price || room.totalGrossAmount.amount || 0);
+    } else {
+      const doubleRooms = Math.floor(adultsCount / 2);
+      totalPrice = (doubleRooms * (room.priceForTwo || room.price || room.totalGrossAmount.amount || 0)) + (room.price || room.totalGrossAmount.amount || 0);
+    }
+
+    setCurrentPrice(totalPrice);
     setCurrentPriceText(newPriceText);
-    setCurrentNightsText(newNightsText);
   }, [dateRange?.from, dateRange?.to, guests, room]);
 
 
   const handleBookNow = () => {
-    if (!dateRange?.from || !dateRange?.to) return;
+    if (!dateRange?.from || !dateRange?.to) {
+      setDateError(true);
+      return;
+    }
+    setDateError(false);
     const queryString = getPath({ 
       from: getDate(dateRange?.from), 
       to: getDate(dateRange?.to), 
@@ -76,25 +114,23 @@ const BookingForm = ({ id, room, params }: { id: string, room: RoomOffer , param
     router.push(`/booking/${id}?${queryString}`);
   };
   return (
-    <div className='sticky top-10 flex flex-col bg-white rounded-[20px] px-5 pt-[25px] w-full pb-10'>
+    <div className='sticky shadow-xl top-10 flex flex-col bg-white border md:border-none rounded-[20px] px-5 pt-[25px] w-full pb-10'>
       <h3 className='font-semibold text-2xl text-center mb-3'>BOOK</h3>
       <div className='flex justify-between mb-1 gap-2'>
-        <div className='text-brown flex items-center gap-1'>Per {currentNightsText} from </div>
+        <div className='text-brown flex items-center gap-1'>Total</div>
         <div className='text-xl min-w-[80px] self-end text-center rounded-full bg-green/15 font-[700] text-green px-2.5 py-2'>€{currentPrice}</div>
       </div>
-      <div className='text-blue flex items-center gap-1 my-4'><BsFillPersonFill className='size-4 text-blue' />{currentPriceText}</div>
+      <div className='text-mute flex items-center gap-1 my-4 mb-10'><BsFillPersonFill className='size-4 text-mute' />{currentPriceText}</div>
 
       <div className='flex flex-col gap-5 w-full mb-5'>
-        <label className='w-full'>
-          <div className='flex font-medium mb-2 gap-2 h-5 '>
-            <div className=' pr-2 border-r-2 border-black pb-1'>Check In</div>
-            <div className='pb-1'>Check out</div>
-          </div>
+        <div className='flex flex-col gap-1'>
           <DateInput 
             value={dateRange || undefined}
             open={openCheckIn}
             onOpenChange={setOpenCheckIn}
-            className="max-w-[350px]"
+            className="w-full md:max-w-[350px] "
+            inputStyle={dateError ? "border-red" : "border-mute"}
+            isError={dateError}
           >
             <Calendar 
               required={false}
@@ -102,21 +138,40 @@ const BookingForm = ({ id, room, params }: { id: string, room: RoomOffer , param
               captionLayout="label"
               selected={dateRange}
               onSelect={(date) => {
-                setDateRange(date as DateRange);
-                if (date?.from && date?.to) {
-                  setValue(date as DateRange, 'dateRange');
+                if (date?.from && !date?.to) {
+                  const nextDay = new Date(date.from);
+                  nextDay.setDate(nextDay.getDate() + 1);
+                  const newRange = { from: date.from, to: nextDay };
+                  setDateRange(newRange);
+                  setValue(newRange, 'dateRange');
+                  setDateError(false);
+                } else if (date?.from && date?.to) {
+                  // Check if same day selected
+                  if (date.from.getTime() === date.to.getTime()) {
+                    const nextDay = new Date(date.from);
+                    nextDay.setDate(nextDay.getDate() + 1);
+                    const newRange = { from: date.from, to: nextDay };
+                    setDateRange(newRange);
+                    setValue(newRange, 'dateRange');
+                  } else {
+                    setDateRange(date as DateRange);
+                    setValue(date as DateRange, 'dateRange');
+                  }
+                  setDateError(false);
+                } else {
+                  setDateRange(date as DateRange);
                 }
               }}
               disabled={{ before: new Date() }}
             />
           </DateInput>
-        </label>
+          {dateError && (
+            <span className='text-red-500 text-sm pl-1'>Please select  dates</span>
+          )}
+        </div>
 
         <Separator orientation="horizontal" />
-        <label className='w-full'>
-          <div className='font-medium mb-2'>Guests</div>
-          <Guests setValue={setGuests} value={guests} />
-        </label>
+        <Guests setValue={setGuests} value={guests} className="border-mute" />
       </div>
       <Button className='w-full' onClick={handleBookNow}>Book Now</Button>
     </div>

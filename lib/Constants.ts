@@ -1,12 +1,19 @@
 // Tax
-export const TAX_RATE = 0;
-export const PHONE_NUMBER = "+5 077 6764 8570 "
+export const PHONE_NUMBER = "+5 077 6764 8570"
+export const EMAIL = "info@charlie-m.de"
+
+
+export const RATE_PLANS = {
+  STANDARD: 'FLEX_WEB', // standard prices for room refundable price that we get to show initial room price
+  NON_REFUNDABLE: 'FLEX_WEB7', // non refundable prices for room, when we choose non refundable in room info page we use this price
+  LONG_STAY : 'NR_WEB7', // we will use this price in booking more then 7 nights 
+}
 // Hotel Information
 export const HOTEL_INFO = {
   name: "Charlie M Hotel",
   // Contact
   telephone: PHONE_NUMBER, 
-  email: "info@charlie-m.de",
+  email: EMAIL,
   
   address: {
     streetAddress: "Friedrichstraße 33", 

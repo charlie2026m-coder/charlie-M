@@ -2,7 +2,6 @@ import { Fetch } from './Request';
 import dayjs from 'dayjs';
 import { cache } from 'react';
 import { OfferResponse, RoomOffer } from '@/types/offers';
-import { calculateNights } from '@/lib/utils';
 import { getRoomsDetails } from './getRoomsDetails';
 const propId = process.env.APALEO_PROPERTY_ID;
 
@@ -10,32 +9,40 @@ const propId = process.env.APALEO_PROPERTY_ID;
 const getAvailableRoomsInternal = async (from?: string, to?: string, guests: number = 1) => {
   if (!propId) throw new Error('Property ID is required. Set APALEO_PROPERTY_ID in .env');
   
-  const arrival = from || dayjs().format('YYYY-MM-DD');
-  const departure = to || dayjs().add(1, 'day').format('YYYY-MM-DD');
-  const guestsCount = (guests && guests > 1) ? 2 : 1;
-
+  let arrival = from || dayjs().format('YYYY-MM-DD');
+  let departure = to || dayjs().add(1, 'day').format('YYYY-MM-DD');
+  
+  // Validate that departure is at least 1 day after arrival
+  if (arrival === departure) {
+    departure = dayjs(arrival).add(1, 'day').format('YYYY-MM-DD');
+  } else if (dayjs(departure).isBefore(dayjs(arrival))) {
+    const temp = arrival;
+    arrival = departure;
+    departure = dayjs(temp).add(1, 'day').format('YYYY-MM-DD');
+  }
+  
   try {
-      const response = await Fetch<OfferResponse>(`/booking/v1/offers?propertyId=${propId}&arrival=${arrival}&departure=${departure}&channelCode=Direct&adults=${guestsCount}`).then(res => res.offers);
+      const singleRoomResponse = await Fetch<OfferResponse>(`/booking/v1/offers?propertyId=${propId}&arrival=${arrival}&departure=${departure}&channelCode=Ibe&adults=1`).then(res => res.offers);
       
-      //availableUnits
-      const nights = calculateNights(from as string, to as string);
-      const type = nights > 7  ? 'LONG_STAY' : 'BAR_WEB';
-
-      const fillteredRooms = response.filter(room => {
-        return room.ratePlan.code.includes(type);
-      });
+      // Always fetch double room data
+      const doubleRoomResponse = await Fetch<OfferResponse>(`/booking/v1/offers?propertyId=${propId}&arrival=${arrival}&departure=${departure}&channelCode=Ibe&adults=2`).then(res => res.offers);
+      
       const roomsDetails = await getRoomsDetails();
 
-      const formattedRooms = fillteredRooms.map(room => {
+      const formattedRooms = singleRoomResponse.map(room => {
         const roomDetails = roomsDetails.find(item => item.id === room.unitGroup.id);
-
+        const doubleRoom = doubleRoomResponse.find(dr => dr.unitGroup.id === room.unitGroup.id && dr.ratePlan.id === room.ratePlan.id);
+        
         return {
           ...room,
           images: roomDetails?.photos || [],
-          id: room.unitGroup.id,
+          id: `${room.unitGroup.id}-${room.ratePlan.id}`, // Unique ID combining unit group and rate plan
           name: room.unitGroup.name,
           description: room.unitGroup.description,
-          price: room.totalGrossAmount.amount,
+          price: room.totalGrossAmount.amount, // Price for 1 guest
+          priceForTwo: doubleRoom?.totalGrossAmount.amount, // Price for 2 guests (only if guests > 1)
+          oneNightPrice: room.timeSlices[0].totalGrossAmount.amount,
+          oneNightPriceForTwo: doubleRoom?.timeSlices[0].totalGrossAmount.amount, // Only if guests > 1
           currency: room.totalGrossAmount.currency,
           attributes: roomDetails?.attributes || [],
           size: roomDetails?.size || 0,

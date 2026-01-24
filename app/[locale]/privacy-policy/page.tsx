@@ -1,6 +1,7 @@
 import { MdShield } from "react-icons/md";
 import Content from "./components/Content";
 import type { Metadata } from 'next';
+import Header from "@/app/_components/header/Header";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -58,11 +59,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default function PrivacyPolicy() {
+export default async function PrivacyPolicy({ params }: Props) {
+  const { locale } = await Promise.resolve(params);
 
-  
   return (
-    <section className="flex flex-col items-center justify-center container px-4 md:px-10 xl:px-[100px] py-[50px] bg-light">
+    <>
+      <Header locale={locale} />
+      <section className="flex flex-col items-center justify-center container px-4 md:px-10 xl:px-[100px] py-[50px] bg-light">
       <div className="flex flex-col items-center gap-6 py-15 bg-blue/30 rounded-[40px] mb-8">
         <div className='flex items-center gap-5'>
           <div className='size-10 md:size-[76px] bg-blue rounded-full flex items-center justify-center text-white '>
@@ -75,6 +78,7 @@ export default function PrivacyPolicy() {
 
       <Content />
     </section>
+    </>
   )
 }
 

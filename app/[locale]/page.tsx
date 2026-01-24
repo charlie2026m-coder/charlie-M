@@ -1,16 +1,18 @@
-import PosterSection from '@/app/_components/Home/PosterSection';
-import RoomsSection from '@/app/_components/Home/RoomsSection';
-import WhySection from '@/app/_components/Home/WhySection';
-import VibeSection from '@/app/_components/Home/VibeSection';
-import FAQSection from '@/app/_components/Home/FAQSection';
-import ReviewsSection from '@/app/_components/Home/ReviewsSection';
-import CheckInSection from '@/app/_components/Home/CheckInSection';
+import VideoSection from '@/app/[locale]/home/VideoSection';
+import RoomsSection from '@/app/[locale]/home/RoomsSection';
+
+import StickyCheckInForm from '@/app/[locale]/home/components/StickyCheckInForm';
 import type { Metadata } from 'next';
 import { HOTEL_INFO } from '@/lib/Constants';
+import LocationSection from '@/app/[locale]/home/LocationSection';
+import ConceptSection from './home/ConceptSection';
+import ExperienceSection from './home/ExperienceSection';
+import PersonalizeSection from './home/PersonalizeSection';
+import DesignSection from './home/DesignSection';
+import FAQSection from './home/FAQSection';
+import ReviewsSection from './home/ReviewsSection';
 
-type Props = {
-  params: Promise<{ locale: string }>;
-};
+type Props = {params: Promise<{ locale: string }>};
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await Promise.resolve(params);
@@ -74,16 +76,18 @@ export default async function Home({ params }: Props) {
   const { locale } = await Promise.resolve(params);
 
   return (
-      <section className="flex flex-col  pt-[50px] ">
-        <div className='container px-4 xl:px-[100px]'>
-          <PosterSection />
-          <RoomsSection locale={locale} />
-          <WhySection locale={locale} />
-        </div>
-          <VibeSection locale={locale} />
-          <FAQSection />
-          <ReviewsSection />
-          <CheckInSection />
+      <section className="flex flex-col">
+        <VideoSection locale={locale} />
+        <StickyCheckInForm />
+        <RoomsSection locale={locale} />
+        <LocationSection />
+        <ConceptSection />
+        <ExperienceSection />
+        <PersonalizeSection locale={locale} />
+        <DesignSection locale={locale} />
+        <FAQSection />
+        <ReviewsSection />
+        {/* <InstagramSection /> */}
       </section>
   );
 }
