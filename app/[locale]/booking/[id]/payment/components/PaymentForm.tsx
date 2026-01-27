@@ -8,7 +8,6 @@ import { useBookingStore } from "@/store/useBookingStore";
 import { toast } from "sonner";
 import LoadingDots from "@/app/_components/ui/LoadingDots";
 import { FiArrowLeft } from "react-icons/fi";
-import { Link } from "@/navigation";
 
 
 export default function PaymentForm({ amount }: {amount: number}) {
@@ -191,10 +190,10 @@ export default function PaymentForm({ amount }: {amount: number}) {
 
   return (
     <div className='flex flex-col gap-5 col-span-1 xl:col-span-2'>
-    <Link href='/profile/reservations' className="flex items-center gap-3">
+    <button onClick={() => router.back()} className="flex items-center gap-3 hover:text-blue transition-colors">
       <FiArrowLeft className='size-5' />
-        Back to My Reservations
-    </Link>
+      Back to Booking Details
+    </button>
     <div className=" flex flex-col">
       <div className="bg-white rounded-2xl border p-8">
         <h2 className="text-[22px] font-bold mb-4">Complete Payment</h2>
