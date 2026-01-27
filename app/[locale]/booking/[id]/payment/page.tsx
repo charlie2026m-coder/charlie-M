@@ -63,9 +63,7 @@ const PaymentPage = () => {
             isLoading={false}
           />
         ) : (
-          <PaymentForm 
-            amount={booking?.totalAmount || 0}
-          />
+          <PaymentForm amount={booking?.totalAmount || 0} />
         )}
         <SummaryCard />
       </div>

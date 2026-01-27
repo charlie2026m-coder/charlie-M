@@ -8,7 +8,7 @@ import dayjs from 'dayjs';
 import { getExtraPrice } from '@/lib/utils';
 
 const SummaryCard = () => {
-  const { booking, rooms, roomDetails, services, extras } = useBookingStore()
+  const { booking, rooms, roomDetails, services, extras, apaleoBookingId } = useBookingStore()
 
   if (!booking || !booking.reservations) {
     return (
@@ -22,7 +22,6 @@ const SummaryCard = () => {
   const { reservations } = booking
   const totalGuests = reservations[0].adults + (reservations[0].childrenAges?.length || 0)
   const nights = calculateNights(reservations[0].arrival, reservations[0].departure)
-  const roomPrice = roomDetails?.price || 0
 
   const updatedRooms = rooms.map(room => {
     const updateExtras = room.extras?.map(extra => {
@@ -101,7 +100,7 @@ const SummaryCard = () => {
   const totalPrice = roomsTotalPrice + extrasTotalPrice + servicesTotalPrice
 
   return (
-    <div className='flex flex-col bg-white rounded-[20px] py-5 px-3 shadow-xl self-start col-span-1'>
+    <div className='flex flex-col bg-white rounded-[20px] py-5 px-3 border self-start col-span-1'>
       <h2 className='text-2xl font-bold mb-3 text-center'>Summary</h2>
       <Image 
         src="/images/room1.webp" 
@@ -206,6 +205,13 @@ const SummaryCard = () => {
         <span className='font-semibold text-lg'>Total price:</span>
         <Price price={Number(totalPrice.toFixed(2))} />
       </div>
+
+      {apaleoBookingId && (
+        <div className='flex items-center justify-between border-t pt-3'>
+          <span className='text-gray-500'>Booking ID:</span>
+          <span className='font-bold text-lg'>{apaleoBookingId}</span>
+        </div>
+      )}
     </div>
   )
 }

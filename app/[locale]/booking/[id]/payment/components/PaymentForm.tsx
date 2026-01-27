@@ -6,6 +6,9 @@ import { AdyenCheckout, Dropin } from "@adyen/adyen-web/auto";
 import "@adyen/adyen-web/styles/adyen.css";
 import { useBookingStore } from "@/store/useBookingStore";
 import { toast } from "sonner";
+import LoadingDots from "@/app/_components/ui/LoadingDots";
+import { FiArrowLeft } from "react-icons/fi";
+import { Link } from "@/navigation";
 
 
 export default function PaymentForm({ amount }: {amount: number}) {
@@ -110,6 +113,7 @@ export default function PaymentForm({ amount }: {amount: number}) {
               transactionReference: transactionRef
             }
 
+
             try {
               const response = await fetch("/api/bookings/create", {
                 method: "POST",
@@ -117,13 +121,18 @@ export default function PaymentForm({ amount }: {amount: number}) {
                 body: JSON.stringify(newBooking),
               });
 
-              if (!response.ok) throw new Error("Failed");
+              if (!response.ok) throw new Error("Failed to create booking");
 
               const bookingData = await response.json();
+              // Save Apaleo booking ID to store
+              if (bookingData.id) {
+                useBookingStore.getState().setApaleoBookingId(bookingData.id);
+              }
               toast.success("Booking created!", { id: "create-booking" });
               const successUrl = `/${urlParams.locale}/booking/${urlParams.id}/success?bookingId=${bookingData.id}`;
               router.push(successUrl);
             } catch (error) {
+              console.error('Booking creation failed:', error);
               toast.error("Booking failed", { id: "create-booking" });
               setCreatingBooking(false);
             }
@@ -168,12 +177,12 @@ export default function PaymentForm({ amount }: {amount: number}) {
 
   if (creatingBooking) {
     return (
-      <div className="col-span-1 xl:col-span-2 flex flex-col">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <div className="flex flex-col items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue mb-4"></div>
+      <div className="col-span-1 xl:col-span-2 flex flex-col h-full min-h-[60vh]">
+        <div className="bg-white p-8 h-full flex items-center justify-center">
+          <div className="flex flex-col items-center justify-center">
             <h2 className="text-[22px] font-bold mb-2">Creating Booking...</h2>
-            <p className="text-gray-600">Please wait while we process your reservation</p>
+            <p className="text-gray-600 mb-4">Please wait while we process your reservation</p>
+            <LoadingDots />
           </div>
         </div>
       </div>
@@ -181,13 +190,20 @@ export default function PaymentForm({ amount }: {amount: number}) {
   }
 
   return (
+    <div className='flex flex-col gap-5'>
+    <Link href='/profile/reservations' className="flex items-center gap-3">
+      <FiArrowLeft className='size-5' />
+      
+        Back to My Reservations
+    </Link>
     <div className="col-span-1 xl:col-span-2 flex flex-col">
-      <div className="bg-white rounded-2xl shadow-xl p-8">
+      <div className="bg-white rounded-2xl border p-8">
         <h2 className="text-[22px] font-bold mb-4">Complete Payment</h2>
         <p className="text-gray-600 mb-6">Secure payment powered by Adyen</p>
         {loading && <p className="text-center">Loading payment methods...</p>}
         <div ref={dropinRef} className="adyen-dropin-container" />
       </div>
+    </div>
     </div>
   );
 }

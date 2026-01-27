@@ -19,7 +19,7 @@ const RefundCard = ({ rooms }: { rooms: RoomOffer[] }) => {
     setRoomDetails(mainRoom)
   }
   return (
-    <div className='flex flex-col bg-white rounded-[20px] py-6 px-4 shadow-xl'>
+    <div className='flex flex-col bg-white rounded-[20px] py-6 px-4 border'>
       <RadioGroup value={isRefundable ? 'true' : 'false'} onValueChange={handleRefundChange} >
         <Label htmlFor="non-refundable" className="flex items-center gap-4 cursor-pointer pb-5"  >
           <RadioGroupItem value="false" id="non-refundable" />

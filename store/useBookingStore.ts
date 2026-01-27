@@ -23,6 +23,8 @@ export interface BookingService {
 interface BookingState {
   booking: Booking | undefined;
   transactionReference: string | null;
+  reservationId: string | null;
+  apaleoBookingId: string | null;
   
   roomDetails: RoomOffer | undefined;
   rooms: Room[] ;
@@ -36,6 +38,8 @@ interface BookingState {
   
   setBooking: (booking: Booking) => void;
   setTransactionReference: (transactionReference: string) => void;
+  setReservationId: (reservationId: string) => void;
+  setApaleoBookingId: (id: string) => void;
   setRoomDetails: (roomDetails: RoomOffer) => void;
   setServices: (services: BookingService[]) => void;
   setExtras: (extras: Service[]) => void;
@@ -66,6 +70,12 @@ export const useBookingStore = create<BookingState>()(
 
       transactionReference: null,
       setTransactionReference: (transactionReference: string) => set((state) => ({ ...state, transactionReference })),
+
+      reservationId: null,
+      setReservationId: (reservationId: string) => set((state) => ({ ...state, reservationId })),
+
+      apaleoBookingId: null,
+      setApaleoBookingId: (apaleoBookingId: string) => set((state) => ({ ...state, apaleoBookingId })),
 
       services: [],
       setServices: (services: BookingService[]) => set((state) => ({ ...state, services })),
@@ -114,6 +124,8 @@ export const useBookingStore = create<BookingState>()(
           bookingId: undefined,
           isRefundable: true,
           transactionReference: null,
+          reservationId: null,
+          apaleoBookingId: null,
           services: [],
           extras: [],
         })
@@ -127,6 +139,8 @@ export const useBookingStore = create<BookingState>()(
         roomDetails: state.roomDetails,
         bookingId: state.bookingId,
         isRefundable: state.isRefundable,
+        reservationId: state.reservationId,
+        apaleoBookingId: state.apaleoBookingId,
         services: state.services,
         extras: state.extras,
       }),

@@ -135,7 +135,7 @@ const BookingMenu = ({
 
 
   return (
-    <div className='flex flex-col bg-white rounded-[20px] py-5 px-3 shadow-xl'>
+    <div className='flex flex-col bg-white rounded-[20px] py-5 px-3 border'>
       <ChangeDate arrival={roomsOffers[0].arrival} departure={roomsOffers[0].departure} />
       <AddRooms filledRooms={filledRooms} availableUnits={roomsOffers[0].availableUnits} isKidsBedAvailable={isKidsBedAvailable} />
 

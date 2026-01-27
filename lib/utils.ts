@@ -250,6 +250,7 @@ export const formatReservations = (
               serviceId: service.serviceId,
               dates: service.dates.map((date: any) => ({
                 serviceDate: date.serviceDate,
+                count: date.count,
                 amount: date.amount
               }))
             };

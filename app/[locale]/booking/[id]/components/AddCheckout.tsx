@@ -15,8 +15,9 @@ import { ButtonIcon } from "@/app/_components/ui/ButtonIcon";
 import { useBookingStore } from "@/store/useBookingStore";
 import dayjs from "dayjs";
 import { cn } from "@/lib/utils";
+import { Room } from "@/types/types";
   
-const AddCheckoutExtra = ({ extra, rooms }: { extra: Service, rooms: RoomOffer[] }) => {
+const AddCheckoutExtra = ({ extra, rooms }: { extra: Service, rooms: Room[]}) => {
   const [isOpen, setIsOpen] = useState(false);
   const services = useBookingStore(state => state.services);
   const setServices = useBookingStore(state => state.setServices);
@@ -117,7 +118,7 @@ const AddCheckoutExtra = ({ extra, rooms }: { extra: Service, rooms: RoomOffer[]
         <div className='flex items-center justify-between pt-5'>
           <span>Total: {count} {extra.name}</span>
           <Button onClick={handleConfirm} className='h-[45px]'>
-            Confirm € {getTotalPrice().toFixed(2)}
+            Confirm <span className='font-semibold'>€ {getTotalPrice().toFixed(2)}</span>
           </Button>
         </div>
       </DialogContent>

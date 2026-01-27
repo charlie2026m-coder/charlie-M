@@ -16,9 +16,9 @@ const SuccessPage = () => {
         <div className='col-span-1 xl:col-span-2 flex flex-col py-10'>
           <div className='w-full flex gap-3 py-2.5  items-center justify-center text-green-600 bg-green-600/10 rounded-full mb-6'>
             <MdCheckCircle className='size-5' />
-            <h2 className='text-[18px] font-bold text-center'>Success</h2>
+            <h2 className='text-[18px] font-bold text-center'>Your booking is confirmed!</h2>
           </div>
-          <p className='text-dark text-center mb-5'>You have successfully booked a room. We have sent you detailed information to your email address: </p>
+          <p className='text-dark text-center mb-5'>We sent you the confirmation to the email: <strong>{booking?.booker?.email}</strong></p>
           <Image 
             src='/images/booking-completed.svg' 
             alt='success' 
@@ -27,8 +27,7 @@ const SuccessPage = () => {
 
             className='w-[375px] h-[344px] mx-auto object-cover mb-4'
           />
-          <p className='font-medium inter  text-center mb-5'>{booking?.booker?.email}</p>
-          <Button className='mx-auto' onClick={() => router.push('/')}>Back to Homepage</Button>
+          <Button className='mx-auto' onClick={() => router.push('/')}>Back to Main Page</Button>
         </div>
         <SummaryCard />
 

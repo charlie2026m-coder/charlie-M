@@ -13,8 +13,9 @@ import { Service } from "@/types/apaleo";
 import { RoomOffer } from "@/types/offers";
 import { ButtonIcon } from "@/app/_components/ui/ButtonIcon";
 import { useBookingStore } from "@/store/useBookingStore";
-  
-const AddUnlimitedExtra = ({ extra, room, guests, rooms, nights }: { extra: Service, room: RoomOffer, guests: number, rooms: RoomOffer[], nights: number }) => {
+import { Room } from "@/types/types";
+
+const AddUnlimitedExtra = ({ extra, room, guests, rooms, nights }: { extra: Service, room: RoomOffer, guests: number, rooms: Room[], nights: number }) => {
   const [isOpen, setIsOpen] = useState(false);
   const services = useBookingStore(state => state.services);
   const setServices = useBookingStore(state => state.setServices);
@@ -25,19 +26,13 @@ const AddUnlimitedExtra = ({ extra, room, guests, rooms, nights }: { extra: Serv
   
   const mode = extra.availability?.mode;//Daily, Arrival, Departure
   const pricingUnit = extra.pricingUnit;//Person, Room
-
-  // Calculate max limit
+  // Calculate max limit based on pricing unit
   const getMaxLimit = () => {
-    if ((mode === 'Arrival' || mode === 'Departure') && pricingUnit === 'Room') {
+    if (pricingUnit === 'Room') {
       return rooms.length;
     }
-    if ((mode === 'Arrival' || mode === 'Departure') && pricingUnit === 'Person') {
-      return guests;
-    }
-    if (mode === 'Daily' && pricingUnit === 'Room') {
-      return rooms.length;
-    }
-    if (mode === 'Daily' && pricingUnit === 'Person') {
+    if (pricingUnit === 'Person') {
+      // Max is total number of guests across all rooms
       return guests;
     }
     return 1;
@@ -47,20 +42,18 @@ const AddUnlimitedExtra = ({ extra, room, guests, rooms, nights }: { extra: Serv
 
   // Calculate total price
   const getTotalPrice = () => {
-    if ((mode === 'Arrival' || mode === 'Departure') && pricingUnit === 'Person') {
-      return extra.price * count * guests;
-    }
+    // Daily services are per night
     if (mode === 'Daily' && pricingUnit === 'Room') {
       return extra.price * count * nights;
     }
+    
     if (mode === 'Daily' && pricingUnit === 'Person') {
       return extra.price * count * nights;
     }
+    
     return extra.price * count;
   };
-  const add =() => {
-    console.log(mode)
-    console.log(pricingUnit)
+  const add = () => {
     if (count >= maxLimit) return
     setCount(count + 1)
   }
@@ -147,7 +140,7 @@ const AddUnlimitedExtra = ({ extra, room, guests, rooms, nights }: { extra: Serv
         <div className='flex items-center justify-between pt-5'>
           <span>Total: {count} {extra.name}</span>
           <Button onClick={handleConfirm} className='h-[45px]'>
-            Confirm € {getTotalPrice().toFixed(2)}
+            Confirm <span className='font-semibold'>€ {getTotalPrice().toFixed(2)}</span>
           </Button>
         </div>
       </DialogContent>

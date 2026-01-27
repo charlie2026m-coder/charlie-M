@@ -83,9 +83,7 @@ const BookingPage = ({
           <ExtrasSection 
             nights={nights}
             extras={extras} 
-            room={rooms[0]} 
-            guests={Number(adults)} 
-            rooms={rooms}
+            room={rooms[0]}
           />}
         </div>
         <div className='col-span-1 gap-5 flex flex-col'>

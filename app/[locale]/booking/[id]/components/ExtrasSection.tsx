@@ -2,9 +2,14 @@
 import ExtraCard from './ExtraCard'
 import { Service } from '@/types/apaleo'
 import { RoomOffer } from '@/types/offers'
-const ExtrasSection = ({ extras, room, guests, rooms, nights }: { extras: Service[] | undefined, room: RoomOffer, guests: number, rooms: RoomOffer[], nights: number }) => {
-  if(!extras || extras.length === 0) return null;
+import { useBookingStore } from '@/store/useBookingStore'
 
+const ExtrasSection = ({ extras, room, nights }: { extras: Service[] | undefined, room: RoomOffer, nights: number }) => {
+  const rooms = useBookingStore(state => state.rooms);
+  const guests = rooms.reduce((acc, room) => acc + room.adults, 0);
+  
+  if(!extras || extras.length === 0) return null;
+  
   return (  
     <div className='flex flex-col gap-[26px] mb-10'>
       <h2 className='inter  font-semibold w-full pb-2.5 border-b'>Add Extras:</h2>

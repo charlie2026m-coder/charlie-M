@@ -6,15 +6,15 @@ import AddUnlimitedExtra from './AddUnlimitedExtra';
 import { RoomOffer } from '@/types/offers';
 import AddLimitedExtra from './AddLimitedExtra';
 import AddCheckoutExtra from './AddCheckout';
+import { Room } from '@/types/types'
 
-
-const ExtraCard = ({ item, room, guests, rooms, nights }: { item: Service, room: RoomOffer, guests: number, rooms: RoomOffer[], nights: number }) => {
+const ExtraCard = ({ item, room, guests, rooms, nights }: { item: Service, room: RoomOffer, guests: number, rooms: Room[], nights: number }) => {
   const [isOpen, setIsOpen] = useState(false);
-
   const isUnlimited = item.unlimited;
   const isSoldOut = item.isSoldOut;
   const isCheckout = item.id === 'CMH-LCO' || item.id === 'CMH-ECI';
 
+  console.log(item,' extra card')
   const image = '/images/extra.webp'
   return (
     <div className='flex sm:flex-col gap-2 relative'>
@@ -34,7 +34,12 @@ const ExtraCard = ({ item, room, guests, rooms, nights }: { item: Service, room:
         </div>
       </div>
       {!isSoldOut &&<div>
-        {isCheckout ? <AddCheckoutExtra extra={item} rooms={rooms} /> : isUnlimited ? <AddUnlimitedExtra extra={item} room={room} guests={guests} rooms={rooms} nights={nights} /> : <AddLimitedExtra extra={item} rooms={rooms} room={room} guests={guests} />}
+        {isCheckout 
+          ? <AddCheckoutExtra extra={item} rooms={rooms} /> 
+          : isUnlimited 
+            ? <AddUnlimitedExtra extra={item} room={room} guests={guests} rooms={rooms} nights={nights} /> 
+            : <AddLimitedExtra extra={item} rooms={rooms} room={room} guests={guests} />
+        }
       </div>}
 
       <div className='flex flex-col '>
