@@ -3,6 +3,7 @@ import { headers } from "next/headers"
 import { getOrRefreshToken } from "@/services/Request"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { Booking } from "@/types/booking"
+import { createFolioPayment } from "@/services/createFolioPayment"
 
 const APALEO_API_URL = 'https://api.apaleo.com'
 
@@ -63,8 +64,16 @@ export async function POST(request: Request) {
     }
 
     const apaleoData: ApaleoBookingResponse = await response.json()
-    console.log('✅ Booking created successfully:', apaleoData)
+    // Create folio payment after booking is created
+    if (booking.transactionReference && booking.totalAmount) {
 
+      await createFolioPayment(
+        apaleoData.id,
+        booking.totalAmount,
+        booking.transactionReference
+      )
+      console.log('✅ Folio payment created successfully')
+    }
 
     try {
       const supabase = await createSupabaseServerClient()

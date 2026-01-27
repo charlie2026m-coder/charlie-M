@@ -3,13 +3,12 @@ import { useBookingStore } from '@/store/useBookingStore'
 import Price from "@/app/_components/ui/price";
 import Image from 'next/image';
 import { calculateNights } from '@/lib/utils';
-// import { TAX_RATE } from '@/lib/Constants';
 import { BsCalendar2Fill } from 'react-icons/bs';
 import dayjs from 'dayjs';
 import { getExtraPrice } from '@/lib/utils';
 
 const SummaryCard = () => {
-  const { booking, rooms, roomDetails } = useBookingStore()
+  const { booking, rooms, roomDetails, services, extras, apaleoBookingId } = useBookingStore()
 
   if (!booking || !booking.reservations) {
     return (
@@ -23,7 +22,6 @@ const SummaryCard = () => {
   const { reservations } = booking
   const totalGuests = reservations[0].adults + (reservations[0].childrenAges?.length || 0)
   const nights = calculateNights(reservations[0].arrival, reservations[0].departure)
-  const roomPrice = roomDetails?.price || 0
 
   const updatedRooms = rooms.map(room => {
     const updateExtras = room.extras?.map(extra => {
@@ -57,13 +55,52 @@ const SummaryCard = () => {
     }
   };
 
+  // Calculate price for unlimited/checkout services
+  const calculateUnlimitedServicePrice = (serviceId: string, count: number) => {
+    const service = extras.find(e => e.id === serviceId);
+    if (!service) return 0;
+
+    const mode = service.availability?.mode;
+    const pricingUnit = service.pricingUnit;
+    
+    if (mode === 'Daily' && pricingUnit === 'Room') {
+      return service.price * count * nights;
+    }
+    if (mode === 'Daily' && pricingUnit === 'Person') {
+      return service.price * count * nights;
+    }
+    return service.price * count;
+  };
+
+  // Calculate total price for all services (unlimited, checkout and limited)
+  const servicesTotalPrice = services.reduce((acc, service) => {
+    // If service has count (unlimited or checkout services)
+    if (service.count) {
+      return acc + calculateUnlimitedServicePrice(service.serviceId, service.count);
+    }
+    
+    // If service has dates array (limited services)
+    if (service.dates && service.dates.length > 0) {
+      const serviceDetails = extras.find(e => e.id === service.serviceId);
+      if (!serviceDetails) return acc;
+      
+      const totalForDates = service.dates.reduce((dateAcc, date) => {
+        return dateAcc + (serviceDetails.price * date.count);
+      }, 0);
+      
+      return acc + totalForDates;
+    }
+    
+    return acc;
+  }, 0);
+
   // Calculate total price for all rooms based on their guest counts
   const roomsTotalPrice = rooms.reduce((acc, room) => acc + calculateRoomPrice(room.adults), 0);
   const extrasTotalPrice = flatExtras.reduce((acc, extra) => acc + extra.totalPrice, 0)
-  const totalPrice = roomsTotalPrice + extrasTotalPrice
+  const totalPrice = roomsTotalPrice + extrasTotalPrice + servicesTotalPrice
 
   return (
-    <div className='flex flex-col bg-white rounded-[20px] py-5 px-3 shadow-xl self-start col-span-1'>
+    <div className='flex flex-col bg-white rounded-[20px] py-5 px-3 border self-start col-span-1'>
       <h2 className='text-2xl font-bold mb-3 text-center'>Summary</h2>
       <Image 
         src="/images/room1.webp" 
@@ -102,9 +139,10 @@ const SummaryCard = () => {
         </div>
       </div>
 
-      {reservations[0].services && reservations[0].services.length > 0 && (
+      {((flatExtras.length > 0) || (services.length > 0)) && (
         <div className='flex flex-col mb-5'>
           <span className='font-semibold mb-4 text-[15px]'>Extras:</span>
+          
           {updatedRooms.map((room, index) => (
             room.extras && room.extras.length > 0 && (
               <div key={room.id} className='flex flex-col gap-1 mb-2'>
@@ -119,9 +157,46 @@ const SummaryCard = () => {
               </div>
             )
           ))}
+          
+          {services.map((service) => {
+            const serviceDetails = extras.find(e => e.id === service.serviceId);
+            if (!serviceDetails) return null;
+            
+            // For unlimited/checkout services with count
+            if (service.count) {
+              const servicePrice = calculateUnlimitedServicePrice(service.serviceId, service.count);
+              
+              return (
+                <div key={service.serviceId} className='flex items-center gap-2 inter text-sm text-dark mb-2'>
+                  <div className='truncate overflow-hidden whitespace-nowrap flex items-center'>
+                    {serviceDetails.name} (x{service.count})
+                  </div>
+                  <span className='text-bale font-semibold ml-auto'>€ {servicePrice.toFixed(2)}</span>
+                </div>
+              );
+            }
+            
+            // For limited services with dates array
+            if (service.dates && service.dates.length > 0) {
+              const totalCount = service.dates.reduce((sum, date) => sum + date.count, 0);
+              const totalPrice = service.dates.reduce((sum, date) => sum + (serviceDetails.price * date.count), 0);
+              
+              return (
+                <div key={service.serviceId} className='flex items-center gap-2 inter text-sm text-dark mb-2'>
+                  <div className='truncate overflow-hidden whitespace-nowrap flex items-center'>
+                    {serviceDetails.name} (x{totalCount})
+                  </div>
+                  <span className='text-bale font-semibold ml-auto'>€ {totalPrice.toFixed(2)}</span>
+                </div>
+              );
+            }
+            
+            return null;
+          })}
+          
           <div className='flex items-center justify-between gap-2 inter text-sm text-dark mb-2'>
             <span>Total:</span>
-            <span className='text-bale font-semibold'>€ {extrasTotalPrice.toFixed(2)}</span>
+            <span className='text-bale font-semibold'>€ {(extrasTotalPrice + servicesTotalPrice).toFixed(2)}</span>
           </div>
         </div>
       )}
@@ -130,6 +205,13 @@ const SummaryCard = () => {
         <span className='font-semibold text-lg'>Total price:</span>
         <Price price={Number(totalPrice.toFixed(2))} />
       </div>
+
+      {apaleoBookingId && (
+        <div className='flex items-center justify-between border-t pt-3'>
+          <span className='text-gray-500'>Booking ID:</span>
+          <span className='font-bold text-lg'>{apaleoBookingId}</span>
+        </div>
+      )}
     </div>
   )
 }

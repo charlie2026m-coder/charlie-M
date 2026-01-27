@@ -8,6 +8,7 @@ import { Checkbox } from '@/app/_components/ui/checkbox'
 import { useBookingStore } from '@/store/useBookingStore'
 import { GuestDetailsFormData, guestDetailsSchema } from '@/types/schemas'
 import { Link } from '@/navigation'
+import LoadingDots from '@/app/_components/ui/LoadingDots'
 
 interface GuestDetailsFormProps {
   onSubmit: (data: GuestDetailsFormData) => void
@@ -157,7 +158,7 @@ const GuestDetailsForm = ({ onSubmit, onBack, isLoading = false }: GuestDetailsF
           className='flex-1 max-w-[210px] h-[55px]'
           disabled={isLoading || !consent}
         >
-          {isLoading ? 'Creating Booking...' : 'Continue'}
+          {isLoading ? <LoadingDots /> : 'Continue'}
         </Button>
       </div>
     </form>

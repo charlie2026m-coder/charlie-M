@@ -9,8 +9,8 @@ const propId = process.env.APALEO_PROPERTY_ID;
 const getAvailableRoomsInternal = async (from?: string, to?: string, guests: number = 1) => {
   if (!propId) throw new Error('Property ID is required. Set APALEO_PROPERTY_ID in .env');
   
-  let arrival = from || dayjs().format('YYYY-MM-DD');
-  let departure = to || dayjs().add(1, 'day').format('YYYY-MM-DD');
+  let arrival = from || dayjs().add(1, 'day').format('YYYY-MM-DD');
+  let departure = to || dayjs().add(2, 'day').format('YYYY-MM-DD');
   
   // Validate that departure is at least 1 day after arrival
   if (arrival === departure) {
@@ -23,15 +23,17 @@ const getAvailableRoomsInternal = async (from?: string, to?: string, guests: num
   
   try {
       const singleRoomResponse = await Fetch<OfferResponse>(`/booking/v1/offers?propertyId=${propId}&arrival=${arrival}&departure=${departure}&channelCode=Ibe&adults=1`).then(res => res.offers);
-      
       // Always fetch double room data
-      const doubleRoomResponse = await Fetch<OfferResponse>(`/booking/v1/offers?propertyId=${propId}&arrival=${arrival}&departure=${departure}&channelCode=Ibe&adults=2`).then(res => res.offers);
-      
+      const doubleRoomResponse = await Fetch<OfferResponse>(`/booking/v1/offers?propertyId=${propId}&arrival=${arrival}&departure=${departure}&channelCode=Ibe&adults=2`).then(res => res.offers).catch(() => undefined);
+      if (!singleRoomResponse || singleRoomResponse.length === 0) {
+        return { error: 'No rooms available for selected dates' };
+      }
+
       const roomsDetails = await getRoomsDetails();
 
       const formattedRooms = singleRoomResponse.map(room => {
         const roomDetails = roomsDetails.find(item => item.id === room.unitGroup.id);
-        const doubleRoom = doubleRoomResponse.find(dr => dr.unitGroup.id === room.unitGroup.id && dr.ratePlan.id === room.ratePlan.id);
+        const doubleRoom = doubleRoomResponse?.find(dr => dr.unitGroup.id === room.unitGroup.id && dr.ratePlan.id === room.ratePlan.id);
         
         return {
           ...room,

@@ -143,7 +143,12 @@ export interface Service {
   pricingType: PricingType;
   daysOfWeek: string[];
   unlimited?: boolean;
-  dates?: AvailabilityServiceItem[];
+  isSoldOut?: boolean;
+  availability: {
+    mode: PricingType;
+    daysOfWeek: string[];
+  };
+  timeSlices?: AvailabilityServiceItem[];
 }
 
 //_____________________AVAILABILITY

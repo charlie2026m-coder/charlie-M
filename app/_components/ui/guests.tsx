@@ -2,24 +2,13 @@
 
 import * as React from "react"
 import { Popover, PopoverTrigger, PopoverContent } from "./popover"
-import { Button } from "./button"
 import { Input } from "./input"
 import { ChevronDown, ChevronUp } from "lucide-react"
 import { Separator } from "./separator"
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
+import { ButtonIcon } from "./ButtonIcon"
 
-const ButtonIcon = ({ onClick, symbol, disabled }: { onClick: () => void, symbol: '+' | '-', disabled?: boolean }) => {
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      disabled={disabled}
-      className='size-6 rounded-full bg-blue hover:opacity-60 disabled:opacity-50 pb-[2px] hover:bg-blue hover:text-white text-white'
-      onClick={() => onClick()}
-    > {symbol} </Button>
-  )
-}
 
 export function Guests({ 
   maxAdults = 99,
@@ -47,8 +36,8 @@ export function Guests({
   const totalGuests = value.adults + value.children;
   const canAddAdult = maxPersons ? totalGuests < maxPersons && value.adults < maxAdults : value.adults < maxAdults;
   const canAddChild = maxPersons 
-    ? totalGuests < maxPersons && value.children < maxChildren && value.children < 5
-    : value.children < maxChildren && value.children < 5;
+    ? totalGuests < maxPersons && value.children < maxChildren && value.children < 5 && value.children < value.adults
+    : value.children < maxChildren && value.children < 5 && value.children < value.adults;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -85,7 +74,7 @@ export function Guests({
         <div className="flex flex-col gap-4">
           {/* Adults */}
           <div className="flex items-center justify-between ">
-            <div className="font-semibold text-black">{t('guests.adults')}</div>
+            <div className="font-semibold text-black">Guests</div>
 
             <div className="flex items-center gap-2">
               <ButtonIcon onClick={() => setValue({ ...value, adults: Math.max(1, value.adults - 1) })} symbol='-' disabled={value.adults <= 1} />
@@ -93,11 +82,7 @@ export function Guests({
                 {value.adults}
               </span>
 
-              <ButtonIcon 
-                onClick={() => setValue({ ...value, adults: value.adults + 1 })} 
-                symbol='+' 
-                disabled={!canAddAdult}
-              />
+              <ButtonIcon   onClick={() => setValue({ ...value, adults: value.adults + 1 })} symbol='+' disabled={!canAddAdult} />
             </div>
           </div>
 
@@ -106,7 +91,7 @@ export function Guests({
           {/* Children */}
           <div className={`flex flex-col ${disableChildren ? 'opacity-50' : ''}`}>
             <div className="flex items-center justify-between">
-              <div className="font-semibold text-black">{t('guests.children')}</div>
+              <div className="font-semibold text-black">Babies</div>
 
               <div className="flex items-center gap-2">
                 <ButtonIcon 

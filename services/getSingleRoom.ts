@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import { cache } from 'react';
 import { OfferResponse, RoomOffer } from '@/types/offers';
 import { getRoomsDetails } from './getRoomsDetails';
+import { Service } from '@/types/apaleo';
 const propId = process.env.APALEO_PROPERTY_ID;
 
 const getSingleRoomInternal = async (roomId: string, from?: string, to?: string, adults?: string) => {
@@ -23,18 +24,16 @@ const getSingleRoomInternal = async (roomId: string, from?: string, to?: string,
   try {
     const roomsData = await getRoomsDetails();
     const singleRoomResponse = await Fetch<OfferResponse>(`/booking/v1/offers?propertyId=${propId}&arrival=${arrival}&departure=${departure}&unitGroupIds=${roomId}&channelCode=Ibe&adults=1`).then(res => res.offers);
-    
-    // Check if we got any rooms
+
     if (!singleRoomResponse || singleRoomResponse.length === 0) {
       return { error: 'No rooms available for selected dates' };
     }
-    
-    // Always fetch double room data
-    const doubleRoomResponse = await Fetch<OfferResponse>(`/booking/v1/offers?propertyId=${propId}&arrival=${arrival}&departure=${departure}&unitGroupIds=${roomId}&channelCode=Ibe&adults=2`).then(res => res.offers);
+
+    const doubleRoomResponse = await Fetch<OfferResponse>(`/booking/v1/offers?propertyId=${propId}&arrival=${arrival}&departure=${departure}&unitGroupIds=${roomId}&channelCode=Ibe&adults=2`).then(res => res.offers).catch(() => undefined);
     
     const formattedRooms = singleRoomResponse.map(room => {
       const roomDetails = roomsData.find(item => item.id === room.unitGroup.id);
-      const doubleRoom = doubleRoomResponse.find(dr => dr.unitGroup.id === room.unitGroup.id && dr.ratePlan.id === room.ratePlan.id);
+      const doubleRoom = doubleRoomResponse?.find(dr => dr.unitGroup.id === room.unitGroup.id && dr.ratePlan.id === room.ratePlan.id);
 
       return {
         ...room,
@@ -60,3 +59,4 @@ const getSingleRoomInternal = async (roomId: string, from?: string, to?: string,
 };
 
 export const getSingleRoom = cache(getSingleRoomInternal);
+

@@ -51,7 +51,8 @@ export async function Fetch<T>(
   options?: {
     method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
     body?: any;
-  }
+  },
+  retry: boolean = true
 ): Promise<T> {
   const token = await getOrRefreshToken();
 
@@ -67,6 +68,13 @@ export async function Fetch<T>(
   
   // Handle 204 No Content - return empty object/array
   if (response.status === 204) return {} as T;
+
+  // If 401 and we haven't retried yet, refresh token and retry
+  if (response.status === 401 && retry) {
+    console.log('Token expired (401), refreshing and retrying...');
+    cachedToken = null; // Force token refresh
+    return Fetch<T>(endpoint, options, false); // Retry once
+  }
 
   if (!response.ok) {
     throw new Error(`Apaleo API error: ${response.status}`);
