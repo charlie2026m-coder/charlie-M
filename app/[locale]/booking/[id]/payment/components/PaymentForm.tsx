@@ -190,13 +190,12 @@ export default function PaymentForm({ amount }: {amount: number}) {
   }
 
   return (
-    <div className='flex flex-col gap-5'>
+    <div className='flex flex-col gap-5 col-span-1 xl:col-span-2'>
     <Link href='/profile/reservations' className="flex items-center gap-3">
       <FiArrowLeft className='size-5' />
-      
         Back to My Reservations
     </Link>
-    <div className="col-span-1 xl:col-span-2 flex flex-col">
+    <div className=" flex flex-col">
       <div className="bg-white rounded-2xl border p-8">
         <h2 className="text-[22px] font-bold mb-4">Complete Payment</h2>
         <p className="text-gray-600 mb-6">Secure payment powered by Adyen</p>
