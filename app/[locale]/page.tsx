@@ -14,7 +14,15 @@ import ReviewsSection from './home/ReviewsSection';
 
 export const dynamic = 'force-dynamic';
 
-type Props = {params: Promise<{ locale: string }>};
+type Props = {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ 
+    from?: string;
+    to?: string;
+    adults?: string;
+    children?: string;
+  }>;
+};
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await Promise.resolve(params);

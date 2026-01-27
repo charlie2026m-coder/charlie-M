@@ -52,6 +52,7 @@ const BookingForm = ({ id, rooms, params }: { id: string, rooms: RoomOffer[] , p
   const [currentPrice, setCurrentPrice] = useState(calculatePrice(guests.adults))
   const [currentPriceText, setCurrentPriceText] = useState(priceText)
   const [dateError, setDateError] = useState(false)
+  const [datesChanged, setDatesChanged] = useState(false)
 
   useEffect(() => {
     if (params.from && params.to) {
@@ -111,14 +112,22 @@ const BookingForm = ({ id, rooms, params }: { id: string, rooms: RoomOffer[] , p
       adults: guests.adults.toString(), 
       children: guests.children.toString() 
     });
-    router.push(`/booking/${id}?${queryString}`);
+    
+    if (datesChanged) {
+      // Reload current page with new query params to fetch updated data
+      router.push(`/rooms/${id}?${queryString}`);
+      setDatesChanged(false);
+    } else {
+      // Proceed to booking
+      router.push(`/booking/${id}?${queryString}`);
+    }
   };
   return (
     <div className='sticky shadow-xl top-10 flex flex-col bg-white border md:border-none rounded-[20px] px-5 pt-[25px] w-full pb-10'>
       <h3 className='font-semibold text-2xl text-center mb-3'>BOOK</h3>
       <div className='flex justify-between mb-1 gap-2'>
         <div className='text-brown flex items-center gap-1'>Total</div>
-        <div className='text-xl min-w-[80px] self-end text-center rounded-full bg-green/15 font-[700] text-green px-2.5 py-2'>€{currentPrice}</div>
+        <div className='text-xl min-w-[80px] self-end text-center rounded-full bg-green/15 font-[700] text-green px-2.5 py-2'>€{currentPrice.toFixed(2)}</div>
       </div>
       <div className='text-mute flex items-center gap-1 my-4 mb-10'><BsFillPersonFill className='size-4 text-mute' />{currentPriceText}</div>
 
@@ -138,6 +147,7 @@ const BookingForm = ({ id, rooms, params }: { id: string, rooms: RoomOffer[] , p
               captionLayout="label"
               selected={dateRange}
               onSelect={(date) => {
+                setDatesChanged(true);
                 if (date?.from && !date?.to) {
                   const nextDay = new Date(date.from);
                   nextDay.setDate(nextDay.getDate() + 1);
@@ -171,9 +181,16 @@ const BookingForm = ({ id, rooms, params }: { id: string, rooms: RoomOffer[] , p
         </div>
 
         <Separator orientation="horizontal" />
-        <Guests setValue={setGuests} value={guests} className="border-mute" />
+        <Guests 
+          setValue={setGuests} 
+          value={guests} 
+          className="border-mute"
+          maxPersons={room.availableUnits * room.maxPersons}
+        />
       </div>
-      <Button className='w-full' onClick={handleBookNow}>Book Now</Button>
+      <Button className='w-full' onClick={handleBookNow}>
+        {datesChanged ? 'Search' : 'Book Now'}
+      </Button>
     </div>
   )
 }

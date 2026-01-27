@@ -4,6 +4,7 @@ import RoomContent from './components/RoomContent'
 import { getSingleRoom } from '@/services/getSingleRoom'
 import ErrorCard from '../components/ErrorCard'
 import Availability from './components/Availability'
+import NoCapacityWarning from './components/NoCapacityWarning'
 import { calculateNights } from '@/lib/utils'
 import type { Metadata } from 'next'
 import { RATE_PLANS } from '@/lib/Constants';
@@ -127,13 +128,19 @@ const RoomPage = async ({ params, searchParams }: IParams) => {
   const rooms = await getSingleRoom(id, from, to, adults)
   if ('error' in rooms) return <ErrorCard isSingleRoom={true} link='/rooms' />
 
+  const room = rooms[0]
+  const totalAdults = adults ? Number(adults) : 1
+  const maxCapacity = room.availableUnits * room.maxPersons
+  const hasEnoughCapacity = totalAdults <= maxCapacity
+
   return (
     <div className='flex flex-col relative pt-10 flex-1'>
-      <PhotoGallery images={rooms[0].images} roomName={rooms[0].name} />
+      <PhotoGallery images={room.images} roomName={room.name} />
       <div className='grid grid-cols-1  lg:grid-cols-3 xl:grid-cols-4 gap-y-10 md:gap-10 mb-[30px]'>
 
-        <div className='col-span-2 xl:col-span-3 flex flex-col'>
-           <RoomContent room={rooms[0]} isRoomInfo={true} />
+      {hasEnoughCapacity 
+        ? <div className='col-span-2 xl:col-span-3 flex flex-col'>
+            <RoomContent room={room} isRoomInfo={true} />
             <Availability 
               id={id}
               from={from}
@@ -141,7 +148,15 @@ const RoomPage = async ({ params, searchParams }: IParams) => {
               children={children}
               adults={adults}
             />
-        </div>
+          </div>
+           : <NoCapacityWarning 
+              totalAdults={totalAdults}
+              from={from}
+              to={to}
+              adults={adults}
+              children={children}
+            />
+        }
         <div className='col-span-1'>
           <BookingForm 
             id={id} 
