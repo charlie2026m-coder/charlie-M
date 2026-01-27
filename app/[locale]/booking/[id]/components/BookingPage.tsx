@@ -29,6 +29,7 @@ const BookingPage = ({
   const setRooms = useBookingStore(state => state.setRooms)
   const setRoomDetails = useBookingStore(state => state.setRoomDetails)
   const setParams = useBookingStore(state => state.setParams)
+  const setExtras = useBookingStore(state => state.setExtras)
   const clearBooking = useBookingStore(state => state.clearBooking)
   const bookingId = useBookingStore(state => state.bookingId)
   const setBookingId = useBookingStore(state => state.setBookingId)
@@ -68,8 +69,9 @@ const BookingPage = ({
     if (storedBookingId !== currentBookingId || !storedRoomDetails) {
       setParams({ from, to, nights })
       setRoomDetails(mainRoom)
+      setExtras(extras)
     }
-  }, [from, to, adults, children, mainRoom?.id, mainRoom?.ratePlan.id])
+  }, [from, to, adults, children, mainRoom?.id, mainRoom?.ratePlan.id, extras])
 
   return (
     <>  
@@ -77,15 +79,24 @@ const BookingPage = ({
       <div className='grid grid-cols-1  lg:grid-cols-3 mb-[30px]'>
         <div className='col-span-1 lg:col-span-2 flex flex-col lg:pr-10'>
           <RoomContent room={mainRoom} />
-          {extras.length > 0 && <ExtrasSection extras={extras} />}
+          {extras.length > 0 && 
+          <ExtrasSection 
+            nights={nights}
+            extras={extras} 
+            room={rooms[0]} 
+            guests={Number(adults)} 
+            rooms={rooms}
+          />}
         </div>
         <div className='col-span-1 gap-5 flex flex-col'>
-          <RefundCard rooms={rooms}  />
+          <RefundCard rooms={rooms}   />
           <BookingMenu 
             rooms={rooms} 
             params={{ from, to, adults, children }} 
             filledRooms={filledRooms}
             isKidsBedAvailable={isKidsBedAvailable}
+            extras={extras}
+            nights={nights}
           />
         </div>
       </div>

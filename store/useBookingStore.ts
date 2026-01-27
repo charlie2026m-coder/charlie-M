@@ -7,6 +7,18 @@ import { v4 as uuidv4 } from 'uuid';
 import { RoomOffer } from '@/types/offers';
 import { Booking } from '@/types/booking';
 
+export interface BookingService {
+  serviceId: string;
+  count?: number; // For unlimited services
+  dates?: {
+    serviceDate: string;
+    count: number;
+    amount: {
+      amount: number;
+      currency: string;
+    };
+  }[];
+}
 
 interface BookingState {
   booking: Booking | undefined;
@@ -14,6 +26,8 @@ interface BookingState {
   
   roomDetails: RoomOffer | undefined;
   rooms: Room[] ;
+  services: BookingService[];
+  extras: Service[];
 
   isRefundable: boolean;
   params: { from: string; to: string; nights: number; }
@@ -23,6 +37,8 @@ interface BookingState {
   setBooking: (booking: Booking) => void;
   setTransactionReference: (transactionReference: string) => void;
   setRoomDetails: (roomDetails: RoomOffer) => void;
+  setServices: (services: BookingService[]) => void;
+  setExtras: (extras: Service[]) => void;
 
   setIsRefundable: (isRefundable: boolean) => void;
   setParams: (params: { from: string; to: string; nights: number }) => void;
@@ -50,6 +66,12 @@ export const useBookingStore = create<BookingState>()(
 
       transactionReference: null,
       setTransactionReference: (transactionReference: string) => set((state) => ({ ...state, transactionReference })),
+
+      services: [],
+      setServices: (services: BookingService[]) => set((state) => ({ ...state, services })),
+
+      extras: [],
+      setExtras: (extras: Service[]) => set((state) => ({ ...state, extras })),
 
       isRefundable: true,
       setIsRefundable: (isRefundable: boolean) => set((state) => ({ ...state, isRefundable })),
@@ -92,6 +114,8 @@ export const useBookingStore = create<BookingState>()(
           bookingId: undefined,
           isRefundable: true,
           transactionReference: null,
+          services: [],
+          extras: [],
         })
       },
     }),
@@ -103,6 +127,8 @@ export const useBookingStore = create<BookingState>()(
         roomDetails: state.roomDetails,
         bookingId: state.bookingId,
         isRefundable: state.isRefundable,
+        services: state.services,
+        extras: state.extras,
       }),
     }
   )

@@ -46,23 +46,46 @@ const fetchExtras = async (from: string, to: string): Promise<Service[]> => {
     const availability = await Fetch<AvailabilityResponse>(
       `/availability/v1/services?propertyId=${propertyId}&from=${arrival}&to=${departure}`
     ).then(res => res.timeSlices)
-    
     const formattedServices = response.map(item => {
       if(item.unlimited) return item;
 
+      const mode = item.availability.mode;
+      let isSoldOut = false;
+      if(mode === 'Arrival') {
+        isSoldOut = availability[0].services.find(service => service.service.id === item.id)?.availableCount === 0;
+      }
+      if(mode === 'Departure') {
+        isSoldOut = availability[availability.length - 1].services.find(service => service.service.id === item.id)?.availableCount === 0;
+      }
+      if(mode === 'Daily') {
+        console.log('Daily')
+        const stayDays = availability.slice(0, -1);
+        console.log(stayDays, 'stayDays')
+        isSoldOut = stayDays.length > 0 && stayDays.every(timeSlice => timeSlice.services.find(service => service.service.id === item.id)?.availableCount === 0);
+        console.log(isSoldOut, 'isSoldOut')
+      }
+      console.log(isSoldOut, 'isSoldOutXXXX')
+
+      const timeSlices = availability.map(timeSlice =>{
+        return {
+          serviceDate: timeSlice.from,
+          soldCount: timeSlice.services.find(service => service.service.id === item.id)?.soldCount || 0,
+          availableCount: timeSlice.services.find(service => service.service.id === item.id)?.availableCount || 0,
+          quantity: timeSlice.services.find(service => service.service.id === item.id)?.quantity || 0,
+        }}
+      )
+
       return {
         ...item,
-        dates: availability.map(date => date.services.find(service => service.service.id === item.id))
+        timeSlices: timeSlices,
+        isSoldOut: isSoldOut
       }
-
     })
 
 
 
-    console.log(formattedServices, 'formattedServices')
-    console.log(availability, 'availability')
 
-    return  response;
+    return  formattedServices as Service[];
   } catch (error: any) {
     console.error('Failed to fetch extras:', error.message);
     return [];

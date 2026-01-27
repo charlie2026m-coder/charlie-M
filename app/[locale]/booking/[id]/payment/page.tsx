@@ -45,7 +45,7 @@ const PaymentPage = () => {
     }
     
     setBooking(bookingModel)
-    // setShowPaymentForm(true)
+    setShowPaymentForm(true)
   }
 
   const handleBack = () => {

@@ -181,16 +181,12 @@ export const getPriceType = (arrival: string , departure: string, isNonRef?: boo
 }
 
 export const getType = (nights: number, isRefundable: boolean) => {
-  // if(nights > 7) {
-  //   return RATE_PLANS.LONG_STAY;
-  // }
-  if(!isRefundable) {
-    return RATE_PLANS.NON_REFUNDABLE;
+  // For stays >= 7 nights
+  if (nights >= 7) {
+    return isRefundable ? RATE_PLANS.LONG_STAY : RATE_PLANS.NON_REFUNDABLE_LONG_STAY;
   }
-  // if(nights > 7 && !isRefundable) {
-  //   return RATE_PLANS.LONG_STAY;
-  // }
-  return RATE_PLANS.STANDARD;
+  // For stays < 7 nights
+  return isRefundable ? RATE_PLANS.STANDARD : RATE_PLANS.NON_REFUNDABLE;
 }
 
 
@@ -198,7 +194,8 @@ export const formatReservations = (
   from: string, 
   to: string, 
   roomDetails: RoomOffer, 
-  updatedRooms: Room[], 
+  updatedRooms: Room[],
+  storeServices?: any[]
 ) => {
   const timeSlices = roomDetails.timeSlices.map(_ => ({ ratePlanId: roomDetails.ratePlan.id }))
 
@@ -217,13 +214,52 @@ export const formatReservations = (
     }
   };
 
-  const reservations = updatedRooms.map(item => {
+  const reservations = updatedRooms.map((item, index) => {
     const childrenAges = item.children > 0 ? Array(item.children).fill(0) as number[] : undefined
     
     // Calculate price for this specific room with its guest count
     const roomPrice = calculateRoomPrice(item.adults);
     const extrasPrice = item.extras?.reduce((acc, extra) => acc + (extra.totalPrice || 0), 0) || 0
     const reservationAmount = roomPrice + extrasPrice
+    
+    // Format old extras from room
+    const roomExtras = item.extras?.map(extra => ({
+      serviceId: extra.id
+    })) || [];
+    
+    // Add store services only to first reservation
+    type ServiceWithCount = { serviceId: string; count: number };
+    type ServiceWithDates = { serviceId: string; dates: any[] };
+    type SimpleService = { serviceId: string };
+    type FormattedService = ServiceWithCount | ServiceWithDates | SimpleService;
+    
+    let allServices: FormattedService[] = roomExtras;
+    if (index === 0 && storeServices && storeServices.length > 0) {
+      const formattedStoreServices = storeServices
+        .map((service): FormattedService | null => {
+          // For services with count (unlimited/checkout)
+          if (service.count) {
+            return {
+              serviceId: service.serviceId,
+              count: service.count
+            };
+          }
+          // For services with dates (limited)
+          if (service.dates && service.dates.length > 0) {
+            return {
+              serviceId: service.serviceId,
+              dates: service.dates.map((date: any) => ({
+                serviceDate: date.serviceDate,
+                amount: date.amount
+              }))
+            };
+          }
+          return null;
+        })
+        .filter((service): service is FormattedService => service !== null);
+      
+      allServices = [...roomExtras, ...formattedStoreServices];
+    }
     
     return {
       arrival: from,
@@ -232,9 +268,7 @@ export const formatReservations = (
       channelCode: 'IBE' as const,
       guaranteeType: 'Prepayment' as const,
       timeSlices,
-      services: item.extras?.map(extra => ({
-        serviceId: extra.id
-      })) || [],
+      services: allServices,
       reservationAmount,
       ...(childrenAges && { childrenAges }),
     }

@@ -1,27 +1,41 @@
 import Image from 'next/image'
 import { ClientCustomDialog } from "@/app/_components/ui/ClientCustomDialog";
 import { useState } from "react";
-import AddExtraButton from "./AddExtraButton";
 import { Service } from '@/types/apaleo';
+import AddUnlimitedExtra from './AddUnlimitedExtra';
+import { RoomOffer } from '@/types/offers';
+import AddLimitedExtra from './AddLimitedExtra';
+import AddCheckoutExtra from './AddCheckout';
 
 
-const ExtraCard = ({ item }: { item: Service }) => {
+const ExtraCard = ({ item, room, guests, rooms, nights }: { item: Service, room: RoomOffer, guests: number, rooms: RoomOffer[], nights: number }) => {
   const [isOpen, setIsOpen] = useState(false);
+
+  const isUnlimited = item.unlimited;
+  const isSoldOut = item.isSoldOut;
+  const isCheckout = item.id === 'CMH-LCO' || item.id === 'CMH-ECI';
 
   const image = '/images/extra.webp'
   return (
     <div className='flex sm:flex-col gap-2 relative'>
-      <div className='relative '>
-        <div className=' size-[80px] sm:w-full sm:h-[185px]'>
+      <div className='relative'>
+        <div className='size-[80px] sm:w-full sm:h-[185px]'>
           <Image 
             src={image} 
             alt={item.name} 
             fill
             className='rounded-lg object-cover'
           />
+          {isSoldOut && (
+            <div className='absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center'>
+              <span className='text-white font-bold text-sm sm:text-lg'>Sold Out</span>
+            </div>
+          )}
         </div>
       </div>
-        <AddExtraButton extra={item} />
+      {!isSoldOut &&<div>
+        {isCheckout ? <AddCheckoutExtra extra={item} rooms={rooms} /> : isUnlimited ? <AddUnlimitedExtra extra={item} room={room} guests={guests} rooms={rooms} nights={nights} /> : <AddLimitedExtra extra={item} rooms={rooms} room={room} guests={guests} />}
+      </div>}
 
       <div className='flex flex-col '>
         <h3 className='inter font-semibold'>{item.name}</h3>

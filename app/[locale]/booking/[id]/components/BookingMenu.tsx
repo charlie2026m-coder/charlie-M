@@ -11,16 +11,22 @@ import AddRooms from './AddRooms';
 import Price from "@/app/_components/ui/price";
 import { useRouter, useParams } from 'next/navigation';
 
+import { Service } from '@/types/apaleo';
+
 const BookingMenu = ({
   rooms: roomsOffers,
   params,
   filledRooms,
-  isKidsBedAvailable = true
+  isKidsBedAvailable = true,
+  extras = [],
+  nights: passedNights,
 }: {
   rooms: RoomOffer[]
   params: UrlParams
   filledRooms: Room[]
   isKidsBedAvailable?: boolean
+  extras?: Service[]
+  nights: number
 }) => {
   const router = useRouter()
   const urlParams = useParams()
@@ -29,7 +35,7 @@ const BookingMenu = ({
   const { setBooking } = useBookingStore()
   const rooms = useBookingStore(state => state.rooms) || roomsOffers
   const roomDetails = useBookingStore(state => state.roomDetails) || roomsOffers[0]
-  const price = roomDetails.price || 0
+  const services = useBookingStore(state => state.services)
 
   const updatedRooms = rooms.map(room => {
     const updateExtras = room.extras?.map(extra => {
@@ -47,6 +53,47 @@ const BookingMenu = ({
 
   const flatExtras = updatedRooms.flatMap(room => room.extras || [])
   const getText = (days: number) => days === 1 ? 'night' : 'nights'
+
+  // Calculate price for unlimited services
+  const calculateUnlimitedServicePrice = (serviceId: string, count: number) => {
+    const service = extras.find(e => e.id === serviceId);
+    if (!service) return 0;
+
+    const mode = service.availability?.mode;
+    const pricingUnit = service.pricingUnit;
+    
+    // For all modes: count already represents the quantity selected
+    if (mode === 'Daily' && pricingUnit === 'Room') {
+      return service.price * count * passedNights;
+    }
+    if (mode === 'Daily' && pricingUnit === 'Person') {
+      return service.price * count * passedNights;
+    }
+    // For Arrival/Departure: count is already the number of rooms/persons
+    return service.price * count;
+  };
+
+  // Calculate total price for all services (unlimited and limited)
+  const servicesTotalPrice = services.reduce((acc, service) => {
+    // If service has count (unlimited or checkout services)
+    if (service.count) {
+      return acc + calculateUnlimitedServicePrice(service.serviceId, service.count);
+    }
+    
+    // If service has dates array (limited services)
+    if (service.dates && service.dates.length > 0) {
+      const serviceDetails = extras.find(e => e.id === service.serviceId);
+      if (!serviceDetails) return acc;
+      
+      const totalForDates = service.dates.reduce((dateAcc, date) => {
+        return dateAcc + (serviceDetails.price * date.count);
+      }, 0);
+      
+      return acc + totalForDates;
+    }
+    
+    return acc;
+  }, 0);
 
   // Calculate price for each room based on guest count
   const calculateRoomPrice = (adultsCount: number) => {
@@ -67,7 +114,7 @@ const BookingMenu = ({
   const roomsTotalPrice = rooms.reduce((acc, room) => acc + calculateRoomPrice(room.adults), 0);
   const extrasTotalPrice = flatExtras.reduce((acc, extra) => acc + extra.totalPrice, 0)
   
-  const totalPrice = roomsTotalPrice + extrasTotalPrice
+  const totalPrice = roomsTotalPrice + extrasTotalPrice + servicesTotalPrice
  
 
   const goNext = () => {
@@ -75,7 +122,8 @@ const BookingMenu = ({
       from as string, 
       to as string, 
       roomDetails, 
-      updatedRooms as Room[], 
+      updatedRooms as Room[],
+      services
     )
     setBooking({ 
       reservations,
@@ -96,11 +144,16 @@ const BookingMenu = ({
         <div className='flex flex-col gap-1 mb-5'>
           {rooms.map((room, index) => {
             const roomPrice = calculateRoomPrice(room.adults);
+            // Calculate price per night for this room
+            const pricePerNight = room.adults === 1 
+              ? (roomDetails.oneNightPrice || roomDetails.averagePrice || 0)
+              : (roomDetails.oneNightPriceForTwo || roomDetails.averagePrice || 0);
+            
             return (
               <div key={index} className='flex items-center gap-2 inter text-sm text-dark'>
                 <span className=' truncate overflow-hidden whitespace-nowrap '>Room {index + 1} ({room.adults} {room.adults === 1 ? 'guest' : 'guests'})</span>
-                <span>€ {roomDetails.averagePrice}</span>x<span>{nights} {getText(nights)}</span>
-                <span className='text-bale font-semibold ml-auto'>€ {roomPrice}</span>
+                <span>€ {pricePerNight}</span>x<span>{nights} {getText(nights)}</span>
+                <span className='text-bale font-semibold ml-auto'>€ {roomPrice.toFixed(2)}</span>
               </div>
             )
           })}
@@ -109,7 +162,7 @@ const BookingMenu = ({
             <span className='text-bale font-semibold ml-auto'>7.5%</span>
           </div>
         </div>
-        {flatExtras.length > 0 && <>
+        {(flatExtras.length > 0 || services.length > 0) && <>
           <span className='font-semibold mb-1.5 '>Extras:</span>
           {updatedRooms.map((room, index) => {
             return (
@@ -127,6 +180,41 @@ const BookingMenu = ({
                 })}
               </div>
             )
+          })}
+          {services.map((service) => {
+            const serviceDetails = extras.find(e => e.id === service.serviceId);
+            if (!serviceDetails) return null;
+            
+            // For unlimited/checkout services with count
+            if (service.count) {
+              const servicePrice = calculateUnlimitedServicePrice(service.serviceId, service.count);
+              
+              return (
+                <div key={service.serviceId} className='flex items-center gap-2 inter text-sm text-dark mb-2'>
+                  <div className='truncate overflow-hidden whitespace-nowrap flex items-center'>
+                    {serviceDetails.name} (x{service.count})
+                  </div>
+                  <span className='text-bale font-semibold ml-auto'>€ {servicePrice.toFixed(2)}</span>
+                </div>
+              );
+            }
+            
+            // For limited services with dates array
+            if (service.dates && service.dates.length > 0) {
+              const totalCount = service.dates.reduce((sum, date) => sum + date.count, 0);
+              const totalPrice = service.dates.reduce((sum, date) => sum + (serviceDetails.price * date.count), 0);
+              
+              return (
+                <div key={service.serviceId} className='flex items-center gap-2 inter text-sm text-dark mb-2'>
+                  <div className='truncate overflow-hidden whitespace-nowrap flex items-center'>
+                    {serviceDetails.name} (x{totalCount})
+                  </div>
+                  <span className='text-bale font-semibold ml-auto'>€ {totalPrice.toFixed(2)}</span>
+                </div>
+              );
+            }
+            
+            return null;
           })}
         </>}
       </div>
