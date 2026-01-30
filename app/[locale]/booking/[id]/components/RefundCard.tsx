@@ -9,11 +9,12 @@ import { Separator } from "@/app/_components/ui/separator"
 import { RoomOffer } from '@/types/offers'
 import { getType } from '@/lib/utils'
 
-const RefundCard = ({ rooms }: { rooms: RoomOffer[] }) => {
-  const { isRefundable, setIsRefundable, params, setRoomDetails } = useBookingStore()
+const RefundCard = ({ rooms, nights }: { rooms: RoomOffer[], nights: number }) => {
+  const { isRefundable, setIsRefundable, setRoomDetails } = useBookingStore()
   const handleRefundChange = (value: string) => {
     const isRefunable = value === 'true'
-    const planType = getType(params.nights, isRefunable)
+    const planType = getType(nights, isRefunable)
+    
     const mainRoom = rooms.find(room => room.ratePlan.code === planType) || rooms[0]
     setIsRefundable(isRefunable)
     setRoomDetails(mainRoom)

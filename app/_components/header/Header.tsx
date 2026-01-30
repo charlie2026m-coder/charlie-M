@@ -1,15 +1,24 @@
+'use client';
 import Image from "next/image"
 import Navigation from "./Navigation"
-import { Link } from "@/navigation"
+import { Link, useRouter } from "@/navigation"
 import AuthBlock from "./AuthBlock"
 import { Button } from "../ui/button"
 import MobileMenu from "./MobileMenu";
 import ViberNumber from "./ViberNumber"
 import Language from "./Language"
 import { cn } from "@/lib/utils"
-import { Suspense } from "react"
+import { Suspense, useState } from "react"
 
 const Header = ({ locale, isWhite = false }: { locale: string, isWhite?: boolean }) => {
+  const router = useRouter();
+  const [isNavigating, setIsNavigating] = useState(false);
+
+  const handleMobileBookNow = () => {
+    setIsNavigating(true);
+    router.push('/rooms');
+  };
+
   return (
         <header className={cn('w-full', !isWhite && 'bg-white shadow-lg ')}>
           <section className="container px-4  xl:px-[100px] py-3 flex items-center ">
@@ -35,9 +44,13 @@ const Header = ({ locale, isWhite = false }: { locale: string, isWhite?: boolean
               </div>
 
               {/* for mobile version */}
-              <Link href='/rooms' className=' md:hidden ml-auto'>
-                <Button className={cn('h-[44px]', isWhite && ' bg-white hover:bg-white/90 hover:text-black')}> Book Now </Button>
-              </Link>
+              <Button 
+                onClick={handleMobileBookNow}
+                disabled={isNavigating}
+                className={cn('h-[44px] md:hidden ml-auto', isWhite && ' bg-white hover:bg-white/90 hover:text-black')}
+              >
+                {isNavigating ? 'Loading...' : 'Book Now'}
+              </Button>
 
             </div>
           </section>

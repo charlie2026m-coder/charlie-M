@@ -77,7 +77,9 @@ export async function Fetch<T>(
   }
 
   if (!response.ok) {
-    throw new Error(`Apaleo API error: ${response.status}`);
+    const errorData = await response.json().catch(() => ({}));
+    console.error(`Apaleo API error ${response.status}:`, errorData);
+    throw new Error(`Apaleo API error: ${response.status} - ${JSON.stringify(errorData)}`);
   }
 
   return await response.json();

@@ -36,7 +36,6 @@ const BookingMenu = ({
   const rooms = useBookingStore(state => state.rooms) || roomsOffers
   const roomDetails = useBookingStore(state => state.roomDetails) || roomsOffers[0]
   const services = useBookingStore(state => state.services)
-
   const updatedRooms = rooms.map(room => {
     const updateExtras = room.extras?.map(extra => {
       return {
@@ -51,7 +50,6 @@ const BookingMenu = ({
   })
 
 
-  const flatExtras = updatedRooms.flatMap(room => room.extras || [])
   const getText = (days: number) => days === 1 ? 'night' : 'nights'
 
   // Calculate price for unlimited services
@@ -110,11 +108,29 @@ const BookingMenu = ({
     }
   };
 
+  // Calculate city tax for each room based on guest count
+  const calculateRoomTax = (adultsCount: number) => {
+    const maxPersons = roomDetails.maxPersons || 2;
+    const roomsNeeded = Math.ceil(adultsCount / maxPersons);
+    
+    if (adultsCount === 1) {
+      return roomDetails.cityTax || 0;
+    } else if (adultsCount % 2 === 0) {
+      return roomsNeeded * (roomDetails.cityTaxForTwo || roomDetails.cityTax || 0);
+    } else {
+      const doubleRooms = Math.floor(adultsCount / 2);
+      return (doubleRooms * (roomDetails.cityTaxForTwo || roomDetails.cityTax || 0)) + (roomDetails.cityTax || 0);
+    }
+  };
+
   // Calculate total price for all rooms based on their guest counts
   const roomsTotalPrice = rooms.reduce((acc, room) => acc + calculateRoomPrice(room.adults), 0);
-  const extrasTotalPrice = flatExtras.reduce((acc, extra) => acc + extra.totalPrice, 0)
   
-  const totalPrice = roomsTotalPrice + extrasTotalPrice + servicesTotalPrice
+  // Calculate city tax using actual tax amounts from Apaleo
+  const cityTaxAmount = rooms.reduce((acc, room) => acc + calculateRoomTax(room.adults), 0);
+  
+  // Round to 2 decimal places to handle floating point errors
+  const totalPrice = Math.round((roomsTotalPrice + cityTaxAmount + servicesTotalPrice) * 100) / 100
  
 
   const goNext = () => {
@@ -123,8 +139,10 @@ const BookingMenu = ({
       to as string, 
       roomDetails, 
       updatedRooms as Room[],
-      services
+      services,
+      servicesTotalPrice // Pass services total price
     )
+    
     setBooking({ 
       reservations,
       totalAmount: totalPrice
@@ -157,12 +175,12 @@ const BookingMenu = ({
               </div>
             )
           })}
-          <div  className='flex items-center gap-2 inter text-sm text-dark mt-2'>
-            <span>City tax:</span>
-            <span className='text-bale font-semibold ml-auto'>7.5%</span>
-          </div>
+        <div  className='flex items-center gap-2 inter text-sm text-dark mt-2'>
+          <span>City tax:</span>
+          <span className='text-bale font-semibold ml-auto'>€ {cityTaxAmount.toFixed(2)}</span>
         </div>
-        {(flatExtras.length > 0 || services.length > 0) && <>
+        </div>
+        {services.length > 0 && <>
           <span className='font-semibold mb-1.5 '>Extras:</span>
           {updatedRooms.map((room, index) => {
             return (
@@ -221,7 +239,7 @@ const BookingMenu = ({
 
       <div className='flex items-center justify-between mb-3'>
           <span className='font-semibold text-lg'>Total price:</span>
-          <Price price={Number(totalPrice.toFixed(2))} />
+          <Price price={totalPrice} />
       </div>
 
       <Button 

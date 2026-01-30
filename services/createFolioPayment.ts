@@ -11,9 +11,26 @@ export async function createFolioPayment(
     if (!transactionReference) throw new Error('Transaction reference is required');
 
     const reservationId = `${bookingId}-1-1`;
+    
     // Get folio details
     const folio = await Fetch<any>(`/finance/v1/folios/${reservationId}`);
-    if (!folio.allowedPayment || folio.allowedPayment <= 0) throw new Error('No payment allowed for this folio');
+    console.log('Folio details - Balance:', folio.balance?.amount, 'Allowed payment:', folio.allowedPayment);
+    
+    // Check if payment is needed
+    const balance = folio.balance?.amount || 0;
+    const allowedPayment = folio.allowedPayment || 0;
+    
+    // If no payment allowed or balance is positive (we owe them), skip payment
+    if (allowedPayment <= 0 || balance >= 0) {
+      console.log(`No payment required - Balance: ${balance}, Allowed: ${allowedPayment}`);
+      return {
+        success: true,
+        payment: null,
+        message: `No payment required - folio balance is ${balance}`
+      };
+    }
+    
+    const paymentAmount = allowedPayment;
 
     // Create payment by authorization
     const paymentResponse = await Fetch(
@@ -24,8 +41,8 @@ export async function createFolioPayment(
           transactionReference: transactionReference,
           referenceType: 'PspReference',
           amount: {
-            amount: folio.allowedPayment,
-            currency: folio.balance.currency || 'EUR'
+            amount: paymentAmount,
+            currency: folio.balance?.currency || 'EUR'
           }
         }
       }

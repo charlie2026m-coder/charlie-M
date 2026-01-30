@@ -26,7 +26,6 @@ const Booking = async ({ params, searchParams }: IParams) => {
   
   const rooms = await getSingleRoom(id, from, to, adults)
   let extras = await getApaleoExtras(from, to)
-
   if ('error' in rooms) return <ErrorCard isSingleRoom={true} link='/rooms' />
   const isKidsBedAvailable = rooms[0].attributes.includes('kids')
   if(!isKidsBedAvailable) extras = extras.filter(extra => extra.id !== 'CMH-BAB')

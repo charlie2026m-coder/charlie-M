@@ -1,20 +1,23 @@
 import { Button } from '@/app/_components/ui/button'
 import PhotoSlider from '@/app/[locale]/home/components/PhotoSlider'
-import { Link } from '@/navigation'
+import { Link, useRouter } from '@/navigation'
 import { getPath } from '@/lib/utils'
 import { UrlParams } from '@/types/apaleo'
 import { RoomOffer } from '@/types/offers'
+import { useState } from 'react'
 
 import RoomParamsRow from '@/app/_components/ui/RoomParamsRow'
 import Price from '@/app/_components/ui/price'
 
 const RoomCard = ({ 
   params,
-  room,
+  room, 
 }: { 
   params: UrlParams,
   room: RoomOffer
 }) => {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
 
   const queryString = getPath({ from: params.from, to: params.to, adults: params.adults, children: params.children })
   const adultsCount = Number(params.adults || 1);
@@ -32,6 +35,11 @@ const RoomCard = ({
   
   const roomDetailId = room.unitGroup.id;
 
+  const handleBookNow = () => {
+    setIsLoading(true);
+    router.push(`/rooms/${roomDetailId}?${queryString}`);
+  };
+
   return (
     <div className='w-full flex flex-col rounded-[40px] bg-white overflow-hidden shadow-lg h-full'>
       <PhotoSlider height={260} images={room.images} roomName={room.name} />
@@ -44,9 +52,14 @@ const RoomCard = ({
 
         <div className='flex xxs:flex-row flex-col items-center gap-2 md:gap-8 justify-between w-full'>
           <Price price={price} className='h-[50px] w-full xs:w-auto' />
-          <Link href={`/rooms/${roomDetailId}?${queryString}`} className='w-full'>  
-            <Button variant='outline' className='h-[50px] w-full active:bg-black active:text-white'>Book Now</Button>
-          </Link>
+          <Button 
+            onClick={handleBookNow}
+            disabled={isLoading}
+            variant='outline' 
+            className='h-[50px] active:bg-black active:text-white'
+          >
+            {isLoading ? 'Loading...' : 'Book Now'}
+          </Button>
         </div>
       </div>
     </div>

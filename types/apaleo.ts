@@ -110,6 +110,7 @@ export interface ServiceDetails {
   name: string;
   description?: string;
   pricingUnit: 'Person' | 'Room';
+  code: string;
   defaultGrossPrice: {
     amount: number;
     currency: string;

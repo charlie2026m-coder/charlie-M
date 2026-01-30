@@ -4,7 +4,7 @@ import { BsCheckCircleFill } from "react-icons/bs";
 import { IoCard } from "react-icons/io5";
 import { RiSofaFill } from "react-icons/ri";
 import { FaCalendar } from "react-icons/fa";
-import Link from "next/link";
+import { Link } from "@/navigation";
 import { Reservation } from "@/types/apaleo";
 import dayjs from "dayjs";
 export const CheckinButton = () => {

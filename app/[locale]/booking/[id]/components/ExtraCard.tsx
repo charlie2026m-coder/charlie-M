@@ -14,7 +14,6 @@ const ExtraCard = ({ item, room, guests, rooms, nights }: { item: Service, room:
   const isSoldOut = item.isSoldOut;
   const isCheckout = item.id === 'CMH-LCO' || item.id === 'CMH-ECI';
 
-  console.log(item,' extra card')
   const image = '/images/extra.webp'
   return (
     <div className='flex sm:flex-col gap-2 relative'>

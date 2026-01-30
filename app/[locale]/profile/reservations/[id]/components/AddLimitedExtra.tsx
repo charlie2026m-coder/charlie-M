@@ -11,26 +11,21 @@ import { Button } from "@/app/_components/ui/button";
 import { useState, useRef, useEffect } from "react";
 import { AvailabilityServiceItem, Service } from "@/types/apaleo";
 import { ButtonIcon } from "@/app/_components/ui/ButtonIcon";
-import { useBookingStore } from "@/store/useBookingStore";
+import { useAddExtrasStore } from "@/store/useAddExtras";
 import dayjs from "dayjs";
 import { cn } from "@/lib/utils";
-import { RoomOffer } from "@/types/offers";
-import { Room } from "@/types/types";
 import { ChevronDown } from "lucide-react";
 
-const AddLimitedExtra = ({ extra, rooms, room, guests }: { extra: Service, rooms: Room[], room: RoomOffer, guests: number }) => {
+const AddLimitedExtra = ({ extra, adults, nights, existingCount = 0, existingDates = [] }: { extra: Service, adults: number, nights: number, existingCount?: number, existingDates?: string[] }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const services = useBookingStore(state => state.services);
-  const setServices = useBookingStore(state => state.setServices);
+  const services = useAddExtrasStore(state => state.services);
+  const addService = useAddExtrasStore(state => state.addService);
+  const removeService = useAddExtrasStore(state => state.removeService);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
   
-  const maxRooms = rooms.length;
-  
-  // Exclude last day (departure day) - we only count nights, not the checkout day
   const availableTimeSlices = extra.timeSlices?.slice(0, -1) || [];
   
-  // Initialize daily counts from saved service or default to 0
   const savedService = services.find(s => s.serviceId === extra.id);
   const [dailyCounts, setDailyCounts] = useState<{ [date: string]: number }>(() => {
     const initialCounts: { [date: string]: number } = {};
@@ -41,7 +36,6 @@ const AddLimitedExtra = ({ extra, rooms, room, guests }: { extra: Service, rooms
     return initialCounts;
   });
 
-  // Check if content is scrollable
   useEffect(() => {
     const checkScroll = () => {
       if (scrollRef.current) {
@@ -52,7 +46,6 @@ const AddLimitedExtra = ({ extra, rooms, room, guests }: { extra: Service, rooms
       }
     };
     
-    // Delay check to ensure content is rendered
     const timer = setTimeout(checkScroll, 100);
     scrollRef.current?.addEventListener('scroll', checkScroll);
     
@@ -75,18 +68,14 @@ const AddLimitedExtra = ({ extra, rooms, room, guests }: { extra: Service, rooms
         currency: extra.currency || 'EUR'
       }
     })).filter(d => d.count > 0);
-
-    const existingServices = services.filter(s => s.serviceId !== extra.id);
     
-    // If no dates selected, just remove the service
     if (newDates.length === 0) {
-      setServices(existingServices);
+      removeService(extra.id);
     } else {
-      const newService = {
+      addService({
         serviceId: extra.id,
         dates: newDates,
-      };
-      setServices([...existingServices, newService]);
+      });
     }
     
     setIsOpen(false);
@@ -94,8 +83,21 @@ const AddLimitedExtra = ({ extra, rooms, room, guests }: { extra: Service, rooms
 
   const selectAll = () => {
     const newCounts: { [date: string]: number } = {};
+    const isRoom = extra.pricingUnit === 'Room';
+    const isPerson = extra.pricingUnit === 'Person';
+    
     availableTimeSlices.forEach(item => {
-      newCounts[item.serviceDate] = Math.max(0, Math.min(item.availableCount, maxRooms));
+      const isOccupied = existingDates.includes(item.serviceDate);
+      if (isOccupied) {
+        newCounts[item.serviceDate] = 0;
+      } else if (isRoom) {
+        newCounts[item.serviceDate] = Math.min(1, item.availableCount);
+      } else if (isPerson) {
+        const remainingGuests = adults - existingCount;
+        newCounts[item.serviceDate] = Math.min(remainingGuests, item.availableCount);
+      } else {
+        newCounts[item.serviceDate] = Math.max(0, item.availableCount);
+      }
     });
     setDailyCounts(newCounts);
   };
@@ -108,7 +110,7 @@ const AddLimitedExtra = ({ extra, rooms, room, guests }: { extra: Service, rooms
   };
 
   const getTotalPrice = () => {
-    return Object.values(dailyCounts).reduce((sum, count) => sum + (count * extra.price), 0);
+    return Math.round(Object.values(dailyCounts).reduce((sum, count) => sum + (count * extra.price), 0) * 100) / 100;
   };
 
   const getTotalCount = () => {
@@ -131,8 +133,8 @@ const AddLimitedExtra = ({ extra, rooms, room, guests }: { extra: Service, rooms
 
         <div className='py-2.5 border-b border-t flex items-center justify-between'>
           <div className='flex flex-col text-lg font-semibold'>
-            <h3>{room.name}</h3>
-            <p className='text-blue'>{guests} guest{guests > 1 ? 's' : ''}  </p>
+            <h3>Select dates</h3>
+            <p className='text-blue text-sm font-normal'>Choose quantity per day</p>
           </div>
           <Button variant="outline" className='h-[45px]' onClick={selectAll}>
           Select all available
@@ -150,7 +152,10 @@ const AddLimitedExtra = ({ extra, rooms, room, guests }: { extra: Service, rooms
                 item={item} 
                 count={dailyCounts[item.serviceDate] || 0}
                 onCountChange={handleDayCountChange}
-                maxRooms={maxRooms}
+                pricingUnit={extra.pricingUnit}
+                adults={adults}
+                existingCount={existingCount}
+                isOccupied={existingDates.includes(item.serviceDate)}
               />
           ))}
         </div>
@@ -179,18 +184,40 @@ const DayRow = ({
   item, 
   count, 
   onCountChange,
-  maxRooms
+  pricingUnit,
+  adults,
+  existingCount = 0,
+  isOccupied = false
 }: { 
   item: AvailabilityServiceItem, 
   count: number, 
   onCountChange: (date: string, count: number) => void,
-  maxRooms: number
+  pricingUnit: string,
+  adults: number,
+  existingCount?: number,
+  isOccupied?: boolean
 }) => {
   const availableCount = item.availableCount;
-  const maxLimit = Math.max(0, Math.min(availableCount, maxRooms));
+  const isPast = dayjs(item.serviceDate).isBefore(dayjs(), 'day');
+  const isDisabled = availableCount <= 0 || isPast || isOccupied;
+  
+  const getMaxLimit = () => {
+    if (isDisabled) return 0;
+    
+    if (pricingUnit === 'Room') {
+      return Math.min(1, availableCount);
+    }
+    if (pricingUnit === 'Person') {
+      const remainingGuests = adults - existingCount;
+      return Math.min(remainingGuests, availableCount);
+    }
+    return Math.max(0, availableCount);
+  };
+  
+  const maxLimit = getMaxLimit();
 
   const add = () => {
-    if (count >= maxLimit) return;
+    if (count >= maxLimit || isDisabled) return;
     onCountChange(item.serviceDate, count + 1);
   };
 
@@ -199,13 +226,13 @@ const DayRow = ({
     onCountChange(item.serviceDate, count - 1);
   };
 
-
   return (
     <div className='flex items-center justify-between'>
       <div className='flex items-center gap-2'>
-        <span className={cn('font-bold', availableCount <= 0 && 'line-through text-gray')}>{dayjs(item.serviceDate).format('ddd DD MMM')}</span>
-        {availableCount <= 0 
-        ? <span className="text-gray text-sm">Sold Out</span>
+        <span className={cn('font-bold', isDisabled && 'line-through text-gray')}>{dayjs(item.serviceDate).format('ddd DD MMM')}</span>
+        {isPast ? <span className="text-gray text-sm">Past</span>
+        : isOccupied ? <span className="text-gray text-sm">Added</span>
+        : availableCount <= 0 ? <span className="text-gray text-sm">Sold Out</span>
         : <span className="text-gray text-sm">({availableCount})</span>}
       </div>
 
@@ -214,7 +241,7 @@ const DayRow = ({
         <span className="font-semibold min-w-[20px] text-center">
           {count}
         </span>
-        <ButtonIcon onClick={add} symbol='+' disabled={count >= maxLimit} />
+        <ButtonIcon onClick={add} symbol='+' disabled={count >= maxLimit || isDisabled} />
       </div>
     </div>
   );

@@ -2,7 +2,7 @@ import { clsx, type ClassValue } from "clsx"
 import dayjs from "dayjs"
 import { twMerge } from "tailwind-merge"
 import { v4 as uuidv4 } from 'uuid';
-import { UrlParams } from "@/types/apaleo"
+import { Service, UrlParams } from "@/types/apaleo"
 import { Room, RoomExtra } from "@/types/types"
 import { RoomOffer } from "@/types/offers"
 import { RATE_PLANS } from "./Constants";
@@ -194,12 +194,14 @@ export const formatReservations = (
   from: string, 
   to: string, 
   roomDetails: RoomOffer, 
-  updatedRooms: Room[],
-  storeServices?: any[]
+  updatedRooms: Room[], 
+  storeServices?: any[],
+  servicesTotalPrice?: number,
+  availableServices?: Service[]
 ) => {
   const timeSlices = roomDetails.timeSlices.map(_ => ({ ratePlanId: roomDetails.ratePlan.id }))
 
-  // Calculate price for each room based on guest count
+  // Calculate price for each room based on guest count (WITHOUT tax)
   const calculateRoomPrice = (adultsCount: number) => {
     const maxPersons = roomDetails.maxPersons || 2;
     const roomsNeeded = Math.ceil(adultsCount / maxPersons);
@@ -214,52 +216,135 @@ export const formatReservations = (
     }
   };
 
+  // Calculate city tax for each room based on guest count
+  const calculateRoomTax = (adultsCount: number) => {
+    const maxPersons = roomDetails.maxPersons || 2;
+    const roomsNeeded = Math.ceil(adultsCount / maxPersons);
+    
+    if (adultsCount === 1) {
+      return roomDetails.cityTax || 0;
+    } else if (adultsCount % 2 === 0) {
+      return roomsNeeded * (roomDetails.cityTaxForTwo || roomDetails.cityTax || 0);
+    } else {
+      const doubleRooms = Math.floor(adultsCount / 2);
+      return (doubleRooms * (roomDetails.cityTaxForTwo || roomDetails.cityTax || 0)) + (roomDetails.cityTax || 0);
+    }
+  };
+
+  // Track remaining services to distribute across rooms
+  const remainingServices: { [key: string]: number } = {};
+  const remainingServiceDates: { [key: string]: { [date: string]: number } } = {};
+  
+  // Helper to get pricing unit for a service
+  const getServicePricingUnit = (serviceId: string): 'Person' | 'Room' => {
+    const service = availableServices?.find(s => s.id === serviceId);
+    return service?.pricingUnit || 'Person'; // Default to Person if not found
+  };
+  
+  // Initialize remaining counts
+  if (storeServices && storeServices.length > 0) {
+    storeServices.forEach(service => {
+      if (service.count) {
+        remainingServices[service.serviceId] = service.count;
+      }
+      if (service.dates && service.dates.length > 0) {
+        remainingServiceDates[service.serviceId] = {};
+        service.dates.forEach((date: any) => {
+          remainingServiceDates[service.serviceId][date.serviceDate] = date.count;
+        });
+      }
+    });
+  }
+
   const reservations = updatedRooms.map((item, index) => {
     const childrenAges = item.children > 0 ? Array(item.children).fill(0) as number[] : undefined
     
-    // Calculate price for this specific room with its guest count
     const roomPrice = calculateRoomPrice(item.adults);
-    const extrasPrice = item.extras?.reduce((acc, extra) => acc + (extra.totalPrice || 0), 0) || 0
-    const reservationAmount = roomPrice + extrasPrice
+    const roomTax = calculateRoomTax(item.adults);
     
-    // Format old extras from room
-    const roomExtras = item.extras?.map(extra => ({
-      serviceId: extra.id
-    })) || [];
+
+    const reservationAmount = Math.round((roomPrice + roomTax) * 100) / 100
     
-    // Add store services only to first reservation
+    // Distribute services: take from remaining pool, don't multiply
     type ServiceWithCount = { serviceId: string; count: number };
     type ServiceWithDates = { serviceId: string; dates: any[] };
     type SimpleService = { serviceId: string };
     type FormattedService = ServiceWithCount | ServiceWithDates | SimpleService;
     
-    let allServices: FormattedService[] = roomExtras;
-    if (index === 0 && storeServices && storeServices.length > 0) {
+    let allServices: FormattedService[] = [];
+    if (storeServices && storeServices.length > 0) {
       const formattedStoreServices = storeServices
         .map((service): FormattedService | null => {
-          // For services with count (unlimited/checkout)
+          const pricingUnit = getServicePricingUnit(service.serviceId);
+          
+          // For services with count (unlimited/checkout) - distribute based on pricing unit
           if (service.count) {
-            return {
-              serviceId: service.serviceId,
-              count: service.count
-            };
+            const available = remainingServices[service.serviceId] || 0;
+            if (available <= 0) return null;
+            
+            let roomShare = 0;
+            
+            if (pricingUnit === 'Room') {
+              // Room services: max 1 per room, rest goes to next room
+              roomShare = Math.min(available, 1);
+            } else {
+              // Person services: max 1 per person (adults) in this room
+              roomShare = Math.min(available, item.adults);
+            }
+            
+            remainingServices[service.serviceId] -= roomShare;
+            
+            if (roomShare > 0) {
+              return {
+                serviceId: service.serviceId,
+                count: roomShare
+              };
+            }
+            return null;
           }
-          // For services with dates (limited)
+          
+          // For services with dates (limited) - distribute based on pricing unit for each date
           if (service.dates && service.dates.length > 0) {
-            return {
-              serviceId: service.serviceId,
-              dates: service.dates.map((date: any) => ({
-                serviceDate: date.serviceDate,
-                count: date.count,
-                amount: date.amount
-              }))
-            };
+            const serviceDates = service.dates
+              .map((date: any) => {
+                const available = remainingServiceDates[service.serviceId]?.[date.serviceDate] || 0;
+                if (available <= 0) return null;
+                
+                let roomShare = 0;
+                
+                if (pricingUnit === 'Room') {
+                  // Room services: max 1 per room per date
+                  roomShare = Math.min(available, 1);
+                } else {
+                  // Person services: max 1 per person per date
+                  roomShare = Math.min(available, item.adults);
+                }
+                
+                remainingServiceDates[service.serviceId][date.serviceDate] -= roomShare;
+                
+                if (roomShare > 0) {
+                  return {
+                    serviceDate: date.serviceDate,
+                    count: roomShare
+                  };
+                }
+                return null;
+              })
+              .filter((d: any): d is { serviceDate: string; count: number } => d !== null);
+            
+            if (serviceDates.length > 0) {
+              return {
+                serviceId: service.serviceId,
+                dates: serviceDates
+              };
+            }
+            return null;
           }
           return null;
         })
         .filter((service): service is FormattedService => service !== null);
       
-      allServices = [...roomExtras, ...formattedStoreServices];
+      allServices = formattedStoreServices;
     }
     
     return {
@@ -269,8 +354,13 @@ export const formatReservations = (
       channelCode: 'IBE' as const,
       guaranteeType: 'Prepayment' as const,
       timeSlices,
+      // Keep services in the object for state storage
+      // They will be used to add services after booking creation
       services: allServices,
-      reservationAmount,
+      prepaymentAmount: {
+        amount: reservationAmount,
+        currency: 'EUR'
+      },
       ...(childrenAges && { childrenAges }),
     }
   })

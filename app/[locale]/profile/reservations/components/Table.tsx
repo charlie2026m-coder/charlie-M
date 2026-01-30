@@ -65,6 +65,7 @@ const ReservationsTable = () => {
 
   // Use guest query data if in guest mode, otherwise use normal reservations
   const { data, isLoading, isError, isFetching } = isGuestMode ? guestQuery : normalQuery
+  
   // Reset page to 0 when filter changes
   useEffect(() => {
     setCurrentPage(0)

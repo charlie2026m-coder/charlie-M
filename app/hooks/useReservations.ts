@@ -10,8 +10,8 @@ export function useReservations(page: number, filter: ReservationFilter = 'All')
 
       return response.json();
     },
-    placeholderData: (previousData: any) => previousData, // Keep previous data while loading
-    staleTime: 5 * 60 * 1000, 
+    staleTime: 0, // Always fetch fresh data when filter/page changes
+    refetchOnMount: true, // Always refetch when component mounts
   });
 }
 
@@ -36,7 +36,7 @@ export function useDeleteReservationService() {
 
   return useMutation({
     mutationFn: async ({ reservationId, serviceId }: { reservationId: string; serviceId: string }) => {
-      const response = await fetch(`/api/reservations/${reservationId}/services?serviceId=${serviceId}`, { 
+      const response = await fetch(`/api/services?reservationId=${reservationId}&serviceId=${serviceId}`, { 
         method: 'DELETE' 
       });
       if (!response.ok) throw new Error('Failed to delete service');

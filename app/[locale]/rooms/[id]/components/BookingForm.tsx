@@ -4,6 +4,7 @@ import { Separator } from "@/app/_components/ui/separator"
 import { Guests } from "@/app/_components/ui/guests"
 import { Button } from "@/app/_components/ui/button"
 import { Calendar } from "@/app/_components/ui/calendar"
+import { Spinner } from "@/app/_components/ui/spinner"
 import { useEffect, useState } from "react"
 import { DateRange } from "react-day-picker";
 import { useRouter } from "@/navigation";
@@ -19,9 +20,8 @@ import { RATE_PLANS } from "@/lib/Constants"
 
 const BookingForm = ({ id, rooms, params }: { id: string, rooms: RoomOffer[] , params: UrlParams }) => {
   const nights = calculateNights(params.from as string, params.to as string);
-  const type = nights > 7  ? RATE_PLANS.LONG_STAY : RATE_PLANS.STANDARD;
+  const type = nights >= 7 ? RATE_PLANS.LONG_STAY : RATE_PLANS.STANDARD;
   const room = rooms.find(room => room.ratePlan.code.includes(type)) || rooms[0];
-
   const [openCheckIn, setOpenCheckIn] = useState(false);
   const router = useRouter();
   const dateRangeStore = useStore(state => state.dateRange);
@@ -39,20 +39,29 @@ const BookingForm = ({ id, rooms, params }: { id: string, rooms: RoomOffer[] , p
   const calculatePrice = (adultsCount: number) => {
     const roomsNeeded = Math.ceil(adultsCount / room.maxPersons);
     
+    let roomPrice = 0;
+    let taxAmount = 0;
+    
     if (adultsCount === 1) {
-      return room.price || room.totalGrossAmount.amount || 0;
+      roomPrice = room.price || room.totalGrossAmount.amount || 0;
+      taxAmount = room.cityTax || 0;
     } else if (adultsCount % 2 === 0) {
-      return roomsNeeded * (room.priceForTwo || room.price || room.totalGrossAmount.amount || 0);
+      roomPrice = roomsNeeded * (room.priceForTwo || room.price || room.totalGrossAmount.amount || 0);
+      taxAmount = roomsNeeded * (room.cityTaxForTwo || room.cityTax || 0);
     } else {
       const doubleRooms = Math.floor(adultsCount / 2);
-      return (doubleRooms * (room.priceForTwo || room.price || room.totalGrossAmount.amount || 0)) + (room.price || room.totalGrossAmount.amount || 0);
+      roomPrice = (doubleRooms * (room.priceForTwo || room.price || room.totalGrossAmount.amount || 0)) + (room.price || room.totalGrossAmount.amount || 0);
+      taxAmount = (doubleRooms * (room.cityTaxForTwo || room.cityTax || 0)) + (room.cityTax || 0);
     }
+    
+    return roomPrice + taxAmount;
   };
 
   const [currentPrice, setCurrentPrice] = useState(calculatePrice(guests.adults))
   const [currentPriceText, setCurrentPriceText] = useState(priceText)
   const [dateError, setDateError] = useState(false)
   const [datesChanged, setDatesChanged] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     if (params.from && params.to) {
@@ -61,6 +70,8 @@ const BookingForm = ({ id, rooms, params }: { id: string, rooms: RoomOffer[] , p
         to: dayjs(params.to).toDate(),
       });
     }
+    // Reset loading state when component mounts or params change
+    setIsLoading(false);
   }, [params.from, params.to]);
 
   useEffect(() => {
@@ -81,19 +92,8 @@ const BookingForm = ({ id, rooms, params }: { id: string, rooms: RoomOffer[] , p
       room 
     });
 
-    // Calculate price based on guest distribution
-    const adultsCount = guests.adults;
-    const roomsNeeded = Math.ceil(adultsCount / room.maxPersons);
-    
-    let totalPrice = 0;
-    if (adultsCount === 1) {
-      totalPrice = room.price || room.totalGrossAmount.amount || 0;
-    } else if (adultsCount % 2 === 0) {
-      totalPrice = roomsNeeded * (room.priceForTwo || room.price || room.totalGrossAmount.amount || 0);
-    } else {
-      const doubleRooms = Math.floor(adultsCount / 2);
-      totalPrice = (doubleRooms * (room.priceForTwo || room.price || room.totalGrossAmount.amount || 0)) + (room.price || room.totalGrossAmount.amount || 0);
-    }
+    // Calculate price using the calculatePrice function (includes tax)
+    const totalPrice = calculatePrice(guests.adults);
 
     setCurrentPrice(totalPrice);
     setCurrentPriceText(newPriceText);
@@ -106,6 +106,8 @@ const BookingForm = ({ id, rooms, params }: { id: string, rooms: RoomOffer[] , p
       return;
     }
     setDateError(false);
+    setIsLoading(true);
+    
     const queryString = getPath({ 
       from: getDate(dateRange?.from), 
       to: getDate(dateRange?.to), 
@@ -188,8 +190,17 @@ const BookingForm = ({ id, rooms, params }: { id: string, rooms: RoomOffer[] , p
           maxPersons={room.availableUnits * room.maxPersons}
         />
       </div>
-      <Button className='w-full' onClick={handleBookNow}>
-        {datesChanged ? 'Search' : 'Book Now'}
+      <Button 
+        className='w-full' 
+        onClick={handleBookNow}
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <span className='flex items-center gap-2'>
+            <Spinner className='size-4' />
+            Loading...
+          </span>
+        ) : datesChanged ? 'Search' : 'Book Now'}
       </Button>
     </div>
   )

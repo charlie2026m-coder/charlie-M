@@ -23,10 +23,12 @@ export default function PaymentForm({ amount }: {amount: number}) {
   useEffect(() => {
     if (isInitialized.current) return;
     isInitialized.current = true;
-
+    console.log(Math.ceil(amount * 100), 'amount');
+    console.log(amount, 'amount');
     const init = async () => {
       try {
-        const amountInCents = amount * 100;
+        // Always round up to avoid underpayment due to floating point errors
+        const amountInCents = Math.ceil(amount * 100);
 
         const paymentMethodsRes = await fetch("/api/payments/payment-methods", {
           method: "POST",
@@ -120,7 +122,20 @@ export default function PaymentForm({ amount }: {amount: number}) {
                 body: JSON.stringify(newBooking),
               });
 
-              if (!response.ok) throw new Error("Failed to create booking");
+              if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                const errorMessage = errorData.details?.messages?.[0] || "Failed to create booking";
+                
+                // Check if it's a service availability error
+                if (errorMessage.includes("fully booked") || errorMessage.includes("service")) {
+                  toast.error("Some services are no longer available. Please try again or contact support.", { id: "create-booking", duration: 6000 });
+                } else {
+                  toast.error(errorMessage, { id: "create-booking", duration: 6000 });
+                }
+                
+                setCreatingBooking(false);
+                return;
+              }
 
               const bookingData = await response.json();
               // Save Apaleo booking ID to store
@@ -132,7 +147,7 @@ export default function PaymentForm({ amount }: {amount: number}) {
               router.push(successUrl);
             } catch (error) {
               console.error('Booking creation failed:', error);
-              toast.error("Booking failed", { id: "create-booking" });
+              toast.error("Booking failed. Please contact support.", { id: "create-booking" });
               setCreatingBooking(false);
             }
           },

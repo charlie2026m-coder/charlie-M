@@ -7,6 +7,7 @@ import Steps from '../components/Steps'
 import GuestDetailsForm from './components/GuestDetailsForm'
 import PaymentForm from './components/PaymentForm'
 import SummaryCard from '../components/SummaryCard'
+import PaymentBanner from '@/app/_components/ui/PaymentBanner'
 
 const PaymentPage = () => {
   const router = useRouter()
@@ -56,11 +57,7 @@ const PaymentPage = () => {
     <>
       <Steps currentStep={2} />
       {showPaymentForm && (
-        <div className='fixed top-0 left-0 right-0 z-50 bg-red-500 text-white p-4 text-center h-50 flex items-center justify-center'>
-          <p className='text-xl font-bold'>
-            TEST PAYMENT ENVIRONMENT - DO NOT USE REAL PAYMENT CARD DETAILS
-          </p>
-        </div>
+        <PaymentBanner />
       )}
       <div className={`grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-10 pb-[30px] ${showPaymentForm ? 'pt-16' : ''}`}>
         {!showPaymentForm ? (
