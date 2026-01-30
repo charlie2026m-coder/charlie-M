@@ -278,6 +278,21 @@
     "responsible_content": "Responsible for content pursuant to Section 55 (2) of the German Interstate Broadcasting Treaty (RStV):",
     "dispute_resolution": "Dispute Resolution:",
     "dispute_resolution_text": "MBoutique GmbH & Co. KG is prepared to participate in dispute resolution proceedings before a consumer arbitration board, insofar as this is legally required or appropriate in individual cases."
+  },
+  "reservations": {
+    "extendYourStay": {
+      "title": "Extend your stay",
+      "nightsPrefix": "Extend your stay by",
+      "nightsSuffix": "nights",
+      "availableRoomsPrefix": "We have",
+      "availableRoomsSuffix": "available for the selected dates",
+      "room": "room",
+      "rooms": "rooms",
+      "cancel": "Cancel",
+      "check": "Check",
+      "book": "Book",
+      "loading": "Loading..."
+    }
   }
 }
 

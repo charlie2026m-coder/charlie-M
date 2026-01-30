@@ -48,6 +48,9 @@ const ReservationPage = async ({ params }: { params: { id: string } }) => {
             arrival={arrivalDate}
             departure={departureDate}
             availableExtras={extras}
+            unitGroupId={reservation.unitGroup?.id}
+            adults={reservation.adults}
+            children={reservation.childrenAges?.length || 0}
           />
         )}
         {canAddExtras && extras.length > 0 && (

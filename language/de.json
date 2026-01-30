@@ -275,6 +275,21 @@
     "responsible_content": "Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV:",
     "dispute_resolution": "Streitbeilegung:",
     "dispute_resolution_text": "Die MBoutique GmbH & Co. KG ist bereit, an einem Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen, sofern dies gesetzlich vorgesehen oder im Einzelfall sachgerecht ist."
+  },
+  "reservations": {
+    "extendYourStay": {
+      "title": "Verlängern Sie Ihren Aufenthalt",
+      "nightsPrefix": "Verlängern Sie Ihren Aufenthalt um",
+      "nightsSuffix": "Nächte",
+      "availableRoomsPrefix": "Wir haben",
+      "availableRoomsSuffix": "für die ausgewählten Daten verfügbar",
+      "room": "Zimmer",
+      "rooms": "Zimmer",
+      "cancel": "Abbrechen",
+      "check": "Prüfen",
+      "book": "Buchen",
+      "loading": "Lädt..."
+    }
   }
 }
 
