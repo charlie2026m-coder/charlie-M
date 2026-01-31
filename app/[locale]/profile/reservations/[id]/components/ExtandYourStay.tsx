@@ -185,7 +185,7 @@ const ExtandYourStay = ({
                     <Button 
                       className='flex-1 h-[45px]' 
                       variant='default'
-                      disabled={isNavigating}
+                      disabled={isNavigating || availableUnits === 0}
                       onClick={() => {
                         if (extensionRange?.from && extensionRange?.to && unitGroupId) {
                           setIsNavigating(true)

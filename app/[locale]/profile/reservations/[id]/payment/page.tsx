@@ -4,8 +4,10 @@ import PaymentForm from './components/PaymentForm'
 import ServicesTable from './components/ServicesTable'
 import { useAddExtrasStore } from '@/store/useAddExtras'
 import PaymentBanner from '@/app/_components/ui/PaymentBanner'
+import { useTranslations } from 'next-intl'
 
 const PaymentPage = () => {
+  const t = useTranslations('payment')
   const params = useParams()
   const reservationId = params.id as string
   const selectedServices = useAddExtrasStore(state => state.services)
@@ -16,8 +18,8 @@ const PaymentPage = () => {
     return (
       <div className='flex items-center justify-center min-h-[60vh]'>
         <div className='text-center'>
-          <h2 className='text-2xl font-bold mb-2'>No services selected</h2>
-          <p className='text-gray-600'>Please go back and select services to pay for.</p>
+          <h2 className='text-2xl font-bold mb-2'>{t('noServicesSelected')}</h2>
+          <p className='text-gray-600'>{t('pleaseGoBackAndSelect')}</p>
         </div>
       </div>
     )

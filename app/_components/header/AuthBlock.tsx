@@ -1,17 +1,22 @@
 'use client';
-import { Link, useRouter } from "@/navigation"
+import { Link, useRouter, usePathname } from "@/navigation"
 import { Button } from "../ui/button"
 import ProfileInfo from "./ProfileInfo"
 import { useAuth } from "@/lib/auth-provider"
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const AuthBlock = ({ isWhite = false }: { isWhite?: boolean }) => {
   const { user, loading } = useAuth();
   const t = useTranslations();
   const router = useRouter();
+  const pathname = usePathname();
   const [isNavigating, setIsNavigating] = useState(false);
+  
+  useEffect(() => {
+    setIsNavigating(false);
+  }, [pathname]);
   
   const handleBookNow = () => {
     setIsNavigating(true);
@@ -26,7 +31,7 @@ const AuthBlock = ({ isWhite = false }: { isWhite?: boolean }) => {
         disabled={isNavigating}
         className={cn('h-[44px]', isWhite && ' bg-white hover:bg-white/90 hover:text-black')}
       >
-        {isNavigating ? 'Loading...' : t('book_now_btn')}
+        {isNavigating ? t('loading') : t('book_now_btn')}
       </Button>
 
       {!loading && !user && (

@@ -8,9 +8,11 @@ import { useBookingStore } from "@/store/useBookingStore";
 import { toast } from "sonner";
 import LoadingDots from "@/app/_components/ui/LoadingDots";
 import { FiArrowLeft } from "react-icons/fi";
+import { useTranslations } from "next-intl";
 
 
 export default function PaymentForm({ amount }: {amount: number}) {
+  const t = useTranslations('payment')
   const dropinRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const urlParams = useParams();
@@ -107,7 +109,7 @@ export default function PaymentForm({ amount }: {amount: number}) {
             if (!transactionRef || !booking?.reservations) return;
 
             setCreatingBooking(true);
-            toast.loading("Creating booking...", { id: "create-booking" });
+            toast.loading(t('creatingBooking'), { id: "create-booking" });
 
             const newBooking = {
               ...booking,
@@ -128,7 +130,7 @@ export default function PaymentForm({ amount }: {amount: number}) {
                 
                 // Check if it's a service availability error
                 if (errorMessage.includes("fully booked") || errorMessage.includes("service")) {
-                  toast.error("Some services are no longer available. Please try again or contact support.", { id: "create-booking", duration: 6000 });
+                  toast.error(t('servicesUnavailable'), { id: "create-booking", duration: 6000 });
                 } else {
                   toast.error(errorMessage, { id: "create-booking", duration: 6000 });
                 }
@@ -142,22 +144,22 @@ export default function PaymentForm({ amount }: {amount: number}) {
               if (bookingData.id) {
                 useBookingStore.getState().setApaleoBookingId(bookingData.id);
               }
-              toast.success("Booking created!", { id: "create-booking" });
+              toast.success(t('bookingCreated'), { id: "create-booking" });
               const successUrl = `/${urlParams.locale}/booking/${urlParams.id}/success?bookingId=${bookingData.id}`;
               router.push(successUrl);
             } catch (error) {
               console.error('Booking creation failed:', error);
-              toast.error("Booking failed. Please contact support.", { id: "create-booking" });
+              toast.error(t('bookingFailed'), { id: "create-booking" });
               setCreatingBooking(false);
             }
           },
 
           onPaymentFailed: (result: any) => {
-            toast.error("Payment failed");
+            toast.error(t('paymentFailed'));
           },
 
           onError: (error: any) => {
-            toast.error("Payment error");
+            toast.error(t('paymentError'));
           },
         };
 
@@ -181,7 +183,7 @@ export default function PaymentForm({ amount }: {amount: number}) {
         setLoading(false);
       } catch (error) {
         console.error("Error initializing payment:", error);
-        alert("Failed to initialize payment. Please try again.");
+        toast.error(t('paymentInitFailed'));
         setLoading(false);
       }
     };
@@ -194,8 +196,8 @@ export default function PaymentForm({ amount }: {amount: number}) {
       <div className="col-span-1 xl:col-span-2 flex flex-col h-full min-h-[60vh]">
         <div className="bg-white p-8 h-full flex items-center justify-center">
           <div className="flex flex-col items-center justify-center">
-            <h2 className="text-[22px] font-bold mb-2">Creating Booking...</h2>
-            <p className="text-gray-600 mb-4">Please wait while we process your reservation</p>
+            <h2 className="text-[22px] font-bold mb-2">{t('creatingBooking')}</h2>
+            <p className="text-gray-600 mb-4">{t('pleaseWait')}</p>
             <LoadingDots />
           </div>
         </div>
@@ -207,13 +209,13 @@ export default function PaymentForm({ amount }: {amount: number}) {
     <div className='flex flex-col gap-5 col-span-1 xl:col-span-2'>
     <button onClick={() => router.back()} className="flex items-center gap-3 hover:text-blue transition-colors">
       <FiArrowLeft className='size-5' />
-      Back to Booking Details
+      {t('backToBookingDetails')}
     </button>
     <div className=" flex flex-col">
       <div className="bg-white rounded-2xl border p-8">
-        <h2 className="text-[22px] font-bold mb-4">Complete Payment</h2>
-        <p className="text-gray-600 mb-6">Secure payment powered by Adyen</p>
-        {loading && <p className="text-center">Loading payment methods...</p>}
+        <h2 className="text-[22px] font-bold mb-4">{t('completePayment')}</h2>
+        <p className="text-gray-600 mb-6">{t('securePayment')}</p>
+        {loading && <p className="text-center">{t('loadingPaymentMethods')}</p>}
         <div ref={dropinRef} className="adyen-dropin-container" />
       </div>
     </div>

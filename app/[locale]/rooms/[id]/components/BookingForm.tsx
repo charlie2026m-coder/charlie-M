@@ -17,8 +17,11 @@ import dayjs from "dayjs"
 import { UrlParams } from "@/types/apaleo"
 import { calculateNights } from "@/lib/utils"
 import { RATE_PLANS } from "@/lib/Constants"
+import { useTranslations } from 'next-intl'
 
 const BookingForm = ({ id, rooms, params }: { id: string, rooms: RoomOffer[] , params: UrlParams }) => {
+  const t = useTranslations('bookingForm')
+  const tCommon = useTranslations()
   const nights = calculateNights(params.from as string, params.to as string);
   const type = nights >= 7 ? RATE_PLANS.LONG_STAY : RATE_PLANS.STANDARD;
   const room = rooms.find(room => room.ratePlan.code.includes(type)) || rooms[0];
@@ -35,29 +38,20 @@ const BookingForm = ({ id, rooms, params }: { id: string, rooms: RoomOffer[] , p
     to: dateRangeStore.to || (params.to ? dayjs(params.to).toDate() : undefined),
   });
   
-  // Calculate initial price based on guest count
-  const calculatePrice = (adultsCount: number) => {
+  // Calculate total price: price per night * nights * number of rooms
+  const calculatePrice = (adultsCount: number, nightsCount: number) => {
     const roomsNeeded = Math.ceil(adultsCount / room.maxPersons);
     
-    let roomPrice = 0;
-    let taxAmount = 0;
+    // Get price per night based on number of adults
+    const pricePerNight = adultsCount >= 2 
+      ? (room.oneNightPriceForTwo || room.oneNightPrice || 0)
+      : (room.oneNightPrice || 0);
     
-    if (adultsCount === 1) {
-      roomPrice = room.price || room.totalGrossAmount.amount || 0;
-      taxAmount = room.cityTax || 0;
-    } else if (adultsCount % 2 === 0) {
-      roomPrice = roomsNeeded * (room.priceForTwo || room.price || room.totalGrossAmount.amount || 0);
-      taxAmount = roomsNeeded * (room.cityTaxForTwo || room.cityTax || 0);
-    } else {
-      const doubleRooms = Math.floor(adultsCount / 2);
-      roomPrice = (doubleRooms * (room.priceForTwo || room.price || room.totalGrossAmount.amount || 0)) + (room.price || room.totalGrossAmount.amount || 0);
-      taxAmount = (doubleRooms * (room.cityTaxForTwo || room.cityTax || 0)) + (room.cityTax || 0);
-    }
-    
-    return roomPrice + taxAmount;
+    // Total = price per night * nights * number of rooms
+    return pricePerNight * nightsCount * roomsNeeded;
   };
 
-  const [currentPrice, setCurrentPrice] = useState(calculatePrice(guests.adults))
+  const [currentPrice, setCurrentPrice] = useState(calculatePrice(guests.adults, nights))
   const [currentPriceText, setCurrentPriceText] = useState(priceText)
   const [dateError, setDateError] = useState(false)
   const [datesChanged, setDatesChanged] = useState(false)
@@ -92,8 +86,9 @@ const BookingForm = ({ id, rooms, params }: { id: string, rooms: RoomOffer[] , p
       room 
     });
 
-    // Calculate price using the calculatePrice function (includes tax)
-    const totalPrice = calculatePrice(guests.adults);
+    // Calculate nights from the new date range
+    const nightsCount = calculateNights(fromDate, toDate);
+    const totalPrice = calculatePrice(guests.adults, nightsCount);
 
     setCurrentPrice(totalPrice);
     setCurrentPriceText(newPriceText);
@@ -126,9 +121,9 @@ const BookingForm = ({ id, rooms, params }: { id: string, rooms: RoomOffer[] , p
   };
   return (
     <div className='sticky shadow-xl top-10 flex flex-col bg-white border md:border-none rounded-[20px] px-5 pt-[25px] w-full pb-10'>
-      <h3 className='font-semibold text-2xl text-center mb-3'>BOOK</h3>
+      <h3 className='font-semibold text-2xl text-center mb-3'>{t('title')}</h3>
       <div className='flex justify-between mb-1 gap-2'>
-        <div className='text-brown flex items-center gap-1'>Total</div>
+        <div className='text-brown flex items-center gap-1'>{t('total')}</div>
         <div className='text-xl min-w-[80px] self-end text-center rounded-full bg-green/15 font-[700] text-green px-2.5 py-2'>€{currentPrice.toFixed(2)}</div>
       </div>
       <div className='text-mute flex items-center gap-1 my-4 mb-10'><BsFillPersonFill className='size-4 text-mute' />{currentPriceText}</div>
@@ -148,6 +143,7 @@ const BookingForm = ({ id, rooms, params }: { id: string, rooms: RoomOffer[] , p
               mode="range"  
               captionLayout="label"
               selected={dateRange}
+              defaultMonth={dateRange?.from || new Date()}
               onSelect={(date) => {
                 setDatesChanged(true);
                 if (date?.from && !date?.to) {
@@ -178,7 +174,7 @@ const BookingForm = ({ id, rooms, params }: { id: string, rooms: RoomOffer[] , p
             />
           </DateInput>
           {dateError && (
-            <span className='text-red-500 text-sm pl-1'>Please select  dates</span>
+            <span className='text-red-500 text-sm pl-1'>{t('pleaseSelectDates')}</span>
           )}
         </div>
 
@@ -198,9 +194,9 @@ const BookingForm = ({ id, rooms, params }: { id: string, rooms: RoomOffer[] , p
         {isLoading ? (
           <span className='flex items-center gap-2'>
             <Spinner className='size-4' />
-            Loading...
+            {tCommon('loading')}
           </span>
-        ) : datesChanged ? 'Search' : 'Book Now'}
+        ) : datesChanged ? t('search') : tCommon('book_now_btn')}
       </Button>
     </div>
   )

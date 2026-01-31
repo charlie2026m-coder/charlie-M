@@ -11,9 +11,11 @@ import ReservationIdDialog from './ReservationIdDialog'
 import Logout from './Logout'
 import { useProfileStore, ReservationFilter } from '@/store/useProfile'
 import { useState, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 
 
 const ProfileMenu = () => {
+  const t = useTranslations('profile')
   const pathname = usePathname()
   const { profile } = useProfile()
   const { reservationFilter, setReservationFilter } = useProfileStore()
@@ -26,20 +28,29 @@ const ProfileMenu = () => {
 
   const tabs = [
     {
-      label: 'Profile',
+      label: t('profile'),
       value: '',
     },
     {
-      label: 'My Reservations',
+      label: t('myReservations'),
       value: '/reservations',
     },
   ]
 
-  const resTabs = ['All', 'Ongoing', 'Upcoming', 'Completed', 'Canceled' ] as const
+  // Map English filter values to translated labels
+  const filterLabels: Record<ReservationFilter, string> = {
+    'All': t('all'),
+    'Ongoing': t('ongoing'),
+    'Upcoming': t('upcoming'),
+    'Completed': t('completed'),
+    'Canceled': t('canceled')
+  }
+  
+  const resTabs = (['All', 'Ongoing', 'Upcoming', 'Completed', 'Canceled'] as const).map(filter => filterLabels[filter])
 
   return (
     <CustomCard className=" col-span-1 self-start border rounded-[40px]  p-3 lg:p-[30px]">
-      <h1 className='text-lg pb-5 border-b w-full text-center mb-5'>{profile?.name || ' Jnohn Dou'}</h1>
+      <h1 className='text-lg pb-5 border-b w-full text-center mb-5'>{profile?.name || t('guest')}</h1>
 
       {tabs.map((tab) => {
         const href = `/profile${tab.value}`
@@ -70,9 +81,19 @@ const ProfileMenu = () => {
             {tab.value === '/reservations' && !isGuestMode && (
               <SlideMenu 
                 isActive={(isActive && tab.value === '/reservations' && pathname === '/profile/reservations')}
-                sections={resTabs.map(tab => tab.toString())}
-                activeSection={reservationFilter}
-                onSectionClick={(title) => setReservationFilter(title as ReservationFilter)}
+                sections={resTabs}
+                activeSection={filterLabels[reservationFilter]}
+                onSectionClick={(title) => {
+                  // Map translated labels back to English filter values
+                  const reverseMap: Record<string, ReservationFilter> = {
+                    [t('all')]: 'All',
+                    [t('ongoing')]: 'Ongoing',
+                    [t('upcoming')]: 'Upcoming',
+                    [t('completed')]: 'Completed',
+                    [t('canceled')]: 'Canceled'
+                  }
+                  setReservationFilter(reverseMap[title] || 'All')
+                }}
               />
             )}
           </div>

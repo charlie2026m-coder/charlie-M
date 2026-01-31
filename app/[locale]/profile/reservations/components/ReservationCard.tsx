@@ -4,13 +4,15 @@ import Image from 'next/image'
 import { BsFillPersonFill } from 'react-icons/bs'
 import StatusBadge from '@/app/_components/ui/StatusBadge';
 import { cn } from '@/lib/utils';
-import { Separator } from '@/app/_components/ui/separator';
 import { toast } from 'sonner';
+import { IoCopy } from "react-icons/io5";
 import { InfoButton, DetailsButton, BookAgainButton, InvoiceButton, CheckinButton } from './Buttons';
 import { bookingStatuses } from '@/types/types';
 import { Reservation as ReservationType } from '@/types/apaleo';
 import { Link } from '@/navigation';
+import { useTranslations } from 'next-intl';
 const ReservationCard = ({ reservation }: { reservation: ReservationType,}  ) => {
+  const t = useTranslations('profile')
   const { status, arrival, departure, id, name, images, guests } = reservation;
   const from = dayjs(arrival).format('ddd D MMM YYYY');
   const to = dayjs(departure).format('ddd D MMM YYYY');
@@ -41,14 +43,13 @@ const ReservationCard = ({ reservation }: { reservation: ReservationType,}  ) =>
            <span className={cn(' lg:hidden',isCancelled && 'text-red-500')}>{from}</span>
            <span className={cn(' lg:hidden',isCancelled && 'text-red-500')}>{to}</span>
            <span className='flex items-center gap-1'>
-            <BsFillPersonFill className='size-4 text-red' /> {guests} guests  
+            <BsFillPersonFill className='size-4 text-red' /> {guests} {guests === 1 ? t('guest') : t('guests')}
           </span>
         </div>
         <div className='flex gap-2.5 xl:items-center flex-col xl:flex-row '>
-          {code && <RoomCode roomNumber={roomNumber} code={code} />}
+        {(code && !isCheckin && !isCancelled) && <RoomCode roomNumber={roomNumber} code={code} />}
           <div className='flex gap-2 grow flex-col lg:flex-row '>
-            {code && <InfoButton />}
-            {!isCheckin && !isCancelled  && <CheckinButton />}
+            {/* {!isCheckin && !isCancelled  && <CheckinButton />} */}
             {(isCompleted || isCancelled) && <BookAgainButton reservation={reservation} />}
             {isCompleted  && <InvoiceButton />}
             <DetailsButton id={id} />
@@ -68,35 +69,45 @@ export default ReservationCard;
 
 
 const RoomCode = ({roomNumber, code}: {roomNumber: number, code: number}) => {
+  const t = useTranslations('profile')
+  
   const handleCopy = async (text: string | number, label: string) => {
     try {
       await navigator.clipboard.writeText(text.toString());
-      toast.success(`${label} copied to clipboard!`);
+      toast.success(t('copiedToClipboard', { label }));
     } catch (err) {
-      toast.error('Failed to copy to clipboard');
+      toast.error(t('failedToCopy'));
     }
   };
 
   return (
-    <div className='flex flex-col lg:flex-row lg:items-center rounded-lg border p-1 border-light1 gap-3 text-sm px-4 w-full lg:w-fit text-mute font-bold  '>
-        <span className='text-xs'>Room </span>
-        <div 
-          className='rounded flex items-center justify-center bg-light-bg px-2 cursor-copy hover:bg-gray-200 transition-colors' 
-          onClick={() => handleCopy(roomNumber, 'Room number')}
-          title="Click to copy"
-        >
-          {roomNumber}
+      <div className='flex gap-2 w-full lg:w-fit'>
+        {/* Room Number Card */}
+        <div className='flex-1 lg:flex-initial bg-gradient-to-br from-blue/5 to-blue/10 rounded-lg px-3 py-1.5 border border-blue/20 h-[30px] flex items-center justify-center'>
+          <div className='flex items-center gap-2'>
+            <span className='text-[10px] uppercase tracking-wider text-blue/70 font-semibold'>{t('room')}</span>
+            <div className='text-sm font-bold text-blue flex items-center gap-1'>
+              {roomNumber}
+            </div>
+          </div>
         </div>
 
-      <Separator orientation='vertical' className='shrink hidden lg:block'/>
-        <span className='text-xs'>Access Pin</span>
+        {/* Access Pin Card */}
         <div 
-          className='rounded flex items-center justify-center bg-light-bg px-2 cursor-copy hover:bg-gray-200 transition-colors'
-          onClick={() => handleCopy(code, 'Code')}
-          title="Click to copy"
+          className='flex-1 lg:flex-initial bg-gradient-to-br from-green/5 to-green/10 rounded-lg px-3 py-1.5 border border-green/20 hover:border-green/40 transition-all duration-300 hover:shadow-sm group h-[30px] flex items-center justify-center cursor-copy'
+          onClick={() => handleCopy(code, t('code'))}
+          title={t('clickToCopy')}
         >
-          {code}
+          <div className='flex items-center gap-2'>
+            <span className='text-[10px] uppercase tracking-wider text-green/70 font-semibold'>{t('accessPin')}</span>
+            <div className='text-sm font-bold text-green flex items-center gap-1 group-hover:scale-105 transition-transform'>
+              {code}
+              <IoCopy className='w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity' />
+            </div>
+          </div>
         </div>
-    </div>
+        
+        <InfoButton />
+      </div>
   )
 }

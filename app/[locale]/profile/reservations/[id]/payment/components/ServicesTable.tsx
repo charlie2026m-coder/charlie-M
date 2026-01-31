@@ -1,8 +1,10 @@
 'use client'
 import { useAddExtrasStore } from '@/store/useAddExtras'
 import Price from '@/app/_components/ui/price'
+import { useTranslations } from 'next-intl'
 
 const ServicesTable = () => {
+  const t = useTranslations('payment')
   const selectedServices = useAddExtrasStore(state => state.services)
   const nights = useAddExtrasStore(state => state.nights)
   const availableExtras = useAddExtrasStore(state => state.availableExtras)
@@ -42,10 +44,10 @@ const ServicesTable = () => {
 
   return (
     <div className='flex flex-col bg-white rounded-[20px] py-5 px-3 border self-start'>
-      <h2 className='text-2xl font-bold mb-3 text-center'>Summary</h2>
+      <h2 className='text-2xl font-bold mb-3 text-center'>{t('summary')}</h2>
 
       <div className='flex flex-col mb-5'>
-        <span className='font-semibold mb-4 text-[15px]'>Services:</span>
+        <span className='font-semibold mb-4 text-[15px]'>{t('services')}</span>
         
         {selectedServices.map((service, index) => {
           let count = 0
@@ -95,7 +97,7 @@ const ServicesTable = () => {
       </div>
 
       <div className='flex items-center justify-between mb-3'>
-        <span className='font-semibold text-lg'>Total:</span>
+        <span className='font-semibold text-lg'>{t('total')}</span>
         <Price price={totalPrice} />
       </div>
     </div>

@@ -6,8 +6,10 @@ import { Service } from '@/types/apaleo';
 import AddUnlimitedExtra from './AddUnlimitedExtra';
 import AddLimitedExtra from './AddLimitedExtra';
 import AddCheckoutExtra from './AddCheckout';
+import { useTranslations } from 'next-intl';
 
 const ExtraCard = ({ item, adults, nights, existingCount = 0, existingDates = [] }: { item: Service, adults: number, nights: number, existingCount?: number, existingDates?: string[] }) => {
+  const t = useTranslations('profile');
   const [isOpen, setIsOpen] = useState(false);
   const isUnlimited = item.unlimited;
   const isBabyBed = item.id === 'CMH-BAB';
@@ -39,7 +41,7 @@ const ExtraCard = ({ item, adults, nights, existingCount = 0, existingDates = []
           />
           {isSoldOut && (
             <div className='absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center'>
-              <span className='text-white font-bold text-sm sm:text-lg'>Sold Out</span>
+              <span className='text-white font-bold text-sm sm:text-lg'>{t('soldOut')}</span>
             </div>
           )}
         </div>
@@ -60,13 +62,13 @@ const ExtraCard = ({ item, adults, nights, existingCount = 0, existingDates = []
         <ClientCustomDialog 
           open={isOpen}
           setOpen={setIsOpen}
-          trigger={<span className='text-brown underline cursor-pointer w-full'>Learn more</span>} 
+          trigger={<span className='text-brown underline cursor-pointer w-full'>{t('learnMore')}</span>} 
           content={
             <div className='flex flex-col '>
               <Image src={image} alt={item.name || 'Extra'} width={185} height={185} className='w-full h-[185px] lg:h-[230px] xl:h-[350px] rounded-lg object-cover mb-7' />
               <div className='flex  justify-between items-center mb-4'>
-                <div className='font-semibold text-lg'>Price:</div>
-                <div className='text-green font-bold text-xl'>+ €{item.price.toFixed(2)}<span className='text-base text-dark font-normal'>( {pricingType === 'Daily' ? 'per day' : 'one time'} )</span></div>
+                <div className='font-semibold text-lg'>{t('price')}:</div>
+                <div className='text-green font-bold text-xl'>+ €{item.price.toFixed(2)}<span className='text-base text-dark font-normal'>( {pricingType === 'Daily' ? t('perDay') : t('oneTime')} )</span></div>
               </div>
               <p className='text-dark'>
                 {item.description}

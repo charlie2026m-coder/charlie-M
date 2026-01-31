@@ -12,13 +12,21 @@ const PhotoGallery = ({ images, roomName }: { images: string[]; roomName?: strin
   const hasImages = images && images.length > 0
 
   const nextPhoto = () => {
-    if (showImages === images.length - 1 || showImages === null) return
-    setShowImages(showImages + 1)
+    if (showImages === null) return
+    if (showImages === images.length - 1) {
+      setShowImages(0) // Loop to first image
+    } else {
+      setShowImages(showImages + 1)
+    }
   }
 
   const prevPhoto = () => {
-    if (showImages === 0 || showImages === null) return
-    setShowImages(showImages - 1)
+    if (showImages === null) return
+    if (showImages === 0) {
+      setShowImages(images.length - 1) // Loop to last image
+    } else {
+      setShowImages(showImages - 1)
+    }
   }
 
   // Show placeholder if no images
@@ -105,7 +113,15 @@ const PhotoGallery = ({ images, roomName }: { images: string[]; roomName?: strin
               width={720} 
               height={440} 
               className='max-h-[calc(80vh-140px)] w-full object-cover rounded-4xl cursor-pointer' 
-              onClick={() => setShowImages(showImages === null ? 0 : showImages + 1)}
+              onClick={() => {
+                if (showImages === null) {
+                  setShowImages(0)
+                } else if (showImages === images.length - 1) {
+                  setShowImages(0) // Loop to first image
+                } else {
+                  setShowImages(showImages + 1)
+                }
+              }}
             />
             <div onClick={prevPhoto} className='absolute left-0 bg-gradient-to-l from-transparent via-black/50 to-black/80 hover:to-black/90 top-0 bottom-0 w-10 md:w-20 flex items-center justify-center  rounded-l-4xl'>
               <IoChevronBack className='size-10 md:size-20 cursor-pointer text-white'  />

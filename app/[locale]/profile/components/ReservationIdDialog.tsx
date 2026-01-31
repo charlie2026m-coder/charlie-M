@@ -3,8 +3,10 @@ import { ClientCustomDialog } from "@/app/_components/ui/ClientCustomDialog"
 import { Input } from "@/app/_components/ui/input"
 import { useState } from "react"
 import Image from "next/image"
+import { useTranslations } from 'next-intl'
 
 const ReservationIdDialog = () => {
+    const t = useTranslations('profile')
     const [isOpen, setIsOpen] = useState(false)
     const [isNotFound, setIsNotFound] = useState(false)
     const [isSuccess, setIsSuccess] = useState(false)
@@ -30,7 +32,7 @@ const ReservationIdDialog = () => {
       setOpen={setIsOpen}
       trigger={
         <div className='text-brown cursor-pointer hover:text-brown/80 transition-all duration-300'>
-          + Add via Reservation ID
+          {t('addViaReservationId')}
         </div>
       }
       content={
@@ -40,7 +42,7 @@ const ReservationIdDialog = () => {
             ? <Success close={close} /> 
             : <Form reservationId={reservationId} setReservationId={setReservationId} handleSubmit={handleSubmit} close={close} />
       }
-      title={isNotFound ? 'Not Found' : isSuccess ? 'Success' : 'Add via Reservation ID'}
+      title={isNotFound ? t('notFound') : isSuccess ? t('success') : t('addViaReservationIdTitle')}
     />
   )
 }
@@ -54,20 +56,21 @@ const Form = ({
   handleSubmit, 
   close 
 }: { reservationId: string, setReservationId: (reservationId: string) => void, handleSubmit: () => void, close: () => void }) => {
+  const t = useTranslations('profile')
 
   return (
     <div className='w-full flex flex-col gap-10'>
-      <div className='text-[15px] text-dark inter'>Enter your Reservation ID (or booking.com code) </div>
+      <div className='text-[15px] text-dark inter'>{t('enterReservationId')}</div>
       <Input
         type='text'
-        placeholder='Reservation ID/Code'
+        placeholder={t('reservationIdPlaceholder')}
         className='w-[400px] h-10 rounded-full'
         value={reservationId}
         onChange={(e) => setReservationId(e.target.value)}
       />
       <div className='flex gap-4 items-center'>
-        <Button variant='outline' className='flex-1 max-w-[190px] h-[45px]' onClick={close}>Cancel</Button>
-        <Button className='flex-1 max-w-[190px] h-[45px]' onClick={handleSubmit}>Add</Button>
+        <Button variant='outline' className='flex-1 max-w-[190px] h-[45px]' onClick={close}>{t('cancel')}</Button>
+        <Button className='flex-1 max-w-[190px] h-[45px]' onClick={handleSubmit}>{t('add')}</Button>
       </div>
 
     </div>
@@ -75,9 +78,11 @@ const Form = ({
 }
 
 const NotFound = ({ close }: { close: () => void }) => {
+  const t = useTranslations('profile')
+  
   return (
     <div className='w-full flex flex-col '>
-      <div className='text-[15px] text-dark inter mb-6  text-center'>Nothing found for this Reservation ID number. Please, check and try again.</div>
+      <div className='text-[15px] text-dark inter mb-6  text-center'>{t('nothingFound')}</div>
       <Image
         src='/images/not-found-guy.svg' 
         alt='not-found' 
@@ -85,15 +90,17 @@ const NotFound = ({ close }: { close: () => void }) => {
         height={240} 
         className='w-[120px] object-cover mx-auto mb-5' 
       />
-      <Button className='w-full  h-[45px]' onClick={close}>Ok</Button>
+      <Button className='w-full  h-[45px]' onClick={close}>{t('ok')}</Button>
     </div>
   )
 }
 
 const Success = ({ close }: { close: () => void }) => {
+  const t = useTranslations('profile')
+  
   return (
     <div className='w-full flex flex-col '>
-      <div className='text-[15px] text-dark inter mb-6  text-center'>Your reservation has been successfully added</div>
+      <div className='text-[15px] text-dark inter mb-6  text-center'>{t('reservationAddedSuccess')}</div>
       <Image
         src='/images/success-guy.svg' 
         alt='not-found' 
@@ -101,7 +108,7 @@ const Success = ({ close }: { close: () => void }) => {
         height={240} 
         className='w-[120px] object-cover mx-auto mb-5' 
       />
-      <Button className='w-full  h-[45px]' onClick={close}>Ok</Button>
+      <Button className='w-full  h-[45px]' onClick={close}>{t('ok')}</Button>
     </div>
   )
 }

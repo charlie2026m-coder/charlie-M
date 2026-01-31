@@ -3,6 +3,7 @@ import { useAddExtrasStore } from '@/store/useAddExtras'
 import { Service } from '@/types/apaleo'
 import { Button } from '@/app/_components/ui/button'
 import { useRouter, useParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 
 const ExistingExtras = ({ 
   services, 
@@ -13,6 +14,7 @@ const ExistingExtras = ({
   nights: number,
   availableExtras: Service[]
 }) => {
+  const t = useTranslations('profile')
   const router = useRouter()
   const params = useParams()
   const reservationId = params.id as string
@@ -60,7 +62,7 @@ const ExistingExtras = ({
 
   return (
     <div className='rounded-lg p-5 border h-full flex flex-col'>
-      <h2 className='mt-2 font-semibold mb-4'>Extra services:</h2>
+      <h2 className='mt-2 font-semibold mb-4'>{t('extraServices')}:</h2>
       <div className='flex flex-col gap-3 flex-1'>
         {/* Existing services */}
         {hasExistingServices && services.map((serviceItem: any, index: number) => {
@@ -103,7 +105,7 @@ const ExistingExtras = ({
             if (isDaily && (isPerson || isRoom)) {
               price = Math.round(selectedService.price * selectedService.count * nights * 100) / 100
               if (isPerson) {
-                quantityText = `${selectedService.count} × ${nights} nights`
+                quantityText = `${selectedService.count} × ${nights} ${t('nights')}`
               } else {
                 quantityText = `${selectedService.count}`
               }
@@ -127,7 +129,7 @@ const ExistingExtras = ({
           )
         })}
         <div className='flex justify-between items-center my-2 text-sm font-semibold'>
-          <span>Total:</span>
+          <span>{t('total')}:</span>
           <span className='text-green'>€{newServicesTotal.toFixed(2)}</span>
         </div>
       </div>}
@@ -143,7 +145,7 @@ const ExistingExtras = ({
               router.push(`/profile/reservations/${reservationId}/payment`)
             }}
           >
-            Pay Now 
+            {t('payNow')}
           </Button>
         </div>
       )}

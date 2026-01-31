@@ -3,7 +3,7 @@ import ExtraCard from "./ExtraCard"
 import { Service } from "@/types/apaleo"
 import { useAddExtrasStore } from '@/store/useAddExtras'
 import { useEffect } from 'react'
-import dayjs from 'dayjs'
+import { useTranslations } from 'next-intl'
 
 const AddExtras = ({ 
   extras,
@@ -16,6 +16,7 @@ const AddExtras = ({
   adults: number,
   nights: number
 }) => {
+  const t = useTranslations('profile')
   const setAvailableExtras = useAddExtrasStore(state => state.setAvailableExtras)
   
   useEffect(() => {
@@ -104,7 +105,7 @@ const AddExtras = ({
   return (
     <div >
       <div className='flex items-center gap-2  pb-2 mb-5 text-lg font-semibold w-full'>
-        Upgrade your stay
+        {t('upgradeYourStay')}
       </div>
       <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 lg:gap-6 gap-y-3 lg:gap-y-10 mb-5'>
         {availableExtras.map((extra) => {

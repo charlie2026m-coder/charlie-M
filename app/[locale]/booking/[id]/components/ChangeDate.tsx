@@ -61,6 +61,7 @@ const ChangeDate = ({ arrival, departure }: { arrival: string, departure: string
           mode="range"
           captionLayout="label"
           selected={dateRange}
+          defaultMonth={dateRange?.from || new Date(arrival)}
           onSelect={(date) => {
             if (date?.from && !date?.to) {
               const nextDay = new Date(date.from);

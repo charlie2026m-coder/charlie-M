@@ -3,8 +3,10 @@ import ExtraCard from './ExtraCard'
 import { Service } from '@/types/apaleo'
 import { RoomOffer } from '@/types/offers'
 import { useBookingStore } from '@/store/useBookingStore'
+import { useTranslations } from 'next-intl'
 
 const ExtrasSection = ({ extras, room, nights }: { extras: Service[] | undefined, room: RoomOffer, nights: number }) => {
+  const t = useTranslations('bookingForm')
   const rooms = useBookingStore(state => state.rooms);
   const guests = rooms.reduce((acc, room) => acc + room.adults, 0);
   
@@ -12,7 +14,7 @@ const ExtrasSection = ({ extras, room, nights }: { extras: Service[] | undefined
   
   return (  
     <div className='flex flex-col gap-[26px] mb-10'>
-      <h2 className='inter  font-semibold w-full pb-2.5 border-b'>Add Extras:</h2>
+      <h2 className='inter  font-semibold w-full pb-2.5 border-b'>{t('addExtras')}</h2>
       <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 gap-y-10'>
         {extras.map((extra) => (
           <ExtraCard key={extra.id} item={extra} room={room} guests={guests} rooms={rooms} nights={nights} />

@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import { useRouter, useParams } from 'next/navigation'
 import { useBookingStore } from '@/store/useBookingStore'
 import { GuestDetailsFormData } from '@/types/schemas'
 import Steps from '../components/Steps'
@@ -10,8 +9,6 @@ import SummaryCard from '../components/SummaryCard'
 import PaymentBanner from '@/app/_components/ui/PaymentBanner'
 
 const PaymentPage = () => {
-  const router = useRouter()
-  const urlParams = useParams()
   const setBooking = useBookingStore(state => state.setBooking)
   const booking = useBookingStore(state => state.booking)
   const [showPaymentForm, setShowPaymentForm] = useState(false)
@@ -48,10 +45,6 @@ const PaymentPage = () => {
     setBooking(bookingModel)
     setShowPaymentForm(true)
   }
-
-  const handleBack = () => {
-    router.push(`/${urlParams.locale}/booking/${urlParams.id}`)
-  }
   
   return (
     <>
@@ -63,7 +56,6 @@ const PaymentPage = () => {
         {!showPaymentForm ? (
           <GuestDetailsForm 
             onSubmit={handleSubmit}
-            onBack={handleBack}
             isLoading={false}
           />
         ) : (

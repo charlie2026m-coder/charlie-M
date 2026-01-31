@@ -2,11 +2,14 @@
 import Image from "next/image";
 import { useBookingStore } from "@/store/useBookingStore";
 import { Button } from "@/app/_components/ui/button";
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/navigation';
 import Steps from "../components/Steps";
 import { MdCheckCircle } from "react-icons/md";
 import SummaryCard from "../components/SummaryCard";
+import { useTranslations } from 'next-intl';
+
 const SuccessPage = () => {
+  const t = useTranslations('success')
   const booking = useBookingStore(state => state.booking)
   const router = useRouter()
   return (
@@ -16,9 +19,9 @@ const SuccessPage = () => {
         <div className='col-span-1 xl:col-span-2 flex flex-col py-10'>
           <div className='w-full flex gap-3 py-2.5  items-center justify-center text-green-600 bg-green-600/10 rounded-full mb-6'>
             <MdCheckCircle className='size-5' />
-            <h2 className='text-[18px] font-bold text-center'>Your booking is confirmed!</h2>
+            <h2 className='text-[18px] font-bold text-center'>{t('bookingConfirmed')}</h2>
           </div>
-          <p className='text-dark text-center mb-5'>We sent you the confirmation to the email: <strong>{booking?.booker?.email}</strong></p>
+          <p className='text-dark text-center mb-5'>{t('confirmationSent')} <strong>{booking?.booker?.email}</strong></p>
           <Image 
             src='/images/booking-completed.svg' 
             alt='success' 
@@ -27,7 +30,7 @@ const SuccessPage = () => {
 
             className='w-[375px] h-[344px] mx-auto object-cover mb-4'
           />
-          <Button className='mx-auto' onClick={() => router.push('/')}>Back to Main Page</Button>
+          <Button className='mx-auto' onClick={() => router.push('/')}>{t('backToMainPage')}</Button>
         </div>
         <SummaryCard />
 

@@ -9,11 +9,11 @@ import { cn } from '@/lib/utils';
 const FAQSection = () => {
   const t = useTranslations('home')
   const [activeTab, setActiveTab] = useState(0)
-  const [activeFAQ, setActiveFAQ] = useState('Check-in & Access')
+  const [activeFAQ, setActiveFAQ] = useState(t.raw('faq_categories.0.title'))
 
   const faqPoints = [
     {
-      title: 'Check-in & Access',
+      title: t.raw('faq_categories.0.title'),
       items: [
         {
           title: t.raw('faq_categories.0.items.0.title'),
@@ -53,7 +53,7 @@ const FAQSection = () => {
   }
   return (
     <div id="faq" className='flex flex-col container px-4 xl:px-[100px] pb-10'>
-      <Header title='Frequently Asked Questions' />
+      <Header title={t('faq_title')} />
       <div className='grid lg:grid-cols-10 pt-8 gap-5'>
 
         <div className='hidden lg:block col-span-4 '>

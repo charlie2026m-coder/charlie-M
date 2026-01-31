@@ -30,25 +30,22 @@ export function Guests({
   const [open, setOpen] = React.useState(false)
   const t = useTranslations()
 
-  const guestsText = `${value.adults + value.children} Guest${value.adults + value.children !== 1 ? 's' : ''}`
-  
-  // Вычисляем реальные лимиты с учетом maxPersons
-  const totalGuests = value.adults + value.children;
-  const canAddAdult = maxPersons ? totalGuests < maxPersons && value.adults < maxAdults : value.adults < maxAdults;
-  const canAddChild = maxPersons 
-    ? totalGuests < maxPersons && value.children < maxChildren && value.children < 5 && value.children < value.adults
-    : value.children < maxChildren && value.children < 5 && value.children < value.adults;
+  const guestsText = value.adults === 1 
+    ? `1 ${t('guests.guest')}`
+    : `${value.adults} ${t('guests.guests')}`
+  const canAddAdult = maxPersons ? value.adults < maxPersons && value.adults < maxAdults : value.adults < maxAdults;
+  const canAddChild = value.children < maxChildren && value.children < 5 && value.children < value.adults;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <div className="relative flex gap-2" suppressHydrationWarning>
           <div className='hidden md:flex  gap-2 text-xs absolute -top-2 left-5 bg-white px-1'>
-            Guests
+            {t('guests.label')}
           </div>
           <Input
             value={guestsText}
-            placeholder="Guests"
+            placeholder={t('guests.label')}
             className={cn("rounded-full h-10 px-3 pr-4 md:pr-10 border-white shadow-none text-sm md:text-base md:border-black  cursor-pointer", className)}
             readOnly
           />
@@ -74,7 +71,7 @@ export function Guests({
         <div className="flex flex-col gap-4">
           {/* Adults */}
           <div className="flex items-center justify-between ">
-            <div className="font-semibold text-black">Guests</div>
+            <div className="font-semibold text-black">{t('guests.label')}</div>
 
             <div className="flex items-center gap-2">
               <ButtonIcon onClick={() => setValue({ ...value, adults: Math.max(1, value.adults - 1) })} symbol='-' disabled={value.adults <= 1} />
@@ -91,7 +88,7 @@ export function Guests({
           {/* Children */}
           <div className={`flex flex-col ${disableChildren ? 'opacity-50' : ''}`}>
             <div className="flex items-center justify-between">
-              <div className="font-semibold text-black">Babies</div>
+              <div className="font-semibold text-black">{t('guests.babies')}</div>
 
               <div className="flex items-center gap-2">
                 <ButtonIcon 

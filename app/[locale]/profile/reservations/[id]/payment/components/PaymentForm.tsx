@@ -8,6 +8,7 @@ import { useAddExtrasStore } from "@/store/useAddExtras";
 import { toast } from "sonner";
 import LoadingDots from "@/app/_components/ui/LoadingDots";
 import { FiArrowLeft } from "react-icons/fi";
+import { useTranslations } from 'next-intl';
 
 
 export default function PaymentForm({ 
@@ -17,6 +18,7 @@ export default function PaymentForm({
   amount: number;
   reservationId: string;
 }) {
+  const t = useTranslations('payment');
   const dropinRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const urlParams = useParams();
@@ -127,12 +129,12 @@ export default function PaymentForm({
                 transactionRef,
                 servicesCount: selectedServices.length
               });
-              toast.error("Payment completed but missing transaction reference or services");
+              toast.error(t('paymentCompletedMissing'));
               return;
             }
 
             setProcessing(true);
-            toast.loading("Adding services to reservation...", { id: "add-services" });
+            toast.loading(t('addingServicesToReservation'), { id: "add-services" });
 
             try {
               const requestBody = {
@@ -158,7 +160,7 @@ export default function PaymentForm({
                 const errorMessage = errorData.details?.messages?.[0] || errorData.error || "Failed to add services";
                 
                 if (errorMessage.includes("fully booked") || errorMessage.includes("service")) {
-                  toast.error("Some services are no longer available. Please try again or contact support.", { id: "add-services", duration: 6000 });
+                  toast.error(t('servicesUnavailable'), { id: "add-services", duration: 6000 });
                 } else {
                   toast.error(errorMessage, { id: "add-services", duration: 6000 });
                 }
@@ -170,7 +172,7 @@ export default function PaymentForm({
               const data = await response.json();
               console.log('✅ Services added successfully:', data);
               
-              toast.success("Services added successfully!", { id: "add-services" });
+              toast.success(t('servicesAddedSuccessfully'), { id: "add-services" });
               clearServices();
               
               const successUrl = `/${urlParams.locale}/profile/reservations/${reservationId}`;
@@ -178,17 +180,17 @@ export default function PaymentForm({
               router.push(successUrl);
             } catch (error) {
               console.error('Add services failed:', error);
-              toast.error("Failed to add services. Please contact support.", { id: "add-services" });
+              toast.error(t('failedToAddServices'), { id: "add-services" });
               setProcessing(false);
             }
           },
 
           onPaymentFailed: (result: any) => {
-            toast.error("Payment failed");
+            toast.error(t('paymentFailed'));
           },
 
           onError: (error: any) => {
-            toast.error("Payment error");
+            toast.error(t('paymentError'));
           },
         };
 
@@ -212,7 +214,7 @@ export default function PaymentForm({
         setLoading(false);
       } catch (error) {
         console.error("Error initializing payment:", error);
-        toast.error("Failed to initialize payment. Please try again.");
+        toast.error(t('paymentInitFailed'));
         setLoading(false);
       }
     };
@@ -225,8 +227,8 @@ export default function PaymentForm({
       <div className="flex flex-col h-full min-h-[60vh]">
         <div className="bg-white rounded-2xl border p-8 h-full flex items-center justify-center">
           <div className="flex flex-col items-center justify-center">
-            <h2 className="text-[22px] font-bold mb-2">Processing...</h2>
-            <p className="text-gray-600 mb-4">Please wait while we add services to your reservation</p>
+            <h2 className="text-[22px] font-bold mb-2">{t('processing')}</h2>
+            <p className="text-gray-600 mb-4">{t('pleaseWaitAddingServices')}</p>
             <LoadingDots />
           </div>
         </div>
@@ -241,13 +243,13 @@ export default function PaymentForm({
         className="flex items-center gap-3 hover:text-blue transition-colors"
       >
         <FiArrowLeft className='size-5' />
-        Back to Reservation Details
+        {t('backToReservationDetails')}
       </button>
       <div className="flex flex-col">
         <div className="bg-white rounded-2xl border p-8">
-          <h2 className="text-[22px] font-bold mb-4">Complete Payment</h2>
-          <p className="text-gray-600 mb-6">Secure payment powered by Adyen</p>
-          {loading && <p className="text-center">Loading payment methods...</p>}
+          <h2 className="text-[22px] font-bold mb-4">{t('completePayment')}</h2>
+          <p className="text-gray-600 mb-6">{t('securePayment')}</p>
+          {loading && <p className="text-center">{t('loadingPaymentMethods')}</p>}
           <div ref={dropinRef} className="adyen-dropin-container" />
         </div>
       </div>

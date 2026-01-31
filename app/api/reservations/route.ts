@@ -80,7 +80,7 @@ export async function GET(request: Request) {
         ...item,
         name: item.unitGroup?.name || '',
         images: room?.photos || [],
-        guests: item.adults + (item.childrenAges?.length || 0),
+        guests: item.adults, // Only count adults as guests
       } as Reservation;
     });
 

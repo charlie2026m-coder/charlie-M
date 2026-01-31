@@ -1,14 +1,19 @@
+'use client'
 import Image from "next/image";
 import { TbBrandWhatsappFilled } from "react-icons/tb";
 import { IoMail } from "react-icons/io5";
+import { useTranslations } from 'next-intl';
+
 const Contacts = () => {
+  const t = useTranslations('profile');
+  
   return (
     <div className='bg-gradient-to-r from-[#FFF6DF] to-[#EADCB0] flex flex-col lg:flex-row justify-between'>
       <div className='flex w-full px-2 lg:px-4 lg:w-3/5 xl:w-1/2  pt-3 items-center gap-6 '>
         <Image src='/images/help-man.svg' alt='upgrade room' width={90} height={175} className='w-[90px] h-full object-cover' />
         <div className=' text-mute'>
-          <h3 className='font-semibold mb-3'>Need anything? We're right here.</h3>
-          <p className='text-sm'>Our team is here 24/7 to make your stay smooth, simple, and stress-free. <br /> Reach out anytime — we’re just one click away.</p>
+          <h3 className='font-semibold mb-3'>{t('needAnything')}</h3>
+          <p className='text-sm' dangerouslySetInnerHTML={{ __html: t('contactsDescription') }} />
         </div>
       </div>
 
@@ -21,7 +26,7 @@ const Contacts = () => {
         >
           <div className='flex items-center gap-2'>
             <TbBrandWhatsappFilled className='size-6' />
-            <span>WhatsApp Us</span>
+            <span>{t('whatsappUs')}</span>
           </div>
           <span className='font-semibold'>+49 XXX XXXX XXX</span>
         </a>
@@ -31,7 +36,7 @@ const Contacts = () => {
         >
           <div className='flex items-center gap-2'>
             <IoMail className='size-6' />
-            <span>Email Us</span>
+            <span>{t('emailUs')}</span>
           </div>
           <span className='font-semibold'>hello@charliem.stay</span>
         </a>

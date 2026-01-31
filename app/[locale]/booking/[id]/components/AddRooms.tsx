@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { Guests } from '@/app/_components/ui/guests'
@@ -5,9 +7,10 @@ import { Button } from '@/app/_components/ui/button'
 import { useBookingStore } from '@/store/useBookingStore'
 import { HiOutlineTrash } from "react-icons/hi2";
 import { Room } from '@/types/types'
-
+import { useTranslations } from 'next-intl'
 
 const AddRooms = ({ filledRooms, availableUnits, isKidsBedAvailable = true }: { filledRooms: Room[], availableUnits: number, isKidsBedAvailable?: boolean }) => {
+  const t = useTranslations('addRooms')
   const rooms = useBookingStore(state => state.rooms)
   const roomDetails = useBookingStore(state => state.roomDetails)
   const setRooms = useBookingStore(state => state.setRooms)
@@ -30,9 +33,9 @@ const AddRooms = ({ filledRooms, availableUnits, isKidsBedAvailable = true }: { 
 
   const maxPersons = roomDetails?.maxPersons || 2
   const addGuests = (id: string, guests: { adults: number, children: number }) => {
-    const totalGuests = guests.adults + guests.children;
-    if (totalGuests > maxPersons) {
-      console.warn(`Cannot add more than ${maxPersons} guests per room`);
+    // Only check adults count against maxPersons (children don't count)
+    if (guests.adults > maxPersons) {
+      console.warn(`Cannot add more than ${maxPersons} adults per room`);
       return;
     }
     
@@ -68,7 +71,7 @@ const AddRooms = ({ filledRooms, availableUnits, isKidsBedAvailable = true }: { 
                 height={42} 
                 className='size-[42px] min-w-[42px] rounded-lg object-cover' 
               />
-              <div className='font-semibold text-[16px] mr-auto'>Room {index + 1}</div>
+              <div className='font-semibold text-[16px] mr-auto'>{t('room')} {index + 1}</div>
               {maxPersons > 1 &&
                 <Guests
                   maxPersons={maxPersons}
@@ -84,7 +87,7 @@ const AddRooms = ({ filledRooms, availableUnits, isKidsBedAvailable = true }: { 
           </div>
         )
       })}
-      {leftRooms > 0 && <Button variant="outline" className='w-full' onClick={addRoom}>+ Add Room ({leftRooms} left)</Button>}
+      {leftRooms > 0 && <Button variant="outline" className='w-full' onClick={addRoom}>+ {t('addRoom')} ({leftRooms} {t('left')})</Button>}
     </div>
   )
 }

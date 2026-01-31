@@ -10,6 +10,9 @@ import ChangeDate from './ChangeDate';
 import AddRooms from './AddRooms';
 import Price from "@/app/_components/ui/price";
 import { useRouter, useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { Spinner } from '@/app/_components/ui/spinner';
+import { useState } from 'react';
 
 import { Service } from '@/types/apaleo';
 
@@ -28,6 +31,8 @@ const BookingMenu = ({
   extras?: Service[]
   nights: number
 }) => {
+  const t = useTranslations('bookingForm')
+  const tCommon = useTranslations()
   const router = useRouter()
   const urlParams = useParams()
   const { from, to } = params
@@ -36,6 +41,7 @@ const BookingMenu = ({
   const rooms = useBookingStore(state => state.rooms) || roomsOffers
   const roomDetails = useBookingStore(state => state.roomDetails) || roomsOffers[0]
   const services = useBookingStore(state => state.services)
+  const [isLoading, setIsLoading] = useState(false)
   const updatedRooms = rooms.map(room => {
     const updateExtras = room.extras?.map(extra => {
       return {
@@ -50,7 +56,7 @@ const BookingMenu = ({
   })
 
 
-  const getText = (days: number) => days === 1 ? 'night' : 'nights'
+  const getText = (days: number) => days === 1 ? t('night') : t('nights')
 
   // Calculate price for unlimited services
   const calculateUnlimitedServicePrice = (serviceId: string, count: number) => {
@@ -134,6 +140,7 @@ const BookingMenu = ({
  
 
   const goNext = () => {
+    setIsLoading(true)
     const reservations = formatReservations(
       from as string, 
       to as string, 
@@ -158,7 +165,7 @@ const BookingMenu = ({
       <AddRooms filledRooms={filledRooms} availableUnits={roomsOffers[0].availableUnits} isKidsBedAvailable={isKidsBedAvailable} />
 
       <div className='flex flex-col'>
-        <span className='font-semibold mb-1.5 '>Price:</span>
+        <span className='font-semibold mb-1.5 '>{t('price')}</span>
         <div className='flex flex-col gap-1 mb-5'>
           {rooms.map((room, index) => {
             const roomPrice = calculateRoomPrice(room.adults);
@@ -169,19 +176,19 @@ const BookingMenu = ({
             
             return (
               <div key={index} className='flex items-center gap-2 inter text-sm text-dark'>
-                <span className=' truncate overflow-hidden whitespace-nowrap '>Room {index + 1} ({room.adults} {room.adults === 1 ? 'guest' : 'guests'})</span>
+                <span className=' truncate overflow-hidden whitespace-nowrap '>{t('room')} {index + 1} ({room.adults} {room.adults === 1 ? t('guest') : t('guests')})</span>
                 <span>€ {pricePerNight}</span>x<span>{nights} {getText(nights)}</span>
                 <span className='text-bale font-semibold ml-auto'>€ {roomPrice.toFixed(2)}</span>
               </div>
             )
           })}
         <div  className='flex items-center gap-2 inter text-sm text-dark mt-2'>
-          <span>City tax:</span>
+          <span>{t('cityTax')}</span>
           <span className='text-bale font-semibold ml-auto'>€ {cityTaxAmount.toFixed(2)}</span>
         </div>
         </div>
         {services.length > 0 && <>
-          <span className='font-semibold mb-1.5 '>Extras:</span>
+          <span className='font-semibold mb-1.5 '>{t('addExtras')}</span>
           {updatedRooms.map((room, index) => {
             return (
               <div key={index} className='flex flex-col gap-1 mb-2'>
@@ -189,7 +196,7 @@ const BookingMenu = ({
                   return (
                     <div key={extra.id} className='flex items-center gap-2 inter text-sm text-dark'>
                       <div className=' truncate overflow-hidden whitespace-nowrap flex items-center'>
-                        Room {index + 1} - {extra.name}
+                        {t('room')} {index + 1} - {extra.name}
                         <CustomTooltip className='self-center ml-2' text={extraTooltip(extra)}/>
                       </div>
                       <span className='text-bale font-semibold ml-auto'>€ {extra.totalPrice.toFixed(2)}</span>
@@ -238,14 +245,22 @@ const BookingMenu = ({
       </div>
 
       <div className='flex items-center justify-between mb-3'>
-          <span className='font-semibold text-lg'>Total price:</span>
+          <span className='font-semibold text-lg'>{t('totalPrice')}</span>
           <Price price={totalPrice} />
       </div>
 
       <Button 
         className='w-full h-[55px]'
         onClick={goNext}
-      >Book Now</Button>  
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <span className='flex items-center gap-2'>
+            <Spinner className='size-4' />
+            {tCommon('loading')}
+          </span>
+        ) : t('bookNow')}
+      </Button>  
     </div>
   )
 }

@@ -11,10 +11,12 @@ import { Spinner } from '@/app/_components/ui/spinner'
 import { Reservation } from '@/types/apaleo'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { useTranslations } from 'next-intl'
 
 const ITEMS_PER_PAGE = 3
 
 const ReservationsTable = () => {
+  const t = useTranslations('profile')
   const [currentPage, setCurrentPage] = useState(0)
   const page = currentPage + 1 // Convert 0-based to 1-based
   const { reservationFilter, guestBooking } = useProfileStore()
@@ -51,7 +53,7 @@ const ReservationsTable = () => {
           ...reservation,
           name: reservation.unitGroup?.name || '',
           images: room?.photos || [],
-          guests: reservation.adults + (reservation.childrenAges?.length || 0),
+          guests: reservation.adults, // Only count adults as guests
         }
       })
       
@@ -72,7 +74,7 @@ const ReservationsTable = () => {
   }, [reservationFilter])
 
   if (isError) {
-    return <div className='text-center py-10 text-red-500'>Error loading reservations</div>
+    return <div className='text-center py-10 text-red-500'>{t('errorLoadingReservations')}</div>
   }
 
   // Show empty state if no reservations
@@ -89,7 +91,7 @@ const ReservationsTable = () => {
         {/* Show loading overlay only when fetching new data but we have old data */}
         {isFetching && data && (
           <div className='absolute inset-0 bg-white/70 flex items-center justify-center z-10 rounded-lg'>
-              <Spinner /> Loading...
+              <Spinner /> {t('loading')}
           </div>
         )}
         
@@ -102,7 +104,7 @@ const ReservationsTable = () => {
         {!data && isLoading && (
           <div className='flex flex-1 items-center justify-center h-[400px]'>
             <div className='flex items-center gap-2'>
-              <Spinner /> Loading...
+              <Spinner /> {t('loading')}
             </div>
           </div>
         )}
@@ -121,12 +123,13 @@ const ReservationsTable = () => {
 export default ReservationsTable;
 
 const NoReservations = () => {
+  const t = useTranslations('profile')
   return (
     <div className='flex items-center justify-center w-full flex-col flex-1'>
       <Image src="/images/no-reservations.svg" alt="no reservations" width={166} height={250} priority className='w-[166px] h-[250px]' />
-      <p className='text-sm text-gray-500 mb-5'>You haven't booked any rooms yet</p>
+      <p className='text-sm text-gray-500 mb-5'>{t('noRoomsBooked')}</p>
       <Link href='/rooms'>
-        <Button className=' h-[45px] w-[300px]' >Book now</Button>
+        <Button className=' h-[45px] w-[300px]' >{t('bookNow')}</Button>
       </Link>
     </div>
   )

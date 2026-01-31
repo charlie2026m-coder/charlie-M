@@ -1,8 +1,11 @@
+'use client'
 import Image from 'next/image'
 import YellowCard from './YellowCard'
 import CustomImageSlider from '@/app/_components/ui/CustomImageSlider'
 import { TbBrandWhatsappFilled } from 'react-icons/tb'
 import { IoMail } from 'react-icons/io5'
+import { useTranslations } from 'next-intl'
+
 export default function CardContent({ 
   images, 
   description,
@@ -16,6 +19,7 @@ export default function CardContent({
   card2: string[] | undefined, 
   id: number
 }) {
+  const t = useTranslations('profile')
 
   return (
     <div className='flex flex-col pt-5'>
@@ -54,27 +58,28 @@ const text = 'text-dark inter text-start'
 
 //Different cards content for Lost and Found card content 
 const LostCards = () => {
+  const t = useTranslations('profile')
   return (
     <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
       <div className='bg-blue/20 rounded-[20px] p-5 flex flex-col gap-2 w-full'>
-        <h4 className='font-semibold mb-2 w-full'>Lost something during your stay?</h4>
-        <p className='text-dark inter '>Don’t worry — we’re here to help. If you've misplaced an item in your room or anywhere in the building, contact us and we’ll check if it has been found.</p>
+        <h4 className='font-semibold mb-2 w-full'>{t('infoContent.7.lostCardTitle')}</h4>
+        <p className='text-dark inter '>{t('infoContent.7.lostCardDescription')}</p>
       </div>
       <div className='bg-blue/20 rounded-[20px] p-5 flex flex-col gap-2 w-full'>
-        <h4 className='font-semibold mb-2  w-full'>How to reach us:</h4>
+        <h4 className='font-semibold mb-2  w-full'>{t('infoContent.7.howToReachTitle')}</h4>
         <a
           href='https://wa.me/49XXXXXXXXX' 
           target='_blank' 
           rel='noopener noreferrer'
           className='flex items-center gap-2  rounded-3xl w-full cursor-pointer mb-3 hover:underline'
         >
-          <TbBrandWhatsappFilled className='size-6' /> <span>WhatsApp:</span> +49 XXX XXXX XXX
+          <TbBrandWhatsappFilled className='size-6' /> <span>{t('infoContent.7.whatsapp')}</span> +49 XXX XXXX XXX
         </a>
         <a 
           href='mailto:hello@charliem.stay'
           className='flex items-center gap-2 rounded-3xl w-full cursor-pointer hover:underline'
         >
-          <IoMail className='size-6' /> <span>Email:</span> hello@charliem.stay
+          <IoMail className='size-6' /> <span>{t('infoContent.7.email')}</span> hello@charliem.stay
         </a>
       </div>
     </div>
@@ -83,13 +88,14 @@ const LostCards = () => {
 
 //Different cards content for Garbage disposal card content
 const GarbageCards = () => {
+  const t = useTranslations('profile')
   return (
     <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
       <div className='bg-blue/20 rounded-[20px] p-5 flex flex-col gap-2 w-full'>
-        <h4 className='font-semibold mb-2 w-full'>You can dispose of your trash on the –</h4>
-        <p className='text-dark inter '>1 floor, where you’ll find clearly marked bins for general waste and recycling. Fresh bags and small disposal bins are also available in the Self-Service Closet if you need them.</p>
+        <h4 className='font-semibold mb-2 w-full'>{t('infoContent.9.garbageTitle')}</h4>
+        <p className='text-dark inter '>{t('infoContent.9.garbageDescription')}</p>
       </div>
-      <YellowCard isFirst={false} items={['Located on the –1 floor']} />
+      <YellowCard isFirst={false} items={[t('infoContent.9.garbageLocation')]} />
     </div>
   )
 }

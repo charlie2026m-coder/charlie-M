@@ -2,8 +2,10 @@
 import { useProfileStore } from '@/store/useProfile'
 import ReservationsTable from './components/Table'
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 
 const Reservations = () => {
+  const t = useTranslations('profile')
   const { reservationFilter } = useProfileStore() 
   const [isGuestMode, setIsGuestMode] = useState(false)
   
@@ -12,17 +14,17 @@ const Reservations = () => {
   }, [])
   
   const title = {
-    "All": 'All Reservations',
-    "Ongoing" : 'Ongoing Reservations',
-    'Upcoming' : 'Upcoming Reservations',
-    'Completed' : 'Completed Reservations',
-    'Canceled' : 'Canceled Reservations',
+    "All": t('allReservations'),
+    "Ongoing" : t('ongoingReservations'),
+    'Upcoming' : t('upcomingReservations'),
+    'Completed' : t('completedReservations'),
+    'Canceled' : t('canceledReservations'),
   } as const
   
   return (
     <div className='flex flex-col flex-1  p-3 lg:p-[30px] '>
       <div className='flex items-center gap-2 font-semibold text-2xl mb-5'>
-        {isGuestMode ? 'Your Booking' : title[reservationFilter as keyof typeof title]}
+        {isGuestMode ? t('yourBooking') : title[reservationFilter as keyof typeof title]}
       </div>
       <ReservationsTable />
     </div>

@@ -31,8 +31,8 @@ export const getPath = (params: {
 
 export const getPriceData = ({ params, room }: {params: UrlParams, room: RoomOffer}) => {
   let nights = 1;
-  const guests = Number(params.adults || 1) + Number(params.children || 0);
-  const roomsNeeded = Math.ceil(guests / room.maxPersons);
+  const adults = Number(params.adults || 1);
+  const roomsNeeded = Math.ceil(adults / room.maxPersons); // Calculate rooms based on adults only
   if (params.from && params.to) {
     const fromDate = new Date(params.from);
     const toDate = new Date(params.to);
@@ -40,20 +40,20 @@ export const getPriceData = ({ params, room }: {params: UrlParams, room: RoomOff
     if (nights === 0) nights = 1;
   }
   const r = roomsNeeded === 1 ? 'room' : 'rooms';
-  const g = guests === 1 ? 'guest' : 'guests';
+  const g = adults === 1 ? 'guest' : 'guests';
   const n = nights === 1 ? 'night' : 'nights';
-  const priceText = `${guests} ${g}, ${nights} ${n}, ${roomsNeeded} ${r}`;
+  const priceText = `${adults} ${g}, ${nights} ${n}, ${roomsNeeded} ${r}`;
   const priceValue = roomsNeeded * nights * room.totalGrossAmount.amount;
 
   return {
     nightsText: `${nights} ${n}`,
-    guestsText: `${guests} ${g}`,
+    guestsText: `${adults} ${g}`,
     roomsNeededText: `${roomsNeeded} ${r}`,
     price: priceValue.toFixed(2),
     priceText,
     nights,
     roomsNeeded,
-    guests,
+    guests: adults,
   }
 }
 

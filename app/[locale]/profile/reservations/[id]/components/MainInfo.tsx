@@ -1,3 +1,4 @@
+'use client'
 import { BookAgainButton, CheckinButton, ExtendButton } from './Buttons'
 import { PiMapPinFill } from "react-icons/pi";
 import MapWindow from '@/app/_components/footer/MapWindow';
@@ -10,9 +11,11 @@ import { RoomDetailsButton } from './RoomDetails';
 import StatusBadge from '@/app/_components/ui/StatusBadge';
 import { bookingStatuses } from '@/types/types';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
 
 const MainInfo = ({ reservation }: { reservation: any } ) => {
+  const t = useTranslations('profile');
   const from = dayjs(reservation.arrival).format('ddd D MMM YYYY');
   const to = dayjs(reservation.departure).format('ddd D MMM YYYY');
   const isCancelled = reservation.status === bookingStatuses.Canceled;
@@ -27,11 +30,11 @@ const MainInfo = ({ reservation }: { reservation: any } ) => {
         {reservation.status === bookingStatuses.Canceled && <StatusBadge status={bookingStatuses.Canceled} className='h-[35px] items-center justify-center' />}
       </div>
       <div className='flex items-center gap-3 text-mute text-sm mb-3'>
-        Check-in:
+        {t('checkIn')}:
         <span className={cn(reservation.status === bookingStatuses.Canceled && 'text-red-500')}>{from} 15:00 - 00:00</span>
       </div>
       <div className='flex items-center gap-3 text-mute text-sm mb-5'>
-        Check-out:
+        {t('checkOut')}:
         <span className={cn(reservation.status === bookingStatuses.Canceled && 'text-red-500')}>{to} 11:00</span>
       </div>
       <div className='flex flex-col w-full lg:w-4/5 gap-3'>
@@ -48,7 +51,7 @@ const MainInfo = ({ reservation }: { reservation: any } ) => {
       <Image src={reservation.images?.[0] || '/images/room1.webp'} alt={reservation.name} width={430} height={230} className='w-full h-[230px] object-cover rounded-t-2xl' />
       <div className='flex justify-between items-center px-3 py-5'>
         <div className='flex flex-col gap-2 w-1/2 lg:w-2/5'>
-          <h4 className='font-semibold'>Location</h4>
+          <h4 className='font-semibold'>{t('location')}</h4>
           <div className='flex gap-1 items-center text-sm'>
             <PiMapPinFill className='size-6 min-w-6' />
             <span>Friedrichstraße 33, 10969 Berlin</span>
@@ -67,32 +70,34 @@ const MainInfo = ({ reservation }: { reservation: any } ) => {
 export default MainInfo
 
 const RoomCode = ({roomNumber, code}: {roomNumber: number, code: number}) => {
+  const t = useTranslations('profile');
+  
   const handleCopy = async (text: string | number, label: string) => {
     try {
       await navigator.clipboard.writeText(text.toString());
-      toast.success(`${label} copied to clipboard!`);
+      toast.success(t('copiedToClipboard', { label }));
     } catch (err) {
-      toast.error('Failed to copy to clipboard');
+      toast.error(t('failedToCopy'));
     }
   };
 
   return (
     <div className='flex flex-col  gap-2'>
-        <span className='text-xs '>Room № </span>
+        <span className='text-xs '>{t('room')} № </span>
         <div 
           className='rounded border border-light1 flex items-center justify-center  px-2 py-2 cursor-copy hover:bg-gray-200 transition-colors font-bold' 
-          onClick={() => handleCopy(roomNumber, 'Room number')}
-          title="Click to copy"
+          onClick={() => handleCopy(roomNumber, t('roomNumber'))}
+          title={t('clickToCopy')}
         >
           {roomNumber}
         </div>
 
       <Separator orientation='vertical' className='shrink hidden lg:block'/>
-        <span className='text-xs'>Access Pin</span>
+        <span className='text-xs'>{t('accessPin')}</span>
         <div 
           className='rounded border border-light1 flex items-center justify-center  px-2 py-2 cursor-copy hover:bg-gray-200 transition-colors font-bold'
-          onClick={() => handleCopy(code, 'Code')}
-          title="Click to copy"
+          onClick={() => handleCopy(code, t('code'))}
+          title={t('clickToCopy')}
         >
           {code}
         </div>

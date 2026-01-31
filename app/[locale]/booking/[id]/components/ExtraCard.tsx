@@ -1,3 +1,4 @@
+'use client'
 import Image from 'next/image'
 import { ClientCustomDialog } from "@/app/_components/ui/ClientCustomDialog";
 import { useState } from "react";
@@ -7,8 +8,10 @@ import { RoomOffer } from '@/types/offers';
 import AddLimitedExtra from './AddLimitedExtra';
 import AddCheckoutExtra from './AddCheckout';
 import { Room } from '@/types/types'
+import { useTranslations } from 'next-intl'
 
 const ExtraCard = ({ item, room, guests, rooms, nights }: { item: Service, room: RoomOffer, guests: number, rooms: Room[], nights: number }) => {
+  const t = useTranslations('bookingForm')
   const [isOpen, setIsOpen] = useState(false);
   const isUnlimited = item.unlimited;
   const isSoldOut = item.isSoldOut;
@@ -27,7 +30,7 @@ const ExtraCard = ({ item, room, guests, rooms, nights }: { item: Service, room:
           />
           {isSoldOut && (
             <div className='absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center'>
-              <span className='text-white font-bold text-sm sm:text-lg'>Sold Out</span>
+              <span className='text-white font-bold text-sm sm:text-lg'>{t('soldOut')}</span>
             </div>
           )}
         </div>
@@ -48,13 +51,13 @@ const ExtraCard = ({ item, room, guests, rooms, nights }: { item: Service, room:
         <ClientCustomDialog 
           open={isOpen}
           setOpen={setIsOpen}
-          trigger={<span className='text-brown underline cursor-pointer w-full'>Learn more</span>} 
+          trigger={<span className='text-brown underline cursor-pointer w-full'>{t('learnMore')}</span>} 
           content={
             <div className='flex flex-col '>
               <Image src={image} alt={item.name || 'Extra'} width={185} height={185} className='w-full h-[185px] lg:h-[230px] xl:h-[350px] rounded-lg object-cover mb-7' />
               <div className='flex  justify-between items-center mb-4'>
-                <div className='font-semibold text-lg'>Price:</div>
-                <div className='text-green font-bold text-xl'>+ €{item.price.toFixed(2)}<span className='text-base text-dark font-normal'> (per day)</span></div>
+                <div className='font-semibold text-lg'>{t('price')}</div>
+                <div className='text-green font-bold text-xl'>+ €{item.price.toFixed(2)}<span className='text-base text-dark font-normal'></span></div>
               </div>
               <p className='text-dark'>
                 {item.description}

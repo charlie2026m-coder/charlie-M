@@ -1,18 +1,25 @@
 'use client';
 import Image from "next/image"
 import Navigation from "./Navigation"
-import { Link, useRouter } from "@/navigation"
+import { Link, useRouter, usePathname } from "@/navigation"
 import AuthBlock from "./AuthBlock"
 import { Button } from "../ui/button"
 import MobileMenu from "./MobileMenu";
 import ViberNumber from "./ViberNumber"
 import Language from "./Language"
 import { cn } from "@/lib/utils"
-import { Suspense, useState } from "react"
+import { Suspense, useState, useEffect } from "react"
+import { useTranslations } from "next-intl";
 
 const Header = ({ locale, isWhite = false }: { locale: string, isWhite?: boolean }) => {
   const router = useRouter();
+  const pathname = usePathname();
+  const t = useTranslations();
   const [isNavigating, setIsNavigating] = useState(false);
+
+  useEffect(() => {
+    setIsNavigating(false);
+  }, [pathname]);
 
   const handleMobileBookNow = () => {
     setIsNavigating(true);
@@ -49,7 +56,7 @@ const Header = ({ locale, isWhite = false }: { locale: string, isWhite?: boolean
                 disabled={isNavigating}
                 className={cn('h-[44px] md:hidden ml-auto', isWhite && ' bg-white hover:bg-white/90 hover:text-black')}
               >
-                {isNavigating ? 'Loading...' : 'Book Now'}
+                {isNavigating ? t('loading') : t('book_now_btn')}
               </Button>
 
             </div>

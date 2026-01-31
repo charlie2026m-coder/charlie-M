@@ -1,12 +1,22 @@
 'use client'
 import InfoCard from './InfoCard'
+import { useTranslations } from 'next-intl'
 
 const InformationSection = () => {
+  const t = useTranslations('profile')
+  
+  const getLocalizedItems = () => {
+    return infoItems.map(item => ({
+      ...item,
+      title: t(`informationItems.${item.id}`)
+    }))
+  }
+  
   return (
     <>
-      <h3 className='font-semibold text-mute text-[40px] mb-8'>Information</h3>
+      <h3 className='font-semibold text-mute text-[40px] mb-8'>{t('information')}</h3>
       <div className='grid grid-cols-2 lg:grid-cols-3 gap-x-4 lg:gap-x-10  gap-y-5'>
-        {infoItems.map((item) => (
+        {getLocalizedItems().map((item) => (
           <InfoCard key={item.id} card={item} />
         ))}
       </div>
