@@ -76,6 +76,9 @@ export async function logout(): Promise<AuthResult> {
 
     if (error) return { success: false, error: parseAuthError(error) };
 
+    localStorage.removeItem('guestMode');
+    localStorage.removeItem('guestBookingId');
+
     return { success: true };
   } catch (error) {
     return { success: false, error: parseAuthError(error as Error) };

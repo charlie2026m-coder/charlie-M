@@ -1,44 +1,73 @@
 'use client'
 import { useStore } from "@/store/useStore"
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/_components/ui/popover"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { cn } from "@/lib/utils"
 import { Check } from "lucide-react"
 import { Checkbox } from "@/app/_components/ui/checkbox"
 import { Label } from "@/app/_components/ui/label"
+import { useTranslations } from 'next-intl'
 
 const Filters = () => {
   const { filter, bedSizeFilter, priceFilter, roomTypeFilter, childBedFilter, setValue } = useStore()
+  const t = useTranslations('filters')
   const [roomTypeOpen, setRoomTypeOpen] = useState(false)
   const [bedSizeOpen, setBedSizeOpen] = useState(false)
   const [balconyOpen, setBalconyOpen] = useState(false)
   const [priceOpen, setPriceOpen] = useState(false)
 
+  const typeFilters = useMemo(() => [
+    { label: t('all'), value: 'all' },
+    { label: t('single'), value: 'single' },
+    { label: t('standard'), value: 'standard' },
+    { label: t('business'), value: 'business' },
+    { label: t('superior'), value: 'superior' }
+  ], [t])
+
+  const bedsFilter = useMemo(() => [
+    { label: t('all'), value: 'all' },
+    { label: t('single'), value: 'single' },
+    { label: t('queen'), value: 'queen' },
+    { label: t('king'), value: 'king' }
+  ], [t])
+
+  const filters = useMemo(() => [
+    { label: t('any'), value: 'all' },
+    { label: t('balcony'), value: 'balcony' },
+    { label: t('terrace'), value: 'terrace' },
+    { label: t('sharedTerrace'), value: 'shared' }
+  ], [t])
+
+  const priceFilters = useMemo(() => [
+    { label: t('lowToHigh'), value: 'true' },
+    { label: t('highToLow'), value: 'false' }
+  ], [t])
+
   const getRoomTypeLabel = () => {
     const selected = typeFilters.find(f => f.value === roomTypeFilter)?.label
-    return selected || 'All'
+    return selected || t('all')
   }
 
   const getBedSizeLabel = () => {
     const selected = bedsFilter.find(f => f.value === bedSizeFilter)?.label
-    return selected || 'All'
+    return selected || t('all')
   }
 
   const getBalconyLabel = () => {
     const selected = filters.find(f => f.value === filter)?.label
-    return selected || 'Any'
+    return selected || t('any')
   }
 
   const getPriceLabel = () => {
     const priceValue = priceFilter === true ? 'true' : priceFilter === false ? 'false' : undefined
     const selected = priceFilters.find(f => f.value === priceValue)?.label
-    return selected || 'All'
+    return selected || t('all')
   }
 
   return (  
       <div className='flex gap-3 mb-9 flex-wrap'>
         <FilterDropdown
-          label="Room Type"
+          label={t('roomType')}
           value={getRoomTypeLabel()}
           isOpen={roomTypeOpen}
           onOpenChange={setRoomTypeOpen}
@@ -48,7 +77,7 @@ const Filters = () => {
         />
 
         <FilterDropdown
-          label="Bed Size"
+          label={t('bedSize')}
           value={getBedSizeLabel()}
           isOpen={bedSizeOpen}
           onOpenChange={setBedSizeOpen}
@@ -58,7 +87,7 @@ const Filters = () => {
         />
 
         <FilterDropdown
-          label="Balcony"
+          label={t('balcony')}
           value={getBalconyLabel()}
           isOpen={balconyOpen}
           onOpenChange={setBalconyOpen}
@@ -79,12 +108,12 @@ const Filters = () => {
             htmlFor="child-bed" 
             className='text-[15px] inter font-[400] cursor-pointer'
           >
-            Baby Bed
+            {t('babyBed')}
           </Label>
         </div>
         <FilterDropdown
           className='md:ml-auto'
-          label="Price"
+          label={t('price')}
           value={getPriceLabel()}
           isOpen={priceOpen}
           onOpenChange={setPriceOpen}
@@ -103,7 +132,7 @@ const Filters = () => {
             htmlFor="child-bed-mobile" 
             className='text-[15px] inter font-[400] cursor-pointer'
           >
-            Baby Bed
+            {t('babyBed')}
           </Label>
         </div>
       </div>
@@ -180,70 +209,3 @@ const FilterDropdown = ({
 }
 
 export default Filters
-
-const filters = [
-  {
-    label: 'Any',
-    value: 'all'
-  },
-  {
-    label: 'Balcony',
-    value: 'balcony'
-  }, {
-    label: 'Terrace',
-    value: 'terrace'
-  }, {
-    label: 'Shared Terrace',
-    value: 'shared'
-  }
-]
-const typeFilters = [
-  {
-    label: 'All',
-    value: 'all'
-  },
-  {
-    label: 'Single',
-    value: 'single'
-  }, {
-    label: 'Standard',
-    value: 'standard'
-  }, {
-    label: 'Business',
-    value: 'business'
-  }, {
-    label: 'Superior',
-    value: 'superior'
-  }
-]
-
-const bedsFilter = [
-  {
-    label: 'All',
-    value: 'all'
-  },
-  {
-    label: 'Single',
-    value: 'single'
-  },
-  {
-    label: 'Queen',
-    value: 'queen'
-  },
-  {
-    label: 'King',
-    value: 'king'
-  },
-]
-
-const priceFilters = [
-
-  {
-    label: 'Low to High',
-    value: 'true'
-  },
-  {
-    label: 'High to Low',
-    value: 'false'
-  }
-]

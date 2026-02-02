@@ -9,11 +9,11 @@ import { Booking } from '@/types/booking';
 
 export interface BookingService {
   serviceId: string;
-  count?: number; // For unlimited services
+  count?: number;
   dates?: {
     serviceDate: string;
     count: number;
-    amount: {
+    amount?: {
       amount: number;
       currency: string;
     };

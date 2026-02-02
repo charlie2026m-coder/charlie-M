@@ -34,10 +34,11 @@ export const ReservationButton = ({ reservation }: { reservation: any }) => {
   }
   const from = dayjs(arrival).format('ddd DD MMM YYYY');
   const to = dayjs(departure).format('ddd DD MMM YYYY');
-  const nights = dayjs(departure).diff(dayjs(arrival), 'day');
+  // Use startOf('day') to ignore time and calculate nights correctly
+  const nights = dayjs(departure).startOf('day').diff(dayjs(arrival).startOf('day'), 'day');
   const roomPrice = totalGrossAmount?.amount || 0;
   
-  const guestsCount = adults + (childrenAges?.length || 0);
+  const guestsCount = adults; // Only count adults as guests
 
   if(guestsCount > 1) {
     if(reservation.additionalGuests && reservation.additionalGuests.length > 0) {

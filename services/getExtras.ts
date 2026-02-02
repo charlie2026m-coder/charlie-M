@@ -3,6 +3,23 @@ import { Fetch } from './Request';
 import { cache } from 'react';
 import dayjs from 'dayjs';
 
+export enum usageType {
+  Once = "once",
+  Room = "room",
+  Person = "person",
+
+}
+
+const STATUSES = {
+  "ADCLN": usageType.Room,
+  "BAB": usageType.Room,
+  "BRKF": usageType.Person,
+  "ECI":  usageType.Once,
+  "LCO":  usageType.Once,
+  "PET":  usageType.Room,
+  "PRK":  usageType.Room
+}
+
 // Get all services/extras from Apaleo
 const fetchExtras = async (from: string, to: string): Promise<Service[]> => {
   const propertyId = process.env.APALEO_PROPERTY_ID;
@@ -28,7 +45,6 @@ const fetchExtras = async (from: string, to: string): Promise<Service[]> => {
       `/rateplan/v1/services?propertyId=${propertyId}`
     ).then(res => res.services.map(item =>{
       const unlimited = !item.availability.hasOwnProperty("quantity")
-
       return {
         id: item.id,
         name: item.name,
@@ -40,6 +56,7 @@ const fetchExtras = async (from: string, to: string): Promise<Service[]> => {
         daysOfWeek: item.availability.daysOfWeek,
         availability: item.availability,
         unlimited: unlimited,
+        usageType: STATUSES[item.code as keyof typeof STATUSES],
       }
     }));
 
@@ -58,13 +75,9 @@ const fetchExtras = async (from: string, to: string): Promise<Service[]> => {
         isSoldOut = availability[availability.length - 1].services.find(service => service.service.id === item.id)?.availableCount === 0;
       }
       if(mode === 'Daily') {
-        console.log('Daily')
         const stayDays = availability.slice(0, -1);
-        console.log(stayDays, 'stayDays')
         isSoldOut = stayDays.length > 0 && stayDays.every(timeSlice => timeSlice.services.find(service => service.service.id === item.id)?.availableCount === 0);
-        console.log(isSoldOut, 'isSoldOut')
       }
-      console.log(isSoldOut, 'isSoldOutXXXX')
 
       const timeSlices = availability.map(timeSlice =>{
         return {

@@ -8,12 +8,15 @@ import {
 import { Separator } from "@/app/_components/ui/separator"
 import { RoomOffer } from '@/types/offers'
 import { getType } from '@/lib/utils'
+import { useTranslations } from 'next-intl'
 
-const RefundCard = ({ rooms }: { rooms: RoomOffer[] }) => {
-  const { isRefundable, setIsRefundable, params, setRoomDetails } = useBookingStore()
+const RefundCard = ({ rooms, nights }: { rooms: RoomOffer[], nights: number }) => {
+  const t = useTranslations('bookingForm')
+  const { isRefundable, setIsRefundable, setRoomDetails } = useBookingStore()
   const handleRefundChange = (value: string) => {
     const isRefunable = value === 'true'
-    const planType = getType(params.nights, isRefunable)
+    const planType = getType(nights, isRefunable)
+    
     const mainRoom = rooms.find(room => room.ratePlan.code === planType) || rooms[0]
     setIsRefundable(isRefunable)
     setRoomDetails(mainRoom)
@@ -24,9 +27,9 @@ const RefundCard = ({ rooms }: { rooms: RoomOffer[] }) => {
         <Label htmlFor="non-refundable" className="flex items-center gap-4 cursor-pointer pb-5"  >
           <RadioGroupItem value="false" id="non-refundable" />
           <div className="inter text-base font-semibold flex flex-col gap-1">
-            Non-Refundable (Save 5%)
+            {t('nonRefundable')}
             <span className="!text-[15px] inter font-[400] text-dark">
-              No refund in the event of cancellation
+              {t('noRefundDescription')}
             </span>
           </div>
         </Label>
@@ -34,9 +37,9 @@ const RefundCard = ({ rooms }: { rooms: RoomOffer[] }) => {
         <Label htmlFor="refundable" className="flex items-center gap-4 cursor-pointer pt-5"  >
           <RadioGroupItem value="true" id="refundable" />
           <div className="inter text-base font-semibold flex flex-col gap-1">
-            Refundable
+            {t('refundable')}
             <span className="!text-[15px] inter font-[400] text-dark">
-            Cancel free until 3 days prior
+            {t('refundableDescription')}
             </span>
           </div>
         </Label>

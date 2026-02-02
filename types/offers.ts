@@ -19,7 +19,24 @@ export interface Offer {
   unitGroup: UnitGroup;
   timeSlices: TimeSlice[];
   taxDetails: TaxDetail[];
+  cityTaxes: CityTax[];
 }
+
+interface CityTax {
+  totalGrossAmount: {
+    amount: number;
+    currency: string;
+  };
+  dates: {
+    amount: {
+      grossAmount: number;
+      netAmount: number;
+      currency: string;
+    };
+  }[];
+}
+
+
 
 interface Amount {
   amount: number;
@@ -93,10 +110,12 @@ export interface RoomOffer extends Offer {
   attributes: string[];
   size: number;
   maxPersons: number;
-  price?: number; // Total price for 1 guest (legacy support)
-  priceForTwo?: number; // Total price for 2 guests
-  oneNightPrice: number; // Price per night for 1 guest
-  oneNightPriceForTwo?: number; // Price per night for 2 guests
+  price?: number; // Total price for 1 guest (without tax)
+  priceForTwo?: number; // Total price for 2 guests (without tax)
+  oneNightPrice: number; // Price per night for 1 guest (without tax)
+  oneNightPriceForTwo?: number; // Price per night for 2 guests (without tax)
+  cityTax?: number; // City tax for 1 guest
+  cityTaxForTwo?: number; // City tax for 2 guests
   averagePrice?: number; // Average price per night
 }
 

@@ -14,8 +14,7 @@ const intlMiddleware = createMiddleware({
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   
-  // Skip i18n for admin panel and auth routes - no locale routing needed
-  if (pathname.startsWith('/admin') || pathname.startsWith('/auth')) {
+  if (pathname.startsWith('/admin') || pathname.startsWith('/auth') || pathname.startsWith('/api')) {
     return NextResponse.next();
   }
   

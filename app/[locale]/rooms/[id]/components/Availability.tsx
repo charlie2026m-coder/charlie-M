@@ -7,8 +7,10 @@ import { DateRange } from 'react-day-picker'
 import { getDate, getPath } from '@/lib/utils'
 import { useRouter } from '@/navigation'
 import { useStore } from '@/store/useStore'
+import { useTranslations } from 'next-intl'
 
 const Availability = ({ from, to, children, adults, id }: { from?: string, to?: string, children?: string, adults?: string, id: string }) => {
+  const t = useTranslations('availability')
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const nextMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1)
 
@@ -58,7 +60,7 @@ const Availability = ({ from, to, children, adults, id }: { from?: string, to?: 
   return (
     <div className='flex flex-col'>
       <div className='flex items-center gap-2.5 text-2xl font-semibold mb-[30px]'>
-        Availability
+        {t('title')}
       </div>
 
       <div className='flex flex-col md:flex-row gap-6 border-b pb-[30px] mb-[30px]'>
@@ -123,8 +125,8 @@ const Availability = ({ from, to, children, adults, id }: { from?: string, to?: 
         </div>
       </div>
       <div className='flex items-center justify-between md:justify-end gap-2'>
-        <Button  variant='outline' className='h-[55px] w-[160px]' onClick={cancel}>Cancel</Button>
-        <Button className='h-[55px] w-[160px]' onClick={apply}>Apply </Button>
+        <Button  variant='outline' className='h-[55px] w-[160px]' onClick={cancel}>{t('cancel')}</Button>
+        <Button className='h-[55px] w-[160px]' onClick={apply}>{t('apply')}</Button>
       </div>
     </div>
   )

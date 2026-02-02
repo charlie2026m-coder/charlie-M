@@ -2,15 +2,18 @@
 import Section from "../components/Section";
 import Menu from "../components/Menu";
 import { useState, useEffect, useRef } from "react";
-import { privacyPolicy } from "@/content/privacy-policy";  
+import { useTranslations } from 'next-intl';
 
 export default function Content() {
-  const content = privacyPolicy.en.content
-  const [activeSection, setActiveSection] = useState<string>(getSectionId(content[0].title))
+  const t = useTranslations('privacyPolicy')
+  const content = t.raw('content') as Array<{ title: string; paragraphs: string[] }>
+  const [activeSection, setActiveSection] = useState<string>(getSectionId(content[0]?.title || ''))
   const isUserScrollingRef = useRef(false)
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
+    if (!content || content.length === 0) return
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -38,7 +41,7 @@ export default function Content() {
         clearTimeout(scrollTimeoutRef.current)
       }
     }
-  }, [])
+  }, [content])
 
   const handleScrollToSection = (title: string) => {
     const sectionId = getSectionId(title)
@@ -88,8 +91,9 @@ export default function Content() {
     }, 1000)
   }
   
-  return (
+  if (!content || content.length === 0) return null
 
+  return (
       <div className="flex flex-col-reverse md:grid md:grid-cols-3 gap-9">
         <div className="col-span-1 lg:col-span-2">
           {content.map((item, index) => (

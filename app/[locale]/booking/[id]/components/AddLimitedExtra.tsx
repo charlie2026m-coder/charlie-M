@@ -130,12 +130,12 @@ const AddLimitedExtra = ({ extra, rooms, room, guests }: { extra: Service, rooms
         </DialogHeader>
 
         <div className='py-2.5 border-b border-t flex items-center justify-between'>
-        <div className='flex  flex-col text-lg font-semibold '>
+          <div className='flex flex-col text-lg font-semibold'>
             <h3>{room.name}</h3>
             <p className='text-blue'>{guests} guest{guests > 1 ? 's' : ''}  </p>
           </div>
           <Button variant="outline" className='h-[45px]' onClick={selectAll}>
-            Select all available
+          Select all available
           </Button>
         </div>
 
@@ -152,13 +152,13 @@ const AddLimitedExtra = ({ extra, rooms, room, guests }: { extra: Service, rooms
                 onCountChange={handleDayCountChange}
                 maxRooms={maxRooms}
               />
-            ))}
-          </div>
-          
+          ))}
+        </div>
+
           {showScrollIndicator && (
             <div className='absolute -bottom-5 left-0 right-0 h-10 bg-gradient-to-t from-background via-white/80 to-transparent pointer-events-none flex items-end justify-center pb-2'>
               <ChevronDown className='size-6 text-gray-400 animate-bounce' />
-            </div>
+          </div>
           )}
         </div>
 

@@ -1,10 +1,15 @@
+'use client'
+
 import Amenities from '../../components/Amenities'
 import { GiHouseKeys } from "react-icons/gi";
 import TextReadMore from '@/app/_components/ui/TextReadMore';
 import RoomParamsRow from '@/app/_components/ui/RoomParamsRow';
 import { RoomOffer } from '@/types/offers'
 import { cn } from '@/lib/utils'
+import { useTranslations } from 'next-intl'
+
 const RoomContent = ({ room, isRoomInfo = false }: { room: RoomOffer, isRoomInfo?: boolean }) => {
+  const t = useTranslations('roomContent')
   return (
     <>
       <div className='flex flex-col-reverse md:flex-row justify-between mb-5 items-start gap-2'>
@@ -14,7 +19,7 @@ const RoomContent = ({ room, isRoomInfo = false }: { room: RoomOffer, isRoomInfo
         <RoomParamsRow attributes={room.attributes} maxPersons={room.maxPersons} size={room.size} />
         {room.availableUnits > 0 ? (
           <div className=' flex text-red items-center gap-1 ml-auto '>
-            <GiHouseKeys />  We have <span className='font-bold'>{room.availableUnits}</span> left 
+            <GiHouseKeys />  {t('weHave')} <span className='font-bold'>{room.availableUnits}</span> {t('left')} 
           </div>
         ) : null}
       </div>
@@ -29,9 +34,9 @@ const RoomContent = ({ room, isRoomInfo = false }: { room: RoomOffer, isRoomInfo
           lines={3}
         />
         <div className='flex flex-col gap-5 rounded-[20px] px-5 py-4 bg-blue/20 mb-9'>
-          <h3 className='font-semibold'>Please note:</h3>
+          <h3 className='font-semibold'>{t('pleaseNote')}</h3>
           <p className='text-dark text-md mb-2 '>
-          Each room in our historic property has its own individual layout. While every room in this category offers the same comfort level and features, small variations in size or shape are to be expected. Because of this, the room you receive may differ slightly from the photos shown, but it will always match the quality and category you booked.
+          {t('roomVariationNote')}
           </p>
         </div>
     

@@ -36,18 +36,13 @@ const AmenityButton = ({ item }: { item: {
   description: string;
 
 } }) => {
-  // const [isOpen, setIsOpen] = useState(false)
   return (
-    <>
-      <Button 
-        className='flex items-center bg-blue/40 rounded-full px-2.5 group !h-7 items-center gap-1' 
-        // onClick={() => setIsOpen(!isOpen)}
+      <div 
+        className='flex items-center bg-blue/40 rounded-full px-2.5 !h-7 items-center gap-1' 
       >
         <Image className='size-[15px]' src={item.icon} alt={item.title} width={15} height={15} />
         <span className=''>{item.title}</span>
-      </Button>
-      {/* <DetailsDialog title={item.title} image={item.imageUrl} description={item.description} open={isOpen} setOpen={setIsOpen} /> */}
-    </>
+      </div>
   )
 }
 

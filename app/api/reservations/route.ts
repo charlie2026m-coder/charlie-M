@@ -44,9 +44,20 @@ export async function GET(request: Request) {
       apaleoParams.append('status', filterToStatus[filter]);
     }
 
-    // Get reservations from Apaleo
+    // Get ALL reservations from Apaleo (without pagination for sorting)
+    const allReservationsParams = new URLSearchParams({
+      textSearch: user.email,
+      pageSize: '100', // Get more results for proper sorting
+      sort: 'created:desc', // Sort by creation date, newest first
+    });
+
+    // Add status filter if not "All"
+    if (filter !== 'All' && filterToStatus[filter]) {
+      allReservationsParams.append('status', filterToStatus[filter]);
+    }
+
     const apaleoResponse = await Fetch<ApaleoReservationsListResponse>(
-      `/booking/v1/reservations?${apaleoParams.toString()}&expand=services`
+      `/booking/v1/reservations?${allReservationsParams.toString()}&expand=services`
     );
 
     // Handle empty response or 204 No Content
@@ -69,13 +80,20 @@ export async function GET(request: Request) {
         ...item,
         name: item.unitGroup?.name || '',
         images: room?.photos || [],
-        guests: item.adults + (item.childrenAges?.length || 0),
+        guests: item.adults, // Only count adults as guests
       } as Reservation;
     });
 
+    // Apaleo already sorted by created:desc, just apply pagination
+    const startIndex = (page - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const paginatedReservations = formattedReservations.slice(startIndex, endIndex);
+
+    console.log(`📄 Page ${page}: returning reservations ${startIndex + 1}-${Math.min(endIndex, formattedReservations.length)} of ${formattedReservations.length}`);
+
     return NextResponse.json({ 
-      count: apaleoResponse.count, 
-      reservations: formattedReservations 
+      count: formattedReservations.length, // Total count
+      reservations: paginatedReservations 
     });
 
   } catch (error) {

@@ -21,7 +21,6 @@ export async function POST(request: NextRequest) {
       channel: "Web" as any,
       shopperLocale: "de-DE",
     });
-    console.log('📦 Payment methods response:', JSON.stringify(response, null, 2));
 
     return NextResponse.json(response);
   } catch (error: any) {

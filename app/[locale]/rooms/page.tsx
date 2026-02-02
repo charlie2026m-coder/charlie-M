@@ -91,8 +91,8 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 
 const RoomsPage = async ({ searchParams } : Props) => {
   const { from, to, adults, children } = await searchParams;
-  const guests = (adults ? Number(adults) : 1) + (children ? Number(children) : 0);
-  const rooms = await getAvailableRooms(from, to, guests);
+  const adultsCount = adults ? Number(adults) : 1; // Only count adults for room calculation
+  const rooms = await getAvailableRooms(from, to, adultsCount);
   if ('error' in rooms || !rooms) return <ErrorCard />
   if (rooms.length === 0) return <NotFoundCard text='No rooms found' />
   const nights = calculateNights(from as string, to as string);

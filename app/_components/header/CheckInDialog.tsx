@@ -1,0 +1,101 @@
+'use client'
+import { Button } from "@/app/_components/ui/button"
+import { ClientCustomDialog } from "@/app/_components/ui/ClientCustomDialog"
+import { Input } from "@/app/_components/ui/input"
+import { useState } from "react"
+import { useTranslations } from 'next-intl'
+import { usePreCheckIn } from "@/app/hooks/usePreCheckIn"
+
+interface CheckInDialogProps {
+  trigger: React.ReactNode
+}
+
+const CheckInDialog = ({ trigger }: CheckInDialogProps) => {
+  const t = useTranslations('checkIn')
+  const [isOpen, setIsOpen] = useState(false)
+  const [reservationId, setReservationId] = useState('')
+
+  const { data, isPending, error, mutate } = usePreCheckIn()
+
+  const close = () => {
+    setIsOpen(false)
+    setReservationId('')
+  }
+
+  const handleSubmit = () => {
+    if (reservationId.trim() === '') {
+      return
+    }
+    console.log('🔍 Searching for reservation ID:', reservationId)
+    mutate(reservationId, {
+      onSuccess: (data) => {
+        console.log('✅ Reservation found:', data)
+        if (data?.preCheckInUrl) {
+          console.log('🔗 Pre-check-in URL:', data.preCheckInUrl)
+        }
+      },
+      onError: (error) => {
+        console.error('❌ Error fetching reservation:', error)
+      }
+    })
+  }
+
+  return (
+    <ClientCustomDialog
+      open={isOpen}
+      setOpen={setIsOpen}
+      trigger={trigger}
+      content={
+        <div className='flex flex-col '>
+        <div className='text-[15px] mb-2 text-dark inter'>{t('enterReservationId')}</div>
+        <Input
+          type='text'
+          placeholder={t('reservationIdPlaceholder')}
+          className='w-[400px] h-10 rounded-full mb-10'
+          value={reservationId}
+          onChange={(e) => setReservationId(e.target.value)}
+          disabled={isPending}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !isPending) {
+              handleSubmit()
+            }
+          }}
+        />
+  
+        {error && (
+          <div className='text-red-500 text-sm mb-4 text-center'>
+            {t('error')}
+          </div>
+        )}
+
+        {data && !isPending && (
+          <div className='text-green-600 text-sm mb-4 text-center'>
+            {t('found')}
+          </div>
+        )}
+        <div className='flex gap-4 items-center'>
+          <Button 
+            variant='outline' 
+            className='flex-1 max-w-[190px] h-[45px]' 
+            onClick={close}
+            disabled={isPending}
+          >
+            {t('cancel')}
+          </Button>
+          <Button 
+            className='flex-1 max-w-[190px] h-[45px]' 
+            onClick={handleSubmit}
+            disabled={isPending || reservationId.trim() === ''}
+          >
+            {isPending ? t('searching') : t('search')}
+          </Button>
+        </div>
+      </div>
+      }
+      title={t('title')}
+      className='w-auto !px-10'
+    />
+  )
+}
+
+export default CheckInDialog

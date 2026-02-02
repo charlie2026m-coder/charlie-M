@@ -6,21 +6,24 @@ import { calculateNights } from '@/lib/utils';
 import { BsCalendar2Fill } from 'react-icons/bs';
 import dayjs from 'dayjs';
 import { getExtraPrice } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
 const SummaryCard = () => {
+  const t = useTranslations('summary')
+  const tBooking = useTranslations('bookingForm')
   const { booking, rooms, roomDetails, services, extras, apaleoBookingId } = useBookingStore()
 
   if (!booking || !booking.reservations) {
     return (
       <div className='flex flex-col bg-white rounded-[20px] py-5 px-3 shadow-xl'>
-        <h2 className='text-2xl font-bold mb-3 text-center'>Summary</h2>
-        <p className='text-center text-gray-500'>No booking data available</p>
+        <h2 className='text-2xl font-bold mb-3 text-center'>{t('title')}</h2>
+        <p className='text-center text-gray-500'>{t('noBookingData')}</p>
       </div>
     )
   }
 
   const { reservations } = booking
-  const totalGuests = reservations[0].adults + (reservations[0].childrenAges?.length || 0)
+  const totalGuests = reservations[0].adults // Only count adults as guests
   const nights = calculateNights(reservations[0].arrival, reservations[0].departure)
 
   const updatedRooms = rooms.map(room => {
@@ -37,8 +40,7 @@ const SummaryCard = () => {
   })
 
 
-  const flatExtras = updatedRooms.flatMap(room => room.extras || [])
-  const getText = (days: number) => days === 1 ? 'night' : 'nights'
+  const getText = (days: number) => days === 1 ? tBooking('night') : tBooking('nights')
   
   // Calculate price for each room based on guest count
   const calculateRoomPrice = (adultsCount: number) => {
@@ -52,6 +54,21 @@ const SummaryCard = () => {
     } else {
       const doubleRooms = Math.floor(adultsCount / 2);
       return (doubleRooms * (roomDetails?.priceForTwo || roomDetails?.price || 0)) + (roomDetails?.price || 0);
+    }
+  };
+
+  // Calculate city tax for each room based on guest count
+  const calculateRoomTax = (adultsCount: number) => {
+    const maxPersons = roomDetails?.maxPersons || 2;
+    const roomsNeeded = Math.ceil(adultsCount / maxPersons);
+    
+    if (adultsCount === 1) {
+      return roomDetails?.cityTax || 0;
+    } else if (adultsCount % 2 === 0) {
+      return roomsNeeded * (roomDetails?.cityTaxForTwo || roomDetails?.cityTax || 0);
+    } else {
+      const doubleRooms = Math.floor(adultsCount / 2);
+      return (doubleRooms * (roomDetails?.cityTaxForTwo || roomDetails?.cityTax || 0)) + (roomDetails?.cityTax || 0);
     }
   };
 
@@ -96,12 +113,16 @@ const SummaryCard = () => {
 
   // Calculate total price for all rooms based on their guest counts
   const roomsTotalPrice = rooms.reduce((acc, room) => acc + calculateRoomPrice(room.adults), 0);
-  const extrasTotalPrice = flatExtras.reduce((acc, extra) => acc + extra.totalPrice, 0)
-  const totalPrice = roomsTotalPrice + extrasTotalPrice + servicesTotalPrice
+  
+  // Calculate city tax using actual tax amounts from Apaleo
+  const cityTaxAmount = rooms.reduce((acc, room) => acc + calculateRoomTax(room.adults), 0);
+  
+  // Round to 2 decimal places to handle floating point errors
+  const totalPrice = Math.round((roomsTotalPrice + cityTaxAmount + servicesTotalPrice) * 100) / 100
 
   return (
     <div className='flex flex-col bg-white rounded-[20px] py-5 px-3 border self-start col-span-1'>
-      <h2 className='text-2xl font-bold mb-3 text-center'>Summary</h2>
+      <h2 className='text-2xl font-bold mb-3 text-center'>{t('title')}</h2>
       <Image 
         src="/images/room1.webp" 
         alt="summary" 
@@ -111,18 +132,18 @@ const SummaryCard = () => {
       />
 
       <div className='text-[16px] flex justify-between font-[500] py-3 border-b mb-3'> 
-        Guests: <span className='font-bold'>{totalGuests}</span>
+        {t('guests')} <span className='font-bold'>{totalGuests}</span>
       </div>
 
       <div className='flex flex-col'>
-        <span className='font-semibold mb-4 text-[15px]'>Price:</span>
+        <span className='font-semibold mb-4 text-[15px]'>{tBooking('price')}</span>
         <div className='flex flex-col gap-1 mb-3'>
           {rooms.map((room, index) => {
             const roomPrice = calculateRoomPrice(room.adults);
             return (
               <div key={room.id} className='flex flex-col gap-1 mb-2'>
                 <div className='flex items-center gap-2 inter text-sm text-dark'>
-                  <span className='truncate overflow-hidden whitespace-nowrap'>Room {index + 1} ({room.adults} {room.adults === 1 ? 'guest' : 'guests'})</span>
+                  <span className='truncate overflow-hidden whitespace-nowrap'>{tBooking('room')} {index + 1} ({room.adults} {room.adults === 1 ? tBooking('guest') : tBooking('guests')})</span>
                   <span>€ {roomDetails?.averagePrice || 0}</span>×<span>{nights} {getText(nights)}</span>
                   <span className='text-bale font-bold text-base ml-auto'>€ {roomPrice}</span>
                 </div>
@@ -133,22 +154,22 @@ const SummaryCard = () => {
             )
           })}
           <div className='flex items-center gap-2 inter text-sm text-dark mt-2'>
-            <span>City tax:</span>
-            <span className='text-bale font-semibold ml-auto'>7.5%</span>
+            <span>{tBooking('cityTax')}</span>
+            <span className='text-bale font-semibold ml-auto'>€ {cityTaxAmount.toFixed(2)}</span>
           </div>
         </div>
       </div>
 
-      {((flatExtras.length > 0) || (services.length > 0)) && (
+      {(services.length > 0) && (
         <div className='flex flex-col mb-5'>
-          <span className='font-semibold mb-4 text-[15px]'>Extras:</span>
+          <span className='font-semibold mb-4 text-[15px]'>{tBooking('addExtras')}</span>
           
           {updatedRooms.map((room, index) => (
             room.extras && room.extras.length > 0 && (
               <div key={room.id} className='flex flex-col gap-1 mb-2'>
                 {room.extras.map((extra) => (
                   <div key={extra.id} className='flex items-center gap-2 inter text-sm text-dark'>
-                    <span className='truncate'>Room {index + 1} - {extra.name}</span>
+                    <span className='truncate'>{tBooking('room')} {index + 1} - {extra.name}</span>
                     <span className='text-bale font-semibold ml-auto'>
                       € {extra.totalPrice.toFixed(2)}
                     </span>
@@ -195,20 +216,20 @@ const SummaryCard = () => {
           })}
           
           <div className='flex items-center justify-between gap-2 inter text-sm text-dark mb-2'>
-            <span>Total:</span>
-            <span className='text-bale font-semibold'>€ {(extrasTotalPrice + servicesTotalPrice).toFixed(2)}</span>
+            <span>{tBooking('total')}</span>
+            <span className='text-bale font-semibold'>€ {servicesTotalPrice.toFixed(2)}</span>
           </div>
         </div>
       )}
 
       <div className='flex items-center justify-between mb-3'>
-        <span className='font-semibold text-lg'>Total price:</span>
-        <Price price={Number(totalPrice.toFixed(2))} />
+        <span className='font-semibold text-lg'>{tBooking('totalPrice')}</span>
+        <Price price={totalPrice} />
       </div>
 
       {apaleoBookingId && (
         <div className='flex items-center justify-between border-t pt-3'>
-          <span className='text-gray-500'>Booking ID:</span>
+          <span className='text-gray-500'>{t('bookingId')}</span>
           <span className='font-bold text-lg'>{apaleoBookingId}</span>
         </div>
       )}

@@ -38,7 +38,7 @@ const LocationSection = () => {
             onMouseEnter={() => handleMap(-1)}
           >
             <PiMapPinFill className='md:size-6 lg:size-10' />
-            We are here
+            {t('weAreHere')}
           </div>
           {
             locations.map((item, index) => (

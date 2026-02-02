@@ -1,22 +1,20 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { CustomDialog as OriginalCustomDialog } from './CustomDialog'
-
-// Wrapper для CustomDialog, который рендерится только на клиенте
-// Это решает проблему hydration mismatch с Radix UI Dialog
-
 export function ClientCustomDialog({ 
   trigger, 
   content, 
   title, 
   open, 
-  setOpen 
+  setOpen,
+  className
 }: { 
   trigger: React.ReactNode, 
   content: React.ReactNode, 
   title: string, 
   open: boolean, 
   setOpen: (open: boolean) => void 
+  className?: string
 }) {
   const [mounted, setMounted] = useState(false)
 
@@ -25,7 +23,6 @@ export function ClientCustomDialog({
   }, [])
 
   if (!mounted) {
-    // Показываем только trigger до монтирования
     return <div>{trigger}</div>
   }
 
@@ -36,6 +33,7 @@ export function ClientCustomDialog({
       title={title}
       open={open}
       setOpen={setOpen}
+      className={className}
     />
   )
 }

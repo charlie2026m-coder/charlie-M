@@ -5,6 +5,7 @@ import { getSingleRoom } from '@/services/getSingleRoom'
 import ErrorCard from '../components/ErrorCard'
 import Availability from './components/Availability'
 import NoCapacityWarning from './components/NoCapacityWarning'
+import NoAvailabilityCard from './components/NoAvailabilityCard'
 import { calculateNights } from '@/lib/utils'
 import type { Metadata } from 'next'
 import { RATE_PLANS } from '@/lib/Constants';
@@ -126,7 +127,17 @@ const RoomPage = async ({ params, searchParams }: IParams) => {
   const { from, to, adults, children } = await searchParams
   
   const rooms = await getSingleRoom(id, from, to, adults)
-  if ('error' in rooms) return <ErrorCard isSingleRoom={true} link='/rooms' />
+  
+  // If error (no rooms available), show NoAvailabilityCard
+  if ('error' in rooms) {
+    return (
+      <div className='flex flex-col relative pt-10 flex-1'>
+        <div className='grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-y-10 md:gap-10 mb-[30px]'>
+          <NoAvailabilityCard from={from} to={to} />
+        </div>
+      </div>
+    )
+  }
 
   const room = rooms[0]
   const totalAdults = adults ? Number(adults) : 1

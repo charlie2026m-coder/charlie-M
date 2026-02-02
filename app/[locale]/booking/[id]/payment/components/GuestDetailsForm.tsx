@@ -7,16 +7,21 @@ import { Button } from '@/app/_components/ui/button'
 import { Checkbox } from '@/app/_components/ui/checkbox'
 import { useBookingStore } from '@/store/useBookingStore'
 import { GuestDetailsFormData, guestDetailsSchema } from '@/types/schemas'
-import { Link } from '@/navigation'
+import { Link, useRouter } from '@/navigation'
 import LoadingDots from '@/app/_components/ui/LoadingDots'
+import { useTranslations } from 'next-intl'
+import { useParams } from 'next/navigation'
 
 interface GuestDetailsFormProps {
   onSubmit: (data: GuestDetailsFormData) => void
-  onBack: () => void
   isLoading?: boolean
 }
 
-const GuestDetailsForm = ({ onSubmit, onBack, isLoading = false }: GuestDetailsFormProps) => {
+const GuestDetailsForm = ({ onSubmit,  isLoading = false }: GuestDetailsFormProps) => {
+  const t = useTranslations('payment')
+  const router = useRouter()
+  const params = useParams()
+  const locale = params.locale as 'en' | 'de'
   const defaultValues = {name: '', last_name: '', email: '', phone: '', consent: false}
   const { register, handleSubmit, formState: { errors }, reset, watch, setValue: setFormValue } = useForm<GuestDetailsFormData>({ 
     resolver: zodResolver(guestDetailsSchema), 
@@ -55,9 +60,13 @@ const GuestDetailsForm = ({ onSubmit, onBack, isLoading = false }: GuestDetailsF
     }
   }, [booking, reset, isHydrated])
 
+  const handleBack = () => {
+    router.back()
+  }
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className='flex flex-col col-span-1 xl:col-span-2'>
-      <h2 className='text-[22px] font-bold mb-10'>Guest Details</h2>
+      <h2 className='text-[22px] font-bold mb-10'>{t('guestDetails')}</h2>
       
       <div className='grid md:grid-cols-2 gap-4 md:mb-4'>
         <div className='relative flex flex-col gap-1 pb-5'>
@@ -65,7 +74,7 @@ const GuestDetailsForm = ({ onSubmit, onBack, isLoading = false }: GuestDetailsF
             register={register} 
             name='name' 
             type='text' 
-            placeholder='Name' 
+            placeholder={t('name')}
             icon='name'
             isError={!!errors.name}
           />
@@ -79,7 +88,7 @@ const GuestDetailsForm = ({ onSubmit, onBack, isLoading = false }: GuestDetailsF
             register={register}
             name='last_name' 
             type='text' 
-            placeholder='Last Name' 
+            placeholder={t('lastName')}
             icon='name'
             isError={!!errors.last_name}
           />
@@ -93,7 +102,7 @@ const GuestDetailsForm = ({ onSubmit, onBack, isLoading = false }: GuestDetailsF
             register={register}
             name='email' 
             type='email' 
-            placeholder='Email' 
+            placeholder={t('email')}
             icon='email'
             isError={!!errors.email}
           />
@@ -107,7 +116,7 @@ const GuestDetailsForm = ({ onSubmit, onBack, isLoading = false }: GuestDetailsF
             register={register}
             name='phone' 
             type='phone' 
-            placeholder='Phone' 
+            placeholder={t('phone')}
             icon='phone'
             isError={!!errors.phone}
           />
@@ -129,14 +138,15 @@ const GuestDetailsForm = ({ onSubmit, onBack, isLoading = false }: GuestDetailsF
             className={errors.consent ? 'border-red' : ''}
           />
           <div className='text-sm text-dark cursor-pointer leading-relaxed' >
-            I agree to the{' '}
+            {t('agreeToThe')}{' '}
             <Link 
               href='/privacy-policy' 
+              locale={locale}
               target='_blank'
               className='text-blue underline hover:text-blue/80'
               onClick={(e) => e.stopPropagation()}
             >
-              Privacy Policy
+              {t('privacyPolicy')}
             </Link>
           </div>
         </div>
@@ -150,15 +160,15 @@ const GuestDetailsForm = ({ onSubmit, onBack, isLoading = false }: GuestDetailsF
           type='button' 
           variant='outline' 
           className='flex-1 max-w-[210px] h-[55px]'
-          onClick={onBack}
+          onClick={handleBack}
           disabled={isLoading}
-        >Back</Button>
+        >{t('back')}</Button>
         <Button 
           type='submit' 
           className='flex-1 max-w-[210px] h-[55px]'
           disabled={isLoading || !consent}
         >
-          {isLoading ? <LoadingDots /> : 'Continue'}
+          {isLoading ? <LoadingDots /> : t('continue')}
         </Button>
       </div>
     </form>

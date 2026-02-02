@@ -41,10 +41,16 @@ const getAvailableRoomsInternal = async (from?: string, to?: string, guests: num
           id: `${room.unitGroup.id}-${room.ratePlan.id}`, // Unique ID combining unit group and rate plan
           name: room.unitGroup.name,
           description: room.unitGroup.description,
-          price: room.totalGrossAmount.amount, // Price for 1 guest
-          priceForTwo: doubleRoom?.totalGrossAmount.amount, // Price for 2 guests (only if guests > 1)
-          oneNightPrice: room.timeSlices[0].totalGrossAmount.amount,
-          oneNightPriceForTwo: doubleRoom?.timeSlices[0].totalGrossAmount.amount, // Only if guests > 1
+          price: room.totalGrossAmount.amount, // Price for 1 guest without tax
+          priceForTwo: (doubleRoom?.totalGrossAmount?.amount || 0), // Price for 2 guests without tax
+          oneNightPrice: (room.timeSlices?.[0]?.totalGrossAmount?.amount || 0),
+          oneNightPriceForTwo: (doubleRoom?.timeSlices?.[0]?.totalGrossAmount?.amount || 0),
+          cityTax: (room.cityTaxes?.[0]?.totalGrossAmount?.amount || 0), // City tax for 1 guest
+          cityTaxForTwo: (doubleRoom?.cityTaxes?.[0]?.totalGrossAmount?.amount || 0), // City tax for 2 guests
+          // price: room.totalGrossAmount.amount + (room.cityTaxes?.[0]?.totalGrossAmount?.amount || 0), // Price for 1 guest with taxes
+          // priceForTwo: (doubleRoom?.totalGrossAmount?.amount || 0) + (doubleRoom?.cityTaxes?.[0]?.totalGrossAmount?.amount || 0), // Price for 2 guests with taxes
+          // oneNightPrice: (room.timeSlices?.[0]?.totalGrossAmount?.amount || 0) + (room.cityTaxes?.[0]?.dates?.[0]?.amount?.grossAmount || 0),
+          // oneNightPriceForTwo: (doubleRoom?.timeSlices?.[0]?.totalGrossAmount?.amount || 0) + (doubleRoom?.cityTaxes?.[0]?.dates?.[0]?.amount?.grossAmount || 0),
           currency: room.totalGrossAmount.currency,
           attributes: roomDetails?.attributes || [],
           size: roomDetails?.size || 0,

@@ -1,19 +1,21 @@
 'use client'
 import { cn } from '@/lib/utils'
+import { useTranslations } from 'next-intl'
 
 const Steps = ({ currentStep }: { currentStep: number }) => {
+  const t = useTranslations('bookingForm')
   const steps = [
     {
       index: 1,
-      title: 'Your Selection',
+      title: t('yourSelection'),
     },
     {
       index: 2,
-      title: 'Your Info',
+      title: t('yourInfo'),
     },
     {
       index: 3,
-      title: 'Finish',
+      title: t('finish'),
     },
   ]
   

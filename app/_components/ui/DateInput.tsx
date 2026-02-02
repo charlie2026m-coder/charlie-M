@@ -8,6 +8,7 @@ import { useState } from "react";
 import dayjs from 'dayjs';
 import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 
 const getValue = (date: Date | undefined) => {
   if (!date) return ''
@@ -31,6 +32,7 @@ export function DateInput({
   inputStyle?: string,
   isError?: boolean,
 }) {
+  const t = useTranslations();
   const [internalOpen, setInternalOpen] = useState(false)  
   // Use controlled state if provided, otherwise use internal state
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen
@@ -44,14 +46,14 @@ export function DateInput({
         <PopoverTrigger asChild>
           <div className="relative flex" suppressHydrationWarning>
             <div className='hidden md:flex gap-2 text-xs absolute -top-2 left-5 bg-white px-1'>
-              <div className='pr-2 border-r border-black '>Check In  </div>
-              <div >Check out</div>
+              <div className='pr-2 border-r border-black '>{t('dateInput.checkIn')}  </div>
+              <div >{t('dateInput.checkOut')}</div>
             </div>
             <BsCalendar2 className={cn("flex absolute top-1/2 left-3 -translate-y-1/2 md:hidden size-4", isError && "text-red-500")} />
             <Input
               id="date"
               value={formattedValue}
-              placeholder={'Choose date'}
+              placeholder={t('dateInput.chooseDate')}
               className={cn(
                 "rounded-full h-10 border-white shadow-none text-sm md:text-base  md:border-black pl-8 md:pl-3 pr-3 cursor-pointer",
                 isError && "!border-red-500 focus:border-red-500 !ring-red-500/20 focus:ring-red-500",
