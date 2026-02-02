@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth-provider"
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
+import CheckInDialog from "./CheckInDialog";
 
 const AuthBlock = ({ isWhite = false }: { isWhite?: boolean }) => {
   const { user, loading } = useAuth();
@@ -13,7 +14,6 @@ const AuthBlock = ({ isWhite = false }: { isWhite?: boolean }) => {
   const router = useRouter();
   const pathname = usePathname();
   const [isNavigating, setIsNavigating] = useState(false);
-  
   useEffect(() => {
     setIsNavigating(false);
   }, [pathname]);
@@ -23,9 +23,19 @@ const AuthBlock = ({ isWhite = false }: { isWhite?: boolean }) => {
     router.push('/rooms');
   };
 
+
   return (
     <div className="hidden md:flex items-center justify-between gap-1 lg:gap-3">
-      <Button variant='outline' className={cn('h-[44px] border-none underline p-4', isWhite && 'text-white hover:text-white/50')} >{t('check_in_btn')}</Button>
+      <CheckInDialog
+        trigger={
+          <Button 
+            variant='outline' 
+            className={cn('h-[44px] border-none underline p-4 active:bg-transparent', isWhite && 'text-white hover:text-white/50')}
+          >
+            {t('check_in_btn')}
+          </Button>
+        }
+      />
       <Button 
         onClick={handleBookNow}
         disabled={isNavigating}

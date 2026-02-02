@@ -468,6 +468,7 @@
     "profile": "Profil",
     "myReservations": "Reservierungen",
     "all": "Alle",
+    "added": "Hinzugefügt",
     "ongoing": "Laufend",
     "upcoming": "Bevorstehend",
     "completed": "Abgeschlossen",
@@ -486,11 +487,18 @@
     "nothingFound": "Für diese Reservierungs-ID wurde nichts gefunden. Bitte überprüfen Sie die Eingabe und versuchen Sie es erneut.",
     "ok": "Ok",
     "reservationAddedSuccess": "Ihre Reservierung wurde erfolgreich hinzugefügt",
+    "adding": "Wird hinzugefügt...",
+    "reservationAlreadyAdded": "Diese Reservierung wurde bereits hinzugefügt",
+    "reservationEmailMismatch": "Die E-Mail-Adresse der Reservierung stimmt nicht mit Ihrer Kontoe-Mail-Adresse überein",
+    "errorAddingReservation": "Fehler beim Hinzufügen der Reservierung",
+    "reservationNotFoundCheckId": "Reservierung nicht gefunden. Bitte überprüfen Sie die ID.",
+    "reservationIdExample": "Beispiel: XXXXX-1 (muss mit -1 enden)",
     "logout": "Abmelden",
     "logoutConfirm": "Möchten Sie sich wirklich abmelden?",
     "loggingOut": "Wird abgemeldet...",
     "yes": "Ja",
     "allReservations": "Alle Reservierungen",
+    "addedReservations": "Hinzugefügte Reservierungen",
     "ongoingReservations": "Laufende Reservierungen",
     "upcomingReservations": "Bevorstehende Reservierungen",
     "completedReservations": "Abgeschlossene Reservierungen",
@@ -503,6 +511,7 @@
     "viewInvoice": "Rechnung anzeigen",
     "completeCheckIn": "Check-In abschließen",
     "errorLoadingReservations": "Fehler beim Laden der Reservierungen",
+    "reservationNotFoundInApaleo": "Reservierung in Apaleo nicht gefunden",
     "loading": "Lädt...",
     "noRoomsBooked": "Sie haben noch keine Zimmer gebucht",
     "bookNow": "Jetzt buchen",
@@ -640,6 +649,17 @@
         "garbageLocation": "Auf der –1. Etage gelegen"
       }
     }
+  },
+  "checkIn": {
+    "title": "Check-In",
+    "enterReservationId": "Geben Sie Ihre Reservierungs-ID ein",
+    "reservationIdPlaceholder": "Reservierungs-ID",
+    "cancel": "Abbrechen",
+    "search": "Suchen",
+    "searching": "Suchen...",
+    "loading": "Wird geladen...",
+    "error": "Reservierung nicht gefunden. Bitte überprüfen Sie Ihre ID und versuchen Sie es erneut.",
+    "found": "Reservierung gefunden!"
   },
   "termsAndConditions": {
     "title": "Allgemeine Geschäftsbedingungen",

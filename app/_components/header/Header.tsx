@@ -5,7 +5,6 @@ import { Link, useRouter, usePathname } from "@/navigation"
 import AuthBlock from "./AuthBlock"
 import { Button } from "../ui/button"
 import MobileMenu from "./MobileMenu";
-import ViberNumber from "./ViberNumber"
 import Language from "./Language"
 import { cn } from "@/lib/utils"
 import { Suspense, useState, useEffect } from "react"
@@ -50,7 +49,6 @@ const Header = ({ locale, isWhite = false }: { locale: string, isWhite?: boolean
                 </Suspense>
               </div>
 
-              {/* for mobile version */}
               <Button 
                 onClick={handleMobileBookNow}
                 disabled={isNavigating}

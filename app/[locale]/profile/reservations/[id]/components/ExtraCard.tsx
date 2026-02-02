@@ -7,6 +7,8 @@ import AddUnlimitedExtra from './AddUnlimitedExtra';
 import AddLimitedExtra from './AddLimitedExtra';
 import AddCheckoutExtra from './AddCheckout';
 import { useTranslations } from 'next-intl';
+import { getExtraImage, getExtraImages } from '@/lib/getExtraImage';
+import CustomImageSlider from '@/app/_components/ui/CustomImageSlider';
 
 const ExtraCard = ({ item, adults, nights, existingCount = 0, existingDates = [] }: { item: Service, adults: number, nights: number, existingCount?: number, existingDates?: string[] }) => {
   const t = useTranslations('profile');
@@ -28,13 +30,14 @@ const ExtraCard = ({ item, adults, nights, existingCount = 0, existingDates = []
   const isCheckout = item.id === 'CMH-LCO' || item.id === 'CMH-ECI' || item.id === 'CMH-BAB';
   const pricingType = item.pricingType;
 
-  const image = '/images/extra.webp'
+  const images = getExtraImages(item.id, item.name);
+  const coverImage = getExtraImage(item.id, item.name)
   return (
     <div className='flex sm:flex-col gap-2 relative'>
       <div className='relative'>
         <div className='size-[60px] sm:w-full sm:h-[160px]'>
           <Image 
-            src={image} 
+            src={coverImage} 
             alt={item.name} 
             fill
             className='rounded-lg object-cover'
@@ -65,7 +68,11 @@ const ExtraCard = ({ item, adults, nights, existingCount = 0, existingDates = []
           trigger={<span className='text-brown underline cursor-pointer w-full'>{t('learnMore')}</span>} 
           content={
             <div className='flex flex-col '>
-              <Image src={image} alt={item.name || 'Extra'} width={185} height={185} className='w-full h-[185px] lg:h-[230px] xl:h-[350px] rounded-lg object-cover mb-7' />
+              {images.length > 1 ? (
+                <CustomImageSlider images={images} />
+              ) : (
+                <Image src={coverImage} alt={item.name || 'Extra'} width={185} height={185} className='w-full h-[185px] lg:h-[230px] xl:h-[350px] rounded-lg object-cover mb-7' />
+              )}
               <div className='flex  justify-between items-center mb-4'>
                 <div className='font-semibold text-lg'>{t('price')}:</div>
                 <div className='text-green font-bold text-xl'>+ €{item.price.toFixed(2)}<span className='text-base text-dark font-normal'>( {pricingType === 'Daily' ? t('perDay') : t('oneTime')} )</span></div>

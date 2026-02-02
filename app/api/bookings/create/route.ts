@@ -151,46 +151,32 @@ export async function POST(request: Request) {
       console.log('\n✅ Step 2 complete: All reservations processed (services + payments)')
     }
 
+    // Save consent record if consent was given
     try {
       const supabase = await createSupabaseServerClient()
-      const primaryGuest = booking.reservations[0]?.primaryGuest
       const { data: { user } } = await supabase.auth.getUser()
       
-      if (primaryGuest && apaleoData.id && apaleoData.reservationIds) {
-        // Create an array of reservations to insert
-        const reservationsToInsert = apaleoData.reservationIds.map(reservation => ({
-          reservation_id: reservation.id,
+      if (booking.consent && apaleoData.id) {
+        const headersList = await headers()
+        const ip = 
+          headersList.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+          headersList.get('x-real-ip') || 
+          'unknown'
+
+        const consentData = {
+          user_id: user?.id || null,
           booking_id: apaleoData.id,
-          last_name: primaryGuest.lastName,
-          email: primaryGuest.email,
-        }));
-
-        // Insert all reservations
-        await supabase.from('reservations').insert(reservationsToInsert);
-
-        // Save consent record if consent was given
-        if (booking.consent) {
-          const headersList = await headers()
-          const ip = 
-            headersList.get('x-forwarded-for')?.split(',')[0]?.trim() || 
-            headersList.get('x-real-ip') || 
-            'unknown'
-
-          const consentData = {
-            user_id: user?.id || null,
-            booking_id: apaleoData.id,
-            consent_type: 'booking',
-            consent_given: true,
-            ip_address: ip,
-            privacy_policy_version: '1.0',
-            consent_date: new Date().toISOString(),
-          }
-
-          await supabase.from('consents').insert(consentData)
+          consent_type: 'booking',
+          consent_given: true,
+          ip_address: ip,
+          privacy_policy_version: '1.0',
+          consent_date: new Date().toISOString(),
         }
+
+        await supabase.from('consents').insert(consentData)
       }
     } catch (supabaseError) {
-      console.error('Failed to save reservations to Supabase:', supabaseError)
+      console.error('Failed to save consent to Supabase:', supabaseError)
       // Don't fail the whole request if Supabase fails
     }
 

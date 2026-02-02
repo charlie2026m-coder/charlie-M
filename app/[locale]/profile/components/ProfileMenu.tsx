@@ -6,15 +6,18 @@ import { PiCalendarBlankFill } from "react-icons/pi";
 import { TiArrowSortedDown } from "react-icons/ti";
 import { cn } from '@/lib/utils'
 import SlideMenu from './SlideMenu'
-import { Link, usePathname } from '@/navigation' // Use localized usePathname
+import { Link, usePathname } from '@/navigation'
 import ReservationIdDialog from './ReservationIdDialog'
 import Logout from './Logout'
 import { useProfileStore, ReservationFilter } from '@/store/useProfile'
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 
+interface ProfileMenuProps {
+  hasAddedReservations: boolean
+}
 
-const ProfileMenu = () => {
+const ProfileMenu = ({ hasAddedReservations }: ProfileMenuProps) => {
   const t = useTranslations('profile')
   const pathname = usePathname()
   const { profile } = useProfile()
@@ -24,7 +27,6 @@ const ProfileMenu = () => {
   useEffect(() => {
     setIsGuestMode(localStorage.getItem('guestMode') === 'true')
   }, [])
-
 
   const tabs = [
     {
@@ -37,16 +39,22 @@ const ProfileMenu = () => {
     },
   ]
 
-  // Map English filter values to translated labels
   const filterLabels: Record<ReservationFilter, string> = {
     'All': t('all'),
+    'Added': t('added'),
     'Ongoing': t('ongoing'),
     'Upcoming': t('upcoming'),
     'Completed': t('completed'),
     'Canceled': t('canceled')
   }
   
-  const resTabs = (['All', 'Ongoing', 'Upcoming', 'Completed', 'Canceled'] as const).map(filter => filterLabels[filter])
+  const filters: ReservationFilter[] = ['All']
+  if (hasAddedReservations) {
+    filters.push('Added')
+  }
+  filters.push('Ongoing', 'Upcoming', 'Completed', 'Canceled')
+  
+  const resTabs = filters.map(filter => filterLabels[filter])
 
   return (
     <CustomCard className=" col-span-1 self-start border rounded-[40px]  p-3 lg:p-[30px]">
@@ -84,15 +92,19 @@ const ProfileMenu = () => {
                 sections={resTabs}
                 activeSection={filterLabels[reservationFilter]}
                 onSectionClick={(title) => {
-                  // Map translated labels back to English filter values
                   const reverseMap: Record<string, ReservationFilter> = {
                     [t('all')]: 'All',
+                    [t('added')]: 'Added',
                     [t('ongoing')]: 'Ongoing',
                     [t('upcoming')]: 'Upcoming',
                     [t('completed')]: 'Completed',
                     [t('canceled')]: 'Canceled'
                   }
-                  setReservationFilter(reverseMap[title] || 'All')
+                  const selectedFilter = reverseMap[title] || 'All'
+                  if (selectedFilter === 'Added' && !hasAddedReservations) {
+                    return
+                  }
+                  setReservationFilter(selectedFilter)
                 }}
               />
             )}
