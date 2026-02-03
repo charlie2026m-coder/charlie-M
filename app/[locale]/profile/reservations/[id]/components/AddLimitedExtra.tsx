@@ -198,7 +198,7 @@ const DayRow = ({
   isOccupied?: boolean
 }) => {
   const availableCount = item.availableCount;
-  const isPast = dayjs(item.serviceDate).isBefore(dayjs(), 'day');
+  const isPast = dayjs(item.serviceDate).isBefore(dayjs().startOf('day'));
   const isDisabled = availableCount <= 0 || isPast || isOccupied;
   
   const getMaxLimit = () => {

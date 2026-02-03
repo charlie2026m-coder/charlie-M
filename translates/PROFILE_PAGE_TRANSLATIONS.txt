@@ -1,0 +1,177 @@
+СТРАНИЦА: Profile Page
+СЕКЦИЯ: Profile Menu
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Profile
+My Reservations
+All
+Added
+Ongoing
+Upcoming
+Completed
+Canceled
+Guest
++ Add via Reservation ID
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Profil
+Reservierungen
+Alle
+Hinzugefügt
+Laufend
+Bevorstehend
+Abgeschlossen
+Storniert
+Gast
++ Über Reservierungs-ID hinzufügen
+
+
+СТРАНИЦА: Profile Page
+СЕКЦИЯ: Profile Form
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Profile
+Name
+Last Name
+Email
+Phone
+Discard
+Saving...
+Save Changes
+Email confirmed successfully! Your email has been updated.
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Profil
+Vorname
+Nachname
+E-Mail
+Telefon
+Verwerfen
+Speichern...
+Änderungen speichern
+E-Mail erfolgreich bestätigt! Ihre E-Mail wurde aktualisiert.
+
+
+СТРАНИЦА: Profile Page
+СЕКЦИЯ: Password Form
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Change Password
+Create Password
+New Password
+Confirm Password
+Discard
+Saving...
+Save Changes
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Passwort ändern
+Passwort erstellen
+Neues Passwort
+Passwort bestätigen
+Verwerfen
+Speichern...
+Änderungen speichern
+
+
+СТРАНИЦА: Profile Page
+СЕКЦИЯ: Delete Account
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Danger Zone
+Delete Account
+Permanently delete your account and all associated data. This action cannot be undone.
+Type DELETE to confirm
+DELETE
+I understand that this action is permanent and irreversible. My account and all associated data will be deleted.
+Cancel
+Deleting...
+Delete Account
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Gefahrenzone
+Konto löschen
+Löschen Sie Ihr Konto und alle zugehörigen Daten dauerhaft. Diese Aktion kann nicht rückgängig gemacht werden.
+Geben Sie LÖSCHEN ein, um zu bestätigen
+LÖSCHEN
+Ich verstehe, dass diese Aktion dauerhaft und unwiderruflich ist. Mein Konto und alle zugehörigen Daten werden gelöscht.
+Abbrechen
+Wird gelöscht...
+Konto löschen
+
+
+СТРАНИЦА: Profile Page
+СЕКЦИЯ: Guest Mode
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Create an Account
+Sign up to access your profile, manage your bookings, and enjoy all features.
+Сreate account
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Konto erstellen
+Registrieren Sie sich, um auf Ihr Profil zuzugreifen, Ihre Buchungen zu verwalten und alle Funktionen zu nutzen.
+Konto erstellen
+
+
+СТРАНИЦА: Profile Page
+СЕКЦИЯ: Logout
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Logout
+Are you sure you want to logout?
+Cancel
+Logging out...
+Yes
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Abmelden
+Möchten Sie sich wirklich abmelden?
+Abbrechen
+Wird abgemeldet...
+Ja
+
+
+СТРАНИЦА: Profile Page
+СЕКЦИЯ: Add Reservation Dialog
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Add via Reservation ID
+Not Found
+Success
+Enter your Reservation ID (or booking.com code)
+Reservation ID/Code
+Cancel
+Add
+Adding...
+Nothing found for this Reservation ID number. Please, check and try again.
+Ok
+Your reservation has been successfully added
+This reservation has already been added
+Reservation email does not match your account email
+Reservation not found. Please check the ID.
+Example: XXXXX-1 (must end with -1)
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Über Reservierungs-ID hinzufügen
+Nicht gefunden
+Erfolg
+Geben Sie Ihre Reservierungs-ID (oder booking.com-Code) ein
+Reservierungs-ID/Code
+Abbrechen
+Hinzufügen
+Wird hinzugefügt...
+Für diese Reservierungs-ID wurde nichts gefunden. Bitte überprüfen Sie die Nummer und versuchen Sie es erneut.
+Ok
+Ihre Reservierung wurde erfolgreich hinzugefügt
+Diese Reservierung wurde bereits hinzugefügt
+Die E-Mail der Reservierung stimmt nicht mit Ihrer Kontoe-Mail überein
+Reservierung nicht gefunden. Bitte überprüfen Sie die ID.
+Beispiel: XXXXX-1 (muss mit -1 enden)

@@ -16,6 +16,8 @@ export interface AddExtrasService {
 }
 
 interface AddExtrasState {
+  openExtendYourStay: boolean;
+  setOpenExtendYourStay: (open: boolean) => void;
   services: AddExtrasService[];
   transactionReference: string | null;
   nights: number;
@@ -31,6 +33,8 @@ interface AddExtrasState {
 }
 
 export const useAddExtrasStore = create<AddExtrasState>((set) => ({
+  openExtendYourStay: false,
+  setOpenExtendYourStay: (open) => set({ openExtendYourStay: open }),
   services: [],
   transactionReference: null,
   nights: 0,

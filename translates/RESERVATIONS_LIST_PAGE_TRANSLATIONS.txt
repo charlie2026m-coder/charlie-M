@@ -1,0 +1,75 @@
+СТРАНИЦА: Reservations List Page
+СЕКЦИЯ: Page Title
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+All Reservations
+Added Reservations
+Ongoing Reservations
+Upcoming Reservations
+Completed Reservations
+Canceled Reservations
+Your Booking
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Alle Reservierungen
+Hinzugefügte Reservierungen
+Laufende Reservierungen
+Bevorstehende Reservierungen
+Abgeschlossene Reservierungen
+Stornierte Reservierungen
+Ihre Buchung
+
+
+СТРАНИЦА: Reservations List Page
+СЕКЦИЯ: Reservation Card
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Room
+Access Pin
+Code
+Click to copy
+{label} copied to clipboard!
+Failed to copy to clipboard
+guest
+guests
+Add Extras
+Info
+View details
+Book Again
+View Invoice
+Complete Check-In
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Zimmer
+Zugangscode
+Code
+Zum Kopieren klicken
+{label} in die Zwischenablage kopiert!
+Fehler beim Kopieren in die Zwischenablage
+Gast
+Gäste
+Extras hinzufügen
+Info
+Details anzeigen
+Erneut buchen
+Rechnung anzeigen
+Check-In abschließen
+
+
+СТРАНИЦА: Reservations List Page
+СЕКЦИЯ: Empty State
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Error loading reservations
+Loading...
+You haven't booked any rooms yet
+Book now
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Fehler beim Laden der Reservierungen
+Lädt...
+Sie haben noch keine Zimmer gebucht
+Jetzt buchen

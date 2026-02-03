@@ -17,10 +17,14 @@ import { ServicesPaidDetails } from "@/types/apaleo";
 import { useState } from "react";
 import CancelBookingButton from "./CancelBookingButton";
 import { ExtraRow } from "./ExtraRow";
+import { useLocale, useTranslations } from "next-intl";
 
 export const ReservationButton = ({ reservation }: { reservation: any }) => {
   const { id, services, arrival, departure, adults, childrenAges, totalGrossAmount } = reservation;
   const [open, setOpen] = useState(false);
+  const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false);
+  const locale = useLocale();
+  const t = useTranslations('profile');
   const { firstName, lastName } = reservation.primaryGuest;
   let guests = `${firstName} ${lastName}`;
   const isConfirmed = reservation.status === bookingStatuses.Confirmed;
@@ -46,6 +50,45 @@ export const ReservationButton = ({ reservation }: { reservation: any }) => {
       guests = `${guests}, ${additionalGuests}`;
     } else {
       guests = `${guests} + ${guestsCount - 1}`;
+    }
+  }
+
+  const handleDownloadInvoice = async () => {
+    if (isDownloadingInvoice) return
+
+    setIsDownloadingInvoice(true)
+    try {
+      // Folio ID format: reservationId-1
+      const folioId = `${id}-1`
+      const languageCode = locale === 'de' ? 'de' : 'en'
+      
+      const response = await fetch(
+        `/api/invoices/preview-pdf?folioId=${folioId}&languageCode=${languageCode}&lineItemGrouping=NoGrouping`
+      )
+
+      if (!response.ok) {
+        throw new Error('Failed to download invoice')
+      }
+
+      // Get PDF blob
+      const blob = await response.blob()
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `invoice-${folioId}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
+
+      toast.success(t('invoiceDownloaded') || 'Invoice downloaded successfully')
+    } catch (error) {
+      console.error('Error downloading invoice:', error)
+      toast.error(t('invoiceDownloadFailed') || 'Failed to download invoice')
+    } finally {
+      setIsDownloadingInvoice(false)
     }
   }
   return (
@@ -118,7 +161,17 @@ export const ReservationButton = ({ reservation }: { reservation: any }) => {
               onClose={() => setOpen(false)} 
             />
           )}
-          {reservation.status === bookingStatuses.CheckedOut && <Button variant="outline" className='w-full h-[45px] mt-3'><MdDownload /> Download Invoice</Button>}
+          {reservation.status === bookingStatuses.CheckedOut && (
+            <Button 
+              variant="outline" 
+              className='w-full h-[45px] mt-3' 
+              onClick={handleDownloadInvoice}
+              disabled={isDownloadingInvoice}
+            >
+              <MdDownload /> 
+              {isDownloadingInvoice ? (t('downloading') || 'Downloading...') : (t('viewInvoice') || 'Download Invoice')}
+            </Button>
+          )}
         </DialogContent>
       </Dialog>
     </>

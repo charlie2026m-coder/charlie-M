@@ -6,11 +6,13 @@ import StatusBadge from '@/app/_components/ui/StatusBadge';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { IoCopy } from "react-icons/io5";
-import { InfoButton, DetailsButton, BookAgainButton, InvoiceButton, CheckinButton } from './Buttons';
+import { InfoButton, DetailsButton, BookAgainButton, InvoiceButton } from './Buttons';
 import { bookingStatuses } from '@/types/types';
 import { Reservation as ReservationType } from '@/types/apaleo';
 import { Link } from '@/navigation';
 import { useTranslations } from 'next-intl';
+import { CheckinButton } from './CheckInButton';
+
 const ReservationCard = ({ reservation }: { reservation: ReservationType,}  ) => {
   const t = useTranslations('profile')
   const { status, arrival, departure, id, name, images, guests } = reservation;
@@ -49,9 +51,9 @@ const ReservationCard = ({ reservation }: { reservation: ReservationType,}  ) =>
         <div className='flex gap-2.5 xl:items-center flex-col xl:flex-row '>
         {(code && !isCheckin && !isCancelled) && <RoomCode roomNumber={roomNumber} code={code} />}
           <div className='flex gap-2 grow flex-col lg:flex-row '>
-            {/* {!isCheckin && !isCancelled  && <CheckinButton />} */}
+            {!isCheckin && !isCancelled  && <CheckinButton reservationId={id} />}
             {(isCompleted || isCancelled) && <BookAgainButton reservation={reservation} />}
-            {isCompleted  && <InvoiceButton />}
+            {isCompleted  && <InvoiceButton reservationId={id} />}
             <DetailsButton id={id} />
           </div>
         </div>

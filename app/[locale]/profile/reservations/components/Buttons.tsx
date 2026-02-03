@@ -8,7 +8,8 @@ import { Link } from "@/navigation";
 import CodeModal from "./CodeModal";
 import dayjs from "dayjs";
 import { Reservation } from "@/types/apaleo";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+import { toast } from "sonner";
 
 export const AddExtrasButton = () => {
   const t = useTranslations('profile')
@@ -57,16 +58,60 @@ export const BookAgainButton = ({ reservation }: { reservation: Reservation }) =
   )
 } 
 
-export const InvoiceButton = () => {
+export const InvoiceButton = ({ reservationId }: { reservationId: string }) => {
   const t = useTranslations('profile')
+  const locale = useLocale()
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleDownloadInvoice = async () => {
+    if (isLoading) return
+
+    setIsLoading(true)
+    try {
+      // Folio ID format: reservationId-1
+      const folioId = `${reservationId}-1`
+      const languageCode = locale === 'de' ? 'de' : 'en'
+      
+      const response = await fetch(
+        `/api/invoices/preview-pdf?folioId=${folioId}&languageCode=${languageCode}&lineItemGrouping=NoGrouping`
+      )
+
+      if (!response.ok) {
+        throw new Error('Failed to download invoice')
+      }
+
+      // Get PDF blob
+      const blob = await response.blob()
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `invoice-${folioId}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
+
+      toast.success(t('invoiceDownloaded') || 'Invoice downloaded successfully')
+    } catch (error) {
+      console.error('Error downloading invoice:', error)
+      toast.error(t('invoiceDownloadFailed') || 'Failed to download invoice')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
-    <Button variant='outline' className='h-[30px] text-sm'> <MdDownload className='size-4' /> {t('viewInvoice')} </Button>
+    <Button 
+      variant='outline' 
+      className='h-[30px] text-sm' 
+      onClick={handleDownloadInvoice}
+      disabled={isLoading}
+    > 
+      <MdDownload className='size-4' /> 
+      {isLoading ? t('downloading') || 'Downloading...' : t('viewInvoice')} 
+    </Button>
   )
 }
 
-export const CheckinButton = () => {
-  const t = useTranslations('profile')
-  return (
-    <Button variant='outline' className='h-[30px] border-red text-red hover:bg-red hover:text-white text-sm px-3'>{t('completeCheckIn')} </Button>
-  )
-}

@@ -8,6 +8,8 @@ import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/app/_components/ui/button'
 import { useExtensionRooms } from '@/app/hooks/useExtensionRooms'
 import { useTranslations } from 'next-intl'
+import { useAddExtrasStore } from '@/store/useAddExtras'
+import { cn } from '@/lib/utils'
 
 const ExtandYourStay = ({ 
   existingServices, 
@@ -33,10 +35,9 @@ const ExtandYourStay = ({
   const reservationId = params.id as string
   const arrivalDate = new Date(arrival)
   const router = useRouter()
+  const { openExtendYourStay, services  } = useAddExtrasStore();
   const [isNavigating, setIsNavigating] = useState(false)
   // Day after departure is the start of extension
-  const extensionStartDate = dayjs(departure).add(1, 'day').toDate()
-  
   // Load extension dates from localStorage if available
   const [extensionRange, setExtensionRange] = useState<DateRange | undefined>(() => {
     if (typeof window !== 'undefined') {
@@ -99,13 +100,18 @@ const ExtandYourStay = ({
   const reservationDates = getReservationDates()
 
   return (
-    <div className='mb-10'>
+    <div className={cn(
+      'mb-10', 
+      (openExtendYourStay || (services && services.length > 0) || (existingServices && existingServices.length > 0)) 
+      ? 'block' 
+      : 'hidden')}>
       <div className='flex items-center gap-2 pb-2 mb-5 text-lg font-semibold w-full'>
         {t('extendYourStay.title')}
       </div>
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
         {/* Left side - Calendar (2/3 width) */}
-        <div className='col-span-1 '>
+        {openExtendYourStay && (
+          <div className='col-span-1 '>
           <div className='rounded-lg border p-5 bg-white'>
             <style jsx global>{`
               /* Existing reservation dates - #D3C393 and disabled */
@@ -232,7 +238,7 @@ const ExtandYourStay = ({
               </div>
             )}
           </div>
-        </div>
+        </div>)}
 
         {/* Right side - Existing extras card (1/3 width) */}
         <div className='col-span-1 '>

@@ -38,7 +38,7 @@ const MainInfo = ({ reservation }: { reservation: any } ) => {
         <span className={cn(reservation.status === bookingStatuses.Canceled && 'text-red-500')}>{to} 11:00</span>
       </div>
       <div className='flex flex-col w-full lg:w-4/5 gap-3'>
-        {!reservation.isCheckin && !isCancelled && <CheckinButton />}
+        {!reservation.isCheckin && !isCancelled && <CheckinButton reservationId={reservation.id} />}
         {reservation.code && (<RoomCode roomNumber={reservation.roomNumber} code={reservation.code} />)}
         {(isCheckedOut || isCancelled) && (<BookAgainButton reservation={reservation} />)}
         <ReservationButton reservation={reservation} />

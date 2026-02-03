@@ -2,10 +2,9 @@ import { useMutation } from '@tanstack/react-query';
 
 interface Reservation {
   id: string;
-  checkIn: string;
-  checkOut: string;
+  confirmationCode: string;
   status: string;
-  preCheckInUrl?: string;
+  guestAppUrl: string;
 }
 
 export function usePreCheckIn() {

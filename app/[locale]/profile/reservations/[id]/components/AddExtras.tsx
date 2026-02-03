@@ -9,12 +9,14 @@ const AddExtras = ({
   extras,
   existingServices,
   adults,
-  nights
+  nights,
+  isBabyBedAvailable
 }: { 
   extras: Service[],
   existingServices?: any[],
   adults: number,
-  nights: number
+  nights: number,
+  isBabyBedAvailable?: boolean
 }) => {
   const t = useTranslations('profile')
   const setAvailableExtras = useAddExtrasStore(state => state.setAvailableExtras)
@@ -30,20 +32,15 @@ const AddExtras = ({
   const existingServiceIds = existingServices?.map(s => s.service.id) || [];
 
   const availableExtras = extras.filter(extra => {
-    // Hide Early Check-in (CMH-ECI) - extras are fetched from tomorrow if reservation started
     if (extra.id === 'CMH-ECI') {
       return false;
     }
     
-    if (!existingServiceIds.includes(extra.id)) {
-      return true;
-    }
+    if (extra.id === 'CMH-BAB' ) return isBabyBedAvailable;
+    
+    if (!existingServiceIds.includes(extra.id)) return true;
 
     const existingService = existingServices?.find(s => s.service.id === extra.id);
-    
-    if (extra.id === 'CMH-BAB') {
-      return false;
-    }
     
     if (extra.availability?.mode === 'Arrival' || extra.availability?.mode === 'Departure') {
       return false;
