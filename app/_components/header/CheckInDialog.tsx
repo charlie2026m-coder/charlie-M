@@ -52,6 +52,9 @@ const CheckInDialog = ({ trigger }: CheckInDialogProps) => {
         <div className='flex flex-col '>
         {!data && (
           <>
+            <div className='text-gray-600 text-sm mb-6 text-center leading-relaxed   max-w-[400px]'>
+              {t('subtitle')}
+            </div>
             <div className='text-[15px] mb-2 text-dark inter'>{t('enterReservationId')}</div>
             <Input
               type='text'
@@ -77,11 +80,11 @@ const CheckInDialog = ({ trigger }: CheckInDialogProps) => {
 
         {data && !isPending && (
           <div className='mb-4'>
-            <div className='text-green-600 text-sm mb-4 text-center'>
+            <div className='text-green-600 font-semibold text-base mb-2 text-center'>
               {t('bookingFound')}
             </div>
-            <div className='text-[15px] mb-2 text-dark inter mb-4'>
-              <span className='font-semibold'>{t('reservationIdPlaceholder')}:</span> {data.confirmationCode}
+            <div className='text-dark text-sm mb-6 text-center'>
+              {t('reservationId')}: <span className='font-semibold'>{data.confirmationCode}</span>
             </div>
             <Button 
               className='w-full h-[45px]' 

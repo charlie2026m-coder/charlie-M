@@ -5,23 +5,25 @@ import MapWindow from '@/app/_components/footer/MapWindow';
 import Image from 'next/image';
 import dayjs from 'dayjs';
 import { toast } from 'sonner';
-import { Separator } from '@/app/_components/ui/separator';
 import { ReservationButton } from './ReservationDetails';
 import { RoomDetailsButton } from './RoomDetails';
 import StatusBadge from '@/app/_components/ui/StatusBadge';
 import { bookingStatuses } from '@/types/types';
 import { cn } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
+import { InvoiceButton } from '../../components/InvoiceButton';
 
 
 const MainInfo = ({ reservation }: { reservation: any } ) => {
   const t = useTranslations('profile');
   const from = dayjs(reservation.arrival).format('ddd D MMM YYYY');
   const to = dayjs(reservation.departure).format('ddd D MMM YYYY');
-  const isCancelled = reservation.status === bookingStatuses.Canceled;
-  const isConfirmed = reservation.status === bookingStatuses.Confirmed;
-  const isInHouse = reservation.status === bookingStatuses.InHouse;
+  const isCancelled = reservation.status === bookingStatuses.Canceled || reservation.status === bookingStatuses.NoShow;
   const isCheckedOut = reservation.status === bookingStatuses.CheckedOut;
+  
+  const isPincode = reservation.accesses;
+  const isClosed = isCheckedOut || isCancelled;
+  const isActive = reservation.status === bookingStatuses.Confirmed || reservation.status === bookingStatuses.InHouse;
   return (
     <div className='grid lg:grid-cols-2 gap-4 pb-6 '>
     <div>
@@ -38,12 +40,16 @@ const MainInfo = ({ reservation }: { reservation: any } ) => {
         <span className={cn(reservation.status === bookingStatuses.Canceled && 'text-red-500')}>{to} 11:00</span>
       </div>
       <div className='flex flex-col w-full lg:w-4/5 gap-3'>
-        {!reservation.isCheckin && !isCancelled && <CheckinButton reservationId={reservation.id} />}
-        {reservation.code && (<RoomCode roomNumber={reservation.roomNumber} code={reservation.code} />)}
-        {(isCheckedOut || isCancelled) && (<BookAgainButton reservation={reservation} />)}
-        <ReservationButton reservation={reservation} />
+        {isActive && <CheckinButton reservationId={reservation.id} />}
+        {isPincode && <RoomCode roomNumber={111111} code={777777} />}
+
+        <ReservationButton reservation={reservation} isActive={isActive} />
         <RoomDetailsButton reservation={reservation} />
-        {(isConfirmed || isInHouse) && !isCancelled && (<ExtendButton />)}
+
+        {isClosed && <BookAgainButton reservation={reservation} />}
+        {isActive && <InvoiceButton reservationId={reservation.id} className='!h-[35px] justify-start' />}
+
+        {isActive && <ExtendButton />}
       </div>  
     </div>
 
@@ -82,25 +88,30 @@ const RoomCode = ({roomNumber, code}: {roomNumber: number, code: number}) => {
   };
 
   return (
-    <div className='flex flex-col  gap-2'>
-        <span className='text-xs '>{t('room')} № </span>
+    <div className='flex flex-col lg:flex-row gap-4 lg:gap-6'>
+      <div className='flex flex-col gap-2 flex-1'>
+        <span className='text-xs text-gray-600 font-medium'>{t('room')} №</span>
         <div 
-          className='rounded border border-light1 flex items-center justify-center  px-2 py-2 cursor-copy hover:bg-gray-200 transition-colors font-bold' 
-          onClick={() => handleCopy(roomNumber, t('roomNumber'))}
+          className=' from-white to-gray-50 flex items-center justify-center px-2 py-1 cursor-pointer border rounded-lg transition-all duration-200 font-bold text-lg group relative' 
           title={t('clickToCopy')}
+          onClick={() => handleCopy(roomNumber, t('roomNumber'))}
         >
-          {roomNumber}
+          <span className='text-gray-800'>{roomNumber}</span>
+          <div className='absolute inset-0 bg-blue-500 opacity-0  rounded-lg transition-opacity' />
         </div>
+      </div>
 
-      <Separator orientation='vertical' className='shrink hidden lg:block'/>
-        <span className='text-xs'>{t('accessPin')}</span>
+      <div className='flex flex-col gap-2 flex-1'>
+        <span className='text-xs text-gray-600 font-medium'>{t('accessPin')}</span>
         <div 
-          className='rounded border border-light1 flex items-center justify-center  px-2 py-2 cursor-copy hover:bg-gray-200 transition-colors font-bold'
+          className='rounded-lg border-2 border-gray-200 flex items-center justify-center px-2 py-1 cursor-pointer hover:border-blue  transition-all duration-200 font-bold text-lg group relative'
           onClick={() => handleCopy(code, t('code'))}
           title={t('clickToCopy')}
         >
-          {code}
+          <span className='text-gray-800 tracking-wider'>{code}</span>
+          <div className='absolute inset-0 bg-blue opacity-0 group-hover:opacity-5 rounded-lg transition-opacity' />
         </div>
+      </div>
     </div>
   )
 }

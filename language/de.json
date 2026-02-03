@@ -654,17 +654,19 @@
     }
   },
   "checkIn": {
-    "title": "Check-In",
+    "title": "Online-Check-In",
+    "subtitle": "Schließen Sie Ihren Online-Check-In ab. Zugangscodes sind 24 Stunden vor dem Check-In in Ihrem Profil verfügbar",
     "enterReservationId": "Geben Sie Ihre Reservierungs-ID ein",
-    "reservationIdPlaceholder": "Reservierungs-ID",
+    "reservationIdPlaceholder": "z.B. ABC123",
+    "reservationId": "Reservierungs-ID",
     "cancel": "Abbrechen",
     "search": "Suchen",
     "searching": "Suchen...",
     "loading": "Wird geladen...",
     "error": "Reservierung nicht gefunden. Bitte überprüfen Sie Ihre ID und versuchen Sie es erneut.",
     "found": "Reservierung gefunden!",
-    "bookingFound": "Buchung gefunden! Fahren Sie mit dem Check-in oder Pre-Check-in-Prozess fort.",
-    "proceedToCheckIn": "Zum Check-In fortfahren"
+    "bookingFound": "Buchung gefunden!",
+    "proceedToCheckIn": "Online-Check-In starten"
   },
   "termsAndConditions": {
     "title": "Allgemeine Geschäftsbedingungen",

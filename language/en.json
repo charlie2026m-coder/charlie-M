@@ -655,17 +655,19 @@
     }
   },
   "checkIn": {
-    "title": "Check In",
+    "title": "Online Check-In",
+    "subtitle": "Complete your online check-in. Access codes will be available in your profile 24 hours before check-in",
     "enterReservationId": "Enter your Reservation ID",
-    "reservationIdPlaceholder": "Reservation ID",
+    "reservationIdPlaceholder": "e.g. ABC123",
+    "reservationId": "Reservation ID",
     "cancel": "Cancel",
     "search": "Search",
     "searching": "Searching...",
     "loading": "Loading...",
     "error": "Reservation not found. Please check your ID and try again.",
     "found": "Reservation found!",
-    "bookingFound": "Booking found! Proceed to check-in or pre-check-in process.",
-    "proceedToCheckIn": "Proceed to Check-In"
+    "bookingFound": "Booking found!",
+    "proceedToCheckIn": "Start Online Check-In"
   },
   "termsAndConditions": {
     "title": "Terms and Conditions",

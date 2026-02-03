@@ -10,21 +10,21 @@ import dayjs from "dayjs";
 import { BsFillPersonFill } from "react-icons/bs";
 import { FaSquarePlus } from "react-icons/fa6";
 import { RiMoneyEuroCircleFill } from "react-icons/ri";
-import { Button } from "@/app/_components/ui/button";
 import { bookingStatuses } from "@/types/types";
-import { MdDownload } from "react-icons/md";
 import { ServicesPaidDetails } from "@/types/apaleo";
 import { useState } from "react";
 import CancelBookingButton from "./CancelBookingButton";
 import { ExtraRow } from "./ExtraRow";
 import { useLocale, useTranslations } from "next-intl";
+import { useDownloadInvoice } from "@/app/hooks/useDownloadInvoice";
+import { InvoiceButton } from "../../components/InvoiceButton";
 
-export const ReservationButton = ({ reservation }: { reservation: any }) => {
+export const ReservationButton = ({ reservation, isActive }: { reservation: any, isActive: boolean }) => {
   const { id, services, arrival, departure, adults, childrenAges, totalGrossAmount } = reservation;
   const [open, setOpen] = useState(false);
-  const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false);
   const locale = useLocale();
   const t = useTranslations('profile');
+  const { mutate: downloadInvoice, isPending: isDownloadingInvoice } = useDownloadInvoice();
   const { firstName, lastName } = reservation.primaryGuest;
   let guests = `${firstName} ${lastName}`;
   const isConfirmed = reservation.status === bookingStatuses.Confirmed;
@@ -38,11 +38,10 @@ export const ReservationButton = ({ reservation }: { reservation: any }) => {
   }
   const from = dayjs(arrival).format('ddd DD MMM YYYY');
   const to = dayjs(departure).format('ddd DD MMM YYYY');
-  // Use startOf('day') to ignore time and calculate nights correctly
   const nights = dayjs(departure).startOf('day').diff(dayjs(arrival).startOf('day'), 'day');
   const roomPrice = totalGrossAmount?.amount || 0;
   
-  const guestsCount = adults; // Only count adults as guests
+  const guestsCount = adults;
 
   if(guestsCount > 1) {
     if(reservation.additionalGuests && reservation.additionalGuests.length > 0) {
@@ -53,43 +52,16 @@ export const ReservationButton = ({ reservation }: { reservation: any }) => {
     }
   }
 
-  const handleDownloadInvoice = async () => {
-    if (isDownloadingInvoice) return
-
-    setIsDownloadingInvoice(true)
-    try {
-      // Folio ID format: reservationId-1
-      const folioId = `${id}-1`
-      const languageCode = locale === 'de' ? 'de' : 'en'
-      
-      const response = await fetch(
-        `/api/invoices/preview-pdf?folioId=${folioId}&languageCode=${languageCode}&lineItemGrouping=NoGrouping`
-      )
-
-      if (!response.ok) {
-        throw new Error('Failed to download invoice')
-      }
-
-      // Get PDF blob
-      const blob = await response.blob()
-      
-      // Create download link
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `invoice-${folioId}.pdf`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      window.URL.revokeObjectURL(url)
-
-      toast.success(t('invoiceDownloaded') || 'Invoice downloaded successfully')
-    } catch (error) {
-      console.error('Error downloading invoice:', error)
-      toast.error(t('invoiceDownloadFailed') || 'Failed to download invoice')
-    } finally {
-      setIsDownloadingInvoice(false)
-    }
+  const handleDownloadInvoice = () => {
+    const folioId = `${id}-1`
+    const languageCode = locale === 'de' ? 'de' : 'en'
+    
+    downloadInvoice({
+      folioId,
+      languageCode: languageCode as 'en' | 'de',
+      lineItemGrouping: 'NoGrouping',
+      filename: `invoice-${folioId}.pdf`
+    })
   }
   return (
     <>
@@ -155,23 +127,13 @@ export const ReservationButton = ({ reservation }: { reservation: any }) => {
               <span className='font-semibold ml-auto'>€{roomPrice}</span>
             </div>
           </div>
-          {reservation.status === bookingStatuses.Confirmed && (
-            <CancelBookingButton 
-              reservationId={id} 
-              onClose={() => setOpen(false)} 
-            />
-          )}
-          {reservation.status === bookingStatuses.CheckedOut && (
-            <Button 
-              variant="outline" 
-              className='w-full h-[45px] mt-3' 
-              onClick={handleDownloadInvoice}
-              disabled={isDownloadingInvoice}
-            >
-              <MdDownload /> 
-              {isDownloadingInvoice ? (t('downloading') || 'Downloading...') : (t('viewInvoice') || 'Download Invoice')}
-            </Button>
-          )}
+            <InvoiceButton reservationId={reservation.id} className='h-[45px]' />
+            {isActive && (
+              <CancelBookingButton 
+                reservationId={id} 
+                onClose={() => setOpen(false)} 
+              />
+            )}
         </DialogContent>
       </Dialog>
     </>

@@ -40,16 +40,16 @@ const ReservationPage = async ({ params }: { params: { id: string } }) => {
       <div className='flex flex-col flex-1 p-3 lg:p-[30px]'>
         <BackButton />
         <MainInfo reservation={reservation} />
-          <ExtandYourStay 
-            existingServices={reservation.services} 
-            nights={nights}
-            arrival={arrivalDate}
-            departure={departureDate}
-            availableExtras={extras}
-            unitGroupId={reservation.unitGroup?.id}
-            adults={reservation.adults}
-            children={reservation.childrenAges?.length || 0}
-          />
+        <ExtandYourStay 
+          existingServices={reservation.services} 
+          nights={nights}
+          arrival={arrivalDate}
+          departure={departureDate}
+          availableExtras={extras}
+          unitGroupId={reservation.unitGroup?.id}
+          adults={reservation.adults}
+          children={reservation.childrenAges?.length || 0}
+        />
         {canAddExtras && extras.length > 0 && (
           <AddExtras 
             extras={extras}
