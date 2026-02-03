@@ -9,6 +9,7 @@ import ErrorCard from "@/app/[locale]/rooms/components/ErrorCard";
 import dayjs from "dayjs";
 import Contacts from "./components/Contacts";
 import ExtandYourStay from "./components/ExtandYourStay";
+import { Suspense } from 'react';
 
 const ReservationPage = async ({ params }: { params: { id: string } }) => {
   const { id } = await params;
@@ -39,7 +40,9 @@ const ReservationPage = async ({ params }: { params: { id: string } }) => {
     <div >
       <div className='flex flex-col flex-1 p-3 lg:p-[30px]'>
         <BackButton />
-        <MainInfo reservation={reservation} />
+        <Suspense fallback={<div>Loading...</div>}>
+          <MainInfo reservation={reservation} />
+        </Suspense>
         <ExtandYourStay 
           existingServices={reservation.services} 
           nights={nights}

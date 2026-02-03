@@ -19,7 +19,6 @@ export async function getReservationById(reservationId: string): Promise<Reserva
     let accesses = null;
     const accessDataList = await getReservationAccessesServer(reservationId);
     accesses = accessDataList[0] || null;
-
     // Format reservation with room details and access data
     return {
       ...reservation,
