@@ -1,0 +1,72 @@
+СТРАНИЦА: Reservation Payment Page
+СЕКЦИЯ: Empty State
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+No services selected
+Please go back and select services to pay for.
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Keine Services ausgewählt
+Bitte gehen Sie zurück und wählen Sie Services zum Bezahlen aus.
+
+
+СТРАНИЦА: Reservation Payment Page
+СЕКЦИЯ: Payment Form
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Processing...
+Please wait while we add services to your reservation
+Back to Reservation Details
+Complete Payment
+Secure payment powered by Adyen
+Loading payment methods...
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Wird verarbeitet...
+Bitte warten Sie, während wir Services zu Ihrer Reservierung hinzufügen
+Zurück zu Reservierungsdetails
+Zahlung abschließen
+Sichere Zahlung powered by Adyen
+Zahlungsmethoden werden geladen...
+
+
+СТРАНИЦА: Reservation Payment Page
+СЕКЦИЯ: Payment Messages
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Payment completed but missing transaction reference or services
+Adding services to reservation...
+Some services are no longer available. Please try again or contact support.
+Services added successfully!
+Failed to add services. Please contact support.
+Payment failed
+Payment error
+Failed to initialize payment. Please try again.
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Zahlung abgeschlossen, aber Transaktionsreferenz oder Services fehlen
+Services werden zur Reservierung hinzugefügt...
+Einige Services sind nicht mehr verfügbar. Bitte versuchen Sie es erneut oder kontaktieren Sie den Support.
+Services erfolgreich hinzugefügt!
+Fehler beim Hinzufügen der Services. Bitte kontaktieren Sie den Support.
+Zahlung fehlgeschlagen
+Zahlungsfehler
+Zahlung konnte nicht initialisiert werden. Bitte versuchen Sie es erneut.
+
+
+СТРАНИЦА: Reservation Payment Page
+СЕКЦИЯ: Services Table
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Summary
+Services:
+Total:
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Zusammenfassung
+Services:
+Gesamt:

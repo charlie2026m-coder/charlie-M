@@ -10,17 +10,20 @@ import dayjs from "dayjs";
 import { BsFillPersonFill } from "react-icons/bs";
 import { FaSquarePlus } from "react-icons/fa6";
 import { RiMoneyEuroCircleFill } from "react-icons/ri";
-import { Button } from "@/app/_components/ui/button";
 import { bookingStatuses } from "@/types/types";
-import { MdDownload } from "react-icons/md";
 import { ServicesPaidDetails } from "@/types/apaleo";
 import { useState } from "react";
 import CancelBookingButton from "./CancelBookingButton";
 import { ExtraRow } from "./ExtraRow";
+import { InvoiceButton } from "../../components/InvoiceButton";
+import { useTranslations } from "next-intl";
+import { CITY_TAX_RATE } from "@/lib/Constants";
 
-export const ReservationButton = ({ reservation }: { reservation: any }) => {
-  const { id, services, arrival, departure, adults, childrenAges, totalGrossAmount } = reservation;
+export const ReservationButton = ({ reservation, isActive }: { reservation: any, isActive: boolean }) => {
+  const { id, services, arrival, departure, adults, totalGrossAmount } = reservation;
+  console.log(reservation, 'reservation');
   const [open, setOpen] = useState(false);
+  const t = useTranslations('profile');
   const { firstName, lastName } = reservation.primaryGuest;
   let guests = `${firstName} ${lastName}`;
   const isConfirmed = reservation.status === bookingStatuses.Confirmed;
@@ -34,12 +37,18 @@ export const ReservationButton = ({ reservation }: { reservation: any }) => {
   }
   const from = dayjs(arrival).format('ddd DD MMM YYYY');
   const to = dayjs(departure).format('ddd DD MMM YYYY');
-  // Use startOf('day') to ignore time and calculate nights correctly
   const nights = dayjs(departure).startOf('day').diff(dayjs(arrival).startOf('day'), 'day');
-  const roomPrice = totalGrossAmount?.amount || 0;
-  
-  const guestsCount = adults; // Only count adults as guests
+  const totalGross = totalGrossAmount?.amount || 0;  
+  const guestsCount = adults;
 
+  const servicesTotalPrice = services?.reduce((acc: number, service: ServicesPaidDetails) => acc + service.totalAmount.grossAmount, 0) || 0;
+  const roomPrice = Math.round((totalGross - servicesTotalPrice) * 100) / 100;
+
+  console.log(roomPrice, 'roomPrice');
+  const taxAmount = Math.round((roomPrice * CITY_TAX_RATE) * 100) / 100;
+  console.log(taxAmount, 'taxAmount');
+  const roomPriceWithTax = Math.round((roomPrice + taxAmount) * 100) / 100;
+  const totalPrice = Math.round((roomPriceWithTax + servicesTotalPrice) * 100) / 100;
   if(guestsCount > 1) {
     if(reservation.additionalGuests && reservation.additionalGuests.length > 0) {
       const additionalGuests = reservation.additionalGuests.map((guest: any) => guest.firstName + ' ' + guest.lastName).join(', ');
@@ -48,15 +57,17 @@ export const ReservationButton = ({ reservation }: { reservation: any }) => {
       guests = `${guests} + ${guestsCount - 1}`;
     }
   }
+
+
   return (
     <>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger className='flex gap-2 items-center rounded-full border border-black cursor-pointer hover:opacity-60 h-[35px] text-sm px-5 gap-2 justify-start w-full'>
-          <IoCard />Reservation Details
+          <IoCard />{t('reservationDetails')}
         </DialogTrigger>
         <DialogContent className='w-[90%] max-w-[400px] px-4 rounded-3xl max-h-[90vh] overflow-y-auto gap-0'>
           <DialogHeader>
-            <DialogTitle className='mb-5'>Reservation Details</DialogTitle>
+            <DialogTitle className='mb-5'>{t('reservationDetails')}</DialogTitle>
           </DialogHeader>
           <StatusBadge status={reservation.status} className="h-[35px] items-center justify-center mb-5" />
         
@@ -109,16 +120,16 @@ export const ReservationButton = ({ reservation }: { reservation: any }) => {
           <div className='flex flex-col gap-3 mb-6'>
             <div className='flex items-center gap-2 text-lg font-semibold'>
               <RiMoneyEuroCircleFill className='size-5' /><h3 className='text-lg font-semibold' >Total :</h3>
-              <span className='font-semibold ml-auto'>€{roomPrice}</span>
+              <span className='font-semibold ml-auto'>€{totalPrice}</span>
             </div>
           </div>
-          {reservation.status === bookingStatuses.Confirmed && (
-            <CancelBookingButton 
-              reservationId={id} 
-              onClose={() => setOpen(false)} 
-            />
-          )}
-          {reservation.status === bookingStatuses.CheckedOut && <Button variant="outline" className='w-full h-[45px] mt-3'><MdDownload /> Download Invoice</Button>}
+            <InvoiceButton reservationId={reservation.id} className='h-[45px]' />
+            {isActive && (
+              <CancelBookingButton 
+                reservationId={id} 
+                onClose={() => setOpen(false)} 
+              />
+            )}
         </DialogContent>
       </Dialog>
     </>

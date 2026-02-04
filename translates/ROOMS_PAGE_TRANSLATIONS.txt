@@ -1,0 +1,172 @@
+СТРАНИЦА: Rooms Page
+СЕКЦИЯ: Header
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Rooms
+Location
+Concept
+Book Now
+Check In
+Login
+Loading...
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Zimmer
+Standort
+Konzept
+Jetzt buchen
+Einchecken
+Login
+Lädt...
+
+
+СТРАНИЦА: Rooms Page
+СЕКЦИЯ: Filters
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Room Type
+Bed Size
+Balcony
+Price
+Baby Bed
+All
+Any
+Single
+Standard
+Business
+Superior
+Queen
+King
+Terrace
+Shared Terrace
+Low to High
+High to Low
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Zimmertyp
+Bettgröße
+Balkon
+Preis
+Kinderbett
+Alle
+Beliebig
+Einzelbett
+Standard
+Business
+Superior
+Queen
+King
+Terrasse
+Gemeinsame Terrasse
+Niedrig bis Hoch
+Hoch bis Niedrig
+
+
+СТРАНИЦА: Rooms Page
+СЕКЦИЯ: Room Card
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+per night from
+Book Now
+Loading...
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+pro Nacht ab
+Jetzt buchen
+Lädt...
+
+
+СТРАНИЦА: Rooms Page
+СЕКЦИЯ: No Availability
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+No Rooms Available
+This room is
+{roomName} is
+not available
+for the selected dates
+for today and tomorrow
+Please try different dates or explore other room options.
+Look another
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Keine Zimmer verfügbar
+Dieses Zimmer ist
+{roomName} ist
+nicht verfügbar
+für die ausgewählten Daten
+für heute und morgen
+Bitte versuchen Sie andere Daten oder erkunden Sie andere Zimmeroptionen.
+Andere ansehen
+
+
+СТРАНИЦА: Rooms Page
+СЕКЦИЯ: Common Components
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Guests
+Guest
+Guests
+Adults
+Children
+Babies
+up to 3 years old
+Children not available for this room
+Crib is charged extra
+Check In
+Check out
+Choose date
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Gäste
+Gast
+Gäste
+Erwachsene
+Kinder
+Babys
+bis zu 3 Jahren
+Kinder nicht verfügbar für dieses Zimmer
+Kinderbett wird zusätzlich berechnet
+Einchecken
+Auschecken
+Datum wählen
+
+
+СТРАНИЦА: Rooms Page
+СЕКЦИЯ: Footer
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+WhatsApp Chat Support 24/7
+Call: {phone}
+Friedrichstraße 33, 10969 Berlin
+Modern stays - Berlin days
+Fully automated stay
+Contacts:
+Get Social:
+Tag us in your photos
+Pay with
+Privacy Policy
+Terms and Conditions
+Imprint
+© Charlie M. All Rights Reserved.
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+WhatsApp Chat Support 24/7
+Anrufen: {phone}
+Friedrichstraße 33, 10969 Berlin
+Moderne Aufenthalte - Berliner Tage
+Vollautomatisierter Aufenthalt
+Kontakte:
+Folgen Sie uns:
+Markieren Sie uns in Ihren Fotos
+Bezahlen mit
+Datenschutzerklärung
+Allgemeine Geschäftsbedingungen
+Impressum
+© Charlie M. Alle Rechte vorbehalten.

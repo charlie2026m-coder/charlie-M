@@ -9,6 +9,7 @@ import ErrorCard from "@/app/[locale]/rooms/components/ErrorCard";
 import dayjs from "dayjs";
 import Contacts from "./components/Contacts";
 import ExtandYourStay from "./components/ExtandYourStay";
+import { Suspense } from 'react';
 
 const ReservationPage = async ({ params }: { params: { id: string } }) => {
   const { id } = await params;
@@ -24,41 +25,41 @@ const ReservationPage = async ({ params }: { params: { id: string } }) => {
   const isNotPast = dayjs(departureDate).isAfter(dayjs(), 'day') || dayjs(departureDate).isSame(dayjs(), 'day');
   const canAddExtras = isActive && isNotPast;
   
-  // For extras, use tomorrow if arrival is today or in the past
   const today = dayjs().format('YYYY-MM-DD');
   const extrasStartDate = dayjs(arrivalDate).isBefore(today, 'day') || dayjs(arrivalDate).isSame(today, 'day')
-    ? dayjs().add(1, 'day').format('YYYY-MM-DD')
+    ? today
     : arrivalDate;
   
-  // Calculate nights for extras (from extrasStartDate to departure)
-  const nights = dayjs(departureDate).startOf('day').diff(dayjs(extrasStartDate).startOf('day'), 'day');
+
+  const nightsDiff = dayjs(departureDate).startOf('day').diff(dayjs(extrasStartDate).startOf('day'), 'day');
+  const nights = nightsDiff === 0 ? 1 : nightsDiff;
   
   // Only fetch extras if reservation is active and not past
   const extras = canAddExtras ? await getApaleoExtras(extrasStartDate, departureDate) : [];
-
   return (
     <div >
       <div className='flex flex-col flex-1 p-3 lg:p-[30px]'>
         <BackButton />
-        <MainInfo reservation={reservation} />
-        {canAddExtras && (
-          <ExtandYourStay 
-            existingServices={reservation.services} 
-            nights={nights}
-            arrival={arrivalDate}
-            departure={departureDate}
-            availableExtras={extras}
-            unitGroupId={reservation.unitGroup?.id}
-            adults={reservation.adults}
-            children={reservation.childrenAges?.length || 0}
-          />
-        )}
+        <Suspense fallback={<div>Loading...</div>}>
+          <MainInfo reservation={reservation} />
+        </Suspense>
+        <ExtandYourStay 
+          existingServices={reservation.services} 
+          nights={nights}
+          arrival={arrivalDate}
+          departure={departureDate}
+          availableExtras={extras}
+          unitGroupId={reservation.unitGroup?.id}
+          adults={reservation.adults}
+          children={reservation.childrenAges?.length || 0}
+        />
         {canAddExtras && extras.length > 0 && (
           <AddExtras 
             extras={extras}
             existingServices={reservation.services}
             adults={reservation.adults}
             nights={nights}
+            isBabyBedAvailable={reservation.attributes?.includes('kids')}
           />
         )}
         

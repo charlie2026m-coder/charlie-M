@@ -30,14 +30,17 @@ const CheckInDialog = ({ trigger }: CheckInDialogProps) => {
     mutate(reservationId, {
       onSuccess: (data) => {
         console.log('✅ Reservation found:', data)
-        if (data?.preCheckInUrl) {
-          console.log('🔗 Pre-check-in URL:', data.preCheckInUrl)
-        }
       },
       onError: (error) => {
         console.error('❌ Error fetching reservation:', error)
       }
     })
+  }
+
+  const handleProceedToCheckIn = () => {
+    if (data?.guestAppUrl) {
+      window.location.href = data.guestAppUrl
+    }
   }
 
   return (
@@ -47,21 +50,28 @@ const CheckInDialog = ({ trigger }: CheckInDialogProps) => {
       trigger={trigger}
       content={
         <div className='flex flex-col '>
-        <div className='text-[15px] mb-2 text-dark inter'>{t('enterReservationId')}</div>
-        <Input
-          type='text'
-          placeholder={t('reservationIdPlaceholder')}
-          className='w-[400px] h-10 rounded-full mb-10'
-          value={reservationId}
-          onChange={(e) => setReservationId(e.target.value)}
-          disabled={isPending}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !isPending) {
-              handleSubmit()
-            }
-          }}
-        />
-  
+        {!data && (
+          <>
+            <div className='text-gray-600 text-sm mb-6 text-center leading-relaxed   max-w-[400px]'>
+              {t('subtitle')}
+            </div>
+            <div className='text-[15px] mb-2 text-dark inter'>{t('enterReservationId')}</div>
+            <Input
+              type='text'
+              placeholder={t('reservationIdPlaceholder')}
+              className='w-[400px] h-10 rounded-full mb-10'
+              value={reservationId}
+              onChange={(e) => setReservationId(e.target.value)}
+              disabled={isPending}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !isPending) {
+                  handleSubmit()
+                }
+              }}
+            />
+          </>
+        )}
+
         {error && (
           <div className='text-red-500 text-sm mb-4 text-center'>
             {t('error')}
@@ -69,27 +79,41 @@ const CheckInDialog = ({ trigger }: CheckInDialogProps) => {
         )}
 
         {data && !isPending && (
-          <div className='text-green-600 text-sm mb-4 text-center'>
-            {t('found')}
+          <div className='mb-4'>
+            <div className='text-green-600 font-semibold text-base mb-2 text-center'>
+              {t('bookingFound')}
+            </div>
+            <div className='text-dark text-sm mb-6 text-center'>
+              {t('reservationId')}: <span className='font-semibold'>{data.confirmationCode}</span>
+            </div>
+            <Button 
+              className='w-full h-[45px]' 
+              onClick={handleProceedToCheckIn}
+            >
+              {t('proceedToCheckIn')}
+            </Button>
           </div>
         )}
-        <div className='flex gap-4 items-center'>
-          <Button 
-            variant='outline' 
-            className='flex-1 max-w-[190px] h-[45px]' 
-            onClick={close}
-            disabled={isPending}
-          >
-            {t('cancel')}
-          </Button>
-          <Button 
-            className='flex-1 max-w-[190px] h-[45px]' 
-            onClick={handleSubmit}
-            disabled={isPending || reservationId.trim() === ''}
-          >
-            {isPending ? t('searching') : t('search')}
-          </Button>
-        </div>
+        
+        {!data && (
+          <div className='flex gap-4 items-center'>
+            <Button 
+              variant='outline' 
+              className='flex-1 max-w-[190px] h-[45px]' 
+              onClick={close}
+              disabled={isPending}
+            >
+              {t('cancel')}
+            </Button>
+            <Button 
+              className='flex-1 max-w-[190px] h-[45px]' 
+              onClick={handleSubmit}
+              disabled={isPending || reservationId.trim() === ''}
+            >
+              {isPending ? t('searching') : t('search')}
+            </Button>
+          </div>
+        )}
       </div>
       }
       title={t('title')}

@@ -7,9 +7,54 @@ import { FaCalendar } from "react-icons/fa";
 import { Link } from "@/navigation";
 import { Reservation } from "@/types/apaleo";
 import dayjs from "dayjs";
-export const CheckinButton = () => {
+import { useAddExtrasStore } from "@/store/useAddExtras";
+import { cn } from "@/lib/utils";
+import { usePreCheckIn } from '@/app/hooks/usePreCheckIn'
+import { useState } from 'react'
+import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
+
+interface CheckinButtonProps {
+  reservationId: string
+}
+
+export const CheckinButton = ({ reservationId }: CheckinButtonProps) => {
+  const t = useTranslations('profile')
+  const { mutate, isPending } = usePreCheckIn()
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleCheckIn = () => {
+    if (isLoading || isPending) return
+
+    setIsLoading(true)
+    mutate(reservationId, {
+      onSuccess: (data) => {
+        if (data?.guestAppUrl) {
+          window.open(data.guestAppUrl, '_blank')
+          toast.success(t('redirectingToCheckIn') || 'Redirecting to check-in...')
+        } else {
+          toast.error(t('checkInUrlNotFound') || 'Check-in URL not found')
+        }
+        setIsLoading(false)
+      },
+      onError: (error) => {
+        console.error('Error fetching check-in:', error)
+        toast.error(t('checkInError') || 'Failed to start check-in process')
+        setIsLoading(false)
+      }
+    })
+  }
+
   return (
-    <Button variant='outline' className='h-[35px] border-red text-red hover:bg-red hover:text-white text-sm px-5 gap-2 justify-start'><BsCheckCircleFill /> Complete Check-In </Button>
+    <Button 
+      variant='outline' 
+      className='h-[35px] border-red text-red hover:bg-red hover:text-white text-sm px-5 gap-2 justify-start'
+      onClick={handleCheckIn}
+      disabled={isLoading || isPending}
+    >
+      <BsCheckCircleFill /> 
+      {isLoading || isPending ? t('loading') || 'Loading...' : t('completeCheckIn')}
+    </Button>
   )
 }
 
@@ -26,8 +71,15 @@ export const RoomButton = () => {
 }
 
 export const ExtendButton = () => {
+  const { setOpenExtendYourStay, openExtendYourStay } = useAddExtrasStore();
   return (
-    <Button variant='outline' className='h-[35px] text-sm px-5 gap-2 justify-start'><FaCalendar />Extend Your Stay</Button>
+    <Button 
+      variant='outline' 
+      className={cn('h-[35px] text-sm px-5 gap-2 justify-start', openExtendYourStay ? 'bg-blue text-white border-blue hover:bg-blue/90 hover:text-white' : 'hover:bg-gray-50')}
+      onClick={() => setOpenExtendYourStay(!openExtendYourStay)}
+    >
+      <FaCalendar />Extend Your Stay
+    </Button>
   )
 }
 

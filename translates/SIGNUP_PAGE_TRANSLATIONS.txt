@@ -1,0 +1,95 @@
+СТРАНИЦА: Sign Up Page
+СЕКЦИЯ: Main Form
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Welcome to Charlie M
+Sign Up
+Full Name
+Email
+Password
+Re-Password
+I agree to the
+Privacy Policy
+Loading...
+Sign Up
+Already have an account?
+Login
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Willkommen bei Charlie M
+Registrieren
+Vollständiger Name
+E-Mail
+Passwort
+Passwort wiederholen
+Ich stimme der
+Datenschutzerklärung
+Lädt...
+Registrieren
+Haben Sie bereits ein Konto?
+Login
+
+
+СТРАНИЦА: Sign Up Page
+СЕКЦИЯ: Reservation Form
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+← Back to Sign Up
+Continue with Reservation ID
+Enter Booking.com Number
+Last Name
+Searching...
+Continue
+No found
+Nothing found for this Reservation ID number. Please, check and try again.
+Ok
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+← Zurück zur Registrierung
+Mit Reservierungs-ID fortfahren
+Booking.com-Nummer eingeben
+Nachname
+Suche...
+Fortfahren
+Nicht gefunden
+Für diese Reservierungs-ID wurde nichts gefunden. Bitte überprüfen Sie die Nummer und versuchen Sie es erneut.
+Ok
+
+
+СТРАНИЦА: Sign Up Page
+СЕКЦИЯ: Social Media Buttons
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Continue with Reservation ID
+Continue with Apple
+Continue with Google
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Mit Reservierungs-ID fortfahren
+Mit Apple fortfahren
+Mit Google fortfahren
+
+
+СТРАНИЦА: Sign Up Page
+СЕКЦИЯ: Success Messages
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Please check your email to confirm your account
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Bitte überprüfen Sie Ihre E-Mail, um Ihr Konto zu bestätigen
+
+
+СТРАНИЦА: Sign Up Page
+СЕКЦИЯ: Error Messages
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Registration failed
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Registrierung fehlgeschlagen

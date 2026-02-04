@@ -1,0 +1,515 @@
+СТРАНИЦА: Privacy Policy Page
+СЕКЦИЯ: Title
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Privacy Policy
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Datenschutzerklärung
+
+
+СТРАНИЦА: Privacy Policy Page
+СЕКЦИЯ: Controller
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Controller
+The controller within the meaning of Art. 4 No. 7 GDPR is:
+MBoutique GmbH & Co. KG
+Nazarethkirchstraße 51
+13347 Berlin
+Germany
+Email: info@charlie-m.de
+An internal data protection officer has been appointed.
+The data protection officer can be contacted via the above address.
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Verantwortlicher
+Verantwortlicher im Sinne von Art. 4 Nr. 7 DSGVO ist:
+MBoutique GmbH & Co. KG
+Nazarethkirchstraße 51
+13347 Berlin
+Deutschland
+E-Mail: info@charlie-m.de
+Es wurde ein interner Datenschutzbeauftragter bestellt.
+Der Datenschutzbeauftragte kann über die oben genannte Adresse kontaktiert werden.
+
+
+СТРАНИЦА: Privacy Policy Page
+СЕКЦИЯ: Scope of this Privacy Policy
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Scope of this Privacy Policy
+This Privacy Policy informs you about the processing of personal data in connection with:
+• the operation of our website,
+• booking and provision of hotel accommodation,
+• the fully automated check-in process,
+• the use of digital access systems,
+• communication with guests (email, telephone, WhatsApp),
+• payment processing,
+• analysis and optimisation of hotel operations.
+Personal data means any information relating to an identified or identifiable natural person.
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Geltungsbereich dieser Datenschutzerklärung
+Diese Datenschutzerklärung informiert Sie über die Verarbeitung personenbezogener Daten im Zusammenhang mit:
+• dem Betrieb unserer Website,
+• der Buchung und Bereitstellung von Hotelunterkünften,
+• dem vollautomatisierten Check-in-Prozess,
+• der Nutzung digitaler Zugangssysteme,
+• der Kommunikation mit Gästen (E-Mail, Telefon, WhatsApp),
+• der Zahlungsabwicklung,
+• der Analyse und Optimierung des Hotelbetriebs.
+Personenbezogene Daten sind alle Informationen, die sich auf eine identifizierte oder identifizierbare natürliche Person beziehen.
+
+
+СТРАНИЦА: Privacy Policy Page
+СЕКЦИЯ: Legal Bases for Processing
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Legal Bases for Processing
+We process personal data exclusively in accordance with the GDPR, in particular on the basis of:
+• Art. 6(1)(a) GDPR - consent
+• Art. 6(1)(b) GDPR - performance of a contract / pre-contractual measures
+• Art. 6(1)(c) GDPR - legal obligation
+• Art. 6(1)(d) GDPR - legitimate interest
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Rechtsgrundlagen für die Verarbeitung
+Wir verarbeiten personenbezogene Daten ausschließlich in Übereinstimmung mit der DSGVO, insbesondere auf Grundlage von:
+• Art. 6 Abs. 1 lit. a DSGVO - Einwilligung
+• Art. 6 Abs. 1 lit. b DSGVO - Erfüllung eines Vertrags / vorvertragliche Maßnahmen
+• Art. 6 Abs. 1 lit. c DSGVO - rechtliche Verpflichtung
+• Art. 6 Abs. 1 lit. f DSGVO - berechtigtes Interesse
+
+
+СТРАНИЦА: Privacy Policy Page
+СЕКЦИЯ: Minors
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Minors
+Our services are directed at adults.
+Minors may only stay at our hotel when accompanied by their legal guardians.
+No independent processing of personal data of minors takes place.
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Minderjährige
+Unsere Dienstleistungen richten sich an Erwachsene.
+Minderjährige dürfen nur in Begleitung ihrer gesetzlichen Vertreter in unserem Hotel übernachten.
+Es findet keine eigenständige Verarbeitung personenbezogener Daten von Minderjährigen statt.
+
+
+СТРАНИЦА: Privacy Policy Page
+СЕКЦИЯ: Booking and Stay
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Booking and Stay
+In the context of booking and accommodation, we process in particular the following data:
+• first and last name
+• email address
+• telephone number
+• billing and, if applicable, company address
+• stay details (arrival and departure dates, room assignment)
+• booking and payment references
+Purpose:
+Conclusion, performance and settlement of the accommodation contract.
+Legal basis:
+Art. 6(1)(b) GDPR.
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Buchung und Aufenthalt
+Im Rahmen von Buchung und Unterbringung verarbeiten wir insbesondere folgende Daten:
+• Vor- und Nachname
+• E-Mail-Adresse
+• Telefonnummer
+• Rechnungs- und gegebenenfalls Firmenadresse
+• Aufenthaltsdetails (An- und Abreisedaten, Zimmerzuweisung)
+• Buchungs- und Zahlungsreferenzen
+Zweck:
+Abschluss, Erfüllung und Abwicklung des Beherbergungsvertrags.
+Rechtsgrundlage:
+Art. 6 Abs. 1 lit. b DSGVO.
+
+
+СТРАНИЦА: Privacy Policy Page
+СЕКЦИЯ: Legal Registration Obligations (German Federal Registration Act)
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Legal Registration Obligations (German Federal Registration Act)
+For guests who are not German nationals, registration data is processed in accordance with Sections 29 et seq. of the German Federal Registration Act (Bundesmeldegesetz).
+Legal basis:
+Art. 6(1)(c) GDPR in conjunction with Sections 29 and 30 BMG.
+Retention period:
+One year from the date of departure; deletion within three months thereafter.
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Gesetzliche Meldepflichten (Bundesmeldegesetz)
+Für Gäste, die keine deutschen Staatsangehörigen sind, werden Meldedaten gemäß §§ 29 ff. des Bundesmeldegesetzes (BMG) verarbeitet.
+Rechtsgrundlage:
+Art. 6 Abs. 1 lit. c DSGVO i.V.m. §§ 29 und 30 BMG.
+Aufbewahrungsdauer:
+Ein Jahr ab dem Abreisedatum; Löschung innerhalb von drei Monaten danach.
+
+
+СТРАНИЦА: Privacy Policy Page
+СЕКЦИЯ: Property Management System (Apaleo)
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Property Management System (Apaleo)
+For the management of bookings, stays, guest data and internal hotel operations, we use the property management system apaleo GmbH.
+Provider:
+apaleo GmbH
+Dachauer Straße 15A
+80335 Munich
+Germany
+The following personal data is processed via Apaleo in particular:
+• name
+• contact details
+• booking and stay information
+• room and stay allocation
+• billing and, where applicable, company information
+Purpose:
+Proper management of hotel operations and performance of accommodation contracts.
+Legal basis:
+Art. 6(1)(b) GDPR and Art. 6(1)(f) GDPR.
+Apaleo acts as a data processor within the meaning of Art. 28 GDPR.
+A corresponding data processing agreement has been concluded.
+Processing takes place exclusively on servers within the European Union.
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Property Management System (Apaleo)
+Für die Verwaltung von Buchungen, Aufenthalten, Gästedaten und internen Hotelbetriebsabläufen nutzen wir das Property Management System apaleo GmbH.
+Anbieter:
+apaleo GmbH
+Dachauer Straße 15A
+80335 München
+Deutschland
+Über Apaleo werden insbesondere folgende personenbezogene Daten verarbeitet:
+• Name
+• Kontaktdaten
+• Buchungs- und Aufenthaltsinformationen
+• Zimmer- und Aufenthaltszuweisung
+• Rechnungs- und gegebenenfalls Firmeninformationen
+Zweck:
+Ordnungsgemäße Verwaltung des Hotelbetriebs und Erfüllung von Beherbergungsverträgen.
+Rechtsgrundlage:
+Art. 6 Abs. 1 lit. b DSGVO und Art. 6 Abs. 1 lit. f DSGVO.
+Apaleo handelt als Auftragsverarbeiter im Sinne von Art. 28 DSGVO.
+Es wurde eine entsprechende Vereinbarung zur Auftragsverarbeitung geschlossen.
+Die Verarbeitung erfolgt ausschließlich auf Servern innerhalb der Europäischen Union.
+
+
+СТРАНИЦА: Privacy Policy Page
+СЕКЦИЯ: Digital Check-in (Guestway)
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Digital Check-in (Guestway)
+We use Guestway to provide a fully automated check-in process.
+The following data may be processed:
+• name
+• contact details
+• booking and stay information
+• identification data (uploaded or manually entered), where required
+Purpose:
+Execution of the check-in process and fulfilment of legal obligations.
+Legal bases:
+Art. 6(1)(b) GDPR
+Art. 6(1)(c) GDPR
+Identification data is stored only for as long as legally required and then deleted.
+The check-in process is fully automated.
+No automated decision-making within the meaning of Art. 22 GDPR takes place.
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Digitaler Check-in (Guestway)
+Wir nutzen Guestway für einen vollautomatisierten Check-in-Prozess.
+Folgende Daten können verarbeitet werden:
+• Name
+• Kontaktdaten
+• Buchungs- und Aufenthaltsinformationen
+• Identifikationsdaten (hochgeladen oder manuell eingegeben), soweit erforderlich
+Zweck:
+Durchführung des Check-in-Prozesses und Erfüllung rechtlicher Verpflichtungen.
+Rechtsgrundlagen:
+Art. 6 Abs. 1 lit. b DSGVO
+Art. 6 Abs. 1 lit. c DSGVO
+Identifikationsdaten werden nur so lange gespeichert, wie gesetzlich erforderlich, und anschließend gelöscht.
+Der Check-in-Prozess ist vollautomatisiert.
+Es findet keine automatisierte Entscheidungsfindung im Sinne von Art. 22 DSGVO statt.
+
+
+СТРАНИЦА: Privacy Policy Page
+СЕКЦИЯ: Digital Access Systems (SALTO KS)
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Digital Access Systems (SALTO KS)
+We use SALTO KS for digital access control.
+The following data is processed:
+• guest name
+• stay period
+• room allocation
+• access logs (time and date of door access)
+Purpose:
+Security, traceability and proper hotel operation.
+Legal basis:
+Art. 6(1)(f) GDPR.
+Access logs are stored only for a limited period and deleted unless security-related incidents require longer retention.
+Access is restricted to management only.
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Digitale Zugangssysteme (SALTO KS)
+Wir nutzen SALTO KS für die digitale Zugangskontrolle.
+Folgende Daten werden verarbeitet:
+• Gästename
+• Aufenthaltsdauer
+• Zimmerzuweisung
+• Zugangsprotokolle (Zeitpunkt und Datum des Türzugangs)
+Zweck:
+Sicherheit, Nachvollziehbarkeit und ordnungsgemäßer Hotelbetrieb.
+Rechtsgrundlage:
+Art. 6 Abs. 1 lit. f DSGVO.
+Zugangsprotokolle werden nur für einen begrenzten Zeitraum gespeichert und gelöscht, es sei denn, sicherheitsrelevante Vorfälle erfordern eine längere Aufbewahrung.
+Der Zugang ist nur für die Geschäftsleitung beschränkt.
+
+
+СТРАНИЦА: Privacy Policy Page
+СЕКЦИЯ: Payment Processing (Adyen)
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Payment Processing (Adyen)
+Payment processing is carried out via Adyen.
+Adyen acts as an independent controller within the meaning of the GDPR.
+Legal basis:
+Art. 6(1)(b) GDPR.
+We do not receive complete payment details (e.g. full credit card numbers).
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Zahlungsabwicklung (Adyen)
+Die Zahlungsabwicklung erfolgt über Adyen.
+Adyen handelt als unabhängiger Verantwortlicher im Sinne der DSGVO.
+Rechtsgrundlage:
+Art. 6 Abs. 1 lit. b DSGVO.
+Wir erhalten keine vollständigen Zahlungsdetails (z.B. vollständige Kreditkartennummern).
+
+
+СТРАНИЦА: Privacy Policy Page
+СЕКЦИЯ: Communication with Guests
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Communication with Guests
+We communicate with guests via:
+• email
+• telephone
+• WhatsApp Business (via WhatsApp Ireland Ltd. and Twilio)
+Communication serves:
+• performance of the accommodation contract,
+• handling of enquiries,
+• guest support during the stay,
+• post-stay communication (e.g. feedback).
+Legal bases:
+Art. 6(1)(b) GDPR
+Art. 6(1)(f) GDPR
+Art. 6(1)(a) GDPR (WhatsApp)
+Consent to WhatsApp communication may be withdrawn at any time.
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Kommunikation mit Gästen
+Wir kommunizieren mit Gästen über:
+• E-Mail
+• Telefon
+• WhatsApp Business (über WhatsApp Ireland Ltd. und Twilio)
+Die Kommunikation dient:
+• der Erfüllung des Beherbergungsvertrags,
+• der Bearbeitung von Anfragen,
+• der Gästebetreuung während des Aufenthalts,
+• der Kommunikation nach dem Aufenthalt (z.B. Feedback).
+Rechtsgrundlagen:
+Art. 6 Abs. 1 lit. b DSGVO
+Art. 6 Abs. 1 lit. f DSGVO
+Art. 6 Abs. 1 lit. a DSGVO (WhatsApp)
+Die Einwilligung zur WhatsApp-Kommunikation kann jederzeit widerrufen werden.
+
+
+СТРАНИЦА: Privacy Policy Page
+СЕКЦИЯ: Automated Messages and Service Analysis
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Automated Messages and Service Analysis
+Pre-stay, during-stay and post-stay messages may be sent automatically.
+Support enquiries are stored and analysed to improve service quality and internal processes.
+Legal basis:
+Art. 6(1)(f) GDPR.
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Automatisierte Nachrichten und Serviceanalyse
+Vor dem Aufenthalt, während des Aufenthalts und nach dem Aufenthalt können automatisch Nachrichten versendet werden.
+Support-Anfragen werden gespeichert und analysiert, um die Servicequalität und interne Prozesse zu verbessern.
+Rechtsgrundlage:
+Art. 6 Abs. 1 lit. f DSGVO.
+
+
+СТРАНИЦА: Privacy Policy Page
+СЕКЦИЯ: Website Use and Log Files
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Website Use and Log Files
+When visiting our website, the following data is processed:
+• IP address
+• date and time of access
+• accessed pages
+• browser and operating system data
+Purpose:
+Ensuring stability and security of the website.
+Legal basis:
+Art. 6(1)(f) GDPR.
+Retention period:
+Maximum of 14 days.
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Website-Nutzung und Logdateien
+Beim Besuch unserer Website werden folgende Daten verarbeitet:
+• IP-Adresse
+• Datum und Uhrzeit des Zugriffs
+• aufgerufene Seiten
+• Browser- und Betriebssystemdaten
+Zweck:
+Gewährleistung der Stabilität und Sicherheit der Website.
+Rechtsgrundlage:
+Art. 6 Abs. 1 lit. f DSGVO.
+Aufbewahrungsdauer:
+Maximal 14 Tage.
+
+
+СТРАНИЦА: Privacy Policy Page
+СЕКЦИЯ: Google Analytics
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Google Analytics
+We use Google Analytics exclusively with IP anonymisation enabled.
+• no profiling
+• no remarketing
+• no merging with other data
+Legal basis:
+Art. 6(1)(a) GDPR (consent).
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Google Analytics
+Wir nutzen Google Analytics ausschließlich mit aktivierter IP-Anonymisierung.
+• kein Profiling
+• kein Remarketing
+• keine Zusammenführung mit anderen Daten
+Rechtsgrundlage:
+Art. 6 Abs. 1 lit. a DSGVO (Einwilligung).
+
+
+СТРАНИЦА: Privacy Policy Page
+СЕКЦИЯ: Cookies
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Cookies
+We use:
+• technically necessary cookies (Art. 6(1)(f) GDPR),
+• analytics cookies only with consent (Art. 6(1)(a) GDPR).
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Cookies
+Wir nutzen:
+• technisch notwendige Cookies (Art. 6 Abs. 1 lit. f DSGVO),
+• Analyse-Cookies nur mit Einwilligung (Art. 6 Abs. 1 lit. a DSGVO).
+
+
+СТРАНИЦА: Privacy Policy Page
+СЕКЦИЯ: Hosting and Backups
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Hosting and Backups
+Data processing takes place exclusively on servers located within the European Union.
+Regular backups are created and deleted after defined retention periods.
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Hosting und Backups
+Die Datenverarbeitung erfolgt ausschließlich auf Servern, die sich innerhalb der Europäischen Union befinden.
+Regelmäßige Backups werden erstellt und nach definierten Aufbewahrungsfristen gelöscht.
+
+
+СТРАНИЦА: Privacy Policy Page
+СЕКЦИЯ: Retention Periods
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Retention Periods
+Personal data is deleted once the respective purpose no longer applies and no statutory retention obligations exist.
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Aufbewahrungsfristen
+Personenbezogene Daten werden gelöscht, sobald der jeweilige Zweck nicht mehr besteht und keine gesetzlichen Aufbewahrungspflichten bestehen.
+
+
+СТРАНИЦА: Privacy Policy Page
+СЕКЦИЯ: Rights of Data Subjects
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Rights of Data Subjects
+Data subjects have the right to:
+• access (Art. 15 GDPR)
+• rectification (Art. 16 GDPR)
+• erasure (Art. 17 GDPR)
+• restriction of processing (Art. 18 GDPR)
+• data portability (Art. 20 GDPR)
+• objection (Art. 21 GDPR)
+• withdrawal of consent at any time (Art. 7(3) GDPR)
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Rechte der Betroffenen
+Betroffene haben das Recht auf:
+• Auskunft (Art. 15 DSGVO)
+• Berichtigung (Art. 16 DSGVO)
+• Löschung (Art. 17 DSGVO)
+• Einschränkung der Verarbeitung (Art. 18 DSGVO)
+• Datenübertragbarkeit (Art. 20 DSGVO)
+• Widerspruch (Art. 21 DSGVO)
+• Widerruf der Einwilligung jederzeit (Art. 7 Abs. 3 DSGVO)
+
+
+СТРАНИЦА: Privacy Policy Page
+СЕКЦИЯ: Supervisory Authority
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Supervisory Authority
+Berlin Commissioner for Data Protection and Freedom of Information
+https://www.datenschutz-berlin.de
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Aufsichtsbehörde
+Berliner Beauftragte für Datenschutz und Informationsfreiheit
+https://www.datenschutz-berlin.de
+
+
+СТРАНИЦА: Privacy Policy Page
+СЕКЦИЯ: Changes to this Privacy Policy
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Changes to this Privacy Policy
+We reserve the right to amend this Privacy Policy with effect for the future in the event of legal or technical changes.
+
+________________________________________________________________________________________________________________________________________________________________________________________________
+
+Änderungen dieser Datenschutzerklärung
+Wir behalten uns vor, diese Datenschutzerklärung bei rechtlichen oder technischen Änderungen mit Wirkung für die Zukunft zu ändern.

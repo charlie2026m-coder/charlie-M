@@ -2,7 +2,6 @@ import { Button } from "@/app/_components/ui/button";
 import { IoAddCircleSharp } from "react-icons/io5";
 import { AiFillInfoCircle } from "react-icons/ai";
 import { FaCalendar } from "react-icons/fa";
-import { MdDownload } from "react-icons/md";
 import { useState } from "react";
 import { Link } from "@/navigation";
 import CodeModal from "./CodeModal";
@@ -29,9 +28,20 @@ export const InfoButton = () => {
 
 export const DetailsButton = ({id}: {id: string}) => {
   const t = useTranslations('profile')
+  const [isNavigating, setIsNavigating] = useState(false)
+  
   return (
-    <Button asChild className='h-[30px] text-[14px] lg:ml-auto'>
-      <Link href={`/profile/reservations/${id}`}>{t('viewDetails')}</Link>
+    <Button 
+      asChild 
+      className='h-[30px] text-[14px] lg:ml-auto'
+      disabled={isNavigating}
+    >
+      <Link 
+        href={`/profile/reservations/${id}`}
+        onClick={() => setIsNavigating(true)}
+      >
+        {isNavigating ? t('loading') : t('viewDetails')}
+      </Link>
     </Button>
   )
 }
@@ -57,16 +67,4 @@ export const BookAgainButton = ({ reservation }: { reservation: Reservation }) =
   )
 } 
 
-export const InvoiceButton = () => {
-  const t = useTranslations('profile')
-  return (
-    <Button variant='outline' className='h-[30px] text-sm'> <MdDownload className='size-4' /> {t('viewInvoice')} </Button>
-  )
-}
 
-export const CheckinButton = () => {
-  const t = useTranslations('profile')
-  return (
-    <Button variant='outline' className='h-[30px] border-red text-red hover:bg-red hover:text-white text-sm px-3'>{t('completeCheckIn')} </Button>
-  )
-}

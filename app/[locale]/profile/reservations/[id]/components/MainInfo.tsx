@@ -4,24 +4,26 @@ import { PiMapPinFill } from "react-icons/pi";
 import MapWindow from '@/app/_components/footer/MapWindow';
 import Image from 'next/image';
 import dayjs from 'dayjs';
-import { toast } from 'sonner';
-import { Separator } from '@/app/_components/ui/separator';
 import { ReservationButton } from './ReservationDetails';
 import { RoomDetailsButton } from './RoomDetails';
 import StatusBadge from '@/app/_components/ui/StatusBadge';
 import { bookingStatuses } from '@/types/types';
 import { cn } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
+import { InvoiceButton } from '../../components/InvoiceButton';
+import { PinCodeComponent } from './PinCodeComponent';
 
 
 const MainInfo = ({ reservation }: { reservation: any } ) => {
   const t = useTranslations('profile');
   const from = dayjs(reservation.arrival).format('ddd D MMM YYYY');
   const to = dayjs(reservation.departure).format('ddd D MMM YYYY');
-  const isCancelled = reservation.status === bookingStatuses.Canceled;
-  const isConfirmed = reservation.status === bookingStatuses.Confirmed;
-  const isInHouse = reservation.status === bookingStatuses.InHouse;
+  const isCancelled = reservation.status === bookingStatuses.Canceled || reservation.status === bookingStatuses.NoShow;
   const isCheckedOut = reservation.status === bookingStatuses.CheckedOut;
+  
+  const isPincode = reservation.accesses;
+  const isClosed = isCheckedOut || isCancelled;
+  const isActive = reservation.status === bookingStatuses.Confirmed || reservation.status === bookingStatuses.InHouse;
   return (
     <div className='grid lg:grid-cols-2 gap-4 pb-6 '>
     <div>
@@ -38,12 +40,16 @@ const MainInfo = ({ reservation }: { reservation: any } ) => {
         <span className={cn(reservation.status === bookingStatuses.Canceled && 'text-red-500')}>{to} 11:00</span>
       </div>
       <div className='flex flex-col w-full lg:w-4/5 gap-3'>
-        {!reservation.isCheckin && !isCancelled && <CheckinButton />}
-        {reservation.code && (<RoomCode roomNumber={reservation.roomNumber} code={reservation.code} />)}
-        {(isCheckedOut || isCancelled) && (<BookAgainButton reservation={reservation} />)}
-        <ReservationButton reservation={reservation} />
+        {isActive && <CheckinButton reservationId={reservation.id} />}
+        {isPincode && <PinCodeComponent roomNumber={111111} code={777777} />}
+
+        <ReservationButton reservation={reservation} isActive={isActive} />
         <RoomDetailsButton reservation={reservation} />
-        {(isConfirmed || isInHouse) && !isCancelled && (<ExtendButton />)}
+
+        {isClosed && <BookAgainButton reservation={reservation} />}
+        {isActive && <InvoiceButton reservationId={reservation.id} className='!h-[35px] justify-start' />}
+
+        {isActive && <ExtendButton />}
       </div>  
     </div>
 
@@ -69,38 +75,3 @@ const MainInfo = ({ reservation }: { reservation: any } ) => {
 
 export default MainInfo
 
-const RoomCode = ({roomNumber, code}: {roomNumber: number, code: number}) => {
-  const t = useTranslations('profile');
-  
-  const handleCopy = async (text: string | number, label: string) => {
-    try {
-      await navigator.clipboard.writeText(text.toString());
-      toast.success(t('copiedToClipboard', { label }));
-    } catch (err) {
-      toast.error(t('failedToCopy'));
-    }
-  };
-
-  return (
-    <div className='flex flex-col  gap-2'>
-        <span className='text-xs '>{t('room')} № </span>
-        <div 
-          className='rounded border border-light1 flex items-center justify-center  px-2 py-2 cursor-copy hover:bg-gray-200 transition-colors font-bold' 
-          onClick={() => handleCopy(roomNumber, t('roomNumber'))}
-          title={t('clickToCopy')}
-        >
-          {roomNumber}
-        </div>
-
-      <Separator orientation='vertical' className='shrink hidden lg:block'/>
-        <span className='text-xs'>{t('accessPin')}</span>
-        <div 
-          className='rounded border border-light1 flex items-center justify-center  px-2 py-2 cursor-copy hover:bg-gray-200 transition-colors font-bold'
-          onClick={() => handleCopy(code, t('code'))}
-          title={t('clickToCopy')}
-        >
-          {code}
-        </div>
-    </div>
-  )
-}

@@ -3,9 +3,6 @@
   "book_now_btn": "Jetzt buchen",
   "check_in_btn": "Einchecken",
   "sign_in_btn": "Login",
-  "sign_out_btn": "Abmelden",
-  "sign_up_btn": "Registrieren",
-  "view_all_btn": "Alle anzeigen",
   "loading": "Lädt...",
   "discount": {
     "text": "Erhalten Sie den besten Preis direkt bei uns"
@@ -249,10 +246,7 @@
   "header": {
     "rooms_link": "Zimmer",
     "location_link": "Standort",
-    "about_us_link": "Konzept",
-    "open_profile_link": "Profil öffnen",
-    "dear_guest": "Guten Tag",
-    "my_account_link": "Mein Konto"
+    "about_us_link": "Konzept"
   },
   "guests": {
     "label": "Gäste",
@@ -507,9 +501,17 @@
     "addExtras": "Extras hinzufügen",
     "info": "Info",
     "viewDetails": "Details anzeigen",
+    "reservationDetails": "Reservierungsdetails",
+    "roomInfo": "Zimmerinfo",
     "bookAgain": "Erneut buchen",
     "viewInvoice": "Rechnung anzeigen",
+    "invoiceDownloaded": "Rechnung erfolgreich heruntergeladen",
+    "invoiceDownloadFailed": "Fehler beim Herunterladen der Rechnung",
+    "downloading": "Wird heruntergeladen...",
     "completeCheckIn": "Check-In abschließen",
+    "redirectingToCheckIn": "Weiterleitung zum Check-In...",
+    "checkInUrlNotFound": "Check-In-URL nicht gefunden",
+    "checkInError": "Check-In-Prozess konnte nicht gestartet werden",
     "errorLoadingReservations": "Fehler beim Laden der Reservierungen",
     "reservationNotFoundInApaleo": "Reservierung in Apaleo nicht gefunden",
     "loading": "Lädt...",
@@ -522,14 +524,15 @@
     "copiedToClipboard": "{label} in die Zwischenablage kopiert!",
     "failedToCopy": "Fehler beim Kopieren in die Zwischenablage",
     "backToMyReservations": "Zurück zu Meinen Reservierungen",
-    "checkIn": "Check-in",
-    "checkOut": "Check-out",
+    "checkIn": "Einchecken",
+    "checkOut": "Auschecken",
     "location": "Standort",
     "extraServices": "Zusätzliche Leistungen",
     "total": "Gesamt",
     "payNow": "Jetzt bezahlen",
     "nights": "Nächte",
     "upgradeYourStay": "Ihren Aufenthalt aufwerten",
+    "extendYourStay": "Aufenthalt verlängern",
     "soldOut": "Ausverkauft",
     "learnMore": "Mehr erfahren",
     "price": "Preis:",
@@ -651,20 +654,22 @@
     }
   },
   "checkIn": {
-    "title": "Check-In",
+    "title": "Online-Check-In",
+    "subtitle": "Schließen Sie Ihren Online-Check-In ab. Zugangscodes sind 24 Stunden vor dem Check-In in Ihrem Profil verfügbar",
     "enterReservationId": "Geben Sie Ihre Reservierungs-ID ein",
-    "reservationIdPlaceholder": "Reservierungs-ID",
+    "reservationIdPlaceholder": "z.B. ABC123",
+    "reservationId": "Reservierungs-ID",
     "cancel": "Abbrechen",
     "search": "Suchen",
     "searching": "Suchen...",
     "loading": "Wird geladen...",
     "error": "Reservierung nicht gefunden. Bitte überprüfen Sie Ihre ID und versuchen Sie es erneut.",
-    "found": "Reservierung gefunden!"
+    "found": "Reservierung gefunden!",
+    "bookingFound": "Buchung gefunden!",
+    "proceedToCheckIn": "Online-Check-In starten"
   },
   "termsAndConditions": {
     "title": "Allgemeine Geschäftsbedingungen",
-    "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-    "lastUpdated": "Zuletzt aktualisiert am 5. Januar 2026",
     "content": [
       {
         "title": "Anbieter / Vertragspartner / Geltungsbereich",
@@ -873,8 +878,6 @@
   },
   "privacyPolicy": {
     "title": "Datenschutzerklärung",
-    "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-    "lastUpdated": "Zuletzt aktualisiert am 5. Januar 2026",
     "content": [
       {
         "title": "Verantwortlicher",

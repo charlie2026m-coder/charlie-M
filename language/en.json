@@ -2,11 +2,7 @@
   
   "book_now_btn": "Book Now",
   "check_in_btn": "Check In",
-
   "sign_in_btn": "Login",
-  "sign_out_btn": "Sign Out",
-  "sign_up_btn": "Sign Up",
-  "view_all_btn": "View All",
   "loading": "Loading...",
   "discount": {
     "text": "Get the best rate directly with us"
@@ -251,10 +247,7 @@
   "header": {
     "rooms_link": "Rooms",
     "location_link": "Location",
-    "about_us_link": "Concept",
-    "open_profile_link": "Open profile",
-    "dear_guest": "Dear guest",
-    "my_account_link": "My Account"
+    "about_us_link": "Concept"
   },
   "guests": {
     "label": "Guests",
@@ -509,9 +502,17 @@
     "addExtras": "Add Extras",
     "info": "Info",
     "viewDetails": "View details",
+    "reservationDetails": "Reservation Details",
+    "roomInfo": "Room info",
     "bookAgain": "Book Again",
     "viewInvoice": "View Invoice",
+    "invoiceDownloaded": "Invoice downloaded successfully",
+    "invoiceDownloadFailed": "Failed to download invoice",
+    "downloading": "Downloading...",
     "completeCheckIn": "Complete Check-In",
+    "redirectingToCheckIn": "Redirecting to check-in...",
+    "checkInUrlNotFound": "Check-in URL not found",
+    "checkInError": "Failed to start check-in process",
     "errorLoadingReservations": "Error loading reservations",
     "reservationNotFoundInApaleo": "Reservation not found in Apaleo",
     "loading": "Loading...",
@@ -532,6 +533,7 @@
     "payNow": "Pay Now",
     "nights": "nights",
     "upgradeYourStay": "Upgrade your stay",
+    "extendYourStay": "Extend Your Stay",
     "soldOut": "Sold Out",
     "learnMore": "Learn more",
     "price": "Price",
@@ -653,20 +655,22 @@
     }
   },
   "checkIn": {
-    "title": "Check In",
+    "title": "Online Check-In",
+    "subtitle": "Complete your online check-in. Access codes will be available in your profile 24 hours before check-in",
     "enterReservationId": "Enter your Reservation ID",
-    "reservationIdPlaceholder": "Reservation ID",
+    "reservationIdPlaceholder": "e.g. ABC123",
+    "reservationId": "Reservation ID",
     "cancel": "Cancel",
     "search": "Search",
     "searching": "Searching...",
     "loading": "Loading...",
     "error": "Reservation not found. Please check your ID and try again.",
-    "found": "Reservation found!"
+    "found": "Reservation found!",
+    "bookingFound": "Booking found!",
+    "proceedToCheckIn": "Start Online Check-In"
   },
   "termsAndConditions": {
     "title": "Terms and Conditions",
-    "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-    "lastUpdated": "Last updated 5 January 2026",
     "content": [
       {
         "title": "Provider / Contractual Partner / Scope",
@@ -875,8 +879,6 @@
   },
   "privacyPolicy": {
     "title": "Privacy Policy",
-    "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-    "lastUpdated": "Last updated 5 January 2026",
     "content": [
       {
         "title": "Controller",

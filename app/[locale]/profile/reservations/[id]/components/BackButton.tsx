@@ -1,10 +1,9 @@
-'use client'
 import { Link } from '@/navigation';
 import { FaArrowLeft } from "react-icons/fa6";
-import { useTranslations } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
 
-export default function BackButton() {
-  const t = useTranslations('profile');
+export default async function BackButton() {
+  const t = await getTranslations('profile');
   
   return (
     <Link href='/profile/reservations'>

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { Fetch } from '@/services/Request';
 import { Reservation } from '@/types/apaleo';
+import { getReservationAccessesServer } from '@/services/getReservationAccessesServer';
 
 // Map filter to Apaleo status
 const filterToStatus: Record<string, string> = {
@@ -80,19 +81,32 @@ export async function GET(request: Request) {
         ...item,
         name: item.unitGroup?.name || '',
         images: room?.photos || [],
-        guests: item.adults, // Only count adults as guests
+        guests: item.adults, 
       } as Reservation;
     });
 
-    // Apaleo already sorted by created:desc, just apply pagination
     const startIndex = (page - 1) * pageSize;
     const endIndex = startIndex + pageSize;
-    const paginatedReservations = formattedReservations.slice(startIndex, endIndex);
+    let paginatedReservations = formattedReservations.slice(startIndex, endIndex);
 
-    console.log(`📄 Page ${page}: returning reservations ${startIndex + 1}-${Math.min(endIndex, formattedReservations.length)} of ${formattedReservations.length}`);
+
+    // Get access data for all reservations using server service
+    const reservationIds = paginatedReservations.map(r => r.id);
+    if (reservationIds.length > 0) {
+      const accessDataList = await getReservationAccessesServer(reservationIds);
+      console.log('🔑 Reservation Accesses:', accessDataList);
+
+      paginatedReservations = paginatedReservations.map(reservation => {
+        const accessInfo = accessDataList.find(item => item.reservationId === reservation.id);
+        return {
+          ...reservation,
+          accesses: accessInfo || null
+        };
+      });
+    }
 
     return NextResponse.json({ 
-      count: formattedReservations.length, // Total count
+      count: formattedReservations.length,  
       reservations: paginatedReservations 
     });
 

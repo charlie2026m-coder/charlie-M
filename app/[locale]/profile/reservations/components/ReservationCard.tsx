@@ -6,21 +6,25 @@ import StatusBadge from '@/app/_components/ui/StatusBadge';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { IoCopy } from "react-icons/io5";
-import { InfoButton, DetailsButton, BookAgainButton, InvoiceButton, CheckinButton } from './Buttons';
+import { InfoButton, DetailsButton, BookAgainButton } from './Buttons';
 import { bookingStatuses } from '@/types/types';
 import { Reservation as ReservationType } from '@/types/apaleo';
 import { Link } from '@/navigation';
 import { useTranslations } from 'next-intl';
+import { CheckinButton } from './CheckInButton';
+import { InvoiceButton } from './InvoiceButton';
+
 const ReservationCard = ({ reservation }: { reservation: ReservationType,}  ) => {
   const t = useTranslations('profile')
   const { status, arrival, departure, id, name, images, guests } = reservation;
   const from = dayjs(arrival).format('ddd D MMM YYYY');
   const to = dayjs(departure).format('ddd D MMM YYYY');
-  const isCancelled = status === bookingStatuses.Canceled;
-  const isCompleted = status === bookingStatuses.CheckedOut;
-  const isCheckin = false;
-  const roomNumber = 34;
-  const code = 234323;
+  const isCancelled = status === bookingStatuses.Canceled || status === bookingStatuses.NoShow;
+  const isCheckedOut = status === bookingStatuses.CheckedOut;
+  
+  const isPincode = reservation.accesses;
+  const isClosed = isCheckedOut || isCancelled;
+  const isActive = status === bookingStatuses.Confirmed || status === bookingStatuses.InHouse;
   return (
     <div className='flex flex-col lg:flex-row bg-white border rounded-2xl p-3 relative'>
       <Image 
@@ -47,11 +51,11 @@ const ReservationCard = ({ reservation }: { reservation: ReservationType,}  ) =>
           </span>
         </div>
         <div className='flex gap-2.5 xl:items-center flex-col xl:flex-row '>
-        {(code && !isCheckin && !isCancelled) && <RoomCode roomNumber={roomNumber} code={code} />}
+        {isPincode && <RoomCode roomNumber={0} code={0} />}
           <div className='flex gap-2 grow flex-col lg:flex-row '>
-            {/* {!isCheckin && !isCancelled  && <CheckinButton />} */}
-            {(isCompleted || isCancelled) && <BookAgainButton reservation={reservation} />}
-            {isCompleted  && <InvoiceButton />}
+            {isActive && !isCancelled  && <CheckinButton reservationId={id} />}
+            {isClosed && <BookAgainButton reservation={reservation} />}
+            {isActive && <InvoiceButton reservationId={id} className='h-[30px] ' />}
             <DetailsButton id={id} />
           </div>
         </div>
@@ -82,7 +86,6 @@ const RoomCode = ({roomNumber, code}: {roomNumber: number, code: number}) => {
 
   return (
       <div className='flex gap-2 w-full lg:w-fit'>
-        {/* Room Number Card */}
         <div className='flex-1 lg:flex-initial bg-gradient-to-br from-blue/5 to-blue/10 rounded-lg px-3 py-1.5 border border-blue/20 h-[30px] flex items-center justify-center'>
           <div className='flex items-center gap-2'>
             <span className='text-[10px] uppercase tracking-wider text-blue/70 font-semibold'>{t('room')}</span>
@@ -92,7 +95,6 @@ const RoomCode = ({roomNumber, code}: {roomNumber: number, code: number}) => {
           </div>
         </div>
 
-        {/* Access Pin Card */}
         <div 
           className='flex-1 lg:flex-initial bg-gradient-to-br from-green/5 to-green/10 rounded-lg px-3 py-1.5 border border-green/20 hover:border-green/40 transition-all duration-300 hover:shadow-sm group h-[30px] flex items-center justify-center cursor-copy'
           onClick={() => handleCopy(code, t('code'))}

@@ -75,7 +75,6 @@ const ReservationsTable = ({ addedReservations = [] }: ReservationsTableProps) =
   
   const displayData = reservationFilter === 'Added' ? addedData : data
   
-  // Reset page to 0 when filter changes
   useEffect(() => {
     setCurrentPage(0)
   }, [reservationFilter])

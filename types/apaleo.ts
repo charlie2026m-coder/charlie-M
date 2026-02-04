@@ -354,10 +354,38 @@ export interface ApaleoReservationResponse {
   allFoliosHaveInvoice: boolean;
 }
 
+export interface ReservationAccess {
+  lock: {
+    id: string;
+    name: string;
+    doorName: string;
+  };
+  code: {
+    id: string;
+    pinCode: string;
+    pinCodeSuffix: string;
+    isFallbackCode: boolean;
+    isDisabled: boolean;
+    validFrom: string;
+    validTo: string;
+  };
+}
+
+export interface ReservationAccessData {
+  reservationId: string;
+  confirmationCode: string;
+  roomNumber: string | null;
+  pinCode: string | null;
+  fullPinCode: string | null;
+  validFrom: string | null;
+  validTo: string | null;
+}
+
 export interface Reservation extends ApaleoReservationResponse {
   name: string;
   image: string;
   guests: number;
+  accesses?: ReservationAccessData | null;
 }
 
 //_____________________________OFFERS
