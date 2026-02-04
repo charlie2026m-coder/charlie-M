@@ -45,10 +45,10 @@ export const ReservationButton = ({ reservation, isActive }: { reservation: any,
   const roomPrice = Math.round((totalGross - servicesTotalPrice) * 100) / 100;
 
   console.log(roomPrice, 'roomPrice');
-  const taxAmount = parseFloat((roomPrice * CITY_TAX_RATE).toFixed(2));
+  const taxAmount = Math.round((roomPrice * CITY_TAX_RATE) * 100) / 100;
   console.log(taxAmount, 'taxAmount');
-  const roomPriceWithTax = parseFloat((roomPrice + taxAmount).toFixed(2));
-  const totalPrice = parseFloat((roomPriceWithTax + servicesTotalPrice).toFixed(2));
+  const roomPriceWithTax = Math.round((roomPrice + taxAmount) * 100) / 100;
+  const totalPrice = Math.round((roomPriceWithTax + servicesTotalPrice) * 100) / 100;
   if(guestsCount > 1) {
     if(reservation.additionalGuests && reservation.additionalGuests.length > 0) {
       const additionalGuests = reservation.additionalGuests.map((guest: any) => guest.firstName + ' ' + guest.lastName).join(', ');

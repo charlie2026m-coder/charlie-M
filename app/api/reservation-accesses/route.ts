@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_URL = process.env.NEXT_PUBLIC_GUESTWAY_API_URL;
-const PARTNERSHIP_API_KEY = process.env.NEXT_PUBLIC_GUESTWAY_API_KEY;
-const ACCESS_TOKEN = process.env.NEXT_PUBLIC_GUESTWAY_ACCESS_TOKEN;
+const API_URL = process.env.GUESTWAY_API_URL;
+const PARTNERSHIP_API_KEY = process.env.GUESTWAY_API_KEY;
+const ACCESS_TOKEN = process.env.GUESTWAY_ACCESS_TOKEN;
 
 export async function POST(request: NextRequest) {
   try {
