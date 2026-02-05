@@ -10,8 +10,10 @@ import { DateRange } from 'react-day-picker'
 import { useRouter, usePathname } from '@/navigation'
 import { useSearchParams } from 'next/navigation'
 import { getDate } from '@/lib/utils'
+import { useTranslations } from 'next-intl'
 
 const ChangeDate = ({ arrival, departure }: { arrival: string, departure: string }) => {
+  const t = useTranslations('changeDate')
   const [open, setOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
@@ -84,8 +86,8 @@ const ChangeDate = ({ arrival, departure }: { arrival: string, departure: string
         />
         
         <div className='grid grid-cols-2 gap-2 mt-4'>
-          <Button onClick={handleCancel} variant='outline'>Cancel</Button>
-          <Button onClick={handleApply} disabled={!dateRange?.from || !dateRange?.to}>Apply</Button>
+          <Button onClick={handleCancel} variant='outline'>{t('cancel')}</Button>
+          <Button onClick={handleApply} disabled={!dateRange?.from || !dateRange?.to}>{t('apply')}</Button>
         </div>
       </PopoverContent>
     </Popover>

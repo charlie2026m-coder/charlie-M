@@ -76,6 +76,7 @@
     ],
 
     "personalize_title": "Personalize your stay",
+    "personalize_description": "Optional extras are available for an additional fee",
     "personalize_items": [
       {
         "title": "Parking",
@@ -304,7 +305,18 @@
       "check": "Check",
       "book": "Book",
       "loading": "Loading..."
-    }
+    },
+    "removeService": "Remove Service",
+    "removing": "Removing...",
+    "remove": "Remove",
+    "serviceRemovedSuccessfully": "Service removed successfully",
+    "failedToRemoveService": "Failed to remove service",
+    "cancelBooking": "Cancel Booking",
+    "cancelling": "Cancelling...",
+    "accept": "Accept",
+    "decline": "Decline",
+    "bookingCancelledSuccessfully": "Booking cancelled successfully",
+    "failedToCancelBooking": "Failed to cancel booking"
   },
   "roomCard": {
     "perNightFrom": "per night from",
@@ -384,6 +396,10 @@
     "cancel": "Cancel",
     "apply": "Apply"
   },
+  "changeDate": {
+    "cancel": "Cancel",
+    "apply": "Apply"
+  },
   "addRooms": {
     "room": "Room",
     "addRoom": "Add Room",
@@ -391,7 +407,6 @@
   },
   "bookingForm": {
     "title": "BOOK",
-    "total": "Total",
     "pleaseSelectDates": "Please select dates",
     "search": "Search",
     "yourSelection": "Your Selection",
@@ -412,7 +427,8 @@
     "guests": "guests",
     "cityTax": "City tax:",
     "totalPrice": "Total price:",
-    "bookNow": "Book Now"
+    "bookNow": "Book Now",
+    "total": "Total"
   },
   "payment": {
     "guestDetails": "Guest Details",
@@ -504,6 +520,9 @@
     "info": "Info",
     "viewDetails": "View details",
     "reservationDetails": "Reservation Details",
+    "reservation": "Reservation :",
+    "dates": "Dates :",
+    "downloadInvoice": "Download Invoice",
     "roomInfo": "Room info",
     "bookAgain": "Book Again",
     "viewInvoice": "View Invoice",
@@ -519,22 +538,24 @@
     "loading": "Loading...",
     "noRoomsBooked": "You haven't booked any rooms yet",
     "bookNow": "Book now",
-    "roomNumber": "Room number",
+    "roomNumber": "Room №",
     "accessPin": "Access Pin",
     "code": "Code",
     "clickToCopy": "Click to copy",
     "copiedToClipboard": "{label} copied to clipboard!",
     "failedToCopy": "Failed to copy to clipboard",
     "backToMyReservations": "Back to My Reservations",
-    "checkIn": "Check-in",
-    "checkOut": "Check-out",
+    "checkIn": "Check-in:",
+    "checkOut": "Check-out:",
     "location": "Location",
-    "extraServices": "Extra services",
-    "total": "Total",
+    "extraServices": "Extra services:",
+    "extras": "Extras :",
+    "total": "Total:",
+    "guestsWithCount": "Guests ({guestsCount}) :",
     "payNow": "Pay Now",
     "nights": "nights",
     "upgradeYourStay": "Upgrade your stay",
-    "extendYourStay": "Extend Your Stay",
+    "extendYourStay": "Extend your stay",
     "soldOut": "Sold Out",
     "learnMore": "Learn more",
     "price": "Price",
@@ -542,7 +563,7 @@
     "oneTime": "one time",
     "information": "Information",
     "needAnything": "Need anything? We're right here.",
-    "contactsDescription": "Our team is here 24/7 to make your stay smooth, simple, and stress-free.<br />Reach out anytime — we're just one click away.",
+    "contactsDescription": "Our team is here 24/7 to make your stay smooth, simple, and stress-free. Reach out anytime — we're just one click away.",
     "whatsappUs": "WhatsApp Us",
     "emailUs": "Email Us",
     "informationItems": {
@@ -649,11 +670,34 @@
         ]
       },
       "9": {
-        "garbageTitle": "You can dispose of your trash on the –",
-        "garbageDescription": "1 floor, where you'll find clearly marked bins for general waste and recycling. Fresh bags and small disposal bins are also available in the Self-Service Closet if you need them.",
+        "garbageTitle": "You can dispose of your trash on the –1 floor, where you'll find clearly marked bins for general waste and recycling. Fresh bags and small disposal bins are also available in the Self-Service Closet if you need them.",
+        "garbageDescription": "",
         "garbageLocation": "Located on the –1 floor"
       }
-    }
+    },
+    "name": "Name",
+    "lastName": "Last Name",
+    "email": "Email",
+    "phone": "Phone",
+    "discard": "Discard",
+    "saving": "Saving...",
+    "saveChanges": "Save Changes",
+    "emailConfirmed": "Email confirmed successfully! Your email has been updated.",
+    "changePassword": "Change Password",
+    "createPassword": "Create Password",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password",
+    "dangerZone": "Danger Zone",
+    "deleteAccount": "Delete Account",
+    "permanentlyDelete": "Permanently delete your account and all associated data. This action cannot be undone.",
+    "typeDeleteToConfirm": "Type DELETE to confirm",
+    "deleteWord": "DELETE",
+    "understandPermanent": "I understand that this action is permanent and irreversible. My account and all associated data will be deleted.",
+    "deleting": "Deleting...",
+    "createAnAccount": "Create an Account",
+    "signUpDescription": "Sign up to access your profile, manage your bookings, and enjoy all features.",
+    "validEmailRequired": "Please enter a valid email address",
+    "createAccountButton": "Create account"
   },
   "checkIn": {
     "title": "Online Check-In",
@@ -1097,6 +1141,74 @@
         ]
       }
     ]
+  },
+  "forgotPassword": {
+    "title": "Forgot password?",
+    "subtitle": "Enter your email to reset password",
+    "email": "Email",
+    "loading": "Loading...",
+    "resetPassword": "Reset Password",
+    "rememberPassword": "Remember password?",
+    "login": "Login",
+    "checkEmail": "Check your Email Address",
+    "confirmationSent": "We have sent a link to your email address to reset password",
+    "ok": "Ok",
+    "failedToSend": "Failed to send reset link"
+  },
+  "login": {
+    "welcome": "Welcome to Charlie M",
+    "title": "Login",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot password?",
+    "loading": "Loading...",
+    "loginButton": "Login",
+    "noAccount": "Don't have an account?",
+    "signUp": "Sign Up",
+    "backToLogin": "← Back to Login",
+    "continueWithReservationId": "Continue with Reservation ID",
+    "enterBookingNumber": "Enter Booking.com Number",
+    "lastName": "Last Name",
+    "searching": "Searching...",
+    "continue": "Continue",
+    "notFound": "No found",
+    "nothingFound": "Nothing found for this Reservation ID number. Please, check and try again.",
+    "ok": "Ok",
+    "continueWithApple": "Continue with Apple",
+    "continueWithGoogle": "Continue with Google",
+    "loginFailed": "Login failed. Please check your credentials and try again."
+  },
+  "resetPassword": {
+    "newPassword": "New Password",
+    "enterNewPassword": "Enter your new password",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "updating": "Updating...",
+    "save": "Save",
+    "successfully": "Successfully",
+    "passwordChangedSuccessfully": "Your password has been changed successfully",
+    "ok": "Ok",
+    "invalidOrExpiredResetLink": "Invalid or expired reset link. Please request a new one.",
+    "somethingWentWrong": "Something went wrong. Please try again.",
+    "failedToSavePassword": "Failed to save password"
+  },
+  "signUp": {
+    "welcome": "Welcome to Charlie M",
+    "title": "Sign Up",
+    "fullName": "Full Name",
+    "email": "Email",
+    "password": "Password",
+    "rePassword": "Re-Password",
+    "agreeTo": "I agree to the",
+    "privacyPolicy": "Privacy Policy",
+    "loading": "Loading...",
+    "signUpButton": "Sign Up",
+    "alreadyHaveAccount": "Already have an account?",
+    "login": "Login",
+    "backToSignUp": "← Back to Sign Up",
+    "checkEmailToConfirm": "Please check your email to confirm your account",
+    "registrationFailed": "Registration failed",
+    "emailConfirmationSent": "We have sent a link to your email address to confirm your email address. Please check your email!"
   }
 }
 

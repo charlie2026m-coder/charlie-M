@@ -10,8 +10,10 @@ import { type ReservationFormData, reservationSchema } from '@/types/schemas';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import { useProfileStore } from '@/store/useProfile';
+import { useTranslations } from 'next-intl';
 
 const ReservationForm = () => {
+  const t = useTranslations('login');
   const [error, setError] = useState<string | null>(null);
   const [showNotFound, setShowNotFound] = useState(false);
   const searchBooking = useSearchBooking();
@@ -105,13 +107,13 @@ const ReservationForm = () => {
   return (
     <div className="w-full ">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 relative mb-[30px]">
-        <h2 className="text-xl text-center mb-6">Continue with Reservation ID</h2>
+        <h2 className="text-xl text-center mb-6">{t('continueWithReservationId')}</h2>
 
         <CustomInput 
           register={register} 
           name="number" 
           type="text" 
-          placeholder="Enter Booking.com Number" 
+          placeholder={t('enterBookingNumber')} 
           icon="booking" 
           isError={!!errors.number} 
         />
@@ -119,7 +121,7 @@ const ReservationForm = () => {
           register={register} 
           name="name" 
           type="text" 
-          placeholder="Last Name" 
+          placeholder={t('lastName')} 
           icon="name" 
           isError={!!errors.name} 
         />
@@ -129,7 +131,7 @@ const ReservationForm = () => {
           disabled={searchBooking.isPending || !isValid}
           className="w-full h-12 rounded-full bg-blue hover:bg-blue/80 font-medium !mb-0"
         >
-          {searchBooking.isPending ? 'Searching...' : 'Continue'}
+          {searchBooking.isPending ? t('searching') : t('continue')}
         </Button>
 
         {error && (
@@ -146,12 +148,13 @@ export default ReservationForm;
 
 
 const NotFound = ({ onReset }: { onReset: () => void }) => {
+  const t = useTranslations('login');
   return (
     <div className='w-full flex flex-col items-center justify-center'>
-      <h1 className='text-[20px] font-medium mb-4'>No found</h1>
-      <p className='text-base text-dark'>Nothing found for this Reservation ID number. Please, check and try again.</p>
+      <h1 className='text-[20px] font-medium mb-4'>{t('notFound')}</h1>
+      <p className='text-base text-dark'>{t('nothingFound')}</p>
       <Image src='/images/not-found-booking.svg' alt='not-found' width={330} height={260} className='w-[330px] object-cover mx-auto mb-4' />
-      <Button className='w-full h-[45px]' onClick={onReset}>Ok</Button>
+      <Button className='w-full h-[45px]' onClick={onReset}>{t('ok')}</Button>
     </div>
   )
 }

@@ -2,8 +2,10 @@ import { Button } from '../ui/button'
 import { FaApple } from 'react-icons/fa'  
 import { FcGoogle } from 'react-icons/fc'
 import { useOAuthSignIn } from '@/app/hooks/useAuth'
+import { useTranslations } from 'next-intl'
 
 const SocialMediaButtons = ({ onReservationClick }: { onReservationClick?: () => void }) => {
+  const t = useTranslations('login');
   const oauthMutation = useOAuthSignIn();
 
   return (
@@ -14,7 +16,7 @@ const SocialMediaButtons = ({ onReservationClick }: { onReservationClick?: () =>
         onClick={onReservationClick}
         className={buttonStyle}
       >
-        Continue with Reservation ID
+        {t('continueWithReservationId')}
       </Button>
 
       <Button
@@ -24,7 +26,7 @@ const SocialMediaButtons = ({ onReservationClick }: { onReservationClick?: () =>
         disabled={oauthMutation.isPending}
         className={buttonStyle}
       >
-        <FaApple className="size-6" /> Continue with Apple
+        <FaApple className="size-6" /> {t('continueWithApple')}
       </Button>
 
       <Button
@@ -34,7 +36,7 @@ const SocialMediaButtons = ({ onReservationClick }: { onReservationClick?: () =>
         disabled={oauthMutation.isPending}
         className={buttonStyle}
       >
-        <FcGoogle className="size-6" /> Continue with Google
+        <FcGoogle className="size-6" /> {t('continueWithGoogle')}
       </Button>
     </div>
   )

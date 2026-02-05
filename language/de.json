@@ -2,110 +2,111 @@
   
   "book_now_btn": "Jetzt buchen",
   "check_in_btn": "Einchecken",
-  "sign_in_btn": "Login",
-  "loading": "Lädt...",
+  "sign_in_btn": "Anmelden",
+  "loading": "Wird geladen...",
   "discount": {
-    "text": "Erhalten Sie den besten Preis direkt bei uns"
+    "text": "Buchen Sie direkt bei uns zum besten Preis"
   },
 
   "home":{
-    "rooms_title": "Zimmer auswählen",
-    "rooms_subtitle": "Ihr perfektes Zimmer, nur einen Klick entfernt.",
+    "rooms_title": "Wählen Sie Ihr Zimmer",
+    "rooms_subtitle": "Ihr perfektes Zimmer – nur einen Klick entfernt.",
     "location_title": "Standort",
-    "location_subtitle": "Unser Hotel ist die perfekte Wahl für alle, die in Berlin am Herzen der Stadt wohnen möchten.",
+    "location_subtitle": "Unser Hotel ist die perfekte Wahl für alle, die im Herzen Berlins wohnen möchten.",
     "weAreHere": "Wir sind hier",
 
     "concept_title": "Konzept",
     "concept_mobile_title": "Charlie M Konzept",
-    "concept_h_1": "Reisen sollten einfach sein",
-    "concept_p_1": "— von digitalem Einchecken bis zu Zugang via Smart-Code und einer Empfangsfreien Einrichtung.",
-    "concept_h_2": "Mit sorgfältig designeten Zimmern",
-    "concept_h_2_1": "responsive 24/7 digitalen Support",
-    "concept_p_2": ", wird Ihr Aufenthalt glatt, modern und entspannend unkompliziert.",
+    "concept_h_1": "Reisen sollte sich einfach anfühlen",
+    "concept_p_1": "— vom digitalen Check-in über den Zugang per Smart-Code bis hin zu einem rezeptionsfreien Konzept.",
+    "concept_h_2": "Mit durchdacht gestalteten Zimmern",
+    "concept_h_2_1": "und einem digitalen 24/7-Support",
+    "concept_p_2": "wird Ihr Aufenthalt reibungslos, modern und angenehm unkompliziert.",
 
-    "concept_it_1": "Online Einchecken",
-    "concept_ip_1": "keine Empfang, keine Wartezeit.",
-    "concept_it_2": "Zugang zu Ihrem Zimmer via Smart-Code",
-    "concept_ip_2": "einfach, sicher und immer verfügbar.",
+    "concept_it_1": "Online Check-in",
+    "concept_ip_1": "keine Rezeption, keine Wartezeiten.",
+    "concept_it_2": "Zugang zum Zimmer per Smart-Code",
+    "concept_ip_2": "einfach, sicher und und jederzeit verfügbar",
     "concept_it_3": "Privatsphäre & Unabhängigkeit",
     "concept_ip_3": "ein entspannter Aufenthalt ohne unnötige Unterbrechungen.",
-    "concept_it_4": "Instant Support",
-    "concept_ip_4": "schnelle Hilfe via Chat, wann immer Sie es benötigen.",
+    "concept_it_4": "Sofortige Unterstützung",
+    "concept_ip_4": "schnelle Hilfe per Chat, wann immer Sie sie brauchen.",
 
-    "concept_ip_1_text": "Mit unserem Online-Eincheck-System können Sie die Empfang vollständig überspringen",
-    "concept_ip_2_text": "Ein persönlicher Code sorgt für eine reibungslose und sichere Registrierung",
-    "concept_ip_3_text": "Wir verstehen, dass Ihre Zeit wertvoll ist. Genießen Sie einen reibungslosen und kontaktfreien Aufenthalt mit uns",
-    "concept_ip_4_text": "Unser intelligentes Bot-Team steht Ihnen für alle Fragen zur Verfügung",
+    "concept_ip_1_text": "Dank unseres Online-Check-ins können Sie den Empfang komplett überspringen.",
+    "concept_ip_2_text": "Ein persönlicher Code ermöglicht einen nahtlosen und sicheren Zugang.",
+    "concept_ip_3_text": "Wir wissen, wie wertvoll Ihre Zeit ist – genießen Sie einen kontaktfreien und entspannten Aufenthalt.",
+    "concept_ip_4_text": "Unser smarter Assistent unterstützt Sie rund um die Uhr bei allen Fragen.",
 
     "experience_title": "Charlie M Erfahrungen",
     "items": [
       {
         "title": "Co-Working Space",
-        "text": "Ein ruhiger Platz zum Fokussieren, vollständig mit einem Kaffeeautomaten ausgestattet.",
-        "content": "Ein ruhiger Bereich, der für Fokussierung ausgestattet ist und einen Kaffeeautomaten enthält."
+        "text": "Ein ruhiger Ort zum konzentrierten Arbeiten – inklusive Kaffeestation.",
+        "content": "Ein ruhiger Bereich für konzentriertes Arbeiten, vollständig ausgestattet und mit Kaffeestation."
       },
       
       {
         "title": "Luggage Lockers",
-        "text": "Frische Handtücher, Toilettenartikel & Zimmerbedarf jederzeit verfügbar.",
-        "content": "Mit unserem Online-Eincheck-System können Sie die Empfang vollständig überspringen"
+        "text": "Sichere Aufbewahrung vor dem Check-in oder nach dem Check-out.",
+        "content": "Ideal zur Aufbewahrung Ihres Gepäcks vor dem Check-in oder nach dem Check-out."
       },
       
       {
         "title": "Self-Service Closet",
-        "text": "Frische Handtücher, Toilettenartikel & Zimmerbedarf jederzeit verfügbar.",
-        "content": "Ein Selbstbedienungs-Schrank mit frischen Handtüchern, Toilettenartikeln und Zimmerbedarf, der jederzeit verfügbar ist."
+        "text": "Frische Handtücher, Pflegeprodukte und wichtige Zimmerutensilien jederzeit verfügbar.",
+        "content": "Ein Self-Service-Schrank mit frischen Handtüchern, Pflegeprodukten und wichtigen Zimmerutensilien, jederzeit verfügbar."
       },
       
       {
         "title": "Laundry Room",
-        "text": "Waschen & trocknen, wann immer Sie es benötigen.",
-        "content":"Eine vollständig ausgestattete Wasch- und Trockenraum, in dem Sie Ihre Kleidung jederzeit waschen und trocknen können."
+        "text": "Waschen und Trocknen, wann immer Sie es benötigen.",
+        "content":"Ein voll ausgestatteter Waschraum, in dem Sie Ihre Kleidung jederzeit waschen und trocknen können."
       },
 
       {
         "title": "In-Room Coffee Machine",
-        "text": "Kaffeezellen für Ihren Aufenthalt enthalten.",
-        "content":"Eine schicke Kaffeeautomat im Zimmer mit kostenlosen Kaffeezellen für Ihren gesamten Aufenthalt."
+        "text": "Kaffeekapseln während Ihres Aufenthalts inklusive.",
+        "content":"Eine stilvolle Kaffeemaschine im Zimmer mit kostenlosen Kaffeekapseln für Ihren gesamten Aufenthalt."
       },
       
       {
         "title": "Fast WiFi",
-        "text": "Zuverlässige hochgeschwindigkeits-Verbindung im gesamten Gebäude.",
-        "content":"Bleiben Sie mit schneller, zuverlässiger WiFi im gesamten Gebäude verbunden."
+        "text": "Zuverlässige Highspeed-Verbindung im gesamten Gebäude.",
+        "content":"Bleiben Sie mit schnellem, zuverlässigem WLAN überall im Gebäude verbunden."
       }
     ],
-    "personalize_title": "Ihr Aufenthalt anpassen",
+    "personalize_title": "Gestalten Sie Ihren Aufenthalt individuell",
+    "personalize_description": "Optionale Extras sind gegen eine zusätzliche Gebühr verfügbar",
     "personalize_items": [
       {
         "title": "Parkplatz",
-        "text": "Privat auf dem Gelände parken (maximal 10 Parkplätze)"
+        "text": "Privater Parkplatz direkt vor Ort"
       },
       {
         "title": "Frühstück",
-        "text": "Frische Frühstücksoptionen von unseren Partnern neben dem Co-Working-Raum"
+        "text": "Frische Frühstücksoptionen von unserem Partner"
       },
       {
         "title": "Zusätzliche Reinigung",
-        "text": "Zusätzliche Zimmerräumung während Ihres Aufenthalts"
+        "text": "Zusätzliche Zimmerreinigung während Ihres Aufenthalts"
       },
       {
-        "title": "Frühe Eincheckung",
-        "text": "Kommen Sie früher und stellen Sie sich entspannt ein"
+        "title": "Früher Check-in",
+        "text": "Früher anreisen und entspannt ankommen"
       },
       {
-        "title": "Späte Auscheckung",
-        "text": "Verlängern Sie Ihre Abreise und entspannen Sie sich länger"
+        "title": "Später Check-out",
+        "text": "Ihre Abreise verlängern und länger entspannen"
       },
       {
         "title": "Haustiere",
-        "text": "Nehmen Sie Ihr pelziges Freundchen mit — wir sind glücklich, wenn wir sie auch beherbergen!"
+        "text": "Bringen Sie Ihren vierbeinigen Begleiter mit – wir heißen ihn ebenfalls herzlich willkommen!"
       }
     ],
 
 
-    "design_title": "Für Ihren Aufenthalt designet",
-    "design_description": "Jeder Platz bei Charlie M ist für Ihren Aufenthalt gedacht. Von der Anordnung bis zu den Details, alles ist so konzipiert, dass Ihr Aufenthalt angenehm, einfach und gut zusammenpasst. Ruhige, einladende Details formen den Aufenthalt. Materialien, Licht und Fluss kommen gemeinsam still und zärtlich zusammen, um Plätze zu schaffen, an denen Sie sich entspannen, einstellen und einfach wohlfühlen können.",
+    "design_title": "Design, das Ihren Aufenthalt begleitet",
+    "design_description": "Jeder Bereich bei Charlie M ist auf Ihren Aufenthalt abgestimmt. Vom Grundriss bis zu den Details ist alles darauf ausgelegt, Ihren Aufenthalt komfortabel, unkompliziert und stimmig zu gestalten. Ruhige, einladende Details prägen das Erlebnis. Materialien, Licht und Raumfluss fügen sich harmonisch zusammen und schaffen Orte, an denen Sie zur Ruhe kommen, ankommen und sich während Ihres Aufenthalts einfach wohlfühlen können.",
     "design_items": [
       {
         "image_1": "Lobby",
@@ -132,27 +133,26 @@
     "faq_title": "Häufig gestellte Fragen",
     "faq_categories": [
       {
-        "title": "Einchecken & Zugang",
+        "title": "Check-in & Zugang",
         "items": [
           {
-            "title": "Wie funktioniert der Online-Einchecken?",
+            "title": "Wie funktioniert der Online-Check-in?",
             "p": [
-              "Bei Charlie M ist der Online-Check-in ein schneller digitaler Schritt, der Ihre Ankunft vollständig reibungslos und kontaktlos macht.",
-              "Nach Ihrer Buchung senden wir Ihnen einen Link, über den Sie Ihre Daten sicher bestätigen und die obligatorische Registrierung abschließen können. So können wir Ihre Identität überprüfen, Ihren Aufenthalt vorbereiten und Ihre persönliche Zugangs-PIN aktivieren.",
-              "**Sobald Ihr Online-Check-in abgeschlossen ist, wird Ihnen Ihre PIN am Tag Ihrer Ankunft zugesendet. Sie erhalten sie per E-Mail und WhatsApp, und sie gibt Ihnen Zugang zum Gebäude und zu Ihrem Zimmer.**",
-              "Da wir keine Rezeption vor Ort haben, muss der Online-Check-in vor Ihrer Ankunft abgeschlossen werden – andernfalls können wir Ihren Zugangscode nicht generieren."
+              "Bei Charlie M ist der Online-Check-in ein kurzer digitaler Schritt, der Ihre Ankunft vollständig reibungslos und kontaktlos gestaltet.Nach Ihrer Buchung senden wir Ihnen einen Link, über den Sie Ihre Daten sicher bestätigen und die verpflichtende Registrierung abschließen können. So können wir Ihre Identität überprüfen, Ihren Aufenthalt vorbereiten und Ihren persönlichen Zugangscode (PIN) aktivieren.",
+              "Sobald Ihr Online-Check-in abgeschlossen ist, erhalten Sie Ihren PIN am Tag Ihrer Anreise. Sie bekommen ihn per E-Mail und WhatsApp, und er ermöglicht Ihnen den Zugang sowohl zum Gebäude als auch zu Ihrem Zimmer.",
+              "Da wir keine Rezeption vor Ort haben, muss der Online-Check-in vor Ihrer Anreise abgeschlossen werden – andernfalls können wir keinen Zugangscode für Sie generieren."
             ]
           },
           {
-            "title": "Wann erhalte ich meine Zugangs-PIN?",
+            "title": "Wann erhalte ich meinen Zugangscode (PIN)?",
             "p": [
-              "Ihre Zugangs-PIN wird erst generiert, nachdem Sie den Online-Check-in abgeschlossen haben. Sie erhalten sie am Ankunftstag per E-Mail und WhatsApp, normalerweise am frühen Nachmittag. Diese PIN wird benötigt, um sowohl das Gebäude als auch Ihr Zimmer zu betreten."
+              "Ihr persönlicher Zugangscode (PIN) wird erst nach Abschluss des Online-Check-ins erstellt. Sie erhalten ihn am Tag Ihrer Anreise per E-Mail und WhatsApp, in der Regel bis zum frühen Nachmittag. Dieser PIN wird benötigt, um sowohl das Gebäude als auch Ihr Zimmer zu betreten."
             ]
           },
           {
-            "title": "Welche Türen kann ich mit meiner PIN öffnen?",
+            "title": "Welche Türen kann ich mit meinem PIN öffnen?",
             "p": [
-              "Ihre persönliche PIN gibt Ihnen Zugang zu allem, was Sie während Ihres Aufenthalts benötigen. Mit diesem Code können Sie den Haupteingang, Ihre Zimmertür, den Waschraum und den Gepäckraum öffnen. Keine Schlüssel oder Karten nötig – nur eine PIN für alle Bereiche."
+              "Ihr persönlicher PIN ermöglicht Ihnen den Zugang zu allem, was Sie während Ihres Aufenthalts benötigen. Mit diesem Code können Sie den Haupteingang, die Tür zu Ihrem Zimmer, den Waschraum sowie den Gepäckschließfachraum öffnen. Es sind keine Schlüssel oder Karten erforderlich – ein PIN für alle Bereiche."
             ]
           },
           {
@@ -173,15 +173,15 @@
             ]
           },
           {
-            "title": "Wie oft wird meine Wohnung gereinigt?",
+            "title": "Wie oft wird mein Apartment gereinigt?",
             "p": [
-              "Ihre Wohnung wird vor Ihrer Ankunft gründlich gereinigt und vorbereitet. Bei Aufenthalten von mehr als 7 Nächten bieten wir eine kostenlose wöchentliche Reinigung. Wenn Sie zu jeder Zeit eine zusätzliche Auffrischung wünschen, können Sie eine zusätzliche Reinigung für X buchen."
+              "Ihr Apartment wird vor Ihrer Ankunft gründlich gereinigt und vorbereitet. Bei Aufenthalten von mehr als 7 Nächten bieten wir eine kostenlose wöchentliche Reinigung an. Wenn Sie zwischendurch eine zusätzliche Reinigung wünschen, können Sie diese gegen Aufpreis buchen."
             ]
           },
           {
-            "title": "Wo kann ich frische Handtücher und zusätzliche Ausstattung bekommen?",
+            "title": "Wo erhalte ich frische Handtücher und zusätzliche Pflegeprodukte?",
             "p": [
-              "Sie können jederzeit frische Handtücher und zusätzliche Ausstattung aus unserem Essentials Closet nehmen. Es steht Ihnen jederzeit kostenlos zur Verfügung."
+              "Sie können sich jederzeit frische Handtücher und zusätzliche Pflegeprodukte aus unserem Essentials Closet nehmen. Dieser steht Ihnen jederzeit kostenlos zur Verfügung."
             ]
           },
           {
@@ -199,18 +199,18 @@
         ]
       },
       {
-        "title": "Zusätzliche Leistungen",
+        "title": "Zusatzleistungen",
         "items": [
           {
-            "title": "Welche zusätzlichen Leistungen sind im Hotel verfügbar?",
+            "title": "Welche Zusatzleistungen sind im Hotel verfügbar?",
             "p": [
-              "Wir bieten verschiedene zusätzliche Leistungen, um Ihren Aufenthalt noch komfortabler zu gestalten, darunter Frühstück, Parkplatz, früher Check-in, später Check-out und spezielle Pakete. Sie können alle diese Extras direkt auf unserer Website buchen oder einfach zu Ihrer bestehenden Reservierung hinzufügen."
+              "Wir bieten verschiedene Zusatzleistungen an, um Ihren Aufenthalt noch komfortabler zu gestalten, darunter Frühstück, Parkmöglichkeiten, früher Check-in, später Check-out. Sie können diese Extras direkt über unsere Website buchen oder ganz einfach zu Ihrer bestehenden Reservierung hinzufügen."
             ]
           },
           {
             "title": "Sind Haustiere erlaubt?",
             "p": [
-              "Ja, Haustiere sind willkommen! Wir erheben eine einmalige Gebühr von X für den gesamten Aufenthalt, und Ihr flauschiger Freund kann die Reise mit Ihnen genießen."
+              "Ja, Haustiere sind herzlich willkommen! Wir berechnen eine einmalige Gebühr für den gesamten Aufenthalt, sodass Ihr vierbeiniger Begleiter gemeinsam mit Ihnen die Reise genießen kann."
             ]
           }
         ]
@@ -221,9 +221,8 @@
           {
             "title": "Wie kann ich meine Reservierung ändern oder stornieren?",
             "p": [
-              "Wenn Sie direkt über die Charlie M-Website gebucht haben, können Sie Ihre Reservierung ganz einfach in Ihrem Gästekonto ändern oder stornieren.",
-              "Bei flexiblen Preisen wird jede berechtigte Rückerstattung automatisch an Ihre ursprüngliche Zahlungsmethode zurückgegeben.",
-              "Wenn Ihre Buchung über eine Partnerplattform (wie Booking.com, Airbnb oder Expedia) erfolgt ist, nehmen Sie bitte Änderungen oder Stornierungen direkt auf dieser Plattform vor. Rückerstattungen werden auch vom Anbieter bearbeitet, bei dem Sie gebucht haben."
+              "Wenn Sie direkt über die Charlie-M-Website gebucht haben, können Sie Ihre Reservierung ganz einfach in Ihrem Gästeaccount ändern oder stornieren.Bei flexiblen Tarifen ist eine Rückerstattung möglich, sofern die Stornierung spätestens 48 Stunden vor der geplanten Anreise erfolgt. In diesem Fall wird der erstattungsfähige Betrag automatisch auf die ursprünglich verwendete Zahlungsmethode zurückgebucht.",
+              "Wenn Ihre Buchung über eine Partnerplattform (z. B. Booking.com, Airbnb oder Expedia) erfolgt ist, nehmen Sie bitte alle Änderungen oder Stornierungen direkt über diese Plattform vor. Rückerstattungen werden ebenfalls über den jeweiligen Anbieter abgewickelt."
             ]
           },
           {
@@ -255,14 +254,14 @@
     "adults": "Erwachsene",
     "children": "Kinder",
     "babies": "Babys",
-    "children_age_note": "bis zu 3 Jahren",
-    "children_not_available": "Kinder nicht verfügbar für dieses Zimmer",
-    "crib_fee_note": "Kinderbett wird zusätzlich berechnet"
+    "children_age_note": "bis 3 Jahren",
+    "children_not_available": "Kinder für dieses Zimmer nicht verfügbar",
+    "crib_fee_note": "Babybett gegen Aufpreis"
   },
   "dateInput": {
-    "checkIn": "Einchecken",
-    "checkOut": "Auschecken",
-    "chooseDate": "Datum wählen"
+    "checkIn": "Check-in",
+    "checkOut": "Check-out",
+    "chooseDate": "Datum auswählen"
   },
   "imprint": {
     "title": "Impressum gemäß § 5 TMG",
@@ -271,14 +270,14 @@
     "address_line2": "13347 Berlin",
     "address_line3": "Deutschland",
     "represented_by": "Vertreten durch:",
-    "general_partner": "Die persönlich haftende Gesellschafterin:",
+    "general_partner": "Der persönlich haftende Gesellschafter:",
     "general_partner_name": "MBoutique Verwaltungs GmbH",
-    "managing_directors": "Geschäftsführer der persönlich haftenden Gesellschafterin:",
+    "managing_directors": "Geschäftsführer des persönlich haftenden Gesellschafters:",
     "director1": "David Prajs",
     "director2": "Simon Schmargon",
     "contact": "Kontakt:",
     "email_label": "E-Mail:",
-    "commercial_register": "Handelsregistereintrag:",
+    "commercial_register": "Handelsregister:",
     "registered_with": "Eingetragen im Handelsregister",
     "register_court": "Registergericht: Amtsgericht Berlin-Charlottenburg",
     "register_number": "Handelsregisternummer:",
@@ -288,7 +287,7 @@
     "vat_id_value": "DE361014687",
     "responsible_content": "Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV:",
     "dispute_resolution": "Streitbeilegung:",
-    "dispute_resolution_text": "Die MBoutique GmbH & Co. KG ist grundsätzlich bereit, an einem Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen, soweit dies gesetzlich vorgesehen oder im Einzelfall sachgerecht ist."
+    "dispute_resolution_text": "Die MBoutique GmbH & Co. KG ist bereit, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen, soweit dies gesetzlich vorgeschrieben ist oder im Einzelfall als sinnvoll erachtet wird."
   },
   "reservations": {
     "extendYourStay": {
@@ -303,12 +302,23 @@
       "check": "Prüfen",
       "book": "Buchen",
       "loading": "Lädt..."
-    }
+    },
+    "removeService": "Service entfernen",
+    "removing": "Wird entfernt …",
+    "remove": "Entfernen",
+    "serviceRemovedSuccessfully": "Service erfolgreich entfernt",
+    "failedToRemoveService": "Fehler beim Entfernen des Services",
+    "cancelBooking": "Buchung stornieren",
+    "cancelling": "Wird storniert …",
+    "accept": "Akzeptieren",
+    "decline": "Ablehnen",
+    "bookingCancelledSuccessfully": "Buchung erfolgreich storniert",
+    "failedToCancelBooking": "Fehler beim Stornieren der Buchung"
   },
   "roomCard": {
-    "perNightFrom": "pro Nacht ab",
+    "perNightFrom": "ab … pro Nacht",
     "bookNow": "Jetzt buchen",
-    "loading": "Lädt..."
+    "loading": "Wird geladen …"
   },
   "noAvailability": {
     "title": "Keine Zimmer verfügbar",
@@ -317,13 +327,13 @@
     "notAvailable": "nicht verfügbar",
     "forSelectedDates": "für die ausgewählten Daten",
     "forTodayTomorrow": "für heute und morgen",
-    "tryDifferentDates": "Bitte versuchen Sie andere Daten oder erkunden Sie andere Zimmeroptionen.",
-    "lookAnother": "Andere ansehen"
+    "tryDifferentDates": "Bitte wählen Sie andere Daten oder sehen Sie sich weitere Zimmeroptionen an.",
+    "lookAnother": "Andere Zimmer ansehen"
   },
   "locationCard": {
-    "drive": "Fahren",
+    "drive": "Auto",
     "publicTransport": "Öffentliche Verkehrsmittel",
-    "walk": "Gehen",
+    "walk": "Zu Fuß",
     "seeOnGoogleMaps": "Auf Google Maps anzeigen",
     "centralStation": "Hauptbahnhof (Hbf):",
     "taxi": "Taxi",
@@ -331,14 +341,14 @@
   },
   "footer": {
     "whatsappSupport": "WhatsApp Chat Support 24/7",
-    "call": "Anrufen: {phone}",
+    "call": "Telefon: {phone}",
     "address": "Friedrichstraße 33, 10969 Berlin",
-    "tagline": "Moderne Aufenthalte - Berliner Tage",
+    "tagline": "Modern stays – Berlin days",
     "subtitle": "Vollautomatisierter Aufenthalt",
-    "contacts": "Kontakte:",
+    "contacts": "Kontakt:",
     "getSocial": "Folgen Sie uns:",
-    "tagUs": "Markieren Sie uns in Ihren Fotos",
-    "payWith": "Bezahlen mit",
+    "tagUs": "Markieren Sie uns auf Ihren Fotos",
+    "payWith": "Zahlungsmethoden",
     "privacyPolicy": "Datenschutzerklärung",
     "termsAndConditions": "Allgemeine Geschäftsbedingungen",
     "imprint": "Impressum",
@@ -352,16 +362,16 @@
     "babyBed": "Kinderbett",
     "all": "Alle",
     "any": "Beliebig",
-    "single": "Einzelbett",
+    "single": "Einzel",
     "standard": "Standard",
     "business": "Business",
     "superior": "Superior",
     "queen": "Queen",
     "king": "King",
     "terrace": "Terrasse",
-    "sharedTerrace": "Gemeinsame Terrasse",
-    "lowToHigh": "Niedrig bis Hoch",
-    "highToLow": "Hoch bis Niedrig"
+    "sharedTerrace": "Gemeinschaftsterrasse",
+    "lowToHigh": "Niedrig nach hoch",
+    "highToLow": "Hoch nach niedrig"
   },
   "roomParams": {
     "max": "Max.",
@@ -373,48 +383,52 @@
   },
   "roomContent": {
     "weHave": "Wir haben",
-    "left": "übrig",
+    "left": "verfügbar",
     "babyBedsAvailable": "Kinderbetten verfügbar",
     "pleaseNote": "Bitte beachten Sie:",
-    "roomVariationNote": "Jedes Zimmer in unserem historischen Gebäude hat sein eigenes individuelles Layout. Während jedes Zimmer in dieser Kategorie das gleiche Komfortniveau und die gleichen Ausstattungsmerkmale bietet, sind kleine Variationen in Größe oder Form zu erwarten. Aus diesem Grund kann sich das Zimmer, das Sie erhalten, geringfügig von den gezeigten Fotos unterscheiden, entspricht aber immer der Qualität und Kategorie, die Sie gebucht haben."
+    "roomVariationNote": "Jedes Zimmer in unserem historischen Gebäude verfügt über einen individuellen Grundriss. Obwohl alle Zimmer dieser Kategorie denselben Komfortstandard und dieselben Ausstattungsmerkmale bieten, können sich Größe und Form leicht unterscheiden. Daher kann das Ihnen zugewiesene Zimmer geringfügig von den gezeigten Fotos abweichen, entspricht jedoch stets der gebuchten Qualität und Zimmerkategorie."
   },
   "availability": {
     "title": "Verfügbarkeit",
     "cancel": "Abbrechen",
     "apply": "Anwenden"
   },
+  "changeDate": {
+    "cancel": "Vorgang Abbrechen",
+    "apply": "Übernehmen"
+  },
   "addRooms": {
     "room": "Zimmer",
     "addRoom": "Zimmer hinzufügen",
-    "left": "übrig"
+    "left": "noch verfügbar"
   },
   "bookingForm": {
     "title": "BUCHEN",
-    "total": "Gesamt",
     "pleaseSelectDates": "Bitte wählen Sie Daten aus",
     "search": "Suchen",
     "yourSelection": "Ihre Auswahl",
     "yourInfo": "Ihre Daten",
-    "finish": "Abschluss",
+    "finish": "Fertigstellen",
     "addExtras": "Extras:",
     "learnMore": "Mehr erfahren",
     "price": "Preis:",
     "soldOut": "Ausverkauft",
-    "nonRefundable": "Nicht erstattungsfähig (5% sparen)",
-    "noRefundDescription": "Keine Rückerstattung bei Stornierung",
-    "refundable": "Erstattungsfähig",
-    "refundableDescription": "Kostenlose Stornierung bis 3 Tage vorher",
+    "nonRefundable": "Nicht stornierbar (5% sparen)",
+    "noRefundDescription": "Keine Rückerstattung im Falle einer Stornierung",
+    "refundable": "Kostenlos stornierbar",
+    "refundableDescription": "Kostenfrei stornierbar bis 3 Tage vor Anreise",
     "night": "Nacht",
     "nights": "Nächte",
     "room": "Zimmer",
     "guest": "Gast",
     "guests": "Gäste",
-    "cityTax": "Kurtaxe:",
+    "cityTax": "City Tax:",
     "totalPrice": "Gesamtpreis:",
-    "bookNow": "Jetzt buchen"
+    "bookNow": "Jetzt buchen",
+    "total": "Gesamt"
   },
   "payment": {
-    "guestDetails": "Gästedaten",
+    "guestDetails": "Angaben zum Gast",
     "name": "Vorname",
     "lastName": "Nachname",
     "email": "E-Mail",
@@ -425,27 +439,27 @@
     "continue": "Weiter",
     "creatingBooking": "Buchung wird erstellt...",
     "pleaseWait": "Bitte warten Sie, während wir Ihre Reservierung bearbeiten",
-    "backToBookingDetails": "Zurück zu Buchungsdetails",
+    "backToBookingDetails": "Zurück zu den Buchungsdetails",
     "completePayment": "Zahlung abschließen",
-    "securePayment": "Sichere Zahlung powered by Adyen",
-    "loadingPaymentMethods": "Zahlungsmethoden werden geladen...",
-    "servicesUnavailable": "Einige Services sind nicht mehr verfügbar. Bitte versuchen Sie es erneut oder kontaktieren Sie den Support.",
+    "securePayment": "Sichere Zahlung mit Adyen",
+    "loadingPaymentMethods": "Zahlungsmethoden werden geladen …",
+    "servicesUnavailable": "Einige Leistungen sind nicht mehr verfügbar. Bitte versuchen Sie es erneut oder kontaktieren Sie den Support.",
     "bookingCreated": "Buchung erstellt!",
     "bookingFailed": "Buchung fehlgeschlagen. Bitte kontaktieren Sie den Support.",
     "paymentFailed": "Zahlung fehlgeschlagen",
     "paymentError": "Zahlungsfehler",
     "paymentInitFailed": "Zahlung konnte nicht initialisiert werden. Bitte versuchen Sie es erneut.",
-    "noServicesSelected": "Keine Services ausgewählt",
-    "pleaseGoBackAndSelect": "Bitte gehen Sie zurück und wählen Sie Services zum Bezahlen aus.",
+    "noServicesSelected": "Keine Leistungen ausgewählt",
+    "pleaseGoBackAndSelect": "Bitte gehen Sie zurück und wählen Sie Leistungen aus, die Sie bezahlen möchten.",
     "processing": "Wird verarbeitet...",
-    "pleaseWaitAddingServices": "Bitte warten Sie, während wir Services zu Ihrer Reservierung hinzufügen",
-    "backToReservationDetails": "Zurück zu Reservierungsdetails",
-    "paymentCompletedMissing": "Zahlung abgeschlossen, aber Transaktionsreferenz oder Services fehlen",
-    "addingServicesToReservation": "Services werden zur Reservierung hinzugefügt...",
-    "servicesAddedSuccessfully": "Services erfolgreich hinzugefügt!",
-    "failedToAddServices": "Fehler beim Hinzufügen der Services. Bitte kontaktieren Sie den Support.",
+    "pleaseWaitAddingServices": "Bitte warten Sie, während wir die Leistungen zu Ihrer Reservierung hinzufügen.",
+    "backToReservationDetails": "Zurück zu den Reservierungsdetails",
+    "paymentCompletedMissing": "Zahlung abgeschlossen, jedoch fehlen Transaktionsreferenz oder Leistungen",
+    "addingServicesToReservation": "Leistungen werden zur Reservierung hinzugefügt …",
+    "servicesAddedSuccessfully": "Leistungen erfolgreich hinzugefügt!",
+    "failedToAddServices": "Leistungen konnten nicht hinzugefügt werden. Bitte kontaktieren Sie den Support.",
     "summary": "Zusammenfassung",
-    "services": "Services:",
+    "services": "Leistungen:",
     "total": "Gesamt:"
   },
   "summary": {
@@ -456,12 +470,12 @@
   },
   "success": {
     "bookingConfirmed": "Ihre Buchung ist bestätigt!",
-    "confirmationSent": "Wir haben Ihnen die Bestätigung an die E-Mail gesendet:",
+    "confirmationSent": "Wir haben Ihnen die Bestätigung per E-Mail gesendet:",
     "backToMainPage": "Zurück zur Hauptseite"
   },
   "profile": {
     "profile": "Profil",
-    "myReservations": "Reservierungen",
+    "myReservations": "Meine Reservierungen",
     "all": "Alle",
     "added": "Hinzugefügt",
     "ongoing": "Laufend",
@@ -471,22 +485,22 @@
     "guest": "Gast",
     "guests": "Gäste",
     "room": "Zimmer",
-    "addViaReservationId": "+ Reservierung per ID",
-    "addViaReservationIdTitle": "Reservierung per ID hinzufügen",
+    "addViaReservationId": "+ Über Reservierungsnummer hinzufügen",
+    "addViaReservationIdTitle": "Über Reservierungsnummer hinzufügen",
     "notFound": "Nicht gefunden",
-    "success": "Erfolg",
-    "enterReservationId": "Geben Sie Ihre Reservierungs-ID (oder booking.com Code) ein",
-    "reservationIdPlaceholder": "Reservierungs-ID/Code",
+    "success": "Erfolgreich",
+    "enterReservationId": "Geben Sie Ihre Reservierungsnummer (oder den Booking.com-Code) ein",
+    "reservationIdPlaceholder": "Reservierungsnummer / Code",
     "cancel": "Abbrechen",
     "add": "Hinzufügen",
-    "nothingFound": "Für diese Reservierungs-ID wurde nichts gefunden. Bitte überprüfen Sie die Eingabe und versuchen Sie es erneut.",
+    "nothingFound": "Für diese Reservierungsnummer wurde nichts gefunden. Bitte überprüfen Sie die Eingabe und versuchen Sie es erneut.",
     "ok": "Ok",
     "reservationAddedSuccess": "Ihre Reservierung wurde erfolgreich hinzugefügt",
     "adding": "Wird hinzugefügt...",
     "reservationAlreadyAdded": "Diese Reservierung wurde bereits hinzugefügt",
-    "reservationEmailMismatch": "Die E-Mail-Adresse der Reservierung stimmt nicht mit Ihrer Kontoe-Mail-Adresse überein",
+    "reservationEmailMismatch": "Die E-Mail-Adresse der Reservierung stimmt nicht mit der E-Mail-Adresse Ihres Kontos überein",
     "errorAddingReservation": "Fehler beim Hinzufügen der Reservierung",
-    "reservationNotFoundCheckId": "Reservierung nicht gefunden. Bitte überprüfen Sie die ID.",
+    "reservationNotFoundCheckId": "Reservierung nicht gefunden. Bitte überprüfen Sie die Nummer.",
     "reservationIdExample": "Beispiel: XXXXX-1 (muss mit -1 enden)",
     "logout": "Abmelden",
     "logoutConfirm": "Möchten Sie sich wirklich abmelden?",
@@ -503,6 +517,9 @@
     "info": "Info",
     "viewDetails": "Details anzeigen",
     "reservationDetails": "Reservierungsdetails",
+    "reservation": "Reservierung :",
+    "dates": "Zeitraum:",
+    "downloadInvoice": "Rechnung herunterladen",
     "roomInfo": "Zimmerinfo",
     "bookAgain": "Erneut buchen",
     "viewInvoice": "Rechnung anzeigen",
@@ -515,25 +532,27 @@
     "checkInError": "Check-In-Prozess konnte nicht gestartet werden",
     "errorLoadingReservations": "Fehler beim Laden der Reservierungen",
     "reservationNotFoundInApaleo": "Reservierung in Apaleo nicht gefunden",
-    "loading": "Lädt...",
+    "loading": "Wird geladen …",
     "noRoomsBooked": "Sie haben noch keine Zimmer gebucht",
     "bookNow": "Jetzt buchen",
-    "roomNumber": "Zimmernummer",
-    "accessPin": "Zugangscode",
+    "roomNumber": "Zimmer №",
+    "accessPin": "Zugangscode (PIN)",
     "code": "Code",
-    "clickToCopy": "Zum Kopieren klicken",
+    "clickToCopy": "Zum Kopieren anklicken",
     "copiedToClipboard": "{label} in die Zwischenablage kopiert!",
     "failedToCopy": "Fehler beim Kopieren in die Zwischenablage",
-    "backToMyReservations": "Zurück zu Meinen Reservierungen",
-    "checkIn": "Einchecken",
-    "checkOut": "Auschecken",
+    "backToMyReservations": "Zurück zu meinen Reservierungen",
+    "checkIn": "Check-in:",
+    "checkOut": "Check-out:",
     "location": "Standort",
-    "extraServices": "Zusätzliche Leistungen",
-    "total": "Gesamt",
+    "extraServices": "Zusatzleistungen:",
+    "extras": "Extras :",
+    "total": "Gesamt:",
+    "guestsWithCount": "Gäste ({guestsCount}) :",
     "payNow": "Jetzt bezahlen",
     "nights": "Nächte",
-    "upgradeYourStay": "Ihren Aufenthalt aufwerten",
-    "extendYourStay": "Aufenthalt verlängern",
+    "upgradeYourStay": "Werten Sie Ihren Aufenthalt auf",
+    "extendYourStay": "Verlängern Sie Ihren Aufenthalt",
     "soldOut": "Ausverkauft",
     "learnMore": "Mehr erfahren",
     "price": "Preis:",
@@ -541,18 +560,18 @@
     "oneTime": "einmalig",
     "information": "Informationen",
     "needAnything": "Brauchen Sie etwas? Wir sind für Sie da.",
-    "contactsDescription": "Unser Team ist 24/7 für Sie da, um Ihren Aufenthalt reibungslos, einfach und stressfrei zu gestalten.<br />Kontaktieren Sie uns jederzeit — wir sind nur einen Klick entfernt.",
-    "whatsappUs": "WhatsApp",
-    "emailUs": "E-Mail",
+    "contactsDescription": "Unser Team ist rund um die Uhr für Sie da, um Ihren Aufenthalt reibungslos, unkompliziert und stressfrei zu gestalten. Kontaktieren Sie uns jederzeit — wir sind nur einen Klick entfernt.",
+    "whatsappUs": "Per WhatsApp kontaktieren",
+    "emailUs": "Per E-Mail kontaktieren",
     "informationItems": {
-      "1": "Co-Working Space",
+      "1": "Co-Working-Bereich",
       "2": "Gepäckschließfächer",
-      "3": "Selbstbedienungsschrank",
+      "3": "Self-Service-Closet",
       "4": "Waschraum",
       "5": "Kaffeemaschine im Zimmer",
-      "6": "Schnelles WiFi",
+      "6": "Schnelles WLAN",
       "7": "Fundbüro",
-      "8": "Zimmerauffrischung",
+      "8": "Zimmerreinigung",
       "9": "Müllentsorgung"
     },
     "infoContent": {
@@ -633,9 +652,9 @@
         "description": [
           "Wenn Sie während Ihres Aufenthalts etwas verlieren, kontaktieren Sie uns bitte, und wir werden unser Bestes tun, um Ihnen zu helfen, es zu finden."
         ],
-        "lostCardTitle": "Etwas während Ihres Aufenthalts verloren?",
-        "lostCardDescription": "Keine Sorge — wir sind hier, um zu helfen. Wenn Sie einen Gegenstand in Ihrem Zimmer oder irgendwo im Gebäude verlegt haben, kontaktieren Sie uns und wir prüfen, ob er gefunden wurde.",
-        "howToReachTitle": "Wie Sie uns erreichen:",
+        "lostCardTitle": "Haben Sie während Ihres Aufenthalts etwas verloren?",
+        "lostCardDescription": "Keine Sorge – wir helfen Ihnen gerne weiter. Wenn Sie einen Gegenstand in Ihrem Zimmer oder irgendwo im Gebäude verlegt haben, kontaktieren Sie uns bitte, und wir prüfen, ob er gefunden wurde.",
+        "howToReachTitle": "So erreichen Sie uns:",
         "whatsapp": "WhatsApp:",
         "email": "E-Mail:"
       },
@@ -648,11 +667,34 @@
         ]
       },
       "9": {
-        "garbageTitle": "Sie können Ihren Müll auf der –",
-        "garbageDescription": "1. Etage entsorgen, wo Sie klar gekennzeichnete Behälter für allgemeinen Abfall und Recycling finden. Frische Tüten und kleine Entsorgungsbehälter sind auch im Selbstbedienungsschrank verfügbar, falls Sie sie benötigen.",
-        "garbageLocation": "Auf der –1. Etage gelegen"
+        "garbageTitle": "Sie können Ihren Müll im –1. Stock entsorgen. Dort finden Sie deutlich gekennzeichnete Behälter für Restmüll und Recycling. Frische Müllbeutel sowie kleine Abfalleimer sind bei Bedarf auch im Self-Service-Schrank verfügbar.",
+        "garbageDescription": "",
+        "garbageLocation": "Befindet sich im –1. Stock"
       }
-    }
+    },
+    "name": "Vorname",
+    "lastName": "Nachname",
+    "email": "E-Mail",
+    "phone": "Telefon",
+    "discard": "Verwerfen",
+    "saving": "Wird gespeichert …",
+    "saveChanges": "Änderungen speichern",
+    "emailConfirmed": "E-Mail erfolgreich bestätigt! Ihre E-Mail-Adresse wurde aktualisiert.",
+    "changePassword": "Passwort ändern",
+    "createPassword": "Passwort erstellen",
+    "newPassword": "Neues Passwort",
+    "confirmPassword": "Passwort bestätigen",
+    "dangerZone": "Gefahrenbereich",
+    "deleteAccount": "Konto löschen",
+    "permanentlyDelete": "Löschen Sie Ihr Konto dauerhaft und alle damit verbundenen Daten. Diese Aktion kann nicht rückgängig gemacht werden.",
+    "typeDeleteToConfirm": "Geben Sie LÖSCHEN ein, um zu bestätigen",
+    "deleteWord": "LÖSCHEN",
+    "understandPermanent": "Ich verstehe, dass diese Aktion dauerhaft und unwiderruflich ist. Mein Konto und alle damit verbundenen Daten werden gelöscht.",
+    "deleting": "Wird gelöscht...",
+    "createAnAccount": "Konto erstellen",
+    "signUpDescription": "Registrieren Sie sich, um auf Ihr Profil zuzugreifen, Ihre Buchungen zu verwalten und alle Funktionen zu nutzen.",
+    "validEmailRequired": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+    "createAccountButton": "Konto erstellen"
   },
   "checkIn": {
     "title": "Online-Check-In",
@@ -1096,6 +1138,74 @@
         ]
       }
     ]
+  },
+  "forgotPassword": {
+    "title": "Passwort vergessen?",
+    "subtitle": "Geben Sie Ihre E-Mail-Adresse ein, um das Passwort zurückzusetzen",
+    "email": "E-Mail",
+    "loading": "Wird geladen …",
+    "resetPassword": "Passwort zurücksetzen",
+    "rememberPassword": "Passwort wieder eingefallen?",
+    "login": "Anmelden",
+    "checkEmail": "Überprüfen Sie Ihre E-Mail-Adresse",
+    "confirmationSent": "Wir haben einen Link an Ihre E-Mail-Adresse gesendet, um das Passwort zurückzusetzen",
+    "ok": "Ok",
+    "failedToSend": "Fehler beim Senden des Reset-Links"
+  },
+  "login": {
+    "welcome": "Willkommen bei Charlie M",
+    "title": "Anmelden",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "forgotPassword": "Passwort vergessen?",
+    "loading": "Wird geladen…",
+    "loginButton": "Anmelden",
+    "noAccount": "Noch kein Konto?",
+    "signUp": "Registrieren",
+    "backToLogin": "← Zurück zur Anmeldung",
+    "continueWithReservationId": "Mit Reservierungsnummer fortfahren",
+    "enterBookingNumber": "Booking.com-Nummer eingeben",
+    "lastName": "Nachname",
+    "searching": "Wird gesucht …",
+    "continue": "Weiter",
+    "notFound": "Nicht gefunden",
+    "nothingFound": "Für diese Reservierungsnummer wurde nichts gefunden. Bitte überprüfen Sie die Eingabe und versuchen Sie es erneut.",
+    "ok": "Ok",
+    "continueWithApple": "Mit Apple fortfahren",
+    "continueWithGoogle": "Mit Google fortfahren",
+    "loginFailed": "Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten und versuchen Sie es erneut."
+  },
+  "resetPassword": {
+    "newPassword": "Neues Passwort",
+    "enterNewPassword": "Geben Sie Ihr neues Passwort ein",
+    "password": "Passwort",
+    "confirmPassword": "Passwort bestätigen",
+    "updating": "Wird aktualisiert …",
+    "save": "Speichern",
+    "successfully": "Erfolgreich",
+    "passwordChangedSuccessfully": "Ihr Passwort wurde erfolgreich geändert",
+    "ok": "Ok",
+    "invalidOrExpiredResetLink": "Ungültiger oder abgelaufener Zurücksetzungslink. Bitte fordern Sie einen neuen an.",
+    "somethingWentWrong": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+    "failedToSavePassword": "Passwort konnte nicht gespeichert werden"
+  },
+  "signUp": {
+    "welcome": "Willkommen bei Charlie M",
+    "title": "Registrieren",
+    "fullName": "Vollständiger Name",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "rePassword": "Passwort wiederholen",
+    "agreeTo": "Ich stimme der",
+    "privacyPolicy": "Datenschutzerklärung",
+    "loading": "Wird geladen …",
+    "signUpButton": "Registrieren",
+    "alreadyHaveAccount": "Bereits ein Konto?",
+    "login": "Anmelden",
+    "backToSignUp": "← Zurück zur Registrierung",
+    "checkEmailToConfirm": "Bitte überprüfen Sie Ihre E-Mail, um Ihr Konto zu bestätigen",
+    "registrationFailed": "Registrierung fehlgeschlagen",
+    "emailConfirmationSent": "Wir haben einen Link an Ihre E-Mail-Adresse gesendet, um Ihre E-Mail-Adresse zu bestätigen. Bitte überprüfen Sie Ihre E-Mail!"
   }
 }
 

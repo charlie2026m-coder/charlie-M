@@ -3,31 +3,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
-* {
-  overscroll-behavior: none;
-  overscroll-behavior-y: none;
-  overscroll-behavior-x: none;
-}
-
 html {
   scroll-behavior: smooth;
-  overscroll-behavior-y: none;
-  overscroll-behavior: none;
-  overflow-x: hidden;
-  height: 100%;
-  position: fixed;
-  width: 100%;
 }
 
 body {
-  position: relative;
-  overscroll-behavior-y: none;
-  overscroll-behavior: none;
   overflow-x: hidden;
-  height: 100%;
-  touch-action: pan-y;
-  width: 100%;
-  overflow-y: auto;
 }
 
 #rooms, #location, #concept, #faq {
