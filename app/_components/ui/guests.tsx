@@ -14,18 +14,22 @@ export function Guests({
   maxAdults = 99,
   maxChildren = 99,
   maxPersons,
+  maxBabyBeds,
   setValue, 
   value,
   className = '',
-  disableChildren = false
+  disableChildren = false,
+  totalChildrenInAllRooms
 }: { 
   maxAdults?: number,
   maxChildren?: number,
   maxPersons?: number,
+  maxBabyBeds?: number,
   setValue: (value: { adults: number, children: number }) => void, 
   value: { adults: number, children: number },
   className?: string,
-  disableChildren?: boolean
+  disableChildren?: boolean,
+  totalChildrenInAllRooms?: number
 }) {
   const [open, setOpen] = React.useState(false)
   const t = useTranslations()
@@ -34,7 +38,25 @@ export function Guests({
     ? `1 ${t('guests.guest')}`
     : `${value.adults} ${t('guests.guests')}`
   const canAddAdult = maxPersons ? value.adults < maxPersons && value.adults < maxAdults : value.adults < maxAdults;
-  const canAddChild = value.children < maxChildren && value.children < 5 && value.children < value.adults;
+  
+  // 1 child per 2 adults: 1-2 adults = 1 child max, 3-4 adults = 2 children max
+  const maxChildrenAllowed = Math.ceil(value.adults / 2);
+  
+  // Calculate available baby beds considering children in all rooms
+  let availableBabyBedsForThisRoom = maxBabyBeds;
+  if (maxBabyBeds !== undefined && totalChildrenInAllRooms !== undefined) {
+    // Children in other rooms (excluding current room)
+    const childrenInOtherRooms = totalChildrenInAllRooms - value.children;
+    // Available baby beds for this room = total - children in other rooms
+    availableBabyBedsForThisRoom = Math.max(0, maxBabyBeds - childrenInOtherRooms);
+  }
+  
+  // Limit children by available baby beds if provided
+  const effectiveMaxChildren = availableBabyBedsForThisRoom !== undefined 
+    ? Math.min(maxChildren, maxChildrenAllowed, availableBabyBedsForThisRoom)
+    : Math.min(maxChildren, maxChildrenAllowed);
+    
+  const canAddChild = value.children < effectiveMaxChildren;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

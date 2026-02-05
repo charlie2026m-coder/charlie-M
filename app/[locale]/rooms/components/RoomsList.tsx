@@ -8,10 +8,12 @@ import { RoomOffer } from '@/types/offers'
 
 const RoomsList = ({ 
   rooms, 
-  params 
+  params,
+  isBabyBedAvailable
 }: { 
   rooms: RoomOffer[],
   params: UrlParams 
+  isBabyBedAvailable: { isAvailable: boolean, count: number }
 }) => {
   const { filter, priceFilter, bedSizeFilter, roomTypeFilter, childBedFilter, guests } = useStore()
   const [currentPage, setCurrentPage] = useState(0)
@@ -63,9 +65,14 @@ const RoomsList = ({
     if(roomTypeFilter) {
       filtered = filtered.filter((room) => room.name.toLowerCase().includes(roomTypeFilter.toLowerCase()))
     }
-    // Filter by child bed checkbox OR if children are selected in guests
     if(childBedFilter || guests.children > 0) {
-      filtered = filtered.filter((room) => room.attributes?.includes('kids'))
+      const childrenCount = guests.children || parseInt(params.children as string) || 0;
+      
+      if (isBabyBedAvailable.isAvailable && isBabyBedAvailable.count >= childrenCount) {
+        filtered = filtered.filter((room) => room.attributes?.includes('kids'))
+      } else {
+        filtered = []
+      }
     }
 
     return filtered;

@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, cache } from 'react';
 import { notFound } from 'next/navigation';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
@@ -10,6 +10,10 @@ import CookieBanner from '@/app/_components/CookieBanner';
 import { Toaster } from 'sonner';
 import type { Metadata } from 'next';
 import Discount from '@/app/_components/ui/Discount';
+
+const getCachedMessages = cache(async (locale: string) => {
+  return await getMessages({ locale });
+});
 type Props = {
   children: ReactNode;
   params: Promise<{ locale: string }>;
@@ -48,7 +52,7 @@ export default async function LocaleLayout({
     notFound();
   }
 
-  const messages = await getMessages({ locale });
+  const messages = await getCachedMessages(locale);
 
   return (
     <NextIntlClientProvider key={locale} messages={messages} locale={locale}>

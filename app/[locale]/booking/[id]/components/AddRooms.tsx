@@ -9,7 +9,17 @@ import { HiOutlineTrash } from "react-icons/hi2";
 import { Room } from '@/types/types'
 import { useTranslations } from 'next-intl'
 
-const AddRooms = ({ filledRooms, availableUnits, isKidsBedAvailable = true }: { filledRooms: Room[], availableUnits: number, isKidsBedAvailable?: boolean }) => {
+const AddRooms = ({ 
+  filledRooms, 
+  availableUnits, 
+  isKidsBedAvailable = true,
+  babyBedAvailability 
+}: { 
+  filledRooms: Room[], 
+  availableUnits: number, 
+  isKidsBedAvailable?: boolean,
+  babyBedAvailability?: { isAvailable: boolean; count: number }
+}) => {
   const t = useTranslations('addRooms')
   const rooms = useBookingStore(state => state.rooms)
   const roomDetails = useBookingStore(state => state.roomDetails)
@@ -32,10 +42,25 @@ const AddRooms = ({ filledRooms, availableUnits, isKidsBedAvailable = true }: { 
 
 
   const maxPersons = roomDetails?.maxPersons || 2
+  
+  // Calculate total children across all rooms
+  const totalChildren = state.reduce((acc, room) => acc + (room.children || 0), 0)
+  const maxBabyBeds = babyBedAvailability?.count || 0
+  
   const addGuests = (id: string, guests: { adults: number, children: number }) => {
     // Only check adults count against maxPersons (children don't count)
     if (guests.adults > maxPersons) {
       console.warn(`Cannot add more than ${maxPersons} adults per room`);
+      return;
+    }
+    
+    // Calculate new total children if this change is applied
+    const currentRoomChildren = state.find(r => r.id === id)?.children || 0
+    const newTotalChildren = totalChildren - currentRoomChildren + guests.children
+    
+    // Check if adding this child would exceed available baby beds
+    if (maxBabyBeds > 0 && newTotalChildren > maxBabyBeds) {
+      console.warn(`Cannot add more than ${maxBabyBeds} children (baby beds available)`);
       return;
     }
     
@@ -79,6 +104,8 @@ const AddRooms = ({ filledRooms, availableUnits, isKidsBedAvailable = true }: { 
                   value={room} 
                   className='!max-w-[120px]'
                   disableChildren={!isKidsBedAvailable}
+                  maxBabyBeds={maxBabyBeds}
+                  totalChildrenInAllRooms={totalChildren}
                 />
               }
               {state.length > 1 && <HiOutlineTrash className='size-6 cursor-pointer text-red-700 self-center' onClick={() => handleRemoveRoom(room.id)} />}

@@ -1,6 +1,6 @@
+import { Suspense } from 'react';
 import VideoSection from '@/app/[locale]/home/VideoSection';
 import RoomsSection from '@/app/[locale]/home/RoomsSection';
-
 import StickyCheckInForm from '@/app/[locale]/home/components/StickyCheckInForm';
 import type { Metadata } from 'next';
 import { HOTEL_INFO } from '@/lib/Constants';
@@ -12,7 +12,7 @@ import DesignSection from './home/DesignSection';
 import FAQSection from './home/FAQSection';
 import ReviewsSection from './home/ReviewsSection';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -89,7 +89,30 @@ export default async function Home({ params }: Props) {
       <section className="flex flex-col">
         <VideoSection locale={locale} />
         <StickyCheckInForm />
-        <RoomsSection locale={locale} />
+        <Suspense fallback={
+          <div id="rooms" className='w-full flex flex-col pt-15'>
+            <div className="container px-2 xl:px-0">
+              <div className="flex gap-10 px-30">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className='w-full flex flex-col rounded-[40px] bg-gray-200 overflow-hidden shadow-lg h-full animate-pulse basis-[85%] md:basis-1/2 xl:basis-1/3 shrink-0'>
+                    <div className="w-full h-[260px] bg-gray-300" />
+                    <div className='flex flex-col p-4 pb-6 h-full gap-3'>
+                      <div className="w-3/4 h-6 bg-gray-300 rounded" />
+                      <div className="w-full h-4 bg-gray-300 rounded" />
+                      <div className="w-1/2 h-4 bg-gray-300 rounded mt-auto" />
+                      <div className="flex gap-2 mt-5">
+                        <div className="w-24 h-[50px] bg-gray-300 rounded" />
+                        <div className="flex-1 h-[50px] bg-gray-300 rounded" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        }>
+          <RoomsSection locale={locale} />
+        </Suspense>
         <LocationSection />
         <ConceptSection />
         <ExperienceSection />

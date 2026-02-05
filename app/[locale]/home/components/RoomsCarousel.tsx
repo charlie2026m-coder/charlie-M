@@ -12,8 +12,16 @@ import { GoArrowLeft, GoArrowRight } from "react-icons/go";
 
 export function RoomsCarousel({
   items,
+  locale,
+  translations,
 }: {
-  items: RoomOffer[]  
+  items: RoomOffer[]
+  locale: string
+  translations: {
+    perNightFrom: string
+    loading: string
+    bookNow: string
+  }
 }) {
   const [api, setApi] = React.useState<CarouselApi>()
   const buttonClassName = "size-18 rounded-full  border text-mute border-mute flex items-center justify-center transition-opacity hover:opacity-50"
@@ -35,7 +43,7 @@ export function RoomsCarousel({
             <CarouselContent className="-ml-4 pb-8 xl:pb-[90px] px-2">
               {items.map((item) => (
                 <CarouselItem key={item.id} className="pl-4 basis-[85%] md:basis-1/2 xl:basis-1/3 shrink-0">
-                  <RoomCard item={item} />
+                  <RoomCard item={item} locale={locale} translations={translations} />
                 </CarouselItem>
               ))}
             </CarouselContent>

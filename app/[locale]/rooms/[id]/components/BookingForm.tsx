@@ -19,7 +19,12 @@ import { calculateNights } from "@/lib/utils"
 import { RATE_PLANS } from "@/lib/Constants"
 import { useTranslations } from 'next-intl'
 
-const BookingForm = ({ id, rooms, params }: { id: string, rooms: RoomOffer[] , params: UrlParams }) => {
+const BookingForm = ({ id, rooms, params, babyBedAvailability }: { 
+  id: string, 
+  rooms: RoomOffer[], 
+  params: UrlParams,
+  babyBedAvailability?: { isAvailable: boolean; count: number }
+}) => {
   const t = useTranslations('bookingForm')
   const tCommon = useTranslations()
   const nights = calculateNights(params.from as string, params.to as string);
@@ -181,7 +186,8 @@ const BookingForm = ({ id, rooms, params }: { id: string, rooms: RoomOffer[] , p
         <Separator orientation="horizontal" />
         <Guests 
           setValue={setGuests} 
-          value={guests} 
+          value={guests}
+          maxBabyBeds={babyBedAvailability?.count} 
           className="border-mute"
           maxPersons={room.availableUnits * room.maxPersons}
         />
