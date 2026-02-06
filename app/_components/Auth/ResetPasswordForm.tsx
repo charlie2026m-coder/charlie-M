@@ -7,8 +7,10 @@ import { Button } from "../ui/button";
 import { useUpdatePassword } from "@/app/hooks/useAuth";
 import Success from "./Success";
 import { useRouter } from "@/navigation";
+import { useTranslations } from 'next-intl';
 
 const ResetPasswordForm = () => {
+  const t = useTranslations('resetPassword');
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const updatePasswordMutation = useUpdatePassword();
@@ -42,7 +44,7 @@ const ResetPasswordForm = () => {
       await updatePasswordMutation.mutateAsync(data.password);
       setShowSuccess(true);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to save password';
+      const errorMessage = err instanceof Error ? err.message : t('failedToSavePassword');
       setError(errorMessage);
     }
   };
@@ -53,13 +55,13 @@ const ResetPasswordForm = () => {
   
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 relative mb-[30px]">
-      <h1 className="text-3xl font-[400] text-center mb-6">New Password</h1>
-      <h2 className="text-sm text-center mb-8 text-dark">Enter your new password</h2>
+      <h1 className="text-3xl font-[400] text-center mb-6">{t('newPassword')}</h1>
+      <h2 className="text-sm text-center mb-8 text-dark">{t('enterNewPassword')}</h2>
       <CustomInput 
         register={register} 
         name="password" 
         type="password" 
-        placeholder="Password" 
+        placeholder={t('password')} 
         icon="password"
         isError={!!errors.password}
       />
@@ -68,7 +70,7 @@ const ResetPasswordForm = () => {
         register={register} 
         name="confirmPassword" 
         type="password" 
-        placeholder="Confirm Password" 
+        placeholder={t('confirmPassword')} 
         icon="password"
         isError={!!errors.confirmPassword}
       />
@@ -78,7 +80,7 @@ const ResetPasswordForm = () => {
         disabled={updatePasswordMutation.isPending || !isValid}
         className="w-full h-12 rounded-full bg-blue hover:bg-blue/80 text-white font-medium !mb-0"
       >
-        {updatePasswordMutation.isPending ? 'Updating...' : 'Save'}
+        {updatePasswordMutation.isPending ? t('updating') : t('save')}
       </Button>
       
       {error && (

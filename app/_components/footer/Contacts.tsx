@@ -12,7 +12,6 @@ const Contacts = async ({ locale }: { locale: string }) => {
   const paymentMethods = [
     <SiVisa className='text-white size-7' />,
     <RiMastercardFill className='text-white size-7' />,
-    <FaStripe className='text-white size-7' />,
     <FaGooglePay className='text-white size-7' />,
     <FaApplePay className='text-white size-7' />,
   ];
@@ -28,7 +27,6 @@ const Contacts = async ({ locale }: { locale: string }) => {
           <ul className="flex gap-5 text-[#eoeoeo] justify-around md:justify-start">
               <li className="flex size-14 rounded-full border border-blue items-center justify-center"><FaFacebookF className='text-white size-7' /></li>
               <li className="flex size-14 rounded-full border border-blue items-center justify-center"><AiFillInstagram className='text-white size-7' /></li>
-              <li className="flex size-14 rounded-full border border-blue items-center justify-center"><FaYoutube className='text-white size-7' /></li>
           </ul>
         </div>
         <div className="flex flex-col sm:flex-row gap-5 md:gap-7 opacity-50 text-white text-2xl md:items-center font-semibold">

@@ -13,8 +13,10 @@ import { registerSchema, type RegisterFormData } from '@/types/schemas';
 import { Link, useRouter } from '@/navigation';
 import CustomCard from '@/app/_components/ui/CustomCard';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 
 export default function SignUpPage() {
+  const t = useTranslations('signUp');
   const [error, setError] = useState<string | null>(null);
   const [showReservationForm, setShowReservationForm] = useState(false);
   const registerMutation = useRegister();
@@ -68,11 +70,11 @@ export default function SignUpPage() {
       });
       
       if (result.requiresEmailConfirmation) {
-        toast.success('Please check your email to confirm your account');
+        toast.success(t('checkEmailToConfirm'));
         router.push('/login');
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Registration failed';
+      const errorMessage = err instanceof Error ? err.message : t('registrationFailed');
       setError(errorMessage);
     }
   };
@@ -87,7 +89,7 @@ export default function SignUpPage() {
               onClick={() => setShowReservationForm(false)}
               className="text-sm text-mute hover:text-black transition-colors"
             >
-              ← Back to Sign Up
+              {t('backToSignUp')}
             </button>
           </div>
           <ReservationForm />
@@ -100,21 +102,21 @@ export default function SignUpPage() {
     <div className="bg-white  md:px-4 md:py-16 flex items-center justify-center py-10">
       <CustomCard className="w-full max-w-md p-4 md:p-8 md:border">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 relative mb-[30px]">
-          <h1 className="text-3xl font-[400] text-center mb-2 ">Welcome to Charlie M</h1>
-          <h2 className="text-xl text-center mb-6">Sign Up</h2>
+          <h1 className="text-3xl font-[400] text-center mb-2 ">{t('welcome')}</h1>
+          <h2 className="text-xl text-center mb-6">{t('title')}</h2>
 
           <CustomInput 
             register={register} 
             name="name" 
             type="text" 
-            placeholder="Full Name" 
+            placeholder={t('fullName')} 
             icon="name" 
           />
           <CustomInput 
             register={register} 
             name="email" 
             type="email" 
-            placeholder="Email" 
+            placeholder={t('email')} 
             icon="email" 
             isError={!!errors.email}
           />
@@ -122,7 +124,7 @@ export default function SignUpPage() {
             register={register} 
             name="password" 
             type="password" 
-            placeholder="Password" 
+            placeholder={t('password')} 
             icon="password" 
             isError={!!errors.password || !!errors.confirmPassword} 
           />
@@ -130,7 +132,7 @@ export default function SignUpPage() {
             register={register} 
             name="confirmPassword" 
             type="password" 
-            placeholder="Re-Password" 
+            placeholder={t('rePassword')} 
             icon="password" 
             isError={!!errors.confirmPassword} 
           />
@@ -151,14 +153,14 @@ export default function SignUpPage() {
                 className='text-sm text-dark cursor-pointer leading-relaxed'
                 onClick={() => setFormValue('consent', !consent, { shouldValidate: true })}
               >
-                I agree to the{' '}
+                {t('agreeTo')}{' '}
                 <Link 
                   href='/privacy-policy' 
                   target='_blank'
                   className='text-blue underline hover:text-blue/80'
                   onClick={(e) => e.stopPropagation()}
                 >
-                  Privacy Policy
+                  {t('privacyPolicy')}
                 </Link>
               </label>
             </div>
@@ -169,7 +171,7 @@ export default function SignUpPage() {
             disabled={registerMutation.isPending || !isValid || !consent}
             className="w-full h-12 rounded-full bg-blue hover:bg-blue/80 text-white font-medium !mb-0"
           >
-            {registerMutation.isPending ? 'Loading...' : 'Sign Up'}
+            {registerMutation.isPending ? t('loading') : t('signUpButton')}
           </Button>
           {error && <div className="absolute bottom-[-28px] text-center text-red text-sm px-4 w-full">{error}</div>}
         </form>
@@ -178,9 +180,9 @@ export default function SignUpPage() {
         <SocialMediaButtons onReservationClick={() => setShowReservationForm(true)} />
         
         <div className="mt-4 text-center text-dark">
-          Already have an account? 
+          {t('alreadyHaveAccount')}{' '}
           <Link href="/login" className="text-blue underline cursor-pointer pl-1">
-            Login
+            {t('login')}
           </Link>
         </div>
       </CustomCard>

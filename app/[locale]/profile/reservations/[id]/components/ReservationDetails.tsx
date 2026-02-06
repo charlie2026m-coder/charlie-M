@@ -73,7 +73,7 @@ export const ReservationButton = ({ reservation, isActive }: { reservation: any,
         
           <div className='flex flex-col gap-3 mb-7'>
             <div className='flex items-center gap-2 text-lg font-semibold'>
-              <PiListFill className='size-5' />Reservation :
+              <PiListFill className='size-5' />{t('reservation')}
             </div>
             <div className='flex items-center gap-2 text-lg cursor-pointer' onClick={handleCopy}>
               ID: {reservation.id} <RxCopy />
@@ -82,7 +82,7 @@ export const ReservationButton = ({ reservation, isActive }: { reservation: any,
 
           <div className='flex flex-col gap-3 mb-7'>
             <div className='flex items-center gap-2 text-lg font-semibold'>
-              <PiCalendarBlankFill className='size-5' />Dates :
+              <PiCalendarBlankFill className='size-5' />{t('dates')}
             </div>
             <div className='flex text-lg '>
               {from} - {to}
@@ -91,7 +91,7 @@ export const ReservationButton = ({ reservation, isActive }: { reservation: any,
 
           <div className='flex flex-col gap-3 mb-7'>
             <div className='flex items-center gap-2 text-lg font-semibold'>
-              <BsFillPersonFill className='size-5' />Guests ({guestsCount}) :
+              <BsFillPersonFill className='size-5' />{t('guestsWithCount', { guestsCount })}
             </div>
             <div className='flex  text-lg '>
               {guests} 
@@ -101,7 +101,7 @@ export const ReservationButton = ({ reservation, isActive }: { reservation: any,
           {services?.length > 0 && 
             <div className='flex flex-col gap-3 mb-7'>
               <div className='flex items-center gap-2 text-lg font-semibold'>
-                <FaSquarePlus className='size-5' /><h3 className='text-lg font-semibold' >Extras :</h3>
+                <FaSquarePlus className='size-5' /><h3 className='text-lg font-semibold' >{t('extras')}</h3>
               </div>
               <div className='flex flex-col gap-3'>
                 {services?.map((service: ServicesPaidDetails) => (
@@ -119,7 +119,7 @@ export const ReservationButton = ({ reservation, isActive }: { reservation: any,
           }
           <div className='flex flex-col gap-3 mb-6'>
             <div className='flex items-center gap-2 text-lg font-semibold'>
-              <RiMoneyEuroCircleFill className='size-5' /><h3 className='text-lg font-semibold' >Total :</h3>
+              <RiMoneyEuroCircleFill className='size-5' /><h3 className='text-lg font-semibold' >{t('total')}</h3>
               <span className='font-semibold ml-auto'>€{totalPrice}</span>
             </div>
           </div>

@@ -6,7 +6,7 @@ import ErrorCard from '../components/ErrorCard'
 import Availability from './components/Availability'
 import NoCapacityWarning from './components/NoCapacityWarning'
 import NoAvailabilityCard from './components/NoAvailabilityCard'
-import { calculateNights } from '@/lib/utils'
+import { calculateNights, getServiceAvailabilityById } from '@/lib/utils'
 import type { Metadata } from 'next'
 import { RATE_PLANS } from '@/lib/Constants';
 interface IParams {
@@ -126,7 +126,13 @@ const RoomPage = async ({ params, searchParams }: IParams) => {
   const { id } = await params
   const { from, to, adults, children } = await searchParams
   
-  const rooms = await getSingleRoom(id, from, to, adults)
+  const [rooms, babyBedAvailability] = await Promise.all([
+    getSingleRoom(id, from, to, adults),
+    from && to
+      ? getServiceAvailabilityById(from, to, 'CMH-BAB')
+      : Promise.resolve({ isAvailable: false, count: 0 })
+  ])
+  
   
   // If error (no rooms available), show NoAvailabilityCard
   if ('error' in rooms) {
@@ -151,7 +157,7 @@ const RoomPage = async ({ params, searchParams }: IParams) => {
 
       {hasEnoughCapacity 
         ? <div className='col-span-2 xl:col-span-3 flex flex-col'>
-            <RoomContent room={room} isRoomInfo={true} />
+            <RoomContent room={room} isRoomInfo={true} babyBedAvailability={babyBedAvailability} />
             <Availability 
               id={id}
               from={from}
@@ -177,7 +183,8 @@ const RoomPage = async ({ params, searchParams }: IParams) => {
               to: to || undefined, 
               adults: adults || undefined, 
               children: children || undefined
-            }} 
+            }}
+            babyBedAvailability={babyBedAvailability}
           />   
         </div>
       </div>

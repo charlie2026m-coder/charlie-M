@@ -12,7 +12,7 @@ import Price from "@/app/_components/ui/price";
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Spinner } from '@/app/_components/ui/spinner';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { Service } from '@/types/apaleo';
 
@@ -23,6 +23,7 @@ const BookingMenu = ({
   isKidsBedAvailable = true,
   extras = [],
   nights: passedNights,
+  babyBedAvailability,
 }: {
   rooms: RoomOffer[]
   params: UrlParams
@@ -30,6 +31,7 @@ const BookingMenu = ({
   isKidsBedAvailable?: boolean
   extras?: Service[]
   nights: number
+  babyBedAvailability?: { isAvailable: boolean; count: number }
 }) => {
   const t = useTranslations('bookingForm')
   const tCommon = useTranslations()
@@ -37,7 +39,7 @@ const BookingMenu = ({
   const urlParams = useParams()
   const { from, to } = params
   const nights = calculateNights(from as string, to as string)
-  const { setBooking } = useBookingStore()
+  const { setBooking, setServices } = useBookingStore()
   const rooms = useBookingStore(state => state.rooms) || roomsOffers
   const roomDetails = useBookingStore(state => state.roomDetails) || roomsOffers[0]
   const services = useBookingStore(state => state.services)
@@ -55,6 +57,43 @@ const BookingMenu = ({
     }
   })
 
+  // Auto-add baby beds based on children count
+  useEffect(() => {
+    // Calculate total children from all rooms
+    const totalChildren = rooms.reduce((acc, room) => acc + (room.children || 0), 0)
+    
+    // Get current services from store
+    const currentServices = useBookingStore.getState().services
+    const babyBedServiceId = 'CMH-BAB'
+    const existingBabyBedIndex = currentServices.findIndex(s => s.serviceId === babyBedServiceId)
+    
+    // Auto-add baby beds if children exist and baby beds are available
+    if (totalChildren > 0 && isKidsBedAvailable) {
+      let updatedServices = [...currentServices]
+      
+      if (existingBabyBedIndex >= 0) {
+        // Update existing baby bed count to match children count
+        if (currentServices[existingBabyBedIndex].count !== totalChildren) {
+          updatedServices[existingBabyBedIndex] = {
+            ...currentServices[existingBabyBedIndex],
+            count: totalChildren
+          }
+          setServices(updatedServices)
+        }
+      } else {
+        // Add new baby bed service
+        updatedServices.push({
+          serviceId: babyBedServiceId,
+          count: totalChildren
+        })
+        setServices(updatedServices)
+      }
+    } else if (totalChildren === 0 && existingBabyBedIndex >= 0) {
+      // Remove baby beds if no children
+      const updatedServices = currentServices.filter(s => s.serviceId !== babyBedServiceId)
+      setServices(updatedServices)
+    }
+  }, [rooms, isKidsBedAvailable, setServices])
 
   const getText = (days: number) => days === 1 ? t('night') : t('nights')
 
@@ -147,7 +186,7 @@ const BookingMenu = ({
       roomDetails, 
       updatedRooms as Room[],
       services,
-      servicesTotalPrice // Pass services total price
+      extras // Pass extras array
     )
     
     setBooking({ 
@@ -162,7 +201,7 @@ const BookingMenu = ({
   return (
     <div className='flex flex-col bg-white rounded-[20px] py-5 px-3 border'>
       <ChangeDate arrival={roomsOffers[0].arrival} departure={roomsOffers[0].departure} />
-      <AddRooms filledRooms={filledRooms} availableUnits={roomsOffers[0].availableUnits} isKidsBedAvailable={isKidsBedAvailable} />
+      <AddRooms filledRooms={filledRooms} availableUnits={roomsOffers[0].availableUnits} isKidsBedAvailable={isKidsBedAvailable} babyBedAvailability={babyBedAvailability} />
 
       <div className='flex flex-col'>
         <span className='font-semibold mb-1.5 '>{t('price')}</span>

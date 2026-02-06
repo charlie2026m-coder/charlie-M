@@ -21,16 +21,18 @@ const STATUSES = {
 }
 
 // Get all services/extras from Apaleo
-const fetchExtras = async (from: string, to: string): Promise<Service[]> => {
+const fetchExtras = async (from?: string, to?: string): Promise<Service[]> => {
   const propertyId = process.env.APALEO_PROPERTY_ID;
+
 
   if (!propertyId) {
     throw new Error('Property ID is required. Set APALEO_PROPERTY_ID in .env');
   }
 
   // Validate dates
-  let arrival = from;
-  let departure = to;
+  let arrival = from || dayjs().add(1, 'day').format('YYYY-MM-DD');
+  let departure = to || dayjs().add(2, 'day').format('YYYY-MM-DD');
+
   
   if (arrival === departure) {
     departure = dayjs(arrival).add(1, 'day').format('YYYY-MM-DD');

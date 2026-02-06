@@ -23,9 +23,10 @@ const BookingPage = ({
     filledRooms: Room[]
     extras: Service[]
     isKidsBedAvailable?: boolean
+    babyBedAvailability?: { isAvailable: boolean; count: number }
   }
 }) => {
-  const { from, to, adults, children, rooms, filledRooms, extras, isKidsBedAvailable = true } = params
+  const { from, to, adults, children, rooms, filledRooms, extras, isKidsBedAvailable = true, babyBedAvailability } = params
   const setRooms = useBookingStore(state => state.setRooms)
   const setRoomDetails = useBookingStore(state => state.setRoomDetails)
   const setParams = useBookingStore(state => state.setParams)
@@ -78,12 +79,13 @@ const BookingPage = ({
       <PhotoGallery images={mainRoom?.images || []} />
       <div className='grid grid-cols-1  lg:grid-cols-3 mb-[30px]'>
         <div className='col-span-1 lg:col-span-2 flex flex-col lg:pr-10'>
-          <RoomContent room={mainRoom} />
+          <RoomContent room={mainRoom} babyBedAvailability={babyBedAvailability} />
           {extras.length > 0 && 
           <ExtrasSection 
             nights={nights}
             extras={extras} 
             room={rooms[0]}
+            children={parseInt(children)}
           />}
         </div>
         <div className='col-span-1 gap-5 flex flex-col'>
@@ -95,6 +97,7 @@ const BookingPage = ({
             isKidsBedAvailable={isKidsBedAvailable}
             extras={extras}
             nights={nights}
+            babyBedAvailability={babyBedAvailability}
           />
         </div>
       </div>

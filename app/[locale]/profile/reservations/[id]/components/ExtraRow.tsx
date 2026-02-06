@@ -7,8 +7,10 @@ import { Button } from "@/app/_components/ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useTranslations } from 'next-intl';
 
 export const ExtraRow = ({ service, nights, price, isActive, reservationId }: { service: ServiceDetails, nights: number, price: number, isActive: boolean, reservationId: string }) => {
+  const t = useTranslations('reservations');
   const textUnit = service.pricingUnit === 'Room' ? `x ${nights} ${nights === 1 ? 'night' : 'nights'}` : 'x Person';
   const [open, setOpen] = useState(false);
   const router = useRouter();
@@ -19,12 +21,12 @@ export const ExtraRow = ({ service, nights, price, isActive, reservationId }: { 
       { reservationId, serviceId: service.id },
       {
         onSuccess: () => {
-          toast.success('Service removed successfully');
+          toast.success(t('serviceRemovedSuccessfully'));
           setOpen(false);
           router.refresh(); 
         },
         onError: (error) => {
-          toast.error(error.message || 'Failed to remove service');
+          toast.error(error.message || t('failedToRemoveService'));
         },
       }
     );
@@ -44,7 +46,7 @@ export const ExtraRow = ({ service, nights, price, isActive, reservationId }: { 
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle className="text-1xl">Remove Service</DialogTitle>
+                <DialogTitle className="text-1xl">{t('removeService')}</DialogTitle>
               </DialogHeader>
               <div className="flex gap-2 justify-center pt-4">
                 <Button
@@ -53,7 +55,7 @@ export const ExtraRow = ({ service, nights, price, isActive, reservationId }: { 
                   onClick={handleDeleteService}
                   disabled={isPending}
                 >
-                  {isPending ? 'Removing...' : 'Remove'}
+                  {isPending ? t('removing') : t('remove')}
                 </Button>
                 <Button
                   variant="outline"
@@ -61,7 +63,7 @@ export const ExtraRow = ({ service, nights, price, isActive, reservationId }: { 
                   onClick={() => setOpen(false)}
                   disabled={isPending}
                 >
-                  Cancel
+                  {t('decline')}
                 </Button>
               </div>
             </DialogContent>

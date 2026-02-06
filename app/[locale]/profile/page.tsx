@@ -13,8 +13,10 @@ import DeleteAccountModal from "./components/DeleteAccountModal";
 import { useRouter } from "@/navigation";
 import { supabase } from "@/lib/supabase";
 import { useProfileStore } from "@/store/useProfile";
+import { useTranslations } from 'next-intl';
 
 export default function Profile() {
+  const t = useTranslations('profile');
   const { profile, updateMutation } = useProfile();
   const searchParams = useSearchParams();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -46,11 +48,11 @@ export default function Profile() {
   useEffect(() => {
     const emailConfirmed = searchParams.get('email_confirmed');
     if (emailConfirmed === 'true') {
-      toast.success('Email confirmed successfully! Your email has been updated.');
+      toast.success(t('emailConfirmed'));
       // Remove the query parameter from URL without page reload
       window.history.replaceState({}, '', '/profile');
     }
-  }, [searchParams]);
+  }, [searchParams, t]);
 
   // Load profile data into form when available
   useEffect(() => {
@@ -78,7 +80,7 @@ export default function Profile() {
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(data.email)) {
-      toast.error('Please enter a valid email address');
+      toast.error(t('validEmailRequired'));
       return;
     }
 
@@ -114,9 +116,9 @@ export default function Profile() {
     return (
       <div className='flex flex-col flex-1 px-3 lg:px-[30px] items-center justify-center min-h-[500px]'>
         <div className='max-w-md text-center'>
-          <h2 className='text-2xl font-semibold mb-4'>Create an Account</h2>
+          <h2 className='text-2xl font-semibold mb-4'>{t('createAnAccount')}</h2>
           <p className='text-gray-600 mb-6'>
-            Sign up to access your profile, manage your bookings, and enjoy all features.
+            {t('signUpDescription')}
           </p>
 
           <Button 
@@ -124,7 +126,7 @@ export default function Profile() {
             onClick={handleCreateAccount}
             className='w-full h-12 mt-3'
           >
-            Сreate account
+            {t('createAccountButton')}
           </Button>
         </div>
       </div>
@@ -134,14 +136,14 @@ export default function Profile() {
   return (
     <div className='px-[30px] flex flex-col pt-10'>
       <form onSubmit={(e) => e.preventDefault()}>
-        <h3 className="flex gap-2 items-center font-semibold text-2xl mb-9">Profile</h3>
+        <h3 className="flex gap-2 items-center font-semibold text-2xl mb-9">{t('profile')}</h3>
         <div className='grid  lg:grid-cols-2 gap-8 mb-5'>
           <div className='relative flex flex-col gap-1 '>
             <CustomInput 
               register={register} 
               name='name' 
               type='text' 
-              placeholder='Name' 
+              placeholder={t('name')} 
               icon='name'
               isError={!!errors.name}
             />
@@ -155,7 +157,7 @@ export default function Profile() {
               register={register}
               name='last_name' 
               type='text' 
-              placeholder='Last Name' 
+              placeholder={t('lastName')} 
               icon='name'
               isError={!!errors.last_name}
             />
@@ -169,7 +171,7 @@ export default function Profile() {
               register={register}
               name='email' 
               type='email' 
-              placeholder='Email' 
+              placeholder={t('email')} 
               icon='email'
               isError={!!errors.email}
             />
@@ -183,7 +185,7 @@ export default function Profile() {
               register={register}
               name='phone' 
               type='phone' 
-              placeholder='Phone' 
+              placeholder={t('phone')} 
               icon='phone'
               isError={!!errors.phone}
             />
@@ -204,7 +206,7 @@ export default function Profile() {
           onClick={handleDiscard}
           disabled={!hasChanges || isLoading}
         >
-          Discard
+          {t('discard')}
         </Button>
         <Button 
           type='button'
@@ -212,7 +214,7 @@ export default function Profile() {
           onClick={handleSaveChanges}
           disabled={!hasChanges || isLoading}
         >
-          {isLoading ? 'Saving...' : 'Save Changes'}
+          {isLoading ? t('saving') : t('saveChanges')}
         </Button>
       </div>)
     }
@@ -220,13 +222,13 @@ export default function Profile() {
 
     {/* Danger Zone */}
     <div className='mt-12 pt-8 border-t border-gray-200'>
-      <h3 className='text-xl font-semibold text-red mb-3'>Danger Zone</h3>
+      <h3 className='text-xl font-semibold text-red mb-3'>{t('dangerZone')}</h3>
       <div className='bg-red/5 border border-red/20 rounded-2xl p-5'>
         <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-4'>
           <div>
-            <h4 className='font-semibold text-gray-900 mb-1'>Delete Account</h4>
+            <h4 className='font-semibold text-gray-900 mb-1'>{t('deleteAccount')}</h4>
             <p className='text-sm text-gray-600'>
-              Permanently delete your account and all associated data. This action cannot be undone.
+              {t('permanentlyDelete')}
             </p>
           </div>
           <Button
@@ -235,7 +237,7 @@ export default function Profile() {
             onClick={() => setShowDeleteModal(true)}
             className='h-11 px-6 rounded-full border-red text-red hover:bg-red hover:text-white transition-colors whitespace-nowrap'
           >
-            Delete Account
+            {t('deleteAccount')}
           </Button>
         </div>
       </div>

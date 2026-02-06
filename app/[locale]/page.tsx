@@ -1,7 +1,8 @@
+import { Suspense } from 'react';
 import VideoSection from '@/app/[locale]/home/VideoSection';
 import RoomsSection from '@/app/[locale]/home/RoomsSection';
-
 import StickyCheckInForm from '@/app/[locale]/home/components/StickyCheckInForm';
+import RoomsFallback from '@/app/[locale]/home/components/RoomsFallback';
 import type { Metadata } from 'next';
 import { HOTEL_INFO } from '@/lib/Constants';
 import LocationSection from '@/app/[locale]/home/LocationSection';
@@ -11,8 +12,8 @@ import PersonalizeSection from './home/PersonalizeSection';
 import DesignSection from './home/DesignSection';
 import FAQSection from './home/FAQSection';
 import ReviewsSection from './home/ReviewsSection';
-
-export const dynamic = 'force-dynamic';
+import InstagramSection from './home/InstagramSection';
+export const revalidate = 300;
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -89,7 +90,9 @@ export default async function Home({ params }: Props) {
       <section className="flex flex-col">
         <VideoSection locale={locale} />
         <StickyCheckInForm />
-        <RoomsSection locale={locale} />
+        <Suspense fallback={<RoomsFallback />}>
+          <RoomsSection locale={locale} />
+        </Suspense>
         <LocationSection />
         <ConceptSection />
         <ExperienceSection />
@@ -97,7 +100,7 @@ export default async function Home({ params }: Props) {
         <DesignSection locale={locale} />
         <FAQSection />
         <ReviewsSection />
-        {/* <InstagramSection /> */}
+        <InstagramSection />
       </section>
   );
 }

@@ -101,21 +101,12 @@ export default async function RootLayout({ children, params }: Props) {
   };
   
   return (
-    <html lang={locale} style={{ overscrollBehaviorY: 'none' }}>
+    <html lang={locale}>
       <head>
-        <style dangerouslySetInnerHTML={{
-          __html: `
-            html, body {
-              overscroll-behavior-y: none;
-              overscroll-behavior: none;
-            }
-            body {
-              position: relative;
-            }
-          `
-        }} />
+        <link rel="prefetch" href="/rooms" />
+        <link rel="prefetch" href="/de/rooms" />
       </head>
-      <body className={`${inter.variable} ${plusJakartaSans.variable} antialiased flex flex-col min-h-screen relative`} style={{ overscrollBehaviorY: 'none', overscrollBehavior: 'none' }}>
+      <body className={`${inter.variable} ${plusJakartaSans.variable} antialiased flex flex-col min-h-screen relative`}>
         {/* JSON-LD for Google */}
         <Script
           id="hotel-schema"

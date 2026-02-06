@@ -43,14 +43,15 @@ const PersonalizeSection = async ({ locale }: { locale: string }) => {
   return (
     <div className='flex flex-col container px-4 xl:px-[100px]  lg:py-20'>
       <Header title={t('home.personalize_title')} isThin={true} size="md" />
-      <div className='grid grid-cols-3 gap-x-4 gap-y-10'>
+      <p className='text-sm text-mute md:text-[15px] md:text-center w-full mb-6 md:mb-10 lg:mb-20'>{t('home.personalize_description')}</p>
+      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-6 md:gap-y-10'>
         {items.map((item) => (
-          <div key={item.title} className='flex  items-center flex-col text-mute gap-3'>
-            <h3 className='flex gap-2 md:text-[20px] font-bold  text-center'>
+          <div key={item.title} className='flex  md:items-center flex-col text-mute gap-3'>
+            <h3 className='flex gap-2 text-base md:text-[20px] font-bold md:text-center'>
               <Image src={item.icon} alt={item.title} width={27} height={27} className='object-cover size-5 md:size-7' />
               {item.title}
             </h3>
-            <p className='text-[15px] text-center w-3/4 '>{item.text}</p>
+            <p className='text-sm md:text-[15px] md:text-center w-full md:w-3/4'>{item.text}</p>
           </div>
         ))}
       </div>

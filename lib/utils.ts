@@ -6,6 +6,7 @@ import { Service, UrlParams } from "@/types/apaleo"
 import { Room, RoomExtra } from "@/types/types"
 import { RoomOffer } from "@/types/offers"
 import { RATE_PLANS } from "./Constants";
+import { getApaleoExtras } from "@/services/getExtras";
 
 export function cn(...inputs: ClassValue[]) {return twMerge(clsx(inputs))}
 export const getDate = (date: Date) => {return date?dayjs(date).format('YYYY-MM-DD'): undefined}
@@ -67,6 +68,7 @@ export function sortGuestsByRooms(
 ): Room[] {
   const rooms: Room[] = [];
   let remainingAdults = adults;
+  let remainingChildren = children;
 
   const pushRoom = (a: number, c: number) =>
     rooms.push({ id: uuidv4(), adults: a, children: c, from, to });
@@ -81,6 +83,14 @@ export function sortGuestsByRooms(
   // If no adults but children exist, create one room
   if (rooms.length === 0 && children > 0) {
     pushRoom(1, 0);
+  }
+
+  // Distribute children across rooms (max 1 child per room)
+  let roomIndex = 0;
+  while (remainingChildren > 0 && roomIndex < rooms.length) {
+    rooms[roomIndex].children = 1;
+    remainingChildren--;
+    roomIndex++;
   }
 
   return rooms;
@@ -196,7 +206,6 @@ export const formatReservations = (
   roomDetails: RoomOffer, 
   updatedRooms: Room[], 
   storeServices?: any[],
-  servicesTotalPrice?: number,
   availableServices?: Service[]
 ) => {
   const timeSlices = roomDetails.timeSlices.map(_ => ({ ratePlanId: roomDetails.ratePlan.id }))
@@ -257,7 +266,7 @@ export const formatReservations = (
   }
 
   const reservations = updatedRooms.map((item, index) => {
-    const childrenAges = item.children > 0 ? Array(item.children).fill(0) as number[] : undefined
+    // const childrenAges = item.children > 0 ? Array(item.children).fill(1) as number[] : undefined
     
     const roomPrice = calculateRoomPrice(item.adults);
     const roomTax = calculateRoomTax(item.adults);
@@ -361,9 +370,35 @@ export const formatReservations = (
         amount: reservationAmount,
         currency: 'EUR'
       },
-      ...(childrenAges && { childrenAges }),
+      // ...(childrenAges && { childrenAges }),
     }
   })
 
   return reservations;
+}
+
+
+export const getServiceAvailabilityById = async (
+  from: string,
+  to: string,
+  serviceId: string
+): Promise<{ isAvailable: boolean; count: number }> => {
+  const extras = await getApaleoExtras(from, to);
+  const service = extras.find(extra => extra.id === serviceId);
+  
+  if (!service || service.isSoldOut || !service.timeSlices || service.timeSlices.length === 0) {
+    return { isAvailable: false, count: 0 };
+  }
+  
+  const stayDays = service.timeSlices.slice(0, -1);
+  if (stayDays.length === 0) {
+    return { isAvailable: false, count: 0 };
+  }
+  
+  const minAvailableCount = Math.min(...stayDays.map(slice => slice.availableCount));
+  
+  return {
+    isAvailable: minAvailableCount > 0,
+    count: minAvailableCount
+  };
 }

@@ -7,7 +7,9 @@ import { getAvailableRooms } from '@/services/getAvailableRooms'
 import type { Metadata } from 'next'
 import { HOTEL_INFO, RATE_PLANS } from '@/lib/Constants';
 import StickyCheckInFormRooms from './components/StickyCheckInFormRooms'
-import { calculateNights } from '@/lib/utils'
+import { calculateNights, getServiceAvailabilityById } from '@/lib/utils'
+
+export const revalidate = 60
   
 type Props = {
   params: Promise<{ locale: string }>;
@@ -91,20 +93,31 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 
 const RoomsPage = async ({ searchParams } : Props) => {
   const { from, to, adults, children } = await searchParams;
-  const adultsCount = adults ? Number(adults) : 1; // Only count adults for room calculation
-  const rooms = await getAvailableRooms(from, to, adultsCount);
+  const adultsCount = adults ? Number(adults) : 1;
+  const [rooms, babyBedAvailability] = await Promise.all([
+    getAvailableRooms(from, to, adultsCount),
+    from && to 
+      ? getServiceAvailabilityById(from, to, 'CMH-BAB')
+      : Promise.resolve({ isAvailable: false, count: 0 })
+  ]);
   if ('error' in rooms || !rooms) return <ErrorCard />
   if (rooms.length === 0) return <NotFoundCard text='No rooms found' />
   const nights = calculateNights(from as string, to as string);
   const ratePlan = nights > 7  ? RATE_PLANS.LONG_STAY : RATE_PLANS.STANDARD;
   const standardPriceRooms = rooms.filter(room => room.ratePlan.code.includes(ratePlan))
+  
+  
   return (
     <>
       <StickyCheckInFormRooms params={{ from, to, adults, children }} />
       <Filters />
       {('error' in rooms || !rooms) 
         ? <ErrorCard /> 
-        : <RoomsList rooms={standardPriceRooms} params={{ from, to, adults, children }} />
+        : <RoomsList 
+            rooms={standardPriceRooms} 
+            params={{ from, to, adults, children }} 
+            isBabyBedAvailable={babyBedAvailability}
+          />
       }
     </>
   )

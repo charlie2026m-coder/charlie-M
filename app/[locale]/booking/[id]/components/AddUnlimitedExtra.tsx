@@ -15,7 +15,7 @@ import { ButtonIcon } from "@/app/_components/ui/ButtonIcon";
 import { useBookingStore } from "@/store/useBookingStore";
 import { Room } from "@/types/types";
 
-const AddUnlimitedExtra = ({ extra, room, guests, rooms, nights }: { extra: Service, room: RoomOffer, guests: number, rooms: Room[], nights: number }) => {
+const AddUnlimitedExtra = ({ extra, room, guests, children, rooms, nights }: { extra: Service, room: RoomOffer, guests: number, children: number, rooms: Room[], nights: number }) => {
   const [isOpen, setIsOpen] = useState(false);
   const services = useBookingStore(state => state.services);
   const setServices = useBookingStore(state => state.setServices);

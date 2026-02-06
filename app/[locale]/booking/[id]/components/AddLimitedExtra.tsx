@@ -18,7 +18,7 @@ import { RoomOffer } from "@/types/offers";
 import { Room } from "@/types/types";
 import { ChevronDown } from "lucide-react";
 
-const AddLimitedExtra = ({ extra, rooms, room, guests }: { extra: Service, rooms: Room[], room: RoomOffer, guests: number }) => {
+const AddLimitedExtra = ({ extra, rooms, room, guests, children }: { extra: Service, rooms: Room[], room: RoomOffer, guests: number, children: number }) => {
   const [isOpen, setIsOpen] = useState(false);
   const services = useBookingStore(state => state.services);
   const setServices = useBookingStore(state => state.setServices);
@@ -26,7 +26,6 @@ const AddLimitedExtra = ({ extra, rooms, room, guests }: { extra: Service, rooms
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
   
   const maxRooms = rooms.length;
-  
   // Exclude last day (departure day) - we only count nights, not the checkout day
   const availableTimeSlices = extra.timeSlices?.slice(0, -1) || [];
   

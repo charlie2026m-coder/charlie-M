@@ -12,7 +12,7 @@ import { useTranslations } from 'next-intl'
 import { getExtraImage, getExtraImages } from '@/lib/getExtraImage'
 import CustomImageSlider from '@/app/_components/ui/CustomImageSlider'
 
-const ExtraCard = ({ item, room, guests, rooms, nights }: { item: Service, room: RoomOffer, guests: number, rooms: Room[], nights: number }) => {
+const ExtraCard = ({ item, room, guests, children, rooms, nights }: { item: Service, room: RoomOffer, guests: number, children: number, rooms: Room[], nights: number }) => {
   const t = useTranslations('bookingForm')
   const [isOpen, setIsOpen] = useState(false);
   const isUnlimited = item.unlimited;
@@ -44,8 +44,8 @@ const ExtraCard = ({ item, room, guests, rooms, nights }: { item: Service, room:
         {isCheckout 
           ? <AddCheckoutExtra extra={item} rooms={rooms} /> 
           : isUnlimited 
-            ? <AddUnlimitedExtra extra={item} room={room} guests={guests} rooms={rooms} nights={nights} /> 
-            : <AddLimitedExtra extra={item} rooms={rooms} room={room} guests={guests} />
+            ? <AddUnlimitedExtra extra={item} room={room} guests={guests} children={children} rooms={rooms} nights={nights} /> 
+            : <AddLimitedExtra extra={item} rooms={rooms} room={room} guests={guests} children={children} />
         }
       </div>}
 

@@ -6,8 +6,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { SetPasswordFormData, setPasswordSchema } from "@/types/schemas";
 import { useAuth } from "@/lib/auth-provider";
 import { useSetPassword } from "@/app/hooks/useAuth";
+import { useTranslations } from 'next-intl';
 
 const PasswordForm = () => {
+  const t = useTranslations('profile');
   const { user } = useAuth();
   
   // Check if user has password (for display purposes)
@@ -51,7 +53,7 @@ const PasswordForm = () => {
   return (
     <>
       <form onSubmit={(e) => e.preventDefault()} className='border-t pt-6'>
-        <h4 className='text-lg font-medium mb-5'>{hasPassword ? 'Change Password' : 'Create Password'}</h4>
+        <h4 className='text-lg font-medium mb-5'>{hasPassword ? t('changePassword') : t('createPassword')}</h4>
         
         <div className='grid grid-cols-1 w-full lg:w-1/2 gap-8'>
           <div className='relative flex flex-col gap-1 '>
@@ -59,7 +61,7 @@ const PasswordForm = () => {
               register={registerPassword}
               name='newPassword' 
               type='password' 
-              placeholder={hasPassword ? 'Change Password' : 'New Password'} 
+              placeholder={t('newPassword')} 
               icon='password'
               isError={!!passwordErrors.newPassword}
             />
@@ -75,7 +77,7 @@ const PasswordForm = () => {
               register={registerPassword}
               name='confirmPassword' 
               type='password' 
-              placeholder='Confirm Password' 
+              placeholder={t('confirmPassword')} 
               icon='password'
               isError={!!passwordErrors.confirmPassword}
             />
@@ -97,7 +99,7 @@ const PasswordForm = () => {
         onClick={handleDiscard}
         disabled={!hasChanges || isLoading}
       >
-        Discard
+        {t('discard')}
       </Button>
       <Button 
         type='button'
@@ -105,7 +107,7 @@ const PasswordForm = () => {
         onClick={handleSaveChanges}
         disabled={!hasChanges || isLoading}
       >
-        {isLoading ? 'Saving...' : 'Save Changes'}
+        {isLoading ? t('saving') : t('saveChanges')}
       </Button>
     </div>}
     </>

@@ -5,6 +5,7 @@ import { Button } from '@/app/_components/ui/button'
 import { Checkbox } from '@/app/_components/ui/checkbox'
 import { useDeleteAccount } from '@/app/hooks/useAuth'
 import { IoWarningOutline } from 'react-icons/io5'
+import { useTranslations } from 'next-intl'
 
 interface DeleteAccountModalProps {
   isOpen: boolean
@@ -12,6 +13,7 @@ interface DeleteAccountModalProps {
 }
 
 const DeleteAccountModal = ({ isOpen, onClose }: DeleteAccountModalProps) => {
+  const t = useTranslations('profile');
   const [confirmText, setConfirmText] = useState('')
   const [understand, setUnderstand] = useState(false)
   const deleteAccountMutation = useDeleteAccount()
@@ -21,7 +23,8 @@ const DeleteAccountModal = ({ isOpen, onClose }: DeleteAccountModalProps) => {
       return
     }
 
-    if (confirmText.toLowerCase() !== 'delete') {
+    const deleteWordLower = t('deleteWord').toLowerCase()
+    if (confirmText.toLowerCase() !== deleteWordLower) {
       return
     }
 
@@ -35,7 +38,8 @@ const DeleteAccountModal = ({ isOpen, onClose }: DeleteAccountModalProps) => {
     onClose()
   }
 
-  const isValid = understand && confirmText.toLowerCase() === 'delete'
+  const deleteWordLower = t('deleteWord').toLowerCase()
+  const isValid = understand && confirmText.toLowerCase() === deleteWordLower
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -43,7 +47,7 @@ const DeleteAccountModal = ({ isOpen, onClose }: DeleteAccountModalProps) => {
         <DialogHeader>
           <div className='flex items-center gap-3 mb-2'>
             <IoWarningOutline className='text-red text-3xl' />
-            <DialogTitle className='text-2xl font-bold text-red'>Delete Account</DialogTitle>
+            <DialogTitle className='text-2xl font-bold text-red'>{t('deleteAccount')}</DialogTitle>
           </div>
 
         </DialogHeader>
@@ -53,14 +57,14 @@ const DeleteAccountModal = ({ isOpen, onClose }: DeleteAccountModalProps) => {
 
           {/* Type DELETE to confirm */}
           <div>
-            <label className='text-sm font-medium text-gray-700 mb-2 block'>
-              Type <span className='font-bold text-red'>DELETE</span> to confirm
-            </label>
+            <label className='text-sm font-medium text-gray-700 mb-2 block' dangerouslySetInnerHTML={{
+              __html: t('typeDeleteToConfirm').replace(t('deleteWord'), `<span class='font-bold text-red'>${t('deleteWord')}</span>`)
+            }} />
             <input
               type='text'
               value={confirmText}
               onChange={(e) => setConfirmText(e.target.value)}
-              placeholder='DELETE'
+              placeholder={t('deleteWord')}
               className='w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-red/50'
               disabled={deleteAccountMutation.isPending}
             />
@@ -79,7 +83,7 @@ const DeleteAccountModal = ({ isOpen, onClose }: DeleteAccountModalProps) => {
               htmlFor='understand'
               className='text-sm text-gray-700 cursor-pointer leading-relaxed'
             >
-              I understand that this action is permanent and irreversible. My account and all associated data will be deleted.
+              {t('understandPermanent')}
             </label>
           </div>
 
@@ -92,7 +96,7 @@ const DeleteAccountModal = ({ isOpen, onClose }: DeleteAccountModalProps) => {
               disabled={deleteAccountMutation.isPending}
               className='flex-1 h-12 rounded-full border-gray-300 hover:bg-gray-100'
             >
-              Cancel
+              {t('cancel')}
             </Button>
             <Button
               type='button'
@@ -100,7 +104,7 @@ const DeleteAccountModal = ({ isOpen, onClose }: DeleteAccountModalProps) => {
               disabled={!isValid || deleteAccountMutation.isPending}
               className='flex-1 h-12 rounded-full bg-red hover:bg-red/90 text-white disabled:opacity-50 disabled:cursor-not-allowed'
             >
-              {deleteAccountMutation.isPending ? 'Deleting...' : 'Delete Account'}
+              {deleteAccountMutation.isPending ? t('deleting') : t('deleteAccount')}
             </Button>
           </div>
         </div>

@@ -5,9 +5,11 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogTitle } from '@/app/_components/ui/dialog';
 import ResetPasswordForm from '@/app/_components/Auth/ResetPasswordForm';
+import { useTranslations } from 'next-intl';
 
 
 export default function ResetPassword() {
+  const t = useTranslations('resetPassword');
   const router = useRouter();
 
   const [isValidSession, setIsValidSession] = useState(false);
@@ -18,7 +20,7 @@ export default function ResetPassword() {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error || !session) {
-          toast.error('Invalid or expired reset link. Please request a new one.');
+          toast.error(t('invalidOrExpiredResetLink'));
           router.push('/');
           return;
         }
@@ -26,7 +28,7 @@ export default function ResetPassword() {
         setIsValidSession(true);
       } catch (err) {
         console.error('Session check error:', err);
-        toast.error('Something went wrong. Please try again.');
+        toast.error(t('somethingWentWrong'));
         router.push('/');
       } finally {
         setIsChecking(false);
@@ -42,7 +44,7 @@ export default function ResetPassword() {
   return (
     <Dialog open={true} onOpenChange={() => router.push('/')}>
       <DialogContent className="!max-w-[600px] px-4 md:px-15 xl:px-25 w-[95%] gap-0  py-[50px] rounded-3xl bg-white">
-        <DialogTitle className="absolute opacity-0">Reset Password</DialogTitle>
+        <DialogTitle className="absolute opacity-0">{t('newPassword')}</DialogTitle>
 
         <ResetPasswordForm />
       </DialogContent>

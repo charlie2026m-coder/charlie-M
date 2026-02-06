@@ -7,6 +7,10 @@ html {
   scroll-behavior: smooth;
 }
 
+body {
+  overflow-x: hidden;
+}
+
 #rooms, #location, #concept, #faq {
   scroll-margin-top: 150px;
 }

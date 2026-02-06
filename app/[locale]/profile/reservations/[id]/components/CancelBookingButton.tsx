@@ -4,7 +4,8 @@ import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogHeader } from 
 import { useCancelReservation } from "@/app/hooks/useReservations";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useRouter } from "@/navigation"; // Use localized router
+import { useRouter } from "@/navigation";
+import { useTranslations } from 'next-intl';
 
 interface CancelBookingButtonProps {
   reservationId: string;
@@ -12,6 +13,7 @@ interface CancelBookingButtonProps {
 }
 
 export default function CancelBookingButton({ reservationId, onClose }: CancelBookingButtonProps) {
+  const t = useTranslations('reservations');
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const { mutate: cancelReservation, isPending } = useCancelReservation();
@@ -19,13 +21,13 @@ export default function CancelBookingButton({ reservationId, onClose }: CancelBo
   const handleCancel = () => {
     cancelReservation(reservationId, {
       onSuccess: () => {
-        toast.success('Booking cancelled successfully');
+        toast.success(t('bookingCancelledSuccessfully'));
         setOpen(false);
         onClose?.();
         router.push('/profile/reservations');
       },
       onError: (error) => {
-        toast.error(error.message || 'Failed to cancel booking');
+        toast.error(error.message || t('failedToCancelBooking'));
       },
     });
   };
@@ -34,12 +36,12 @@ export default function CancelBookingButton({ reservationId, onClose }: CancelBo
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className='w-full h-[45px] mt-3'>
-          Cancel Booking
+          {t('cancelBooking')}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-1xl">Cancel Booking</DialogTitle>
+          <DialogTitle className="text-1xl">{t('cancelBooking')}</DialogTitle>
         </DialogHeader>
         <div className="flex gap-2 justify-center pt-4">
           <Button
@@ -48,7 +50,7 @@ export default function CancelBookingButton({ reservationId, onClose }: CancelBo
             onClick={handleCancel}
             disabled={isPending}
           >
-            {isPending ? 'Cancelling...' : 'Accept'}
+            {isPending ? t('cancelling') : t('accept')}
           </Button>
           <Button
             variant="outline"
@@ -56,7 +58,7 @@ export default function CancelBookingButton({ reservationId, onClose }: CancelBo
             onClick={() => setOpen(false)}
             disabled={isPending}
           >
-            Decline
+            {t('decline')}
           </Button>
         </div>
       </DialogContent>
