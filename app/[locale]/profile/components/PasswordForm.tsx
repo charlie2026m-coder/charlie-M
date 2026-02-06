@@ -65,6 +65,7 @@ const PasswordForm = () => {
               icon='password'
               isError={!!passwordErrors.newPassword}
             />
+            <p className="text-xs text-mute mt-1 pl-4">{t('passwordRequirements')}</p>
             {passwordErrors.newPassword && (
               <span className='absolute -bottom-5 left-0 text-red text-xs pl-4'>
                 {passwordErrors.newPassword?.message}

@@ -2,7 +2,7 @@
 import CustomInput from "@/app/_components/ui/customInput";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { GuestDetailsFormData,  guestDetailsSchema } from "@/types/schemas";
+import { ProfileDetailsFormData, profileDetailsSchema } from "@/types/schemas";
 import { Button } from "@/app/_components/ui/button";
 import { useProfile } from "@/app/hooks/useProfile";
 import { useEffect, useState } from "react";
@@ -25,7 +25,16 @@ export default function Profile() {
   const { clearGuestMode } = useProfileStore();
 
   useEffect(() => {
-    setIsGuestMode(localStorage.getItem('guestMode') === 'true');
+    const checkGuestMode = () => {
+      const guestMode = localStorage.getItem('guestMode') === 'true';
+      setIsGuestMode(guestMode);
+    };
+    
+    checkGuestMode();
+    
+    // Also check on storage events (in case guestMode changes in another tab)
+    window.addEventListener('storage', checkGuestMode);
+    return () => window.removeEventListener('storage', checkGuestMode);
   }, []);
 
   // Profile form
@@ -34,8 +43,8 @@ export default function Profile() {
     handleSubmit,
     formState: { errors, isDirty: isProfileDirty },
     reset,
-  } = useForm<GuestDetailsFormData>({
-    resolver: zodResolver(guestDetailsSchema),
+  } = useForm<ProfileDetailsFormData>({
+    resolver: zodResolver(profileDetailsSchema),
     defaultValues: {
       name: '',
       last_name: '',
@@ -76,14 +85,7 @@ export default function Profile() {
     if (isProfileDirty) reset();
   }
 
-  const onSubmit = async (data: GuestDetailsFormData) => {
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(data.email)) {
-      toast.error(t('validEmailRequired'));
-      return;
-    }
-
+  const onSubmit = async (data: ProfileDetailsFormData) => {
     await updateMutation.mutateAsync({
       name: data.name,
       last_name: data.last_name,
@@ -148,7 +150,7 @@ export default function Profile() {
               isError={!!errors.name}
             />
             {errors.name && (
-              <span className='absolute bottom-0 left-0 text-red text-xs pl-4'>{errors.name.message}</span>
+              <span className='absolute -bottom-5 left-0 text-red text-xs pl-4'>{errors.name.message}</span>
             )}
           </div>
           
@@ -162,7 +164,7 @@ export default function Profile() {
               isError={!!errors.last_name}
             />
             {errors.last_name && (
-              <span className='absolute bottom-0 left-0 text-red text-xs pl-4'>{errors.last_name.message}</span>
+              <span className='absolute -bottom-5 left-0 text-red text-xs pl-4'>{errors.last_name.message}</span>
             )}
           </div>
           
@@ -176,7 +178,7 @@ export default function Profile() {
               isError={!!errors.email}
             />
             {errors.email && (
-              <span className='absolute bottom-0 left-0 text-red text-xs pl-4'>{errors.email.message}</span>
+              <span className='absolute -bottom-5 left-0 text-red text-xs pl-4'>{errors.email.message}</span>
             )}
           </div>
           
@@ -190,7 +192,7 @@ export default function Profile() {
               isError={!!errors.phone}
             />
             {errors.phone && (
-              <span className='absolute bottom-0 left-0 text-red text-xs pl-4'>{errors.phone.message}</span>
+              <span className='absolute -bottom-5 left-0 text-red text-xs pl-4'>{errors.phone.message}</span>
             )}
           </div>
         </div>
@@ -198,7 +200,7 @@ export default function Profile() {
 
  
     {hasChanges && (
-      <div className='flex gap-4 self-end mb-10'>
+      <div className='flex gap-4 self-end mb-10 mt-4'>
         <Button 
           type='button' 
           variant='outline' 
@@ -222,7 +224,7 @@ export default function Profile() {
 
     {/* Danger Zone */}
     <div className='mt-12 pt-8 border-t border-gray-200'>
-      <h3 className='text-xl font-semibold text-red mb-3'>{t('dangerZone')}</h3>
+      
       <div className='bg-red/5 border border-red/20 rounded-2xl p-5'>
         <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-4'>
           <div>

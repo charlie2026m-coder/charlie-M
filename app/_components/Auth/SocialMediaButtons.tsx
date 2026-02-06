@@ -19,7 +19,7 @@ const SocialMediaButtons = ({ onReservationClick }: { onReservationClick?: () =>
         {t('continueWithReservationId')}
       </Button>
 
-      <Button
+      {/* <Button
         type="button"
         variant="outline"
         onClick={() => oauthMutation.mutate('apple')}
@@ -27,7 +27,7 @@ const SocialMediaButtons = ({ onReservationClick }: { onReservationClick?: () =>
         className={buttonStyle}
       >
         <FaApple className="size-6" /> {t('continueWithApple')}
-      </Button>
+      </Button> */}
 
       <Button
         type="button"

@@ -57,14 +57,17 @@ const ResetPasswordForm = () => {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 relative mb-[30px]">
       <h1 className="text-3xl font-[400] text-center mb-6">{t('newPassword')}</h1>
       <h2 className="text-sm text-center mb-8 text-dark">{t('enterNewPassword')}</h2>
-      <CustomInput 
-        register={register} 
-        name="password" 
-        type="password" 
-        placeholder={t('password')} 
-        icon="password"
-        isError={!!errors.password}
-      />
+      <div className="relative">
+        <CustomInput 
+          register={register} 
+          name="password" 
+          type="password" 
+          placeholder={t('password')} 
+          icon="password"
+          isError={!!errors.password}
+        />
+        <p className="text-xs text-mute mt-1 pl-4">{t('passwordRequirements')}</p>
+      </div>
 
       <CustomInput 
         register={register} 

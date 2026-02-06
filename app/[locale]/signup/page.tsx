@@ -120,14 +120,17 @@ export default function SignUpPage() {
             icon="email" 
             isError={!!errors.email}
           />
-          <CustomInput 
-            register={register} 
-            name="password" 
-            type="password" 
-            placeholder={t('password')} 
-            icon="password" 
-            isError={!!errors.password || !!errors.confirmPassword} 
-          />
+          <div className="relative">
+            <CustomInput 
+              register={register} 
+              name="password" 
+              type="password" 
+              placeholder={t('password')} 
+              icon="password" 
+              isError={!!errors.password || !!errors.confirmPassword} 
+            />
+            <p className="text-xs text-mute mt-1 pl-4">{t('passwordRequirements')}</p>
+          </div>
           <CustomInput 
             register={register} 
             name="confirmPassword" 
