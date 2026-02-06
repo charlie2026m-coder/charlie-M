@@ -333,6 +333,10 @@
     "tryDifferentDates": "Please try different dates or explore other room options.",
     "lookAnother": "Look another"
   },
+  "noRooms": {
+    "title": "No matches for your request, please contact us directly",
+    "contactUs": "Contact Us"
+  },
   "locationCard": {
     "drive": "Drive",
     "publicTransport": "Public transport",

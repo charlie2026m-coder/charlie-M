@@ -5,6 +5,7 @@ import { CustomPagination } from '@/app/_components/ui/CustomPagination'
 import { useState, useMemo, useEffect } from 'react'
 import { useStore } from '@/store/useStore'
 import { RoomOffer } from '@/types/offers'
+import NoRooms from './NoRooms'
 
 const RoomsList = ({ 
   rooms, 
@@ -91,6 +92,10 @@ const RoomsList = ({
     const start = currentPage * roomsPerPage
     return filteredRooms.slice(start, start + roomsPerPage)
   }, [filteredRooms, currentPage, roomsPerPage, priceFilter, filter])
+
+  if(!displayedRooms || displayedRooms.length === 0) {
+    return <NoRooms />
+  }
   return (
     <div className='flex flex-col gap-[30px] mb-[30px]'>
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'> 

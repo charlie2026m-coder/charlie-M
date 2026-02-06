@@ -330,6 +330,10 @@
     "tryDifferentDates": "Bitte wählen Sie andere Daten oder sehen Sie sich weitere Zimmeroptionen an.",
     "lookAnother": "Andere Zimmer ansehen"
   },
+  "noRooms": {
+    "title": "Keine Übereinstimmungen für Ihre Anfrage, bitte kontaktieren Sie uns direkt",
+    "contactUs": "Kontaktieren Sie uns"
+  },
   "locationCard": {
     "drive": "Auto",
     "publicTransport": "Öffentliche Verkehrsmittel",
