@@ -129,7 +129,7 @@ const ExistingExtras = ({
           )
         })}
         <div className='flex justify-between items-center my-2 text-sm font-semibold'>
-          <span>{t('total')}:</span>
+          <span>{t('total')}</span>
           <span className='text-green'>€{newServicesTotal.toFixed(2)}</span>
         </div>
       </div>}

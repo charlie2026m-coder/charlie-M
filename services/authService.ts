@@ -106,11 +106,17 @@ export async function signInWithOAuth(provider: 'google' | 'apple'): Promise<{ s
 // Send password reset email 
 export async function resetPassword(email: string): Promise<AuthResult> {
   try {
-    const redirectTo = typeof window !== 'undefined' 
-      ? `${window.location.origin}/reset-password`
-      : undefined;
+    let redirectTo: string | undefined;
+    
+    if (typeof window !== 'undefined') {
+      const currentPath = window.location.pathname;
+      const locale = currentPath.startsWith('/de') ? '/de' : '';
+      redirectTo = `${window.location.origin}${locale}/reset-password`;
+    }
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { 
+      redirectTo
+    });
     if (error) return { success: false, error: parseAuthError(error) };
 
     return { success: true };

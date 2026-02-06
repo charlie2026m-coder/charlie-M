@@ -5,13 +5,16 @@ import { Button } from '../ui/button';
 import CustomInput from '../ui/customInput';
 import { forgotPasswordSchema, type ForgotPasswordFormData } from '@/types/schemas';
 import { useForgotPassword } from '@/app/hooks/useAuth';
-import { Link } from '@/navigation';
+import { Link, useRouter } from '@/navigation';
 import { useTranslations } from 'next-intl';
+import Success from './Success';
 
 const ForgotPassword = () => {
   const t = useTranslations('forgotPassword');
   const [error, setError] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
   const forgotPasswordMutation = useForgotPassword();
+  const router = useRouter();
   
   const {
     register,
@@ -41,11 +44,16 @@ const ForgotPassword = () => {
     setError(null);
     try {
       await forgotPasswordMutation.mutateAsync(data.email);
+      setShowSuccess(true);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : t('failedToSend');
       setError(errorMessage);
     }
   };
+
+  if (showSuccess) {
+    return <Success type='pass' onClose={() => router.push('/login')} />;
+  }
 
   return (
     <div className="w-full ">
