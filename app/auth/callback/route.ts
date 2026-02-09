@@ -50,21 +50,33 @@ export async function GET(request: Request) {
         );
       }
 
-      // Check if this is a password recovery flow
+      // Check the type parameter to determine the flow
+      const type = requestUrl.searchParams.get('type');
       const next = requestUrl.searchParams.get('next');
       
-      if (next?.includes('/reset-password')) {
+      // Check if this is a password recovery session
+      // Method 1: Check type parameter (Supabase adds this to reset password URLs)
+      const isRecovery = type === 'recovery';
+      
+      // Method 2: Check if user has recovery_sent_at timestamp (indicates password reset was initiated)
+      // This is set when resetPasswordForEmail is called
+      const hasRecoverySent = data?.user?.recovery_sent_at !== null && 
+                              data?.user?.recovery_sent_at !== undefined;
+      
+      // Method 3: Check if this is a recovery session by checking app_metadata
+      const isRecoverySession = data?.session?.user?.app_metadata?.provider === 'email' &&
+                                hasRecoverySent;
+      
+      // If this is a password recovery flow, redirect to reset-password page
+      if (isRecovery || hasRecoverySent || isRecoverySession) {
         return NextResponse.redirect(`${requestUrl.origin}${localePrefix}/reset-password`);
       }
 
       // Check if this is email confirmation
-      const type = requestUrl.searchParams.get('type');
       const isEmailConfirmation = type === 'email_change' || type === 'email';
       
       // If email was confirmed, sync it to profiles table
       if (isEmailConfirmation && data?.user) {
-        console.log('Email confirmed, syncing to profiles:', data.user.email);
-        
         // Update email in profiles table
         const { error: updateError } = await supabase
           .from('profiles')
@@ -107,7 +119,8 @@ export async function GET(request: Request) {
         return NextResponse.redirect(`${requestUrl.origin}${localePrefix}/profile?email_confirmed=true`);
       }
       
-      return NextResponse.redirect(next || `${requestUrl.origin}${localePrefix}/profile`);
+      // Default redirect to profile for other auth flows (OAuth, etc.)
+      return NextResponse.redirect(`${requestUrl.origin}${localePrefix}/profile`);
     } catch (err) {
       console.error('Unexpected error during code exchange:', err);
       return NextResponse.redirect(

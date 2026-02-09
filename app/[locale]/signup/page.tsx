@@ -136,13 +136,13 @@ export default function SignUpPage() {
             register={register} 
             name="confirmPassword" 
             type="password" 
-            placeholder={t('rePassword')} 
+            placeholder={t('confirmPassword')} 
             icon="password" 
             isError={!!errors.confirmPassword} 
           />
 
           <div className='pt-2'>
-            <div className='flex items-start gap-3'>
+            <div className='flex items-center gap-3'>
               <Checkbox
                 size='sm'
                 id='consent-register'

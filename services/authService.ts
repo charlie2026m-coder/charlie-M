@@ -138,18 +138,21 @@ export async function resetPassword(email: string): Promise<AuthResult> {
     let redirectTo: string | undefined;
     
     if (typeof window !== 'undefined') {
-      const currentPath = window.location.pathname;
-      const locale = currentPath.startsWith('/de') ? '/de' : '';
-      redirectTo = `${window.location.origin}${locale}/reset-password`;
+      redirectTo = `${window.location.origin}/auth/callback`;
     }
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, { 
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, { 
       redirectTo
     });
-    if (error) return { success: false, error: parseAuthError(error) };
+
+    if (error) {
+      console.error('Reset password error:', error);
+      return { success: false, error: parseAuthError(error) };
+    }
 
     return { success: true };
   } catch (error) {
+    console.error('Unexpected error in resetPassword:', error);
     return { success: false, error: parseAuthError(error as Error) };
   }
 }

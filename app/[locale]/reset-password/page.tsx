@@ -3,10 +3,9 @@ import { useState, useEffect } from 'react';
 import { useRouter } from '@/navigation';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { Dialog, DialogContent, DialogTitle } from '@/app/_components/ui/dialog';
 import ResetPasswordForm from '@/app/_components/Auth/ResetPasswordForm';
 import { useTranslations } from 'next-intl';
-
+import CustomCard from '@/app/_components/ui/CustomCard';
 
 export default function ResetPassword() {
   const t = useTranslations('resetPassword');
@@ -36,18 +35,27 @@ export default function ResetPassword() {
     };
 
     checkRecoverySession();
-  }, [router]);
+  }, [router, t]);
 
-  if (isChecking) return null;
-  if (!isValidSession) return null;
+  if (isChecking) {
+    return (
+      <div className="bg-white md:px-4 md:py-16 flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-dark">{t('loading') || 'Loading...'}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isValidSession) {
+    return null;
+  }
 
   return (
-    <Dialog open={true} onOpenChange={() => router.push('/')}>
-      <DialogContent className="!max-w-[600px] px-4 md:px-15 xl:px-25 w-[95%] gap-0  py-[50px] rounded-3xl bg-white">
-        <DialogTitle className="absolute opacity-0">{t('newPassword')}</DialogTitle>
-
+    <div className="bg-white md:px-4 md:py-16 flex items-center justify-center min-h-screen py-10">
+      <CustomCard className="w-full max-w-md p-4 md:p-8 md:border">
         <ResetPasswordForm />
-      </DialogContent>
-    </Dialog>
+      </CustomCard>
+    </div>
   );
 }
