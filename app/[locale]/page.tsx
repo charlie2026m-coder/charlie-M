@@ -12,7 +12,6 @@ import PersonalizeSection from './home/PersonalizeSection';
 import DesignSection from './home/DesignSection';
 import FAQSection from './home/FAQSection';
 import ReviewsSection from './home/ReviewsSection';
-import InstagramSection from './home/InstagramSection';
 export const revalidate = 300;
 
 type Props = {

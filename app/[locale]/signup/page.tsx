@@ -176,7 +176,7 @@ export default function SignUpPage() {
           >
             {registerMutation.isPending ? t('loading') : t('signUpButton')}
           </Button>
-          {error && <div className="absolute bottom-[-28px] text-center text-red text-sm px-4 w-full">{error}</div>}
+          {error && <div className="absolute -bottom-10 text-center text-red text-sm px-4 w-full">{error}</div>}
         </form>
 
         <Divider />
