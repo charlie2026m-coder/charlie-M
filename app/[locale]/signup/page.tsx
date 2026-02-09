@@ -17,7 +17,7 @@ import { useTranslations } from 'next-intl';
 
 export default function SignUpPage() {
   const t = useTranslations('signUp');
-  const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [showReservationForm, setShowReservationForm] = useState(false);
   const registerMutation = useRegister();
   const router = useRouter();
@@ -45,23 +45,24 @@ export default function SignUpPage() {
   const confirmPassword = watch('confirmPassword');
   const consent = watch('consent');
 
+  // Clear submit error when user types
   useEffect(() => {
-    // Exclude consent error from general error message (it has its own display)
-    const errorEntries = Object.entries(errors).filter(([field]) => field !== 'consent');
-    
-    if (errorEntries.length > 0) {
-      const errorMessages = errorEntries
-        .map(([field, error]) => error?.message)
-        .filter(Boolean)
-        .join(', ');
-      setError(errorMessages);
-    } else {
-      setError(null);
+    if (submitError) {
+      setSubmitError(null);
     }
-  }, [errors, email, password, confirmPassword, consent]);
+  }, [email, password, confirmPassword]);
+
+  // Get validation error message (exclude consent error from general error message)
+  const validationError = Object.entries(errors)
+    .filter(([field]) => field !== 'consent')
+    .map(([, error]) => error?.message)
+    .filter(Boolean)
+    .join(', ');
+
+  const error = submitError || validationError || null;
 
   const onSubmit = async (data: RegisterFormData) => {
-    setError(null);
+    setSubmitError(null);
     try {
       const result = await registerMutation.mutateAsync({
         name: data.name,
@@ -75,7 +76,7 @@ export default function SignUpPage() {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : t('registrationFailed');
-      setError(errorMessage);
+      setSubmitError(errorMessage);
     }
   };
 

@@ -11,7 +11,7 @@ import Success from './Success';
 
 const ForgotPassword = () => {
   const t = useTranslations('forgotPassword');
-  const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const forgotPasswordMutation = useForgotPassword();
   const router = useRouter();
@@ -28,26 +28,31 @@ const ForgotPassword = () => {
 
   const email = watch('email');
 
+  // Clear submit error when user types
   useEffect(() => {
-    if (Object.keys(errors).length > 0) {
-      const errorMessages = Object.entries(errors)
-        .map(([field, error]) => error?.message)
-        .filter(Boolean)
-        .join(', ');
-      setError(errorMessages);
-    } else {
-      setError(null);
+    if (submitError) {
+      setSubmitError(null);
     }
-  }, [errors, email]);
+  }, [email]);
+
+  // Get validation error message
+  const validationError = Object.keys(errors).length > 0
+    ? Object.entries(errors)
+        .map(([, error]) => error?.message)
+        .filter(Boolean)
+        .join(', ')
+    : null;
+
+  const error = submitError || validationError;
 
   const onSubmit = async (data: ForgotPasswordFormData) => {
-    setError(null);
+    setSubmitError(null);
     try {
       await forgotPasswordMutation.mutateAsync(data.email);
       setShowSuccess(true);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : t('failedToSend');
-      setError(errorMessage);
+      setSubmitError(errorMessage);
     }
   };
 

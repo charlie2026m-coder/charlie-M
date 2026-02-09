@@ -11,7 +11,7 @@ import { useTranslations } from 'next-intl';
 
 const ResetPasswordForm = () => {
   const t = useTranslations('resetPassword');
-  const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const updatePasswordMutation = useUpdatePassword();
   const router = useRouter();
@@ -29,23 +29,28 @@ const ResetPasswordForm = () => {
   const password = watch('password');
   const confirmPassword = watch('confirmPassword');
 
+  // Clear submit error when user types
   useEffect(() => {
-    if (Object.keys(errors).length > 0) {
-      const errorMessages = Object.entries(errors).map(([, error]) => error?.message).filter(Boolean).join(', ');
-      setError(errorMessages);
-    } else {
-      setError(null);
+    if (submitError) {
+      setSubmitError(null);
     }
-  }, [errors, password, confirmPassword]);
+  }, [password, confirmPassword]);
+
+  // Get validation error message
+  const validationError = Object.keys(errors).length > 0
+    ? Object.entries(errors).map(([, error]) => error?.message).filter(Boolean).join(', ')
+    : null;
+
+  const error = submitError || validationError;
 
   const onSubmit = async (data: ResetPasswordFormData) => {
-    setError(null);
+    setSubmitError(null);
     try {
       await updatePasswordMutation.mutateAsync(data.password);
       setShowSuccess(true);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : t('failedToSavePassword');
-      setError(errorMessage);
+      setSubmitError(errorMessage);
     }
   };
   

@@ -44,6 +44,7 @@ export const useProfile = () => {
     mutationFn: async (updates: Partial<Omit<Profile, 'id' | 'created_at' | 'updated_at'>>) => {
       if (!user?.id) throw new Error('No user ID')
       
+      // Update email in auth.users if changed
       if (updates.email) {
         const currentEmail = (user.email || '').trim().toLowerCase();
         const newEmail = updates.email.trim().toLowerCase();
@@ -64,11 +65,22 @@ export const useProfile = () => {
             }
             throw new Error(`Failed to update email: ${authError.message}`)
           }
-
-
         }
       }
 
+      // Update phone in auth.users metadata if provided
+      if (updates.mobile !== undefined) {
+        const { error: metaError } = await supabase.auth.updateUser({
+          data: { phone: updates.mobile }
+        })
+        
+        if (metaError) {
+          console.warn('⚠️ Failed to update phone in auth metadata:', metaError);
+          // Don't throw - continue with profiles update even if metadata update fails
+        }
+      }
+
+      // Update profiles table
       const { data, error: updateError } = await supabase
         .from('profiles')
         .update(updates)

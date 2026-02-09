@@ -691,7 +691,7 @@
     "createPassword": "Create Password",
     "newPassword": "New Password",
     "confirmPassword": "Confirm Password",
-    "passwordRequirements": "Password must be at least 8 characters and contain at least 1 uppercase letter and 1 special character",
+    "passwordRequirements": "Password must be at least 8 characters and contain at least 1 uppercase letter, 1 number, and 1 special character",
     "dangerZone": "Danger Zone",
     "deleteAccount": "Delete Account",
     "permanentlyDelete": "Permanently delete your account and all associated data. This action cannot be undone.",

@@ -13,12 +13,15 @@ export const loginSchema = z.object({
 
 export type LoginFormData = z.infer<typeof loginSchema>;
 
-// Password validation regex: at least 8 characters, 1 uppercase letter, 1 special character
-const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+// Password validation: at least 8 characters, 1 uppercase letter, 1 number, 1 special character
+// Supports both Latin (A-Z) and Cyrillic (А-Я) uppercase letters
 const passwordValidation = z
   .string()
+  .trim() // Remove whitespace from start and end
   .min(8, 'Password must be at least 8 characters')
-  .regex(passwordRegex, 'Password must contain at least 1 uppercase letter and 1 special character');
+  .regex(/[A-ZА-ЯЁ]/, 'Password must contain at least 1 uppercase letter')
+  .regex(/[0-9]/, 'Password must contain at least 1 number')
+  .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, 'Password must contain at least 1 special character');
 
 //register
 export const registerSchema = z.object({
@@ -27,7 +30,7 @@ export const registerSchema = z.object({
     .min(1, 'Email is required')
     .regex(emailRegex, 'Invalid email address'),
   password: passwordValidation,
-  confirmPassword: z.string(),
+  confirmPassword: z.string().trim(),
   consent: z.boolean().refine((val) => val === true, {
     message: 'You must agree to the Privacy Policy to continue',
   }),
@@ -50,7 +53,7 @@ export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
 export const resetPasswordSchema = z.object({
   password: passwordValidation,
-  confirmPassword: z.string(),
+  confirmPassword: z.string().trim(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -109,9 +112,9 @@ export type ProfileDetailsFormData = z.infer<typeof profileDetailsSchema>
 
 // Password change schema - for email/password users
 export const changePasswordSchema = z.object({
-  currentPassword: z.string().min(6, 'Current password must be at least 6 characters'),
+  currentPassword: z.string().trim().min(6, 'Current password must be at least 6 characters'),
   newPassword: passwordValidation,
-  confirmPassword: z.string(),
+  confirmPassword: z.string().trim(),
 }).refine((data) => data.newPassword === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -123,7 +126,7 @@ export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>
 // Set password schema - for OAuth users
 export const setPasswordSchema = z.object({
   newPassword: passwordValidation,
-  confirmPassword: z.string(),
+  confirmPassword: z.string().trim(),
 }).refine((data) => data.newPassword === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
