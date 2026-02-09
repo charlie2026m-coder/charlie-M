@@ -333,6 +333,10 @@
     "tryDifferentDates": "Please try different dates or explore other room options.",
     "lookAnother": "Look another"
   },
+  "noRooms": {
+    "title": "No matches for your request, please contact us directly",
+    "contactUs": "Contact Us"
+  },
   "locationCard": {
     "drive": "Drive",
     "publicTransport": "Public transport",
@@ -687,6 +691,7 @@
     "createPassword": "Create Password",
     "newPassword": "New Password",
     "confirmPassword": "Confirm Password",
+    "passwordRequirements": "Password must be at least 8 characters and contain at least 1 uppercase letter, 1 number, and 1 special character",
     "dangerZone": "Danger Zone",
     "deleteAccount": "Delete Account",
     "permanentlyDelete": "Permanently delete your account and all associated data. This action cannot be undone.",
@@ -1184,13 +1189,15 @@
     "password": "Password",
     "confirmPassword": "Confirm Password",
     "updating": "Updating...",
+    "loading": "Loading...",
     "save": "Save",
     "successfully": "Successfully",
     "passwordChangedSuccessfully": "Your password has been changed successfully",
     "ok": "Ok",
     "invalidOrExpiredResetLink": "Invalid or expired reset link. Please request a new one.",
     "somethingWentWrong": "Something went wrong. Please try again.",
-    "failedToSavePassword": "Failed to save password"
+    "failedToSavePassword": "Failed to save password",
+    "passwordRequirements": "Password must be at least 8 characters and contain at least 1 uppercase letter and 1 special character"
   },
   "signUp": {
     "welcome": "Welcome to Charlie M",
@@ -1198,7 +1205,7 @@
     "fullName": "Full Name",
     "email": "Email",
     "password": "Password",
-    "rePassword": "Re-Password",
+    "confirmPassword": "Confirm Password",
     "agreeTo": "I agree to the",
     "privacyPolicy": "Privacy Policy",
     "loading": "Loading...",
@@ -1208,7 +1215,8 @@
     "backToSignUp": "← Back to Sign Up",
     "checkEmailToConfirm": "Please check your email to confirm your account",
     "registrationFailed": "Registration failed",
-    "emailConfirmationSent": "We have sent a link to your email address to confirm your email address. Please check your email!"
+    "emailConfirmationSent": "We have sent a link to your email address to confirm your email address. Please check your email!",
+    "passwordRequirements": "Password must be at least 8 characters and contain at least 1 uppercase letter and 1 special character"
   }
 }
 

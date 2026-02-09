@@ -25,8 +25,28 @@ const Contacts = async ({ locale }: { locale: string }) => {
             <span className='text-white text-[#E0E0E0] '>{t('tagUs')}</span>
           </div>
           <ul className="flex gap-5 text-[#eoeoeo] justify-around md:justify-start">
-              <li className="flex size-14 rounded-full border border-blue items-center justify-center"><FaFacebookF className='text-white size-7' /></li>
-              <li className="flex size-14 rounded-full border border-blue items-center justify-center"><AiFillInstagram className='text-white size-7' /></li>
+              <li className="flex size-14 rounded-full border border-blue items-center justify-center hover:bg-blue transition-colors cursor-pointer">
+                <a 
+                  href="https://www.facebook.com/profile.php?id=61587365155032" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center w-full h-full"
+                  aria-label="Facebook"
+                >
+                  <FaFacebookF className='text-white size-7' />
+                </a>
+              </li>
+              <li className="flex size-14 rounded-full border border-blue items-center justify-center hover:bg-blue transition-colors cursor-pointer">
+                <a 
+                  href="https://www.instagram.com/charliemhotel/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center w-full h-full"
+                  aria-label="Instagram"
+                >
+                  <AiFillInstagram className='text-white size-7' />
+                </a>
+              </li>
           </ul>
         </div>
         <div className="flex flex-col sm:flex-row gap-5 md:gap-7 opacity-50 text-white text-2xl md:items-center font-semibold">

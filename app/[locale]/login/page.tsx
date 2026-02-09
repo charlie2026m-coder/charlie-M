@@ -109,13 +109,13 @@ export default function LoginPage() {
           <Button
             type="submit"
             disabled={loginMutation.isPending || !isValid}
-            className="w-full h-12 rounded-full bg-blue hover:bg-blue/80 text-white font-medium mb-1"
+            className="w-full h-12 rounded-full bg-blue hover:bg-blue/80 text-white font-medium !mb-0"
           >
             {loginMutation.isPending ? t('loading') : t('loginButton')}
           </Button>
 
           {loginError && (
-            <div className="text-center text-red-400 text-sm px-4 w-full font-light">
+            <div className="absolute bottom-[-28px] text-center left-1/2 -translate-x-1/2 text-red text-sm w-[120%]">
               {loginError}
             </div>
           )}

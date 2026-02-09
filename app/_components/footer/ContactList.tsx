@@ -1,5 +1,6 @@
 'use client'
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface Contact {
   type: string;
@@ -12,49 +13,94 @@ interface ContactListProps {
 }
 
 const ContactList = ({ contacts }: ContactListProps) => {
-  const handleContactClick = (type: string, value: string) => {
+  const getContactHref = (type: string, value: string) => {
     switch (type) {
       case "phone":
-        window.location.href = `tel:${value}`;
-        break;
+        return `tel:${value}`;
       case "email":
-        window.location.href = `mailto:${value}`;
-        break;
+        return `mailto:${value}`;
       case "whatsapp":
         const cleanPhone = value.replace(/[\s+]/g, '');
-        window.open(`https://wa.me/${cleanPhone}`, '_blank');
-        break;
+        return `https://wa.me/${cleanPhone}`;
       case "location":
-        window.open(value, '_blank');
-        break;
+        return value;
       default:
-        break;
+        return '#';
+    }
+  };
+
+  const handleClick = async (type: string, href: string, value: string, e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (type === "whatsapp" || type === "location") {
+      window.open(href, '_blank');
+    } else if (type === "email") {
+      // Try to open email client
+      window.location.href = href;
+      
+      // Also copy email to clipboard as fallback
+      try {
+        await navigator.clipboard.writeText(value);
+        toast.success('Email copied to clipboard!');
+      } catch (err) {
+        console.error('Failed to copy email:', err);
+      }
+    } else if (type === "phone") {
+      // Try to open phone dialer
+      window.location.href = href;
+      
+      // Also copy phone to clipboard as fallback
+      try {
+        await navigator.clipboard.writeText(value);
+        toast.success('Phone number copied to clipboard!');
+      } catch (err) {
+        console.error('Failed to copy phone:', err);
+      }
     }
   };
 
   return (
     <>
       <ul className="flex md:hidden flex-col gap-1 text-white justify-center pl-0 mb-6 md:mb-0">
-        {contacts.map((contact, index) => (
-          <li 
-            key={index}
-            onClick={() => handleContactClick(contact.type, contact.value)}
-            className={cn("cursor-pointer text-sm md:text-base ", index === 0 && "font-bold text-blue")}
-          >
-            <span>{contact.label}</span>
-          </li>
-        ))}
+        {contacts.map((contact, index) => {
+          const href = getContactHref(contact.type, contact.value);
+          
+          return (
+            <li 
+              key={index}
+              className={cn("text-sm md:text-base ", index === 0 && "font-bold text-blue")}
+            >
+              <a
+                href={href}
+                onClick={(e) => handleClick(contact.type, href, contact.value, e)}
+                className="cursor-pointer"
+              >
+                {contact.label}
+              </a>
+            </li>
+          );
+        })}
       </ul>
       <ul className="hidden md:flex flex-col gap-6 text-white justify-center">
-        {contacts.map((contact, index) => (
-          <li 
-            key={index}
-            onClick={() => handleContactClick(contact.type, contact.value)}
-            className={cn("cursor-pointer ", index === 0 && "font-bold text-blue")}
-          >
-            <span>{contact.label}</span>
-          </li>
-        ))}
+        {contacts.map((contact, index) => {
+          const href = getContactHref(contact.type, contact.value);
+          
+          return (
+            <li 
+              key={index}
+              className={cn("", index === 0 && "font-bold text-blue")}
+            >
+              <a
+                href={href}
+                onClick={(e) => handleClick(contact.type, href, contact.value, e)}
+                className="cursor-pointer"
+              >
+                {contact.label}
+              </a>
+            </li>
+          );
+        })}
       </ul>
     </>
   );

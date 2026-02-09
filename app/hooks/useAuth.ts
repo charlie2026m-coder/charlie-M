@@ -118,6 +118,7 @@ export const useForgotPassword = () => {
       toast.dismiss('forgot-password');
     },
     onError: (error: Error) => {
+      console.error('Password reset failed:', error);
       toast.error(error.message || 'Failed to send reset link', { id: 'forgot-password' });
     },
   });

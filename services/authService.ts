@@ -23,16 +23,23 @@ export function parseAuthError(error: AuthError | Error): string {
 
 export async function login(credentials: LoginCredentials): Promise<AuthResult> {
   try {
+    console.log('🔐 Login attempt with email:', credentials.email);
+    
     const { data, error } = await supabase.auth.signInWithPassword({
       email: credentials.email,
       password: credentials.password,
     });
 
-    if (error) return { success: false, error: parseAuthError(error) };
+    if (error) {
+      console.error('❌ Login error:', error);
+      return { success: false, error: parseAuthError(error) };
+    }
     if (!data.user) return { success: false, error: 'Login failed. Please try again.' };
 
+    console.log('✅ Login successful, user:', data.user.id);
     return { success: true };
   } catch (error) {
+    console.error('❌ Login catch error:', error);
     return { success: false, error: parseAuthError(error as Error) };
   }
 }
@@ -72,15 +79,37 @@ export async function register(credentials: RegisterCredentials): Promise<AuthRe
 
 export async function logout(): Promise<AuthResult> {
   try {
-    const { error } = await supabase.auth.signOut();
+    // Check if there's an active session
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    console.log('🔍 Logout - Session check:', { 
+      hasSession: !!session, 
+      sessionError,
+      userId: session?.user?.id,
+      isAnonymous: session?.user?.is_anonymous 
+    });
+    
+    // Only attempt sign out if there's an active session
+    if (session) {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('❌ SignOut error:', error);
+        return { success: false, error: parseAuthError(error) };
+      }
+    }
 
-    if (error) return { success: false, error: parseAuthError(error) };
-
+    // Always clear guest mode data, regardless of session state
     localStorage.removeItem('guestMode');
     localStorage.removeItem('guestBookingId');
 
+    console.log('✅ Logout successful');
     return { success: true };
   } catch (error) {
+    console.error('❌ Logout catch error:', error);
+    // Even if there's an error, clear guest mode data
+    localStorage.removeItem('guestMode');
+    localStorage.removeItem('guestBookingId');
+    
     return { success: false, error: parseAuthError(error as Error) };
   }
 }
@@ -106,15 +135,24 @@ export async function signInWithOAuth(provider: 'google' | 'apple'): Promise<{ s
 // Send password reset email 
 export async function resetPassword(email: string): Promise<AuthResult> {
   try {
-    const redirectTo = typeof window !== 'undefined' 
-      ? `${window.location.origin}/reset-password`
-      : undefined;
+    let redirectTo: string | undefined;
+    
+    if (typeof window !== 'undefined') {
+      redirectTo = `${window.location.origin}/auth/callback`;
+    }
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
-    if (error) return { success: false, error: parseAuthError(error) };
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, { 
+      redirectTo
+    });
+
+    if (error) {
+      console.error('Reset password error:', error);
+      return { success: false, error: parseAuthError(error) };
+    }
 
     return { success: true };
   } catch (error) {
+    console.error('Unexpected error in resetPassword:', error);
     return { success: false, error: parseAuthError(error as Error) };
   }
 }

@@ -1,12 +1,13 @@
 # Charlie M Hotel - Robots.txt
 
-# Disallow all search engines from indexing
+# Disallow all search engines from indexing (temporarily)
 User-agent: *
 Disallow: /
 
-# Crawl-delay for all bots (optional, helps with server load)
+# Crawl-delay for all bots
 Crawl-delay: 1
 
 # Sitemap (commented out while indexing is disabled)
 # Sitemap: https://charlie-m.de/sitemap.xml
+# Sitemap: https://www.charlie-m.de/sitemap.xml
 

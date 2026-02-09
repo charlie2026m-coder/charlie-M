@@ -32,6 +32,7 @@ const ReservationForm = () => {
   });
 
   const number = watch('number');
+  const name = watch('name');
 
   // Handle any errors from form validation
   useEffect(() => {
@@ -41,7 +42,14 @@ const ReservationForm = () => {
     } else {
       setError(null);
     }
-  }, [errors, number]);
+  }, [errors, number, name]);
+
+  // Clear error when user types
+  useEffect(() => {
+    if (error) {
+      setError(null);
+    }
+  }, [number, name]);
 
   const onSubmit = async (data: ReservationFormData) => {
     setError(null);

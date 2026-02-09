@@ -194,7 +194,7 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
           <Guests setValue={(value) => setValue(value, 'guests')} value={guests} />
         </label>
         <Button
-          className={cn('cursor-pointer size-10  md:size-15 flex items-center justify-center rounded-full transition-all duration-300 bg-blue hover:bg-blue/80')}
+          className={cn('cursor-pointer size-10 active:scale-95  md:size-15 flex items-center justify-center rounded-full transition-all duration-300 bg-blue hover:bg-blue/80')}
           type='submit'
           size="icon"
         >

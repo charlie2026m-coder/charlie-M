@@ -38,13 +38,14 @@ export async function middleware(request: NextRequest) {
       }
     )
 
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { session }, error } = await supabase.auth.getSession()
 
-      if (!session) {
-        const locale = pathname.match(/^\/(de|en)/) ? pathname.split('/')[1] : 'en'
-        const redirectUrl = new URL(`/${locale}/login`, request.url)
-        return NextResponse.redirect(redirectUrl)
-      }
+    // Redirect to login if no valid session exists
+    if (!session || error) {
+      const locale = pathname.match(/^\/(de|en)/) ? pathname.split('/')[1] : 'en'
+      const redirectUrl = new URL(`/${locale}/login`, request.url)
+      return NextResponse.redirect(redirectUrl)
+    }
   }
 
   return response

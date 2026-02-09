@@ -17,7 +17,7 @@ import { useTranslations } from 'next-intl';
 
 export default function SignUpPage() {
   const t = useTranslations('signUp');
-  const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [showReservationForm, setShowReservationForm] = useState(false);
   const registerMutation = useRegister();
   const router = useRouter();
@@ -45,23 +45,24 @@ export default function SignUpPage() {
   const confirmPassword = watch('confirmPassword');
   const consent = watch('consent');
 
+  // Clear submit error when user types
   useEffect(() => {
-    // Exclude consent error from general error message (it has its own display)
-    const errorEntries = Object.entries(errors).filter(([field]) => field !== 'consent');
-    
-    if (errorEntries.length > 0) {
-      const errorMessages = errorEntries
-        .map(([field, error]) => error?.message)
-        .filter(Boolean)
-        .join(', ');
-      setError(errorMessages);
-    } else {
-      setError(null);
+    if (submitError) {
+      setSubmitError(null);
     }
-  }, [errors, email, password, confirmPassword, consent]);
+  }, [email, password, confirmPassword]);
+
+  // Get validation error message (exclude consent error from general error message)
+  const validationError = Object.entries(errors)
+    .filter(([field]) => field !== 'consent')
+    .map(([, error]) => error?.message)
+    .filter(Boolean)
+    .join(', ');
+
+  const error = submitError || validationError || null;
 
   const onSubmit = async (data: RegisterFormData) => {
-    setError(null);
+    setSubmitError(null);
     try {
       const result = await registerMutation.mutateAsync({
         name: data.name,
@@ -75,7 +76,7 @@ export default function SignUpPage() {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : t('registrationFailed');
-      setError(errorMessage);
+      setSubmitError(errorMessage);
     }
   };
 
@@ -120,25 +121,28 @@ export default function SignUpPage() {
             icon="email" 
             isError={!!errors.email}
           />
-          <CustomInput 
-            register={register} 
-            name="password" 
-            type="password" 
-            placeholder={t('password')} 
-            icon="password" 
-            isError={!!errors.password || !!errors.confirmPassword} 
-          />
+          <div className="relative">
+            <CustomInput 
+              register={register} 
+              name="password" 
+              type="password" 
+              placeholder={t('password')} 
+              icon="password" 
+              isError={!!errors.password || !!errors.confirmPassword} 
+            />
+            <p className="text-xs text-mute mt-1 pl-4">{t('passwordRequirements')}</p>
+          </div>
           <CustomInput 
             register={register} 
             name="confirmPassword" 
             type="password" 
-            placeholder={t('rePassword')} 
+            placeholder={t('confirmPassword')} 
             icon="password" 
             isError={!!errors.confirmPassword} 
           />
 
           <div className='pt-2'>
-            <div className='flex items-start gap-3'>
+            <div className='flex items-center gap-3'>
               <Checkbox
                 size='sm'
                 id='consent-register'
@@ -173,7 +177,7 @@ export default function SignUpPage() {
           >
             {registerMutation.isPending ? t('loading') : t('signUpButton')}
           </Button>
-          {error && <div className="absolute bottom-[-28px] text-center text-red text-sm px-4 w-full">{error}</div>}
+          {error && <div className="absolute -bottom-10 text-center text-red text-sm px-4 w-full">{error}</div>}
         </form>
 
         <Divider />

@@ -7,15 +7,27 @@ import { useLogout } from '@/app/hooks/useAuth'
 import { cn } from '@/lib/utils'
 import Image from 'next/image'
 import { useTranslations } from 'next-intl'
+import { useRouter } from '@/navigation'
 
 const Logout = () => {
   const t = useTranslations('profile')
   const [isOpen, setIsOpen] = useState(false)
   const logoutMutation = useLogout()
+  const router = useRouter()
 
-  const handleLogout = () => {
-    logoutMutation.mutate()
-    setIsOpen(false)
+  const handleLogout = async () => {
+    try {
+      await logoutMutation.mutateAsync()
+      setIsOpen(false)
+    } catch (error) {
+      // Even if logout fails (e.g., no session), redirect to home
+      console.error('Logout error:', error)
+      localStorage.removeItem('guestMode')
+      localStorage.removeItem('guestBookingId')
+      setIsOpen(false)
+      router.push('/')
+      router.refresh()
+    }
   }
 
   return (

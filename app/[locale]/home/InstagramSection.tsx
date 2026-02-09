@@ -8,11 +8,31 @@ const InstagramSection = () => {
   const [hasError, setHasError] = useState(false)
 
   useEffect(() => {
-    // Check if script is already loaded
-    if (document.getElementById('TagEmbedScript')) {
-      setIsLoaded(true)
-      return
+    // Only load script if we're on the home page
+    if (typeof window === 'undefined') return
+    
+    // Suppress console errors from taggbox API
+    const originalError = console.error
+    const errorFilter = (message: any, ...args: any[]) => {
+      if (typeof message === 'string' && (message.includes('taggbox') || message.includes('api.taggbox.com'))) {
+        return // Suppress taggbox errors
+      }
+      if (typeof message === 'string' && message.includes('Request failed')) {
+        return // Suppress API request errors
+      }
+      originalError(message, ...args)
     }
+    console.error = errorFilter
+
+    // Global error handler to catch taggbox API errors
+    const handleError = (event: ErrorEvent) => {
+      if (event.message && (event.message.includes('taggbox') || event.message.includes('api.taggbox.com'))) {
+        event.preventDefault()
+        return false
+      }
+    }
+    
+    window.addEventListener('error', handleError)
 
     // Create and load the TagEmbed script
     const script = document.createElement('script')
@@ -36,16 +56,23 @@ const InstagramSection = () => {
     // Handle script load error
     script.onerror = () => {
       setHasError(true)
+      console.error = originalError
+      window.removeEventListener('error', handleError)
     }
     
     document.head.appendChild(script)
 
-    // Cleanup function to remove script on unmount (optional)
+    // Cleanup function to remove script and restore console on unmount
     return () => {
+      console.error = originalError
+      window.removeEventListener('error', handleError)
       const existingScript = document.getElementById('TagEmbedScript')
       if (existingScript) {
         existingScript.remove()
       }
+      // Also remove any tagembed widgets that might have been created
+      const widgets = document.querySelectorAll('.tagembed-widget')
+      widgets.forEach(widget => widget.remove())
     }
   }, [])
 

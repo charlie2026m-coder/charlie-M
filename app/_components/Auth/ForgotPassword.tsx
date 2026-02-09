@@ -5,13 +5,16 @@ import { Button } from '../ui/button';
 import CustomInput from '../ui/customInput';
 import { forgotPasswordSchema, type ForgotPasswordFormData } from '@/types/schemas';
 import { useForgotPassword } from '@/app/hooks/useAuth';
-import { Link } from '@/navigation';
+import { Link, useRouter } from '@/navigation';
 import { useTranslations } from 'next-intl';
+import Success from './Success';
 
 const ForgotPassword = () => {
   const t = useTranslations('forgotPassword');
-  const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
   const forgotPasswordMutation = useForgotPassword();
+  const router = useRouter();
   
   const {
     register,
@@ -25,27 +28,37 @@ const ForgotPassword = () => {
 
   const email = watch('email');
 
+  // Clear submit error when user types
   useEffect(() => {
-    if (Object.keys(errors).length > 0) {
-      const errorMessages = Object.entries(errors)
-        .map(([field, error]) => error?.message)
-        .filter(Boolean)
-        .join(', ');
-      setError(errorMessages);
-    } else {
-      setError(null);
+    if (submitError) {
+      setSubmitError(null);
     }
-  }, [errors, email]);
+  }, [email]);
+
+  // Get validation error message
+  const validationError = Object.keys(errors).length > 0
+    ? Object.entries(errors)
+        .map(([, error]) => error?.message)
+        .filter(Boolean)
+        .join(', ')
+    : null;
+
+  const error = submitError || validationError;
 
   const onSubmit = async (data: ForgotPasswordFormData) => {
-    setError(null);
+    setSubmitError(null);
     try {
       await forgotPasswordMutation.mutateAsync(data.email);
+      setShowSuccess(true);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : t('failedToSend');
-      setError(errorMessage);
+      setSubmitError(errorMessage);
     }
   };
+
+  if (showSuccess) {
+    return <Success type='pass' onClose={() => router.push('/login')} />;
+  }
 
   return (
     <div className="w-full ">
