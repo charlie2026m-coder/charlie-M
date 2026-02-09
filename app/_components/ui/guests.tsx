@@ -12,7 +12,7 @@ import { ButtonIcon } from "./ButtonIcon"
 
 export function Guests({ 
   maxAdults = 99,
-  maxChildren = 99,
+  maxChildren = 5,
   maxPersons,
   maxBabyBeds,
   setValue, 
@@ -39,8 +39,9 @@ export function Guests({
     : `${value.adults} ${t('guests.guests')}`
   const canAddAdult = maxPersons ? value.adults < maxPersons && value.adults < maxAdults : value.adults < maxAdults;
   
-  // 1 child per 2 adults: 1-2 adults = 1 child max, 3-4 adults = 2 children max
-  const maxChildrenAllowed = Math.ceil(value.adults / 2);
+  // Children cannot exceed adults, and maximum 5 children
+  const maxChildrenAllowed = value.adults; // Children not more than adults
+  const maxChildrenLimit = 5; // Maximum 5 children
   
   // Calculate available baby beds considering children in all rooms
   let availableBabyBedsForThisRoom = maxBabyBeds;
@@ -51,10 +52,10 @@ export function Guests({
     availableBabyBedsForThisRoom = Math.max(0, maxBabyBeds - childrenInOtherRooms);
   }
   
-  // Limit children by available baby beds if provided
+  // Limit children by available baby beds if provided, and apply max limits
   const effectiveMaxChildren = availableBabyBedsForThisRoom !== undefined 
-    ? Math.min(maxChildren, maxChildrenAllowed, availableBabyBedsForThisRoom)
-    : Math.min(maxChildren, maxChildrenAllowed);
+    ? Math.min(maxChildren, maxChildrenAllowed, maxChildrenLimit, availableBabyBedsForThisRoom)
+    : Math.min(maxChildren, maxChildrenAllowed, maxChildrenLimit);
     
   const canAddChild = value.children < effectiveMaxChildren;
 
@@ -62,15 +63,24 @@ export function Guests({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <div className="relative flex gap-2" suppressHydrationWarning>
-          <div className='hidden md:flex  gap-2 text-xs absolute -top-2 left-5 bg-white px-1'>
+          <div className='hidden md:flex gap-2 text-xs absolute -top-2 left-5 bg-white px-1 z-10'>
             {t('guests.label')}
           </div>
-          <Input
-            value={guestsText}
-            placeholder={t('guests.label')}
-            className={cn("rounded-full h-10 px-3 pr-4 md:pr-10 border-white shadow-none text-sm md:text-base md:border-black  cursor-pointer", className)}
-            readOnly
-          />
+          <div className="relative w-full">
+            <Input
+              value={guestsText}
+              placeholder={t('guests.label')}
+              className={cn("rounded-full h-10 px-3 pr-4 md:pr-10 border-white shadow-none text-sm md:text-base md:border-black cursor-pointer", className)}
+              readOnly
+            />
+            {value.children > 0 && (
+              <div className="absolute -top-2 right-2 bg-pink-400 rounded-full px-2 py-0.5 flex items-center justify-center text-white text-[8px] font-semibold pointer-events-none whitespace-nowrap">
+                {value.children === 1 
+                  ? `1 ${t('guests.baby')}` 
+                  : `${value.children} ${t('guests.babies')}`}
+              </div>
+            )}
+          </div>
           <div className="absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none">
             {open ? <ChevronUp className="size-4 text-brown" />: <ChevronDown className="size-4 text-brown" />}
           </div>
@@ -96,7 +106,16 @@ export function Guests({
             <div className="font-semibold text-black">{t('guests.label')}</div>
 
             <div className="flex items-center gap-2">
-              <ButtonIcon onClick={() => setValue({ ...value, adults: Math.max(1, value.adults - 1) })} symbol='-' disabled={value.adults <= 1} />
+              <ButtonIcon 
+                onClick={() => {
+                  const newAdults = Math.max(1, value.adults - 1);
+                  // If children exceed new adults count, reduce children to match adults
+                  const newChildren = Math.min(value.children, newAdults);
+                  setValue({ adults: newAdults, children: newChildren });
+                }} 
+                symbol='-' 
+                disabled={value.adults <= 1} 
+              />
               <span className="font-semibold min-w-[20px] text-center">
                 {value.adults}
               </span>

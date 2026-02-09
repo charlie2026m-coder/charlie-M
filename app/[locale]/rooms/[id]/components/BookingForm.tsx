@@ -43,20 +43,32 @@ const BookingForm = ({ id, rooms, params, babyBedAvailability }: {
     to: dateRangeStore.to || (params.to ? dayjs(params.to).toDate() : undefined),
   });
   
-  // Calculate total price: price per night * nights * number of rooms
-  const calculatePrice = (adultsCount: number, nightsCount: number) => {
-    const roomsNeeded = Math.ceil(adultsCount / room.maxPersons);
+
+  const calculatePrice = (adultsCount: number, childrenCount: number, nightsCount: number) => {
+    const roomsForChildren = childrenCount;
     
-    // Get price per night based on number of adults
+    const minAdultsForChildren = childrenCount;
+    const adultsAssignedToChildren = Math.min(adultsCount, minAdultsForChildren);
+    
+    let remainingAdults = adultsCount - adultsAssignedToChildren;
+    
+    const maxAdultsPerChildRoom = 2;
+    const additionalAdultsCapacity = childrenCount * (maxAdultsPerChildRoom - 1);
+    const additionalAdultsAssigned = Math.min(remainingAdults, additionalAdultsCapacity);
+    remainingAdults -= additionalAdultsAssigned;
+    
+    const roomsForRemainingAdults = Math.ceil(remainingAdults / 2);
+    
+    const roomsNeeded = roomsForChildren + roomsForRemainingAdults;
+    
     const pricePerNight = adultsCount >= 2 
       ? (room.oneNightPriceForTwo || room.oneNightPrice || 0)
       : (room.oneNightPrice || 0);
     
-    // Total = price per night * nights * number of rooms
     return pricePerNight * nightsCount * roomsNeeded;
   };
 
-  const [currentPrice, setCurrentPrice] = useState(calculatePrice(guests.adults, nights))
+  const [currentPrice, setCurrentPrice] = useState(calculatePrice(guests.adults, guests.children, nights))
   const [currentPriceText, setCurrentPriceText] = useState(priceText)
   const [dateError, setDateError] = useState(false)
   const [datesChanged, setDatesChanged] = useState(false)
@@ -69,9 +81,8 @@ const BookingForm = ({ id, rooms, params, babyBedAvailability }: {
         to: dayjs(params.to).toDate(),
       });
     }
-    // Reset loading state when component mounts or params change
     setIsLoading(false);
-  }, [params.from, params.to]);
+  }, [params]);
 
   useEffect(() => {
     if (!dateRange?.from || !dateRange?.to) return;
@@ -91,9 +102,8 @@ const BookingForm = ({ id, rooms, params, babyBedAvailability }: {
       room 
     });
 
-    // Calculate nights from the new date range
     const nightsCount = calculateNights(fromDate, toDate);
-    const totalPrice = calculatePrice(guests.adults, nightsCount);
+    const totalPrice = calculatePrice(guests.adults, guests.children, nightsCount);
 
     setCurrentPrice(totalPrice);
     setCurrentPriceText(newPriceText);
@@ -116,11 +126,9 @@ const BookingForm = ({ id, rooms, params, babyBedAvailability }: {
     });
     
     if (datesChanged) {
-      // Reload current page with new query params to fetch updated data
       router.push(`/rooms/${id}?${queryString}`);
       setDatesChanged(false);
     } else {
-      // Proceed to booking
       router.push(`/booking/${id}?${queryString}`);
     }
   };
@@ -159,7 +167,6 @@ const BookingForm = ({ id, rooms, params, babyBedAvailability }: {
                   setValue(newRange, 'dateRange');
                   setDateError(false);
                 } else if (date?.from && date?.to) {
-                  // Check if same day selected
                   if (date.from.getTime() === date.to.getTime()) {
                     const nextDay = new Date(date.from);
                     nextDay.setDate(nextDay.getDate() + 1);
@@ -185,7 +192,10 @@ const BookingForm = ({ id, rooms, params, babyBedAvailability }: {
 
         <Separator orientation="horizontal" />
         <Guests 
-          setValue={setGuests} 
+          setValue={(value) =>{
+            setGuests(value);
+            setDatesChanged(true);
+          }} 
           value={guests}
           maxBabyBeds={babyBedAvailability?.count} 
           className="border-mute"

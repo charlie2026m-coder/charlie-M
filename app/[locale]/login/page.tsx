@@ -115,7 +115,7 @@ export default function LoginPage() {
           </Button>
 
           {loginError && (
-            <div className="absolute bottom-[-28px] text-center left-1/2 -translate-x-1/2 text-red text-sm w-[120%]">
+            <div className="absolute -bottom-10 text-center text-red text-sm px-4 w-full">
               {loginError}
             </div>
           )}

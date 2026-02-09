@@ -33,7 +33,25 @@ export const getPath = (params: {
 export const getPriceData = ({ params, room }: {params: UrlParams, room: RoomOffer}) => {
   let nights = 1;
   const adults = Number(params.adults || 1);
-  const roomsNeeded = Math.ceil(adults / room.maxPersons); // Calculate rooms based on adults only
+  const children = Number(params.children || 0);
+  
+
+  const roomsForChildren = children;
+  
+  const minAdultsForChildren = children;
+  const adultsAssignedToChildren = Math.min(adults, minAdultsForChildren);
+  
+  let remainingAdults = adults - adultsAssignedToChildren;
+  
+  const maxAdultsPerChildRoom = 2;
+  const additionalAdultsCapacity = children * (maxAdultsPerChildRoom - 1);
+  const additionalAdultsAssigned = Math.min(remainingAdults, additionalAdultsCapacity);
+  remainingAdults -= additionalAdultsAssigned;
+  
+  const roomsForRemainingAdults = Math.ceil(remainingAdults / 2);
+  
+  const roomsNeeded = roomsForChildren + roomsForRemainingAdults;
+  
   if (params.from && params.to) {
     const fromDate = new Date(params.from);
     const toDate = new Date(params.to);
@@ -43,7 +61,15 @@ export const getPriceData = ({ params, room }: {params: UrlParams, room: RoomOff
   const r = roomsNeeded === 1 ? 'room' : 'rooms';
   const g = adults === 1 ? 'guest' : 'guests';
   const n = nights === 1 ? 'night' : 'nights';
-  const priceText = `${adults} ${g}, ${nights} ${n}, ${roomsNeeded} ${r}`;
+  
+  // Build price text with adults and children
+  let priceText = `${adults} ${g}`;
+  if (children > 0) {
+    const c = children === 1 ? 'baby' : 'babies';
+    priceText += ` + ${children} ${c}`;
+  }
+  priceText += `, ${nights} ${n}, ${roomsNeeded} ${r}`;
+  
   const priceValue = roomsNeeded * nights * room.totalGrossAmount.amount;
 
   return {
@@ -73,24 +99,33 @@ export function sortGuestsByRooms(
   const pushRoom = (a: number, c: number) =>
     rooms.push({ id: uuidv4(), adults: a, children: c, from, to });
 
-  // Distribute adults across rooms
-  while (remainingAdults > 0) {
-    const roomAdults = Math.min(remainingAdults, maxPersons);
-    remainingAdults -= roomAdults;
-    pushRoom(roomAdults, 0);
-  }
-
-  // If no adults but children exist, create one room
-  if (rooms.length === 0 && children > 0) {
-    pushRoom(1, 0);
-  }
-
-  // Distribute children across rooms (max 1 child per room)
-  let roomIndex = 0;
-  while (remainingChildren > 0 && roomIndex < rooms.length) {
-    rooms[roomIndex].children = 1;
+  for (let i = 0; i < children; i++) {
+    pushRoom(0, 1);
     remainingChildren--;
-    roomIndex++;
+  }
+
+  const minAdultsForChildren = Math.min(adults, children);
+  for (let i = 0; i < minAdultsForChildren; i++) {
+    rooms[i].adults = 1;
+    remainingAdults--;
+  }
+
+  const maxAdultsPerChildRoom = 2;
+  let roomIndex = 0;
+  while (remainingAdults > 0 && roomIndex < rooms.length) {
+    if (rooms[roomIndex].adults < maxAdultsPerChildRoom) {
+      rooms[roomIndex].adults++;
+      remainingAdults--;
+    } else {
+      roomIndex++;
+    }
+    if (roomIndex >= rooms.length) break;
+  }
+
+  while (remainingAdults > 0) {
+    const roomAdults = Math.min(remainingAdults, 2);
+    pushRoom(roomAdults, 0);
+    remainingAdults -= roomAdults;
   }
 
   return rooms;
