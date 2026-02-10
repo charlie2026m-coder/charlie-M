@@ -22,8 +22,8 @@ const Logout = () => {
     } catch (error) {
       // Even if logout fails (e.g., no session), redirect to home
       console.error('Logout error:', error)
-      localStorage.removeItem('guestMode')
-      localStorage.removeItem('guestBookingId')
+      sessionStorage.removeItem('guestMode')
+      sessionStorage.removeItem('guestData')
       setIsOpen(false)
       router.push('/')
       router.refresh()

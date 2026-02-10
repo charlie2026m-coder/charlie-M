@@ -64,7 +64,7 @@ const ReservationIdDialog = () => {
       open={isOpen}
       setOpen={setIsOpen}
       trigger={
-        <div className='text-brown cursor-pointer hover:text-brown/80 transition-all duration-300'>
+        <div className='text-brown cursor-pointer hover:text-brown/80 transition-all duration-300 pl-1'>
           {t('addViaReservationId')}
         </div>
       }

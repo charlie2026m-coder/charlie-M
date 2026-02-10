@@ -78,3 +78,49 @@ export function useAddedReservations() {
     },
   });
 }
+
+export function useGuestReservations(guestData: { type: 'reservation' | 'booking', data: any } | null) {
+  return useQuery({
+    queryKey: ['guest-reservations', guestData?.data?.id],
+    queryFn: async () => {
+      if (!guestData) return { count: 0, reservations: [] };
+
+      // Use cached data from sessionStorage/store
+      const { type, data } = guestData;
+
+      if (type === 'reservation') {
+        // Single reservation - need to fetch with services expanded
+        const response = await fetch(`/api/reservations/${data.id}`);
+        if (!response.ok) throw new Error('Failed to fetch reservation');
+        
+        const reservation = await response.json();
+        return {
+          count: 1,
+          reservations: [reservation]
+        };
+      } else if (type === 'booking') {
+        // Booking with multiple reservations - fetch each with services
+        const reservationIds = data.reservations?.map((r: any) => r.id) || [];
+        
+        const promises = reservationIds.map((id: string) => 
+          fetch(`/api/reservations/${id}`)
+            .then(r => r.ok ? r.json() : null)
+            .catch(() => null)
+        );
+        
+        const reservations = await Promise.all(promises);
+        const validReservations = reservations.filter(r => r !== null);
+        
+        return {
+          count: validReservations.length,
+          reservations: validReservations
+        };
+      }
+
+      return { count: 0, reservations: [] };
+    },
+    enabled: !!guestData,
+    staleTime: 0,
+    refetchOnMount: true,
+  });
+}

@@ -1182,6 +1182,9 @@
     "notFound": "No found",
     "nothingFound": "Nothing found for this Reservation ID number. Please, check and try again.",
     "ok": "Ok",
+    "checkBookingId": "Please check the booking ID",
+    "noMatchesFound": "Unfortunately, no matches found",
+    "serverErrorTryAgain": "Server error. Please try again.",
     "continueWithApple": "Continue with Apple",
     "continueWithGoogle": "Continue with Google",
     "loginFailed": "Login failed. Please check your credentials and try again."

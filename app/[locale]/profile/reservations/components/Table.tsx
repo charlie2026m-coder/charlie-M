@@ -5,12 +5,10 @@ import { Link } from '@/navigation'
 import { useState, useEffect } from 'react'
 import { CustomPagination } from '@/app/_components/ui/CustomPagination'
 import ReservationCard from '../components/ReservationCard'
-import { useReservations } from '@/app/hooks/useReservations'
+import { useReservations, useGuestReservations } from '@/app/hooks/useReservations'
 import { useProfileStore } from '@/store/useProfile'
 import { Spinner } from '@/app/_components/ui/spinner'
 import { Reservation } from '@/types/apaleo'
-import { useQuery } from '@tanstack/react-query'
-import { supabase } from '@/lib/supabase'
 import { useTranslations } from 'next-intl'
 
 const ITEMS_PER_PAGE = 3
@@ -23,48 +21,30 @@ const ReservationsTable = ({ addedReservations = [] }: ReservationsTableProps) =
   const t = useTranslations('profile')
   const [currentPage, setCurrentPage] = useState(0)
   const page = currentPage + 1
-  const { reservationFilter, guestBooking } = useProfileStore()
+  const { reservationFilter, guestData, setGuestData } = useProfileStore()
   
   const [isGuestMode, setIsGuestMode] = useState(false)
-  const [guestBookingId, setGuestBookingId] = useState<string | null>(null)
 
   useEffect(() => {
-    const guestMode = localStorage.getItem('guestMode')
-    const bookingId = localStorage.getItem('guestBookingId')
+    const guestMode = sessionStorage.getItem('guestMode')
     setIsGuestMode(guestMode === 'true')
-    setGuestBookingId(bookingId)
-  }, [])
+    
+    // Load guestData from sessionStorage if not in store
+    if (guestMode === 'true' && !guestData) {
+      const storedData = sessionStorage.getItem('guestData')
+      if (storedData) {
+        try {
+          setGuestData(JSON.parse(storedData))
+        } catch (e) {
+          console.error('Failed to parse guest data:', e)
+        }
+      }
+    }
+  }, [guestData, setGuestData])
 
   const adjustedPage = page === 1 && addedReservations.length > 0 ? 1 : page
   const normalQuery = useReservations(adjustedPage, reservationFilter)
-  
-  const guestQuery = useQuery({
-    queryKey: ['guestReservations', guestBookingId],
-    queryFn: async () => {
-      if (!guestBooking) return { count: 0, reservations: [] }
-      
-      const { data: roomsData } = await supabase
-        .from('rooms')
-        .select('*')
-        .order('id', { ascending: true })
-      
-      const reservations = (guestBooking.reservations || []).map((reservation: any) => {
-        const room = roomsData?.find((r: any) => r.id === reservation.unitGroup?.id)
-        return {
-          ...reservation,
-          name: reservation.unitGroup?.name || '',
-          images: room?.photos || [],
-          guests: reservation.adults,
-        }
-      })
-      
-      return {
-        count: reservations.length,
-        reservations: reservations
-      }
-    },
-    enabled: isGuestMode && !!guestBookingId && !!guestBooking,
-  })
+  const guestQuery = useGuestReservations(guestData)
 
   const { data, isLoading, isError, isFetching } = isGuestMode 
     ? guestQuery 
@@ -115,7 +95,7 @@ const ReservationsTable = ({ addedReservations = [] }: ReservationsTableProps) =
           </div>
         )}
       </div>
-      {totalPages > 1 && (
+      {!isGuestMode && totalPages > 1 && (
         <CustomPagination 
           totalPages={totalPages} 
           currentPage={currentPage} 

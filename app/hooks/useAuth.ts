@@ -32,8 +32,8 @@ export const useLogin = () => {
     },
     onSuccess: () => {
       toast.success('Login successful!', { id: 'login' });
-      localStorage.removeItem('guestMode');
-      localStorage.removeItem('guestBookingId');
+      sessionStorage.removeItem('guestMode');
+      sessionStorage.removeItem('guestData');
       router.push('/profile');
       router.refresh();
     },
@@ -63,8 +63,8 @@ export const useRegister = () => {
         toast.dismiss('register');
       } else {
         toast.success('Account created successfully!', { id: 'register' });
-        localStorage.removeItem('guestMode');
-        localStorage.removeItem('guestBookingId');
+        sessionStorage.removeItem('guestMode');
+        sessionStorage.removeItem('guestData');
         router.push('/profile');
         router.refresh();
       }

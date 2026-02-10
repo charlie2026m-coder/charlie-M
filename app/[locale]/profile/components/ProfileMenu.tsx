@@ -13,11 +13,7 @@ import { useProfileStore, ReservationFilter } from '@/store/useProfile'
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 
-interface ProfileMenuProps {
-  hasAddedReservations: boolean
-}
-
-const ProfileMenu = ({ hasAddedReservations }: ProfileMenuProps) => {
+const ProfileMenu = () => {
   const t = useTranslations('profile')
   const pathname = usePathname()
   const { profile } = useProfile()
@@ -25,7 +21,7 @@ const ProfileMenu = ({ hasAddedReservations }: ProfileMenuProps) => {
   const [isGuestMode, setIsGuestMode] = useState(false)
 
   useEffect(() => {
-    setIsGuestMode(localStorage.getItem('guestMode') === 'true')
+    setIsGuestMode(sessionStorage.getItem('guestMode') === 'true')
   }, [])
 
   const tabs = [
@@ -105,9 +101,7 @@ const ProfileMenu = ({ hasAddedReservations }: ProfileMenuProps) => {
 
 
       <ReservationIdDialog />
-
       <Logout />
-
     </CustomCard>
   )
 }

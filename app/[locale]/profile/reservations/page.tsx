@@ -13,7 +13,7 @@ const Reservations = () => {
   const [isGuestMode, setIsGuestMode] = useState(false)
   
   useEffect(() => {
-    setIsGuestMode(localStorage.getItem('guestMode') === 'true')
+    setIsGuestMode(sessionStorage.getItem('guestMode') === 'true')
   }, [])
 
   const filteredAddedReservations = filterReservationsByStatus(addedReservations, reservationFilter)

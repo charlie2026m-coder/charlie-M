@@ -1180,6 +1180,9 @@
     "notFound": "Nicht gefunden",
     "nothingFound": "Für diese Reservierungsnummer wurde nichts gefunden. Bitte überprüfen Sie die Eingabe und versuchen Sie es erneut.",
     "ok": "Ok",
+    "checkBookingId": "Bitte überprüfen Sie die Buchungsnummer",
+    "noMatchesFound": "Leider wurden keine Übereinstimmungen gefunden",
+    "serverErrorTryAgain": "Serverfehler. Bitte versuchen Sie es erneut.",
     "continueWithApple": "Mit Apple fortfahren",
     "continueWithGoogle": "Mit Google fortfahren",
     "loginFailed": "Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten und versuchen Sie es erneut."
