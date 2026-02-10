@@ -3,14 +3,11 @@ import { useProfileStore } from '@/store/useProfile'
 import ReservationsTable from './components/Table'
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { useQuery } from '@tanstack/react-query'
-import { fetchAddedReservations } from './utils/fetchAddedReservations'
+import { useAddedReservations } from '@/app/hooks/useReservations'
+import { filterReservationsByStatus } from '@/lib/utils'
 
 const Reservations = () => {
-  const { data: addedReservations = [] } = useQuery({
-    queryKey: ['added-reservations'],
-    queryFn: fetchAddedReservations,
-  })
+  const { data: addedReservations = [] } = useAddedReservations()
   const t = useTranslations('profile')
   const { reservationFilter } = useProfileStore() 
   const [isGuestMode, setIsGuestMode] = useState(false)
@@ -18,10 +15,11 @@ const Reservations = () => {
   useEffect(() => {
     setIsGuestMode(localStorage.getItem('guestMode') === 'true')
   }, [])
+
+  const filteredAddedReservations = filterReservationsByStatus(addedReservations, reservationFilter)
   
   const title = {
     "All": t('allReservations'),
-    "Added": t('addedReservations'),
     "Ongoing" : t('ongoingReservations'),
     'Upcoming' : t('upcomingReservations'),
     'Completed' : t('completedReservations'),
@@ -33,7 +31,7 @@ const Reservations = () => {
       <div className='flex items-center gap-2 font-semibold text-2xl mb-5'>
         {isGuestMode ? t('yourBooking') : title[reservationFilter as keyof typeof title]}
       </div>
-      <ReservationsTable addedReservations={addedReservations} />
+      <ReservationsTable addedReservations={filteredAddedReservations} />
     </div>
   )
 }

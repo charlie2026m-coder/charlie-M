@@ -11,27 +11,30 @@ interface AddReservationResponse {
 export function useAddReservation() {
   const queryClient = useQueryClient();
 
-  return useMutation<AddReservationResponse, Error, string>({
-    mutationFn: async (reservationId: string) => {
+  return useMutation<AddReservationResponse, Error, { reservationId: string, lastName: string }>({
+    mutationFn: async (params: { reservationId: string, lastName: string }) => {
+      const { reservationId, lastName } = params;
       console.log('🔍 Step 1: Starting reservation search for ID:', reservationId);
       
       if (!reservationId.trim()) {
         throw new Error('Reservation ID is required');
       }
 
-      // Step 1: Check if reservation exists in Apaleo
-      console.log('🌐 Step 2: Fetching reservation from Apaleo...');
-      const response = await fetch(`/api/reservations/${reservationId}`);
-      
-      console.log('📡 Step 3: Response status:', response.status);
+      const response = await fetch(`/api/reservations/search-reservation?reservationId=${encodeURIComponent(reservationId)}&lastName=${encodeURIComponent(lastName)}`);
       
       if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error || 'Failed to fetch reservation';
+        
         if (response.status === 404) {
-          console.error('❌ Reservation not found in Apaleo');
-          throw new Error('Reservation not found');
+          throw new Error('BOOKING_ID_INVALID');
+        } else if (response.status === 403) {
+          throw new Error('NO_MATCHES_FOUND');
+        } else if (response.status >= 500) {
+          throw new Error('SERVER_ERROR');
         }
-        console.error('❌ Failed to fetch reservation:', response.status);
-        throw new Error(`Failed to fetch reservation: ${response.status}`);
+        
+        throw new Error(errorMessage);
       }
 
       const reservation: ApaleoReservationResponse = await response.json();
@@ -55,9 +58,9 @@ export function useAddReservation() {
 
       // Step 3: Get email and last name from reservation
       const email = reservation.primaryGuest?.email || '';
-      const lastName = reservation.primaryGuest?.lastName || '';
+      const reservationLastName = reservation.primaryGuest?.lastName || '';
 
-      console.log('📝 Step 7: Reservation data - Email:', email, 'LastName:', lastName);
+      console.log('📝 Step 7: Reservation data - Email:', email, 'LastName:', reservationLastName);
 
       // Step 4: Insert reservation into Supabase
       console.log('💾 Step 8: Inserting reservation into Supabase...');
@@ -67,7 +70,7 @@ export function useAddReservation() {
           user_id: user.id,
           reservation_id: reservation.id,
           booking_id: reservation.bookingId || '',
-          last_name: lastName,
+          last_name: reservationLastName,
           email: email,
         });
 

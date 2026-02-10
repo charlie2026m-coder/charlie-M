@@ -156,7 +156,7 @@ const RoomPage = async ({ params, searchParams }: IParams) => {
 
       {hasEnoughCapacity 
         ? <div className='col-span-2 xl:col-span-3 flex flex-col'>
-            <RoomContent room={room} isRoomInfo={true} babyBedAvailability={babyBedAvailability} children={children} />
+            <RoomContent room={room} isRoomInfo={true} />
             <Availability 
               id={id}
               from={from}

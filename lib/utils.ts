@@ -7,6 +7,7 @@ import { Room, RoomExtra } from "@/types/types"
 import { RoomOffer } from "@/types/offers"
 import { RATE_PLANS } from "./Constants";
 import { getApaleoExtras } from "@/services/getExtras";
+import { ReservationFilter } from '@/store/useProfile'
 
 export function cn(...inputs: ClassValue[]) {return twMerge(clsx(inputs))}
 export const getDate = (date: Date) => {return date?dayjs(date).format('YYYY-MM-DD'): undefined}
@@ -436,4 +437,22 @@ export const getServiceAvailabilityById = async (
     isAvailable: minAvailableCount > 0,
     count: minAvailableCount
   };
+}
+
+
+
+export const filterReservationsByStatus = (reservations: any[], filter: ReservationFilter) => {
+  const filterToStatus: Record<string, string> = {
+    'All': '',
+    'Ongoing': 'InHouse',
+    'Upcoming': 'Confirmed',
+    'Completed': 'CheckedOut',
+    'Canceled': 'Canceled',
+  }
+
+  if (filter === 'All') return reservations
+  const targetStatus = filterToStatus[filter]
+  return reservations.filter((reservation: any) => 
+    targetStatus && reservation.status === targetStatus
+  )
 }

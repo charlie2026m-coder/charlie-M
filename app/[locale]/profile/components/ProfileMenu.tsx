@@ -41,18 +41,13 @@ const ProfileMenu = ({ hasAddedReservations }: ProfileMenuProps) => {
 
   const filterLabels: Record<ReservationFilter, string> = {
     'All': t('all'),
-    'Added': t('added'),
     'Ongoing': t('ongoing'),
     'Upcoming': t('upcoming'),
     'Completed': t('completed'),
     'Canceled': t('canceled')
   }
   
-  const filters: ReservationFilter[] = ['All']
-  if (hasAddedReservations) {
-    filters.push('Added')
-  }
-  filters.push('Ongoing', 'Upcoming', 'Completed', 'Canceled')
+  const filters: ReservationFilter[] = ['All', 'Ongoing', 'Upcoming', 'Completed', 'Canceled']
   
   const resTabs = filters.map(filter => filterLabels[filter])
 
@@ -94,16 +89,12 @@ const ProfileMenu = ({ hasAddedReservations }: ProfileMenuProps) => {
                 onSectionClick={(title) => {
                   const reverseMap: Record<string, ReservationFilter> = {
                     [t('all')]: 'All',
-                    [t('added')]: 'Added',
                     [t('ongoing')]: 'Ongoing',
                     [t('upcoming')]: 'Upcoming',
                     [t('completed')]: 'Completed',
                     [t('canceled')]: 'Canceled'
                   }
                   const selectedFilter = reverseMap[title] || 'All'
-                  if (selectedFilter === 'Added' && !hasAddedReservations) {
-                    return
-                  }
                   setReservationFilter(selectedFilter)
                 }}
               />

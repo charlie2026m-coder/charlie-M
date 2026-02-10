@@ -35,7 +35,8 @@ const ReservationsTable = ({ addedReservations = [] }: ReservationsTableProps) =
     setGuestBookingId(bookingId)
   }, [])
 
-  const normalQuery = useReservations(page, reservationFilter)
+  const adjustedPage = page === 1 && addedReservations.length > 0 ? 1 : page
+  const normalQuery = useReservations(adjustedPage, reservationFilter)
   
   const guestQuery = useQuery({
     queryKey: ['guestReservations', guestBookingId],
@@ -65,25 +66,29 @@ const ReservationsTable = ({ addedReservations = [] }: ReservationsTableProps) =
     enabled: isGuestMode && !!guestBookingId && !!guestBooking,
   })
 
-  const addedData = reservationFilter === 'Added' 
-    ? { count: addedReservations.length, reservations: addedReservations.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE) }
-    : null
-
   const { data, isLoading, isError, isFetching } = isGuestMode 
     ? guestQuery 
     : normalQuery
-  
-  const displayData = reservationFilter === 'Added' ? addedData : data
-  
+
+  const displayData = page === 1 && addedReservations.length > 0 && data
+    ? {
+        count: data.count,
+        reservations: [
+          ...addedReservations,
+          ...data.reservations
+        ]
+      }
+    : data
+
   useEffect(() => {
     setCurrentPage(0)
   }, [reservationFilter])
 
-  if (isError && reservationFilter !== 'Added') {
+  if (isError) {
     return <div className='text-center py-10 text-red-500'>{t('errorLoadingReservations')}</div>
   }
 
-  if (displayData && displayData.count === 0) {
+  if (displayData && displayData.count === 0 && addedReservations.length === 0) {
     return <NoReservations />
   }
 
@@ -92,7 +97,7 @@ const ReservationsTable = ({ addedReservations = [] }: ReservationsTableProps) =
   return (
     <>
       <div className='flex flex-col gap-3 mb-6 relative min-h-[400px]'>
-        {isFetching && displayData && reservationFilter !== 'Added' && (
+        {isFetching && displayData && (
           <div className='absolute inset-0 bg-white/70 flex items-center justify-center z-10 rounded-lg'>
               <Spinner /> {t('loading')}
           </div>
@@ -102,7 +107,7 @@ const ReservationsTable = ({ addedReservations = [] }: ReservationsTableProps) =
           <ReservationCard key={item.id + index} reservation={item} />
         ))}
         
-        {!displayData && isLoading && reservationFilter !== 'Added' && (
+        {!displayData && isLoading && (
           <div className='flex flex-1 items-center justify-center h-[400px]'>
             <div className='flex items-center gap-2'>
               <Spinner /> {t('loading')}

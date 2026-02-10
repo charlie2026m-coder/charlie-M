@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware'
 import { Reservation } from '@/types/apaleo'
 import { RoomDetails } from '@/services/getRoomsDetails'
 
-export type ReservationFilter = 'All' | 'Added' | 'Ongoing' | 'Upcoming' | 'Completed' | 'Canceled'
+export type ReservationFilter = 'All' | 'Ongoing' | 'Upcoming' | 'Completed' | 'Canceled'
 
 interface ProfileState {
   reservations: Reservation[] | undefined
