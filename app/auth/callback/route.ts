@@ -50,25 +50,14 @@ export async function GET(request: Request) {
         );
       }
 
-      // Check the type parameter to determine the flow
       const type = requestUrl.searchParams.get('type');
-      const next = requestUrl.searchParams.get('next');
       
-      // Check if this is a password recovery session
-      // Method 1: Check type parameter (Supabase adds this to reset password URLs)
       const isRecovery = type === 'recovery';
       
-      // Method 2: Check if user has recovery_sent_at timestamp (indicates password reset was initiated)
-      // This is set when resetPasswordForEmail is called
-      const hasRecoverySent = data?.user?.recovery_sent_at !== null && 
-                              data?.user?.recovery_sent_at !== undefined;
+      const hasRecentRecovery = data?.user?.recovery_sent_at && 
+        (Date.now() - new Date(data.user.recovery_sent_at).getTime()) < 3600000;
       
-      // Method 3: Check if this is a recovery session by checking app_metadata
-      const isRecoverySession = data?.session?.user?.app_metadata?.provider === 'email' &&
-                                hasRecoverySent;
-      
-      // If this is a password recovery flow, redirect to reset-password page
-      if (isRecovery || hasRecoverySent || isRecoverySession) {
+      if (isRecovery || hasRecentRecovery) {
         return NextResponse.redirect(`${requestUrl.origin}${localePrefix}/reset-password`);
       }
 

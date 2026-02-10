@@ -49,7 +49,7 @@ export async function getOrRefreshToken(): Promise<string> {
 export async function Fetch<T>(
   endpoint: string, 
   options?: {
-    method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+    method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
     body?: any;
   },
   retry: boolean = true

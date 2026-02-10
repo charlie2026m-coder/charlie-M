@@ -3,7 +3,6 @@ import dayjs from 'dayjs';
 import { cache } from 'react';
 import { OfferResponse, RoomOffer } from '@/types/offers';
 import { getRoomsDetails } from './getRoomsDetails';
-import { Service } from '@/types/apaleo';
 const propId = process.env.APALEO_PROPERTY_ID;
 
 const getSingleRoomInternal = async (roomId: string, from?: string, to?: string, adults?: string) => {

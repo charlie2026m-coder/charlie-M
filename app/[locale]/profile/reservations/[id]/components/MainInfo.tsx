@@ -47,7 +47,7 @@ const MainInfo = ({ reservation }: { reservation: any } ) => {
         <RoomDetailsButton reservation={reservation} />
 
         {isClosed && <BookAgainButton reservation={reservation} />}
-        {isActive && <InvoiceButton reservationId={reservation.id} className='!h-[35px] justify-start' />}
+        {isClosed && <InvoiceButton reservationId={reservation.id} className='!h-[35px] justify-start' />}
 
         {isActive && <ExtendButton />}
       </div>  
