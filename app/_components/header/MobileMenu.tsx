@@ -12,6 +12,7 @@ import { useProfile } from "@/app/hooks/useProfile";
 import { useTranslations, useLocale } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Suspense } from "react";
+import MobileCheckInForm from "./MobileCheckInForm";
 
 const MobileMenu = ({ isWhite = false }: { isWhite?: boolean }) => {
   const { profile } = useProfile(); 
@@ -82,12 +83,12 @@ const MobileMenu = ({ isWhite = false }: { isWhite?: boolean }) => {
               width={163} 
               height={104} 
               priority
-              className="w-[163px] h-[104px] mb-10" 
+              className="w-[163px]  mb-10" 
             />
           </Link>
 
           {isHomePage && (
-            <div className='flex flex-col gap-5 items-center pb-10 gap-6'>
+            <div className='flex flex-col gap-5 items-center gap-6 '>
               {links.map(item =>(
                 <Link 
                   key={item.href} 
@@ -109,9 +110,7 @@ const MobileMenu = ({ isWhite = false }: { isWhite?: boolean }) => {
                 <Button variant='outline' className='w-full h-[55px] '> {t('sign_in_btn')} </Button>
               </Link>
             </>)}
-            <Link href='/rooms' className='w-full' onClick={() => setOpen(false)}>
-              <Button variant='outline' className='w-full h-[55px] border-none'> {t('check_in_btn')} </Button>
-            </Link>
+            <MobileCheckInForm />
 
             {!loading && user &&
               <Link href="/profile" className="flex gap-2 items-center justify-center font-bold " onClick={() => setOpen(false)}>

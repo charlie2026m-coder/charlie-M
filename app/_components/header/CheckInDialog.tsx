@@ -8,12 +8,20 @@ import { usePreCheckIn } from "@/app/hooks/usePreCheckIn"
 
 interface CheckInDialogProps {
   trigger: React.ReactNode
+  onOpenChange?: (open: boolean) => void
 }
 
-const CheckInDialog = ({ trigger }: CheckInDialogProps) => {
+const CheckInDialog = ({ trigger, onOpenChange }: CheckInDialogProps) => {
   const t = useTranslations('checkIn')
   const [isOpen, setIsOpen] = useState(false)
   const [reservationId, setReservationId] = useState('')
+  
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open)
+    if (onOpenChange) {
+      onOpenChange(open)
+    }
+  }
 
   const { data, isPending, error, mutate } = usePreCheckIn()
 
@@ -46,7 +54,7 @@ const CheckInDialog = ({ trigger }: CheckInDialogProps) => {
   return (
     <ClientCustomDialog
       open={isOpen}
-      setOpen={setIsOpen}
+      setOpen={handleOpenChange}
       trigger={trigger}
       content={
         <div className='flex flex-col '>
@@ -59,7 +67,7 @@ const CheckInDialog = ({ trigger }: CheckInDialogProps) => {
             <Input
               type='text'
               placeholder={t('reservationIdPlaceholder')}
-              className='w-[400px] h-10 rounded-full mb-10'
+              className='w-full max-w-[400px] h-10 rounded-full mb-10'
               value={reservationId}
               onChange={(e) => setReservationId(e.target.value)}
               disabled={isPending}
@@ -117,7 +125,7 @@ const CheckInDialog = ({ trigger }: CheckInDialogProps) => {
       </div>
       }
       title={t('title')}
-      className='w-auto !px-10'
+      className='w-[95%] max-w-lg !px-3 md:!px-10'
     />
   )
 }
