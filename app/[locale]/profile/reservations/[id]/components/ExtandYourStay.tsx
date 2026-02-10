@@ -83,13 +83,29 @@ const ExtandYourStay = ({
     setAvailableUnits(null)
   }, [extensionRange])
 
-  // Get all dates in the existing reservation range
+  // Get all dates in the existing reservation range (excluding departure date for disabled)
   const getReservationDates = () => {
     const dates: Date[] = []
     let currentDate = dayjs(arrival)
     const endDate = dayjs(departure)
     
-    while (currentDate.isBefore(endDate) || currentDate.isSame(endDate, 'day')) {
+    // Include all dates from arrival to the day before departure
+    while (currentDate.isBefore(endDate, 'day')) {
+      dates.push(currentDate.toDate())
+      currentDate = currentDate.add(1, 'day')
+    }
+    
+    return dates
+  }
+
+  // Get all dates including departure for styling
+  const getAllReservationDates = () => {
+    const dates: Date[] = []
+    let currentDate = dayjs(arrival)
+    const endDate = dayjs(departure)
+    
+    // Include all dates from arrival to departure (inclusive)
+    while (currentDate.isBefore(endDate, 'day') || currentDate.isSame(endDate, 'day')) {
       dates.push(currentDate.toDate())
       currentDate = currentDate.add(1, 'day')
     }
@@ -98,6 +114,8 @@ const ExtandYourStay = ({
   }
 
   const reservationDates = getReservationDates()
+  const allReservationDates = getAllReservationDates()
+  const departureDate = dayjs(departure).toDate()
 
   return (
     <div className={cn(
@@ -114,22 +132,27 @@ const ExtandYourStay = ({
           <div className='col-span-1 '>
           <div className='rounded-lg border p-5 bg-white'>
             <style jsx global>{`
-              /* Existing reservation dates - #D3C393 and disabled */
+              /* All reservation dates including departure - #D3C393 styling */
+              button.all-reservation-date,
+              .rdp-day.all-reservation-date button {
+                background-color: #D3C393 !important;
+                color: white !important;
+                opacity: 1 !important;
+              }
+              
+              /* Disabled reservation dates (not including departure) */
               button.reservation-date,
               button.reservation-date:disabled,
               .rdp-day.reservation-date button,
               .rdp-day.reservation-date button:disabled {
-                background-color: #D3C393 !important;
-                color: white !important;
-                opacity: 1 !important;
                 pointer-events: none !important;
                 cursor: not-allowed !important;
               }
               
               /* Extension dates - golden color #A09060 */
-              button[data-range-start=true]:not(.reservation-date),
-              button[data-range-end=true]:not(.reservation-date),
-              button[data-range-middle=true]:not(.reservation-date) {
+              button[data-range-start=true]:not(.all-reservation-date),
+              button[data-range-end=true]:not(.all-reservation-date),
+              button[data-range-middle=true]:not(.all-reservation-date) {
                 background-color: #A09060 !important;
                 color: white !important;
               }
@@ -140,9 +163,8 @@ const ExtandYourStay = ({
               selected={extensionRange}
               defaultMonth={arrivalDate}
               onSelect={(date) => {
-                const tomorrow = dayjs().add(1, 'day').startOf('day')
-                // Don't allow selection before tomorrow
-                if (date?.from && dayjs(date.from).isBefore(tomorrow, 'day')) {
+                // Don't allow selection before departure date
+                if (date?.from && dayjs(date.from).isBefore(departureDate, 'day')) {
                   return;
                 }
                 
@@ -150,14 +172,16 @@ const ExtandYourStay = ({
                 setExtensionRange(date as DateRange);
               }}
               disabled={[
-                { before: dayjs().add(1, 'day').toDate() }, // Disable all dates before tomorrow
-                ...reservationDates // Disable all reservation dates
+                { before: departureDate }, // Disable all dates before departure
+                ...reservationDates // Disable all reservation dates (arrival to day before departure)
               ]}
               modifiers={{
-                reservation: reservationDates
+                reservation: reservationDates,
+                allReservation: allReservationDates
               }}
               modifiersClassNames={{
-                reservation: 'reservation-date'
+                reservation: 'reservation-date',
+                allReservation: 'all-reservation-date'
               }}
               className='mx-auto'
             />
