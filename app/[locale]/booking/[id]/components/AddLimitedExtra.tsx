@@ -27,7 +27,17 @@ const AddLimitedExtra = ({ extra, rooms, room, guests, children }: { extra: Serv
   
   const maxRooms = rooms.length;
   // Exclude last day (departure day) - we only count nights, not the checkout day
-  const availableTimeSlices = extra.timeSlices?.slice(0, -1) || [];
+  const allTimeSlices = extra.timeSlices?.slice(0, -1) || [];
+  
+  // Filter by daysOfWeek if specified
+  const daysOfWeek = extra.daysOfWeek || extra.availability?.daysOfWeek || [];
+  const availableTimeSlices = daysOfWeek.length > 0
+    ? allTimeSlices.filter(timeSlice => {
+        const date = new Date(timeSlice.serviceDate);
+        const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+        return daysOfWeek.includes(dayName);
+      })
+    : allTimeSlices;
   
   // Initialize daily counts from saved service or default to 0
   const savedService = services.find(s => s.serviceId === extra.id);

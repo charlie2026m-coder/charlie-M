@@ -66,8 +66,6 @@ const fetchExtras = async (from?: string, to?: string): Promise<Service[]> => {
       `/availability/v1/services?propertyId=${propertyId}&from=${arrival}&to=${departure}`
     ).then(res => res.timeSlices)
     const formattedServices = response.map(item => {
-      if(item.unlimited) return item;
-
       const mode = item.availability.mode;
       const isParking = item.id === 'CMH-PRK' || item.id.includes('PRK');
       let isSoldOut = false;
@@ -96,14 +94,16 @@ const fetchExtras = async (from?: string, to?: string): Promise<Service[]> => {
         isSoldOut = stayDays.length > 0 && stayDays.every(timeSlice => timeSlice.services.find(service => service.service.id === item.id)?.availableCount === 0);
       }
 
-      const timeSlices = availability.map(timeSlice =>{
+      const timeSlices = availability.map(timeSlice => {
+        const serviceData = timeSlice.services.find(service => service.service.id === item.id);
         return {
           serviceDate: timeSlice.from,
-          soldCount: timeSlice.services.find(service => service.service.id === item.id)?.soldCount || 0,
-          availableCount: timeSlice.services.find(service => service.service.id === item.id)?.availableCount || 0,
-          quantity: timeSlice.services.find(service => service.service.id === item.id)?.quantity || 0,
-        }}
-      )
+          soldCount: serviceData?.soldCount || 0,
+          availableCount: serviceData?.availableCount || 0,
+          quantity: serviceData?.quantity || 0,
+          service: serviceData?.service || { id: item.id, name: item.name }
+        }
+      })
 
       return {
         ...item,
@@ -115,7 +115,7 @@ const fetchExtras = async (from?: string, to?: string): Promise<Service[]> => {
 
 
 
-
+    console.log('formattedServices', formattedServices);
     return  formattedServices as Service[];
   } catch (error: any) {
     console.error('Failed to fetch extras:', error.message);
