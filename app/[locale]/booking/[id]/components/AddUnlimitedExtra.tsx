@@ -27,29 +27,11 @@ const AddUnlimitedExtra = ({ extra, room, guests, rooms, nights, isParking = fal
   const mode = extra.availability?.mode;//Daily, Arrival, Departure
   const pricingUnit = extra.pricingUnit;//Person, Room
   
-  // For parking, check availability across all dates (like baby bed)
-  const checkParkingAvailability = () => {
-    if (!isParking) return 999; // Not parking, no limit check needed
-    
-    // Exclude first day (arrival) - parking starts day after arrival
-    const availableTimeSlices = extra.timeSlices?.slice(1) || [];
-    if (availableTimeSlices.length === 0) return 0;
-    
-    // Check if ALL dates have availableCount > 0
-    const allAvailable = availableTimeSlices.every(ts => ts.availableCount > 0);
-    if (!allAvailable) return 0;
-    
-    // Return minimum available count across all dates
-    const minAvailable = Math.min(...availableTimeSlices.map(ts => ts.availableCount));
-    return Math.max(0, minAvailable);
-  };
-  
-  const parkingAvailability = checkParkingAvailability();
-  
   // Calculate max limit based on pricing unit
   const getMaxLimit = () => {
     if (isParking) {
       // For parking: min of (rooms count, available parking spots)
+      const parkingAvailability = extra.minAvailable || 0;
       return Math.min(rooms.length, parkingAvailability);
     }
     if (pricingUnit === 'Room') {

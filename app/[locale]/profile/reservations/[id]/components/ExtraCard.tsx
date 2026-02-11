@@ -27,7 +27,12 @@ const ExtraCard = ({ item, adults, nights, existingCount = 0, existingDates = []
     return true;
   };
   
-  const isSoldOut = item.isSoldOut || (isBabyBed && !checkBabyBedAvailability());
+  const checkParkingAvailability = () => {
+    if (isParking) return (item.minAvailable || 0) > 0;
+    return true;
+  };
+  
+  const isSoldOut = item.isSoldOut || (isBabyBed && !checkBabyBedAvailability()) || (isParking && !checkParkingAvailability());
   const isCheckout = item.id === 'CMH-LCO' || item.id === 'CMH-ECI' || item.id === 'CMH-BAB' || isParking;
   const pricingType = item.pricingType;
 

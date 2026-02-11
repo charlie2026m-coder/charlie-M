@@ -145,6 +145,7 @@ export interface Service {
   daysOfWeek: string[];
   unlimited?: boolean;
   isSoldOut?: boolean;
+  minAvailable?: number;
   availability: {
     mode: PricingType;
     daysOfWeek: string[];

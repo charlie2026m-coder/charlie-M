@@ -49,13 +49,8 @@ const AddExtras = ({
     const isParking = extra.id === 'CMH-PRK' || extra.id.includes('PRK');
 
     if (isParking) {
-      const availableTimeSlices = extra.timeSlices?.slice(1) || [];
-      if (availableTimeSlices.length === 0) return false;
-      
-      const allAvailable = availableTimeSlices.every(ts => ts.availableCount > 0);
-      if (!allAvailable) return false;
-      
-      const minAvailable = Math.min(...availableTimeSlices.map(ts => ts.availableCount));
+      // Use pre-calculated minAvailable from API
+      const minAvailable = extra.minAvailable || 0;
       const existingCount = existingService?.count || 0;
       
       return minAvailable > existingCount;

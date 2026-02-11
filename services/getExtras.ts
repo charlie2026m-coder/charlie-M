@@ -69,14 +69,29 @@ const fetchExtras = async (from?: string, to?: string): Promise<Service[]> => {
       if(item.unlimited) return item;
 
       const mode = item.availability.mode;
+      const isParking = item.id === 'CMH-PRK' || item.id.includes('PRK');
       let isSoldOut = false;
-      if(mode === 'Arrival') {
+      
+      let minAvailable: number | undefined;
+      
+      if (isParking) {
+        // For parking: check availability excluding first day (arrival)
+        const availableTimeSlices = availability.slice(1);
+        if (availableTimeSlices.length === 0) {
+          isSoldOut = true;
+          minAvailable = 0;
+        } else {
+          minAvailable = Math.min(...availableTimeSlices.map(timeSlice => {
+            const service = timeSlice.services.find(service => service.service.id === item.id);
+            return service?.availableCount || 0;
+          }));
+          isSoldOut = minAvailable < 1;
+        }
+      } else if(mode === 'Arrival') {
         isSoldOut = availability[0].services.find(service => service.service.id === item.id)?.availableCount === 0;
-      }
-      if(mode === 'Departure') {
+      } else if(mode === 'Departure') {
         isSoldOut = availability[availability.length - 1].services.find(service => service.service.id === item.id)?.availableCount === 0;
-      }
-      if(mode === 'Daily') {
+      } else if(mode === 'Daily') {
         const stayDays = availability.slice(0, -1);
         isSoldOut = stayDays.length > 0 && stayDays.every(timeSlice => timeSlice.services.find(service => service.service.id === item.id)?.availableCount === 0);
       }
@@ -93,7 +108,8 @@ const fetchExtras = async (from?: string, to?: string): Promise<Service[]> => {
       return {
         ...item,
         timeSlices: timeSlices,
-        isSoldOut: isSoldOut
+        isSoldOut: isSoldOut,
+        minAvailable: minAvailable
       }
     })
 
