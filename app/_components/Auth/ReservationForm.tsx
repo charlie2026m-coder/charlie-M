@@ -1,168 +1,127 @@
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useState } from 'react';
 import { Button } from '../ui/button';
-import CustomInput from '../ui/customInput';
-import { useSearchBooking } from '@/app/hooks/useSearchBooking';
-import { toast } from 'sonner';
-import { useRouter } from '@/navigation';
-import { type ReservationFormData, reservationSchema } from '@/types/schemas';
-import Image from 'next/image';
-import { supabase } from '@/lib/supabase';
-import { useProfileStore } from '@/store/useProfile';
+import { Input } from '../ui/input';
 import { useTranslations } from 'next-intl';
+import { useRouter } from '@/navigation';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
+import { useProfileStore } from '@/store/useProfile';
 
 const ReservationForm = () => {
   const t = useTranslations('login');
+  const [bookingId, setBookingId] = useState('');
+  const [lastName, setLastName] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [showNotFound, setShowNotFound] = useState(false);
-  const searchBooking = useSearchBooking();
+  const [isPending, setIsPending] = useState(false);
   const router = useRouter();
-  const { setGuestBooking } = useProfileStore();
+  const { setGuestData } = useProfileStore();
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    reset,
-    formState: { errors, isValid },
-  } = useForm<ReservationFormData>({
-    resolver: zodResolver(reservationSchema),
-    mode: 'onChange',
-  });
-
-  const number = watch('number');
-  const name = watch('name');
-
-  // Handle any errors from form validation
-  useEffect(() => {
-    if (Object.keys(errors).length > 0) {
-      const errorMessages = Object.entries(errors).map(([, error]) => error?.message).filter(Boolean).join(', ');
-      setError(errorMessages);
-    } else {
-      setError(null);
-    }
-  }, [errors, number, name]);
-
-  // Clear error when user types
-  useEffect(() => {
-    if (error) {
-      setError(null);
-    }
-  }, [number, name]);
-
-  const onSubmit = async (data: ReservationFormData) => {
-    setError(null);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     
-    searchBooking.mutate(
-      {
-        externalCode: data.number,
-        lastName: data.name,
-      },
-      {
-        onSuccess: async (response) => {
-          try {
-            // Save booking data to store and localStorage
-            setGuestBooking(response.booking);
-            
-            // Save guest mode flag and booking ID to localStorage
-            if (response.booking?.id) {
-              localStorage.setItem('guestMode', 'true');
-              localStorage.setItem('guestBookingId', response.booking.id);
-            }
-            
-            // Check if user is already signed in
-            const { data: { session } } = await supabase.auth.getSession();
-            
-            if (!session) {
-              // Create anonymous session
-              const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
-              
-              if (authError) {
-                console.error('Error creating anonymous session:', authError);
-                toast.error('Failed to create session');
-                return;
-              }
-              
-              console.log('Anonymous session created:', authData.user?.id);
-            }
-            
-            toast.success('Booking found!');
-            
-            // Redirect to reservations page
-            router.push('/profile/reservations');
-          } catch (error) {
-            console.error('Error in onSuccess:', error);
-            toast.error('Something went wrong');
-          }
-        },
-        onError: (error) => {
-          setShowNotFound(true);
-        },
-      }
-    );
-  };
+    if (!bookingId.trim() || !lastName.trim()) {
+      setError(t('checkBookingId'));
+      return;
+    }
 
-  const handleReset = () => {
-    setShowNotFound(false);
     setError(null);
-    reset();
+    setIsPending(true);
+
+    try {
+      const response = await fetch(`/api/reservations/search-booking?bookingId=${encodeURIComponent(bookingId)}&lastName=${encodeURIComponent(lastName)}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        
+        if (response.status === 404) {
+          setError(t('checkBookingId'));
+        } else if (response.status === 403) {
+          setError(t('noMatchesFound'));
+        } else if (response.status >= 500) {
+          setError(t('serverErrorTryAgain'));
+        } else {
+          setError(errorData.error || t('serverErrorTryAgain'));
+        }
+        setIsPending(false);
+        return;
+      }
+
+      const data = await response.json();
+      
+      // Save full data to store and sessionStorage
+      setGuestData(data);
+      sessionStorage.setItem('guestMode', 'true');
+      
+      // Check if user is already signed in
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        // Create anonymous session
+        const { error: authError } = await supabase.auth.signInAnonymously();
+        
+        if (authError) {
+          console.error('Error creating anonymous session:', authError);
+          toast.error('Failed to create session');
+          setIsPending(false);
+          return;
+        }
+      }
+      
+      // Redirect to reservations page
+      router.push('/profile/reservations');
+    } catch (error) {
+      console.error('Error searching booking:', error);
+      setError(t('serverErrorTryAgain'));
+      setIsPending(false);
+    }
   };
-  if (showNotFound) {
-    return <NotFound onReset={handleReset} />;
-  }
 
   return (
-    <div className="w-full ">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 relative mb-[30px]">
+    <div className="w-full">
+      <form onSubmit={handleSubmit} className="space-y-4 relative mb-[30px]">
         <h2 className="text-xl text-center mb-6">{t('continueWithReservationId')}</h2>
 
-        <CustomInput 
-          register={register} 
-          name="number" 
+        <Input 
+          name="bookingId"
           type="text" 
           placeholder={t('enterBookingNumber')} 
-          icon="booking" 
-          isError={!!errors.number} 
+          value={bookingId}
+          onChange={(e) => {
+            setBookingId(e.target.value);
+            if (error) setError(null);
+          }}
+          disabled={isPending}
+          className="w-full h-12 rounded-full px-5"
         />
-        <CustomInput 
-          register={register} 
-          name="name" 
+        <Input 
+          name="lastName"
           type="text" 
           placeholder={t('lastName')} 
-          icon="name" 
-          isError={!!errors.name} 
+          value={lastName}
+          onChange={(e) => {
+            setLastName(e.target.value);
+            if (error) setError(null);
+          }}
+          disabled={isPending}
+          className="w-full h-12 rounded-full px-5"
         />
 
-        <Button
-          type="submit"
-          disabled={searchBooking.isPending || !isValid}
-          className="w-full h-12 rounded-full bg-blue hover:bg-blue/80 font-medium !mb-0"
-        >
-          {searchBooking.isPending ? t('searching') : t('continue')}
-        </Button>
-
         {error && (
-          <div className="absolute bottom-[-28px] text-center text-red text-sm px-4 w-full">
+          <div className="text-red-500 text-sm text-center break-words whitespace-normal w-full">
             {error}
           </div>
         )}
+
+        <Button
+          type="submit"
+          disabled={isPending || !bookingId.trim() || !lastName.trim()}
+          className="w-full h-12 rounded-full bg-blue hover:bg-blue/80 font-medium !mb-0"
+        >
+          {isPending ? t('searching') : t('continue')}
+        </Button>
       </form>
     </div>
   );
 };
 
 export default ReservationForm;
-
-
-const NotFound = ({ onReset }: { onReset: () => void }) => {
-  const t = useTranslations('login');
-  return (
-    <div className='w-full flex flex-col items-center justify-center'>
-      <h1 className='text-[20px] font-medium mb-4'>{t('notFound')}</h1>
-      <p className='text-base text-dark'>{t('nothingFound')}</p>
-      <Image src='/images/not-found-booking.svg' alt='not-found' width={330} height={260} className='w-[330px] object-cover mx-auto mb-4' />
-      <Button className='w-full h-[45px]' onClick={onReset}>{t('ok')}</Button>
-    </div>
-  )
-}

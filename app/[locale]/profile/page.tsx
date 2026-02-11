@@ -26,7 +26,7 @@ export default function Profile() {
 
   useEffect(() => {
     const checkGuestMode = () => {
-      const guestMode = localStorage.getItem('guestMode') === 'true';
+      const guestMode = sessionStorage.getItem('guestMode') === 'true';
       setIsGuestMode(guestMode);
     };
     

@@ -1,22 +1,17 @@
 'use client'
-
 import Amenities from '../../components/Amenities'
-import { GiHouseKeys } from "react-icons/gi";
 import TextReadMore from '@/app/_components/ui/TextReadMore';
 import RoomParamsRow from '@/app/_components/ui/RoomParamsRow';
 import { RoomOffer } from '@/types/offers'
 import { cn } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
-import { FaBaby } from "react-icons/fa";
 
 const RoomContent = ({ 
   room, 
   isRoomInfo = false,
-  babyBedAvailability 
 }: { 
   room: RoomOffer, 
   isRoomInfo?: boolean,
-  babyBedAvailability?: { isAvailable: boolean; count: number }
 }) => {
   const t = useTranslations('roomContent')
   return (
@@ -27,16 +22,6 @@ const RoomContent = ({
       <div className={cn('pb-3 mb-5 w-full  flex flex-col md:flex-row  justify-between', isRoomInfo && 'border-b')}>
         <RoomParamsRow attributes={room.attributes} maxPersons={room.maxPersons} size={room.size} />
         <div className='flex items-center gap-3 ml-auto'>
-          {room.availableUnits > 0 && (
-            <div className='flex items-center gap-1'>
-              <GiHouseKeys />  {t('weHave')} <span className='font-bold'>{room.availableUnits}</span> {t('left')} 
-            </div>
-          )}
-          {babyBedAvailability?.isAvailable && babyBedAvailability.count > 0 && (
-            <div className='flex items-center gap-1'>
-              | <FaBaby /> <span className='font-bold'>{babyBedAvailability.count}</span> {t('babyBedsAvailable')}
-            </div>
-          )}
         </div>
       </div>
      
@@ -55,7 +40,6 @@ const RoomContent = ({
           {t('roomVariationNote')}
           </p>
         </div>
-    
       </>}
 
     </>

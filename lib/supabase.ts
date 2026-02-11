@@ -8,7 +8,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 // Client-side Supabase client
-// createBrowserClient automatically handles cookies correctly
+// Uses default cookie storage for auth (so middleware can see the session)
 export const supabase = createBrowserClient(
   supabaseUrl,
   supabaseAnonKey

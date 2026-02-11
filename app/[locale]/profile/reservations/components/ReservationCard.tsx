@@ -55,7 +55,7 @@ const ReservationCard = ({ reservation }: { reservation: ReservationType,}  ) =>
           <div className='flex gap-2 grow flex-col lg:flex-row '>
             {isActive && !isCancelled  && <CheckinButton reservationId={id} />}
             {isClosed && <BookAgainButton reservation={reservation} />}
-            {isActive && <InvoiceButton reservationId={id} className='h-[30px] ' />}
+            {isClosed && <InvoiceButton reservationId={id} className='h-[30px] ' />}
             <DetailsButton id={id} />
           </div>
         </div>

@@ -51,7 +51,7 @@
       {
         "title": "Luggage Lockers",
         "text": "Secure storage before check-in or after check-out.",
-        "content": "With our online check-in system, you can skip the reception entirely"
+        "content": "Ideal for storing your luggage before check-in or after check-out."
       },
       {
         "title": "Self-Service Closet",
@@ -242,7 +242,6 @@
       "subtitle": "Fully automated stay in the center of Berlin",
       "exploreRooms": "Explore rooms"
     }
-
   },
 
   "header": {
@@ -256,6 +255,7 @@
     "guests": "Guests",
     "adults": "Adults",
     "children": "Children",
+    "baby": "Baby",
     "babies": "Babies",
     "children_age_note": "up to 3 years old",
     "children_not_available": "Children not available for this room",
@@ -496,8 +496,8 @@
     "addViaReservationIdTitle": "Add via Reservation ID",
     "notFound": "Not Found",
     "success": "Success",
-    "enterReservationId": "Enter your Reservation ID (or booking.com code)",
-    "reservationIdPlaceholder": "Reservation ID/Code",
+    "enterReservationId": "Enter your Reservation ID",
+    "reservationIdPlaceholder": "Reservation ID",
     "cancel": "Cancel",
     "add": "Add",
     "nothingFound": "Nothing found for this Reservation ID number. Please, check and try again.",
@@ -509,6 +509,9 @@
     "errorAddingReservation": "Failed to add reservation",
     "reservationNotFoundCheckId": "Reservation not found. Please check the ID.",
     "reservationIdExample": "Example: XXXXX-1 (must end with -1)",
+    "checkBookingId": "Please check the booking ID",
+    "noMatchesFound": "Unfortunately, no matches found",
+    "serverErrorTryAgain": "Server error. Please try again.",
     "logout": "Logout",
     "logoutConfirm": "Are you sure you want to logout?",
     "loggingOut": "Logging out...",
@@ -565,6 +568,10 @@
     "price": "Price",
     "perDay": "per day",
     "oneTime": "one time",
+    "allNights": "All nights",
+    "available": "available",
+    "addExtra": "Add {name}",
+    "confirm": "Confirm",
     "information": "Information",
     "needAnything": "Need anything? We're right here.",
     "contactsDescription": "Our team is here 24/7 to make your stay smooth, simple, and stress-free. Reach out anytime — we're just one click away.",
@@ -1172,13 +1179,16 @@
     "signUp": "Sign Up",
     "backToLogin": "← Back to Login",
     "continueWithReservationId": "Continue with Reservation ID",
-    "enterBookingNumber": "Enter Booking.com Number",
+    "enterBookingNumber": "Enter Booking ID or Reservation ID",
     "lastName": "Last Name",
     "searching": "Searching...",
     "continue": "Continue",
     "notFound": "No found",
     "nothingFound": "Nothing found for this Reservation ID number. Please, check and try again.",
     "ok": "Ok",
+    "checkBookingId": "Please check the booking ID",
+    "noMatchesFound": "Unfortunately, no matches found",
+    "serverErrorTryAgain": "Server error. Please try again.",
     "continueWithApple": "Continue with Apple",
     "continueWithGoogle": "Continue with Google",
     "loginFailed": "Login failed. Please check your credentials and try again."

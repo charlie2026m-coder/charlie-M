@@ -15,6 +15,7 @@ const ExtraCard = ({ item, adults, nights, existingCount = 0, existingDates = []
   const [isOpen, setIsOpen] = useState(false);
   const isUnlimited = item.unlimited;
   const isBabyBed = item.id === 'CMH-BAB';
+  const isParking = item.id === 'CMH-PRK' || item.id.includes('PRK');
   
   const checkBabyBedAvailability = () => {
     if (isBabyBed) {
@@ -27,7 +28,7 @@ const ExtraCard = ({ item, adults, nights, existingCount = 0, existingDates = []
   };
   
   const isSoldOut = item.isSoldOut || (isBabyBed && !checkBabyBedAvailability());
-  const isCheckout = item.id === 'CMH-LCO' || item.id === 'CMH-ECI' || item.id === 'CMH-BAB';
+  const isCheckout = item.id === 'CMH-LCO' || item.id === 'CMH-ECI' || item.id === 'CMH-BAB' || isParking;
   const pricingType = item.pricingType;
 
   const images = getExtraImages(item.id, item.name);

@@ -5,12 +5,10 @@ import { Link } from '@/navigation'
 import { useState, useEffect } from 'react'
 import { CustomPagination } from '@/app/_components/ui/CustomPagination'
 import ReservationCard from '../components/ReservationCard'
-import { useReservations } from '@/app/hooks/useReservations'
+import { useReservations, useGuestReservations } from '@/app/hooks/useReservations'
 import { useProfileStore } from '@/store/useProfile'
 import { Spinner } from '@/app/_components/ui/spinner'
 import { Reservation } from '@/types/apaleo'
-import { useQuery } from '@tanstack/react-query'
-import { supabase } from '@/lib/supabase'
 import { useTranslations } from 'next-intl'
 
 const ITEMS_PER_PAGE = 3
@@ -23,67 +21,54 @@ const ReservationsTable = ({ addedReservations = [] }: ReservationsTableProps) =
   const t = useTranslations('profile')
   const [currentPage, setCurrentPage] = useState(0)
   const page = currentPage + 1
-  const { reservationFilter, guestBooking } = useProfileStore()
+  const { reservationFilter, guestData, setGuestData } = useProfileStore()
   
   const [isGuestMode, setIsGuestMode] = useState(false)
-  const [guestBookingId, setGuestBookingId] = useState<string | null>(null)
 
   useEffect(() => {
-    const guestMode = localStorage.getItem('guestMode')
-    const bookingId = localStorage.getItem('guestBookingId')
+    const guestMode = sessionStorage.getItem('guestMode')
     setIsGuestMode(guestMode === 'true')
-    setGuestBookingId(bookingId)
-  }, [])
-
-  const normalQuery = useReservations(page, reservationFilter)
-  
-  const guestQuery = useQuery({
-    queryKey: ['guestReservations', guestBookingId],
-    queryFn: async () => {
-      if (!guestBooking) return { count: 0, reservations: [] }
-      
-      const { data: roomsData } = await supabase
-        .from('rooms')
-        .select('*')
-        .order('id', { ascending: true })
-      
-      const reservations = (guestBooking.reservations || []).map((reservation: any) => {
-        const room = roomsData?.find((r: any) => r.id === reservation.unitGroup?.id)
-        return {
-          ...reservation,
-          name: reservation.unitGroup?.name || '',
-          images: room?.photos || [],
-          guests: reservation.adults,
+    
+    // Load guestData from sessionStorage if not in store
+    if (guestMode === 'true' && !guestData) {
+      const storedData = sessionStorage.getItem('guestData')
+      if (storedData) {
+        try {
+          setGuestData(JSON.parse(storedData))
+        } catch (e) {
+          console.error('Failed to parse guest data:', e)
         }
-      })
-      
-      return {
-        count: reservations.length,
-        reservations: reservations
       }
-    },
-    enabled: isGuestMode && !!guestBookingId && !!guestBooking,
-  })
+    }
+  }, [guestData, setGuestData])
 
-  const addedData = reservationFilter === 'Added' 
-    ? { count: addedReservations.length, reservations: addedReservations.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE) }
-    : null
+  const adjustedPage = page === 1 && addedReservations.length > 0 ? 1 : page
+  const normalQuery = useReservations(adjustedPage, reservationFilter)
+  const guestQuery = useGuestReservations(guestData)
 
   const { data, isLoading, isError, isFetching } = isGuestMode 
     ? guestQuery 
     : normalQuery
-  
-  const displayData = reservationFilter === 'Added' ? addedData : data
-  
+
+  const displayData = page === 1 && addedReservations.length > 0 && data
+    ? {
+        count: data.count,
+        reservations: [
+          ...addedReservations,
+          ...data.reservations
+        ]
+      }
+    : data
+
   useEffect(() => {
     setCurrentPage(0)
   }, [reservationFilter])
 
-  if (isError && reservationFilter !== 'Added') {
+  if (isError) {
     return <div className='text-center py-10 text-red-500'>{t('errorLoadingReservations')}</div>
   }
 
-  if (displayData && displayData.count === 0) {
+  if (displayData && displayData.count === 0 && addedReservations.length === 0) {
     return <NoReservations />
   }
 
@@ -92,7 +77,7 @@ const ReservationsTable = ({ addedReservations = [] }: ReservationsTableProps) =
   return (
     <>
       <div className='flex flex-col gap-3 mb-6 relative min-h-[400px]'>
-        {isFetching && displayData && reservationFilter !== 'Added' && (
+        {isFetching && displayData && (
           <div className='absolute inset-0 bg-white/70 flex items-center justify-center z-10 rounded-lg'>
               <Spinner /> {t('loading')}
           </div>
@@ -102,7 +87,7 @@ const ReservationsTable = ({ addedReservations = [] }: ReservationsTableProps) =
           <ReservationCard key={item.id + index} reservation={item} />
         ))}
         
-        {!displayData && isLoading && reservationFilter !== 'Added' && (
+        {!displayData && isLoading && (
           <div className='flex flex-1 items-center justify-center h-[400px]'>
             <div className='flex items-center gap-2'>
               <Spinner /> {t('loading')}
@@ -110,7 +95,7 @@ const ReservationsTable = ({ addedReservations = [] }: ReservationsTableProps) =
           </div>
         )}
       </div>
-      {totalPages > 1 && (
+      {!isGuestMode && totalPages > 1 && (
         <CustomPagination 
           totalPages={totalPages} 
           currentPage={currentPage} 

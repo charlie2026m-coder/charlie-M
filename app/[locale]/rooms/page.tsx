@@ -101,18 +101,17 @@ const RoomsPage = async ({ searchParams } : Props) => {
       : Promise.resolve({ isAvailable: false, count: 0 })
   ]);
   if ('error' in rooms || !rooms) return <ErrorCard />
-  if (rooms.length === 0) return <NotFoundCard text='No rooms found' />
+  
   const nights = calculateNights(from as string, to as string);
   const ratePlan = nights > 7  ? RATE_PLANS.LONG_STAY : RATE_PLANS.STANDARD;
   const standardPriceRooms = rooms.filter(room => room.ratePlan.code.includes(ratePlan))
-  
   
   return (
     <>
       <StickyCheckInFormRooms params={{ from, to, adults, children }} />
       <Filters />
-      {('error' in rooms || !rooms) 
-        ? <ErrorCard /> 
+      {standardPriceRooms.length === 0
+        ? <NotFoundCard text='No rooms found' />
         : <RoomsList 
             rooms={standardPriceRooms} 
             params={{ from, to, adults, children }} 

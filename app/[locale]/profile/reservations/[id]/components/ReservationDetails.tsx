@@ -21,12 +21,12 @@ import { CITY_TAX_RATE } from "@/lib/Constants";
 
 export const ReservationButton = ({ reservation, isActive }: { reservation: any, isActive: boolean }) => {
   const { id, services, arrival, departure, adults, totalGrossAmount } = reservation;
-  console.log(reservation, 'reservation');
   const [open, setOpen] = useState(false);
   const t = useTranslations('profile');
   const { firstName, lastName } = reservation.primaryGuest;
   let guests = `${firstName} ${lastName}`;
   const isConfirmed = reservation.status === bookingStatuses.Confirmed;
+  const isClosed = reservation.status === bookingStatuses.CheckedOut || reservation.status === bookingStatuses.Canceled || reservation.status === bookingStatuses.NoShow;
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(id.toString());
@@ -44,9 +44,7 @@ export const ReservationButton = ({ reservation, isActive }: { reservation: any,
   const servicesTotalPrice = services?.reduce((acc: number, service: ServicesPaidDetails) => acc + service.totalAmount.grossAmount, 0) || 0;
   const roomPrice = Math.round((totalGross - servicesTotalPrice) * 100) / 100;
 
-  console.log(roomPrice, 'roomPrice');
   const taxAmount = Math.round((roomPrice * CITY_TAX_RATE) * 100) / 100;
-  console.log(taxAmount, 'taxAmount');
   const roomPriceWithTax = Math.round((roomPrice + taxAmount) * 100) / 100;
   const totalPrice = Math.round((roomPriceWithTax + servicesTotalPrice) * 100) / 100;
   if(guestsCount > 1) {
@@ -123,7 +121,7 @@ export const ReservationButton = ({ reservation, isActive }: { reservation: any,
               <span className='font-semibold ml-auto'>€{totalPrice}</span>
             </div>
           </div>
-            <InvoiceButton reservationId={reservation.id} className='h-[45px]' />
+            {isClosed && <InvoiceButton reservationId={reservation.id} className='h-[45px]' />}
             {isActive && (
               <CancelBookingButton 
                 reservationId={id} 

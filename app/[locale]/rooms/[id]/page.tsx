@@ -2,7 +2,6 @@ import PhotoGallery from './components/PhotoGallery'
 import BookingForm from './components/BookingForm'
 import RoomContent from './components/RoomContent'
 import { getSingleRoom } from '@/services/getSingleRoom'
-import ErrorCard from '../components/ErrorCard'
 import Availability from './components/Availability'
 import NoCapacityWarning from './components/NoCapacityWarning'
 import NoAvailabilityCard from './components/NoAvailabilityCard'
@@ -157,7 +156,7 @@ const RoomPage = async ({ params, searchParams }: IParams) => {
 
       {hasEnoughCapacity 
         ? <div className='col-span-2 xl:col-span-3 flex flex-col'>
-            <RoomContent room={room} isRoomInfo={true} babyBedAvailability={babyBedAvailability} />
+            <RoomContent room={room} isRoomInfo={true} />
             <Availability 
               id={id}
               from={from}

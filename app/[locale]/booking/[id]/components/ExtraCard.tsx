@@ -18,6 +18,7 @@ const ExtraCard = ({ item, room, guests, children, rooms, nights }: { item: Serv
   const isUnlimited = item.unlimited;
   const isSoldOut = item.isSoldOut;
   const isCheckout = item.id === 'CMH-LCO' || item.id === 'CMH-ECI';
+  const isParking = item.id === 'CMH-PRK' || item.id === 'CMH-PARKING' || item.name?.toLowerCase().includes('park');
 
   // Получаем все изображения для слайдера
   const images = getExtraImages(item.id, item.name);
@@ -43,8 +44,8 @@ const ExtraCard = ({ item, room, guests, children, rooms, nights }: { item: Serv
       {!isSoldOut &&<div>
         {isCheckout 
           ? <AddCheckoutExtra extra={item} rooms={rooms} /> 
-          : isUnlimited 
-            ? <AddUnlimitedExtra extra={item} room={room} guests={guests} children={children} rooms={rooms} nights={nights} /> 
+          : (isUnlimited || isParking)
+            ? <AddUnlimitedExtra extra={item} room={room} guests={guests} rooms={rooms} nights={nights} isParking={isParking} /> 
             : <AddLimitedExtra extra={item} rooms={rooms} room={room} guests={guests} children={children} />
         }
       </div>}

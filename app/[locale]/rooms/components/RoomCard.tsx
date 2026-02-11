@@ -23,17 +23,28 @@ const RoomCard = ({
 
   const queryString = getPath({ from: params.from, to: params.to, adults: params.adults, children: params.children })
   const adultsCount = Number(params.adults || 1);
-  const roomsNeeded = Math.ceil(adultsCount / room.maxPersons);
+  const childrenCount = Number(params.children || 0);
   
-  let price = 0;
-  if (adultsCount === 1) {
-    price = room.oneNightPrice || 0;
-  } else if (adultsCount % 2 === 0) {
-    price = roomsNeeded * (room.oneNightPriceForTwo || room.oneNightPrice || 0);
-  } else {
-    const doubleRooms = Math.floor(adultsCount / 2);
-    price = (doubleRooms * (room.oneNightPriceForTwo || room.oneNightPrice || 0)) + (room.oneNightPrice || 0);
-  }
+  const roomsForChildren = childrenCount;
+  
+  const minAdultsForChildren = childrenCount;
+  const adultsAssignedToChildren = Math.min(adultsCount, minAdultsForChildren);
+  
+  let remainingAdults = adultsCount - adultsAssignedToChildren;
+  
+  const maxAdultsPerChildRoom = 2;
+  const additionalAdultsCapacity = childrenCount * (maxAdultsPerChildRoom - 1);
+  const additionalAdultsAssigned = Math.min(remainingAdults, additionalAdultsCapacity);
+  remainingAdults -= additionalAdultsAssigned;
+  
+  const roomsForRemainingAdults = Math.ceil(remainingAdults / 2);
+  
+  const roomsNeeded = roomsForChildren + roomsForRemainingAdults;
+  
+  const pricePerNight = adultsCount >= 2 
+    ? (room.oneNightPriceForTwo || room.oneNightPrice || 0)
+    : (room.oneNightPrice || 0);
+  const price = roomsNeeded * pricePerNight;
   
   const roomDetailId = room.unitGroup.id;
 

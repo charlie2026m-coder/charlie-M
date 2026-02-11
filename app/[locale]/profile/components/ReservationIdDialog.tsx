@@ -13,33 +13,39 @@ const ReservationIdDialog = () => {
     const [isNotFound, setIsNotFound] = useState(false)
     const [isSuccess, setIsSuccess] = useState(false)
     const [reservationId, setReservationId] = useState('')
+    const [lastName, setLastName] = useState('')
     const [error, setError] = useState<string | null>(null)
     const addReservation = useAddReservation()
 
     const close = () => {
       setIsOpen(false)
       setReservationId('')
+      setLastName('')
       setIsNotFound(false)
       setIsSuccess(false)
       setError(null)
     }
     
     const handleSubmit = () => {
-        if (reservationId.trim() === '') {
+        if (reservationId.trim() === '' || lastName.trim() === '') {
             setError(t('reservationNotFoundCheckId'))
             return
         }
 
-        setError(null) // Clear previous error
+        setError(null)
 
-        addReservation.mutate(reservationId, {
+        addReservation.mutate({ reservationId: reservationId.trim(), lastName: lastName.trim() }, {
             onSuccess: () => {
                 setIsSuccess(true)
                 toast.success(t('reservationAddedSuccess'))
             },
             onError: (error) => {
-                if (error.message.includes('not found')) {
-                    setError(t('reservationNotFoundCheckId'))
+                if (error.message === 'BOOKING_ID_INVALID') {
+                    setError(t('checkBookingId'))
+                } else if (error.message === 'NO_MATCHES_FOUND') {
+                    setError(t('noMatchesFound'))
+                } else if (error.message === 'SERVER_ERROR') {
+                    setError(t('serverErrorTryAgain'))
                 } else if (error.message.includes('already added')) {
                     toast.error(t('reservationAlreadyAdded') || 'Reservation already added')
                     setError(null)
@@ -47,7 +53,7 @@ const ReservationIdDialog = () => {
                     toast.error(t('reservationEmailMismatch') || 'Reservation email does not match your account email')
                     setError(null)
                 } else {
-                    setError(t('reservationNotFoundCheckId'))
+                    setError(t('serverErrorTryAgain'))
                 }
             }
         })
@@ -58,7 +64,7 @@ const ReservationIdDialog = () => {
       open={isOpen}
       setOpen={setIsOpen}
       trigger={
-        <div className='text-brown cursor-pointer hover:text-brown/80 transition-all duration-300'>
+        <div className='text-brown cursor-pointer hover:text-brown/80 transition-all duration-300 pl-1'>
           {t('addViaReservationId')}
         </div>
       }
@@ -71,8 +77,13 @@ const ReservationIdDialog = () => {
                 reservationId={reservationId} 
                 setReservationId={(value) => {
                   setReservationId(value)
-                  if (error) setError(null) // Clear error when user types
-                }} 
+                  if (error) setError(null)
+                }}
+                lastName={lastName}
+                setLastName={(value) => {
+                  setLastName(value)
+                  if (error) setError(null)
+                }}
                 handleSubmit={handleSubmit} 
                 close={close} 
                 isPending={addReservation.isPending} 
@@ -80,7 +91,7 @@ const ReservationIdDialog = () => {
               />
       }
       title={isNotFound ? t('notFound') : isSuccess ? t('success') : t('addViaReservationIdTitle')}
-      className='w-auto !px-10'
+      className='w-[95%]  max-w-lg px-3 md:!px-10'
     />
   )
 }
@@ -91,42 +102,55 @@ export default ReservationIdDialog
 const Form = ({ 
   reservationId,
   setReservationId,
+  lastName,
+  setLastName,
   handleSubmit, 
   close,
   isPending,
   error
-}: { reservationId: string, setReservationId: (reservationId: string) => void, handleSubmit: () => void, close: () => void, isPending: boolean, error: string | null }) => {
+}: { reservationId: string, setReservationId: (reservationId: string) => void, lastName: string, setLastName: (lastName: string) => void, handleSubmit: () => void, close: () => void, isPending: boolean, error: string | null }) => {
   const t = useTranslations('profile')
 
   return (
-    <div className='w-full flex flex-col gap-10'>
-      <div className='text-[15px] text-dark inter'>{t('enterReservationId')}</div>
+    <div className='w-full flex flex-col'>
+      <div className='text-[15px] text-dark inter mb-3'>{t('enterReservationId')}</div>
       <Input
         type='text'
         placeholder={t('reservationIdPlaceholder')}
-        className='w-[400px] h-10 rounded-full'
+        className='w-full h-10 rounded-full mb-5'
         value={reservationId}
         onChange={(e) => setReservationId(e.target.value)}
         disabled={isPending}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' && !isPending && reservationId.trim()) {
+          if (e.key === 'Enter' && !isPending && reservationId.trim() && lastName.trim()) {
             handleSubmit()
           }
         }}
       />
-      {error && (
-        <div className='flex flex-col gap-2'>
-          <div className='text-red-500 text-sm'>{error}</div>
-          <div className='text-red-500 text-sm font-medium'>{t('reservationIdExample')}</div>
-        </div>
-      )}
-      <div className='flex gap-4 items-center'>
+      <Input
+        type='text'
+        placeholder={t('lastName') || 'Last Name'}
+        className='w-full h-10 rounded-full mb-12'
+        value={lastName}
+        onChange={(e) => setLastName(e.target.value)}
+        disabled={isPending}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && !isPending && reservationId.trim() && lastName.trim()) {
+            handleSubmit()
+          }
+        }}
+      />
+        {error && (
+          <div className='text-red-500 text-sm text-center break-words whitespace-normal max-w-[400px] absolute bottom-19'>
+            {error === t('checkBookingId') ? `${error} ${t('reservationIdExample')}` : error}
+          </div>
+        )}
+      <div className='flex gap-4 items-center justify-center'>
         <Button variant='outline' className='flex-1 max-w-[190px] h-[45px]' onClick={close} disabled={isPending}>{t('cancel')}</Button>
-        <Button className='flex-1 max-w-[190px] h-[45px]' onClick={handleSubmit} disabled={isPending || reservationId.trim() === ''}>
+        <Button className='flex-1 max-w-[190px] h-[45px]' onClick={handleSubmit} disabled={isPending || reservationId.trim() === '' || lastName.trim() === ''}>
           {isPending ? t('adding') || 'Adding...' : t('add')}
         </Button>
       </div>
-
     </div>
   )
 }

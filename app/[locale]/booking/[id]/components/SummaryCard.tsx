@@ -140,11 +140,13 @@ const SummaryCard = () => {
         <div className='flex flex-col gap-1 mb-3'>
           {rooms.map((room, index) => {
             const roomPrice = calculateRoomPrice(room.adults);
+            const pricePerNight = roomPrice / nights;
+            
             return (
               <div key={room.id} className='flex flex-col gap-1 mb-2'>
                 <div className='flex items-center gap-2 inter text-sm text-dark'>
                   <span className='truncate overflow-hidden whitespace-nowrap'>{tBooking('room')} {index + 1} ({room.adults} {room.adults === 1 ? tBooking('guest') : tBooking('guests')})</span>
-                  <span>€ {roomDetails?.averagePrice || 0}</span>×<span>{nights} {getText(nights)}</span>
+                  <span>€ {pricePerNight.toFixed(2)}</span>×<span>{nights} {getText(nights)}</span>
                   <span className='text-bale font-bold text-base ml-auto'>€ {roomPrice}</span>
                 </div>
                 <div className='flex gap-2 text-sm '>
@@ -186,11 +188,14 @@ const SummaryCard = () => {
             // For unlimited/checkout services with count
             if (service.count) {
               const servicePrice = calculateUnlimitedServicePrice(service.serviceId, service.count);
+              const mode = serviceDetails.availability?.mode;
+              const isParking = serviceDetails.id === 'CMH-PRK' || serviceDetails.id === 'CMH-PARKING' || serviceDetails.name?.toLowerCase().includes('park');
+              const isDailyService = mode === 'Daily';
               
               return (
                 <div key={service.serviceId} className='flex items-center gap-2 inter text-sm text-dark mb-2'>
                   <div className='truncate overflow-hidden whitespace-nowrap flex items-center'>
-                    {serviceDetails.name} (x{service.count})
+                    {serviceDetails.name} (x{service.count}{isParking && isDailyService ? ` × ${nights} ${getText(nights)}` : ''})
                   </div>
                   <span className='text-bale font-semibold ml-auto'>€ {servicePrice.toFixed(2)}</span>
                 </div>

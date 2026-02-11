@@ -99,16 +99,16 @@ export async function logout(): Promise<AuthResult> {
     }
 
     // Always clear guest mode data, regardless of session state
-    localStorage.removeItem('guestMode');
-    localStorage.removeItem('guestBookingId');
+    sessionStorage.removeItem('guestMode');
+    sessionStorage.removeItem('guestData');
 
     console.log('✅ Logout successful');
     return { success: true };
   } catch (error) {
     console.error('❌ Logout catch error:', error);
     // Even if there's an error, clear guest mode data
-    localStorage.removeItem('guestMode');
-    localStorage.removeItem('guestBookingId');
+    sessionStorage.removeItem('guestMode');
+    sessionStorage.removeItem('guestData');
     
     return { success: false, error: parseAuthError(error as Error) };
   }

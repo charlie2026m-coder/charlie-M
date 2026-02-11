@@ -3,7 +3,6 @@ import dayjs from 'dayjs';
 import { cache } from 'react';
 import { OfferResponse, RoomOffer } from '@/types/offers';
 import { getRoomsDetails } from './getRoomsDetails';
-import { Service } from '@/types/apaleo';
 const propId = process.env.APALEO_PROPERTY_ID;
 
 const getSingleRoomInternal = async (roomId: string, from?: string, to?: string, adults?: string) => {
@@ -54,10 +53,6 @@ const getSingleRoomInternal = async (roomId: string, from?: string, to?: string,
         cityTax: (room.cityTaxes?.[0]?.totalGrossAmount?.amount || 0), // City tax for 1 guest
         cityTaxForTwo: (doubleRoom?.cityTaxes?.[0]?.totalGrossAmount?.amount || 0), // City tax for 2 guests
         
-        // price: room.totalGrossAmount.amount + (room.cityTaxes?.[0]?.totalGrossAmount?.amount || 0), // Price for 1 guest
-        // priceForTwo: (doubleRoom?.totalGrossAmount?.amount || 0) + (doubleRoom?.cityTaxes?.[0]?.totalGrossAmount?.amount || 0), // Price for 2 guests (only if guests > 1)
-        // oneNightPrice: (room.timeSlices?.[0]?.totalGrossAmount?.amount || 0) + (room.cityTaxes?.[0]?.dates?.[0]?.amount?.grossAmount || 0),
-        // oneNightPriceForTwo: (doubleRoom?.timeSlices?.[0]?.totalGrossAmount?.amount || 0) + (doubleRoom?.cityTaxes?.[0]?.dates?.[0]?.amount?.grossAmount || 0), /
         averagePrice: room.timeSlices?.[0]?.totalGrossAmount?.amount || 0,
       };
     });

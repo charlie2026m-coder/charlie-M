@@ -79,7 +79,7 @@ const BookingPage = ({
       <PhotoGallery images={mainRoom?.images || []} />
       <div className='grid grid-cols-1  lg:grid-cols-3 mb-[30px]'>
         <div className='col-span-1 lg:col-span-2 flex flex-col lg:pr-10'>
-          <RoomContent room={mainRoom} babyBedAvailability={babyBedAvailability} />
+          <RoomContent room={mainRoom} />
           {extras.length > 0 && 
           <ExtrasSection 
             nights={nights}
