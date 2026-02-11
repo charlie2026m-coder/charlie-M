@@ -51,7 +51,7 @@
       {
         "title": "Luggage Lockers",
         "text": "Secure storage before check-in or after check-out.",
-        "content": "With our online check-in system, you can skip the reception entirely"
+        "content": "Ideal for storing your luggage before check-in or after check-out."
       },
       {
         "title": "Self-Service Closet",
@@ -568,6 +568,10 @@
     "price": "Price",
     "perDay": "per day",
     "oneTime": "one time",
+    "allNights": "All nights",
+    "available": "available",
+    "addExtra": "Add {name}",
+    "confirm": "Confirm",
     "information": "Information",
     "needAnything": "Need anything? We're right here.",
     "contactsDescription": "Our team is here 24/7 to make your stay smooth, simple, and stress-free. Reach out anytime — we're just one click away.",
@@ -1175,7 +1179,7 @@
     "signUp": "Sign Up",
     "backToLogin": "← Back to Login",
     "continueWithReservationId": "Continue with Reservation ID",
-    "enterBookingNumber": "Enter Booking.com Number",
+    "enterBookingNumber": "Enter Booking ID or Reservation ID",
     "lastName": "Last Name",
     "searching": "Searching...",
     "continue": "Continue",

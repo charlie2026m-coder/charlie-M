@@ -327,13 +327,15 @@ export const formatReservations = (
             const available = remainingServices[service.serviceId] || 0;
             if (available <= 0) return null;
             
+            const isParking = service.serviceId === 'CMH-PRK' || service.serviceId.includes('PRK')
+            
             let roomShare = 0;
             
-            if (pricingUnit === 'Room') {
-              // Room services: max 1 per room, rest goes to next room
+            if (isParking) {
+              roomShare = Math.min(available, 1);
+            } else if (pricingUnit === 'Room') {
               roomShare = Math.min(available, 1);
             } else {
-              // Person services: max 1 per person (adults) in this room
               roomShare = Math.min(available, item.adults);
             }
             

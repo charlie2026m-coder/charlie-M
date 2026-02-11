@@ -45,6 +45,21 @@ const AddExtras = ({
     if (extra.availability?.mode === 'Arrival' || extra.availability?.mode === 'Departure') {
       return false;
     }
+    
+    const isParking = extra.id === 'CMH-PRK' || extra.id.includes('PRK');
+
+    if (isParking) {
+      const availableTimeSlices = extra.timeSlices?.slice(1) || [];
+      if (availableTimeSlices.length === 0) return false;
+      
+      const allAvailable = availableTimeSlices.every(ts => ts.availableCount > 0);
+      if (!allAvailable) return false;
+      
+      const minAvailable = Math.min(...availableTimeSlices.map(ts => ts.availableCount));
+      const existingCount = existingService?.count || 0;
+      
+      return minAvailable > existingCount;
+    }
 
     if (extra.unlimited && 
         extra.availability?.mode === 'Daily' && 

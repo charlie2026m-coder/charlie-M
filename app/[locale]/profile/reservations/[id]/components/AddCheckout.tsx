@@ -14,8 +14,10 @@ import { ButtonIcon } from "@/app/_components/ui/ButtonIcon";
 import { useAddExtrasStore } from "@/store/useAddExtras";
 import dayjs from "dayjs";
 import { cn } from "@/lib/utils";
+import { useTranslations } from 'next-intl';
   
-const AddCheckoutExtra = ({ extra, adults, existingCount = 0 }: { extra: Service, adults: number, nights: number, existingCount?: number }) => {
+const AddCheckoutExtra = ({ extra, adults, nights, existingCount = 0 }: { extra: Service, adults: number, nights: number, existingCount?: number }) => {
+  const t = useTranslations('profile');
   const [isOpen, setIsOpen] = useState(false);
   const services = useAddExtrasStore(state => state.services);
   const addService = useAddExtrasStore(state => state.addService);
@@ -24,6 +26,7 @@ const AddCheckoutExtra = ({ extra, adults, existingCount = 0 }: { extra: Service
   const mode = extra.availability?.mode;
   const pricingUnit = extra.pricingUnit;
   const isBabyBed = extra.id === 'CMH-BAB';
+  const isParking = extra.id === 'CMH-PRK' || extra.id.includes('PRK');
   
   const timeSlice = mode === 'Arrival' 
     ? extra.timeSlices?.[0] 
@@ -41,6 +44,18 @@ const AddCheckoutExtra = ({ extra, adults, existingCount = 0 }: { extra: Service
       const minAvailable = Math.min(...allTimeSlices.map(ts => ts.availableCount));
       return Math.max(0, minAvailable);
     }
+    
+    if (isParking) {
+      const availableTimeSlices = extra.timeSlices?.slice(1) || [];
+      if (availableTimeSlices.length === 0) return 0;
+      
+      const allAvailable = availableTimeSlices.every(ts => ts.availableCount > 0);
+      if (!allAvailable) return 0;
+      
+      const minAvailable = Math.min(...availableTimeSlices.map(ts => ts.availableCount));
+      return Math.max(0, minAvailable);
+    }
+    
     return timeSlice?.availableCount || 0;
   };
   
@@ -68,6 +83,9 @@ const AddCheckoutExtra = ({ extra, adults, existingCount = 0 }: { extra: Service
     if (isBabyBed) {
       const allTimeSlices = extra.timeSlices?.slice(0, -1) || [];
       return extra.price * count * allTimeSlices.length;
+    }
+    if (isParking) {
+      return extra.price * count * nights;
     }
     return extra.price * count;
   };
@@ -122,7 +140,7 @@ const AddCheckoutExtra = ({ extra, adults, existingCount = 0 }: { extra: Service
       <DialogContent className="rounded-xl max-w-[600px] max-h-[80vh] w-full overflow-y-auto">
         <DialogHeader>
           <DialogTitle className='font-semibold text-xl'>
-            Add {extra.name} (€{extra.price})
+            {t('addExtra', { name: `${extra.name} (€${extra.price})` })}
           </DialogTitle>
         </DialogHeader>
 
@@ -131,11 +149,11 @@ const AddCheckoutExtra = ({ extra, adults, existingCount = 0 }: { extra: Service
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-2'>
               <span className={cn('font-bold', availableCount === 0 && 'line-through text-gray')}>
-                {isBabyBed ? 'All nights' : (timeSlice ? dayjs(timeSlice.serviceDate).format('ddd DD MMM') : mode)}
+                {isBabyBed || isParking ? t('allNights') : (timeSlice ? dayjs(timeSlice.serviceDate).format('ddd DD MMM') : mode)}
               </span>
               {availableCount === 0 
-                ? <span className="text-gray text-sm">Sold Out</span>
-                : <span className="text-gray text-sm">({availableCount} available)</span>
+                ? <span className="text-gray text-sm">{t('soldOut')}</span>
+                : <span className="text-gray text-sm">({availableCount} {t('available')})</span>
               }
             </div>
 
@@ -150,9 +168,9 @@ const AddCheckoutExtra = ({ extra, adults, existingCount = 0 }: { extra: Service
         </div>
 
         <div className='flex items-center justify-between pt-5'>
-          <span>Total: {count} {extra.name}</span>
+          <span>{t('total')} {count} {extra.name}</span>
           <Button onClick={handleConfirm} className='h-[45px]'>
-            Confirm <span className='font-semibold'>€ {getTotalPrice().toFixed(2)}</span>
+            {t('confirm')} <span className='font-semibold'>€ {getTotalPrice().toFixed(2)}</span>
           </Button>
         </div>
       </DialogContent>
