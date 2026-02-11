@@ -59,7 +59,7 @@ const DesignSection = ({ locale }: { locale: string }) => {
 
   return (
     <div className='flex flex-col container  py-5 lg:py-20 relative'>
-      <Header title={t('home.design_title')} isThin={true} size="md" />
+      <Header title={t('home.design_title')} size="md" />
       <p className='text-[#6E6E6E] lg:hidden inter text-[14px] text-center'>
         {t('home.design_description')}
       </p>

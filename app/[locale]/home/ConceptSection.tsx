@@ -58,7 +58,7 @@ const ConceptSection = () => {
           <b>{t('concept_h_1')}</b> {t('concept_p_1')}
         </p>
         <p className='text-mute'>
-          <b>{t('concept_h_2')}</b> and <b>{t('concept_h_2_1')}</b>{t('concept_p_2')}
+          <b>{t('concept_h_2')}</b> <b>{t('concept_h_2_1')}</b> {t('concept_p_2')}
         </p>
       </div>
       <MobileConcept items={conceptItems} title={t('concept_mobile_title')} />

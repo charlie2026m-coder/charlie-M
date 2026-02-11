@@ -1,0 +1,27 @@
+Dear @FirstName,
+
+thank you for your reservation at Charlie M Hotel.
+We are pleased to confirm your booking and look forward to welcoming you.
+
+📍 Booking Details
+
+Reservation number: @ReservationNumber
+Check-in: @CheckInDate (from @CheckInTime )
+Check-out: @CheckOutDate
+Room type: @RoomType
+Guests: @NumberOfGuests
+
+🖥️ Online Check-inTo ensure a smooth arrival, we kindly ask you to complete your online check-in in advance.
+Your room PIN code will be available 24 hours before arrival.
+
+👉 Complete your online check-in here:@OnlineCheckInLink
+
+📌 Hotel AddressCharlie M Hotel@HotelAddress
+
+If you have any questions or special requests, feel free to contact us at any time.
+
+We wish you a pleasant stay and look forward to welcoming you at Charlie M Hotel.
+
+Kind regards,
+Charlie M Team
+https://www.charlie-m.de/

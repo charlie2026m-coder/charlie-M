@@ -4,7 +4,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { locales } from '@/i18n';
 import { ReactQueryProvider } from '@/app/providers';
-import StickyHeader from '@/app/_components/header/StickyHeader';
+import ConditionalStickyHeader from '@/app/_components/header/ConditionalStickyHeader';
 import Footer from '@/app/_components/footer/Footer';
 import CookieBanner from '@/app/_components/CookieBanner';
 import { Toaster } from 'sonner';
@@ -59,7 +59,7 @@ export default async function LocaleLayout({
       <ReactQueryProvider>
         <Discount />
 
-        <StickyHeader locale={locale} />
+        <ConditionalStickyHeader locale={locale} />
         <main className="flex-1">{children}</main>
         <Footer locale={locale} />
         <CookieBanner />

@@ -130,6 +130,7 @@
       }
     ],
 
+    "reviews_title": "What Our Guests Say",
     "faq_title": "Frequently Asked Questions",
     "faq_categories": [
       {
@@ -423,7 +424,7 @@
     "nonRefundable": "Non-Refundable (Save 5%)",
     "noRefundDescription": "No refund in the event of cancellation",
     "refundable": "Refundable",
-    "refundableDescription": "Cancel free until 3 days prior",
+    "refundableDescription": "Cancel free until 48 hours prior",
     "night": "night",
     "nights": "nights",
     "room": "Room",

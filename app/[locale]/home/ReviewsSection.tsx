@@ -12,8 +12,10 @@ import {
   CarouselItem,
 } from '@/app/_components/ui/carousel'
 import { GoArrowLeft, GoArrowRight } from "react-icons/go"
+import { useTranslations } from 'next-intl'
 
 const ReviewsSection = () => {
+  const t = useTranslations('home')
   const [api, setApi] = useState<CarouselApi>()
   const [current, setCurrent] = useState(0)
   const [count, setCount] = useState(0)
@@ -36,7 +38,7 @@ const ReviewsSection = () => {
 
   return (
     <div className='flex flex-col container px-4 xl:px-[100px] pt-0 pb-10 lg:py-20'>
-      <Header title='What Our Guests Say' />
+      <Header title={t('reviews_title')} />
 
       <div className="md:hidden">
         <div className="container flex items-center px-2 mt-5 lg:mt-20">
