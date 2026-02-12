@@ -19,7 +19,8 @@ export function Guests({
   value,
   className = '',
   disableChildren = false,
-  totalChildrenInAllRooms
+  totalChildrenInAllRooms,
+  maxChildrenPerRoom
 }: { 
   maxAdults?: number,
   maxChildren?: number,
@@ -29,7 +30,8 @@ export function Guests({
   value: { adults: number, children: number },
   className?: string,
   disableChildren?: boolean,
-  totalChildrenInAllRooms?: number
+  totalChildrenInAllRooms?: number,
+  maxChildrenPerRoom?: number
 }) {
   const [open, setOpen] = React.useState(false)
   const t = useTranslations()
@@ -53,9 +55,15 @@ export function Guests({
   }
   
   // Limit children by available baby beds if provided, and apply max limits
-  const effectiveMaxChildren = availableBabyBedsForThisRoom !== undefined 
+  // If maxChildrenPerRoom is set (e.g., 1 for booking page), use it as hard limit
+  let effectiveMaxChildren = availableBabyBedsForThisRoom !== undefined 
     ? Math.min(maxChildren, maxChildrenAllowed, maxChildrenLimit, availableBabyBedsForThisRoom)
     : Math.min(maxChildren, maxChildrenAllowed, maxChildrenLimit);
+  
+  // Apply per-room limit if specified (for booking page: only 1 child per room)
+  if (maxChildrenPerRoom !== undefined) {
+    effectiveMaxChildren = Math.min(effectiveMaxChildren, maxChildrenPerRoom);
+  }
     
   const canAddChild = value.children < effectiveMaxChildren;
 
