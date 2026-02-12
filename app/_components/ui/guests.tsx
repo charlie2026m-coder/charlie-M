@@ -74,7 +74,7 @@ export function Guests({
               readOnly
             />
             {value.children > 0 && (
-              <div className="absolute -top-2 right-2 bg-pink-400 rounded-full px-2 py-0.5 flex items-center justify-center text-white text-[8px] font-semibold pointer-events-none whitespace-nowrap">
+              <div className="absolute -top-2 right-2 bg-pink-400 rounded-full px-2 py-0.5 flex items-center justify-center text-white text-[8px] md:text-[10px] font-semibold pointer-events-none whitespace-nowrap">
                 {value.children === 1 
                   ? `1 ${t('guests.baby')}` 
                   : `${value.children} ${t('guests.babies')}`}

@@ -46,14 +46,8 @@ const AddCheckoutExtra = ({ extra, adults, nights, existingCount = 0 }: { extra:
     }
     
     if (isParking) {
-      const availableTimeSlices = extra.timeSlices?.slice(1) || [];
-      if (availableTimeSlices.length === 0) return 0;
-      
-      const allAvailable = availableTimeSlices.every(ts => ts.availableCount > 0);
-      if (!allAvailable) return 0;
-      
-      const minAvailable = Math.min(...availableTimeSlices.map(ts => ts.availableCount));
-      return Math.max(0, minAvailable);
+      // Use pre-calculated minAvailable from API
+      return extra.minAvailable || 0;
     }
     
     return timeSlice?.availableCount || 0;

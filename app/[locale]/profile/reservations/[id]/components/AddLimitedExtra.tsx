@@ -24,7 +24,19 @@ const AddLimitedExtra = ({ extra, adults, nights, existingCount = 0, existingDat
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
   
-  const availableTimeSlices = extra.timeSlices?.slice(0, -1) || [];
+  const isCleaning = extra.id === 'CMH-CLN' || extra.name?.toLowerCase().includes('clean');
+  const allTimeSlices = isCleaning 
+    ? extra.timeSlices?.slice(1, -1) || []
+    : extra.timeSlices?.slice(0, -1) || [];
+  
+  const daysOfWeek = extra.daysOfWeek || extra.availability?.daysOfWeek || [];
+  const availableTimeSlices = daysOfWeek.length > 0
+    ? allTimeSlices.filter(timeSlice => {
+        const date = new Date(timeSlice.serviceDate);
+        const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+        return daysOfWeek.includes(dayName);
+      })
+    : allTimeSlices;
   
   const savedService = services.find(s => s.serviceId === extra.id);
   const [dailyCounts, setDailyCounts] = useState<{ [date: string]: number }>(() => {

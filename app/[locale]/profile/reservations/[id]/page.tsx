@@ -60,6 +60,8 @@ const ReservationPage = async ({ params }: { params: { id: string } }) => {
             adults={reservation.adults}
             nights={nights}
             isBabyBedAvailable={reservation.attributes?.includes('kids')}
+            arrival={arrivalDate}
+            departure={departureDate}
           />
         )}
         

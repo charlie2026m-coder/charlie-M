@@ -42,7 +42,7 @@ const PersonalizeSection = async ({ locale }: { locale: string }) => {
   ]
   return (
     <div className='flex flex-col container px-4 xl:px-[100px]  lg:py-20'>
-      <Header title={t('home.personalize_title')} isThin={true} size="md" />
+      <Header title={t('home.personalize_title')} size="md" />
       <p className='text-sm text-mute md:text-[15px] md:text-center w-full mb-6 md:mb-10 lg:mb-20'>{t('home.personalize_description')}</p>
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-6 md:gap-y-10'>
         {items.map((item) => (

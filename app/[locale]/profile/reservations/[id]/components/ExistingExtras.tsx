@@ -43,9 +43,21 @@ const ExistingExtras = ({
           }
         }
       } else if (selectedService.dates) {
-        selectedService.dates.forEach(dateItem => {
-          total += dateItem.amount?.amount || 0
-        })
+        const isCleaning = selectedService.serviceId === 'CMH-CLN' || serviceDetails?.name?.toLowerCase().includes('clean')
+        
+        if (isCleaning) {
+          // For cleaning: sum only new dates (isExisting: false)
+          selectedService.dates.forEach((dateItem: any) => {
+            if (dateItem.isExisting === false) {
+              total += dateItem.amount?.amount || 0
+            }
+          })
+        } else {
+          // For other services with dates
+          selectedService.dates.forEach(dateItem => {
+            total += dateItem.amount?.amount || 0
+          })
+        }
       }
     })
     
@@ -66,10 +78,31 @@ const ExistingExtras = ({
       <div className='flex flex-col gap-3 flex-1'>
         {/* Existing services */}
         {hasExistingServices && services.map((serviceItem: any, index: number) => {
-          const { service, totalAmount } = serviceItem
-          const quantity = service.pricingUnit === 'Room' 
-            ? nights 
-            : 1
+          const { service, totalAmount, dates } = serviceItem
+          const isCleaning = service.id === 'CMH-CLN' || service.name?.toLowerCase().includes('clean')
+          const isBabyBed = service.id === 'CMH-BAB'
+          const isCheckout = service.id === 'CMH-LCO' || service.id === 'CMH-ECI'
+          const mode = service.availability?.mode
+          
+          let quantity = 1
+          
+          // Services with dates array (Cleaning, Baby Bed, etc.)
+          if ((isCleaning || isBabyBed) && dates && Array.isArray(dates)) {
+            // Count number of days (dates where count > 0)
+            quantity = dates.filter((d: any) => (d.count || 0) > 0).length
+          } 
+          // One-time services (Early Check-in, Late Checkout)
+          else if (isCheckout || mode === 'Arrival' || mode === 'Departure') {
+            quantity = 1
+          }
+          // Daily services with Room pricing (Parking, Pet, etc.)
+          else if (service.pricingUnit === 'Room' && mode === 'Daily') {
+            quantity = nights
+          }
+          // Person pricing (Breakfast, etc.)
+          else if (service.pricingUnit === 'Person') {
+            quantity = 1
+          }
 
           return (
             <div key={`existing-${service.id}-${index}`} className='flex justify-between items-center w-full text-sm'>
@@ -91,6 +124,7 @@ const ExistingExtras = ({
           
           let price = 0
           let quantityText = ''
+          let shouldDisplay = true
           
           const isBabyBed = selectedService.serviceId === 'CMH-BAB'
           
@@ -114,10 +148,29 @@ const ExistingExtras = ({
               quantityText = `${selectedService.count}`
             }
           } else if (selectedService.dates) {
-            const totalCount = selectedService.dates.reduce((sum, d) => sum + (d.count || 1), 0)
-            price = Math.round(selectedService.dates.reduce((sum, d) => sum + (d.amount?.amount || 0), 0) * 100) / 100
-            quantityText = `${totalCount}`
+            const isCleaning = selectedService.serviceId === 'CMH-CLN' || serviceDetails?.name?.toLowerCase().includes('clean')
+            
+            if (isCleaning) {
+              // For cleaning: count only new dates (isExisting: false)
+              const newDates = selectedService.dates.filter((d: any) => d.isExisting === false)
+              const totalCount = newDates.length
+              
+              // Don't display if no new dates
+              if (totalCount === 0) {
+                shouldDisplay = false
+              } else {
+                price = Math.round(newDates.reduce((sum: number, d: any) => sum + (d.amount?.amount || 0), 0) * 100) / 100
+                quantityText = `${totalCount}`
+              }
+            } else {
+              // For other services with dates
+              const totalCount = selectedService.dates.reduce((sum, d) => sum + (d.count || 1), 0)
+              price = Math.round(selectedService.dates.reduce((sum, d) => sum + (d.amount?.amount || 0), 0) * 100) / 100
+              quantityText = `${totalCount}`
+            }
           }
+
+          if (!shouldDisplay) return null
 
           return (
             <div key={`new-${selectedService.serviceId}-${index}`} className='flex justify-between items-center w-full text-sm text-green'>

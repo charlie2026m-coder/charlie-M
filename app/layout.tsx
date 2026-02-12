@@ -108,11 +108,7 @@ export default async function RootLayout({ children, params }: Props) {
       </head>
       <body className={`${inter.variable} ${plusJakartaSans.variable} antialiased flex flex-col min-h-screen relative`}>
         {/* JSON-LD for Google */}
-        <Script
-          id="hotel-schema"
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(hotelSchema) }}
-        />
+        <Script id="hotel-schema" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(hotelSchema) }} />
         {children}
       </body>
     </html>

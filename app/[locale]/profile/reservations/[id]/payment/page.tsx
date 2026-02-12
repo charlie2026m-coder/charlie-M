@@ -29,6 +29,7 @@ const PaymentPage = () => {
   const totalAmount = Math.round(selectedServices.reduce((total, service) => {
     const serviceDetails = availableExtras.find(s => s.id === service.serviceId)
     const isBabyBed = service.serviceId === 'CMH-BAB'
+    const isCleaning = service.serviceId === 'CMH-CLN' || serviceDetails?.name?.toLowerCase().includes('clean')
     
     if (isBabyBed && serviceDetails) {
       return total + (serviceDetails.price * nights)
@@ -46,6 +47,11 @@ const PaymentPage = () => {
       return total + (service.count * service.price)
     }
     if (service.dates) {
+      if (isCleaning) {
+        return total + service.dates
+          .filter((date: any) => date.isExisting === false)
+          .reduce((sum, date) => sum + (date.amount?.amount || 0), 0)
+      }
       return total + service.dates.reduce((sum, date) => sum + (date.amount?.amount || 0), 0)
     }
     return total

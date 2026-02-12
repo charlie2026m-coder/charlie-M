@@ -18,6 +18,7 @@ const ServicesTable = () => {
     selectedServices.forEach(service => {
       const serviceDetails = availableExtras.find(s => s.id === service.serviceId)
       const isBabyBed = service.serviceId === 'CMH-BAB'
+      const isCleaning = service.serviceId === 'CMH-CLN' || serviceDetails?.name?.toLowerCase().includes('clean')
       
       if (isBabyBed && serviceDetails) {
         total += serviceDetails.price * nights
@@ -34,7 +35,13 @@ const ServicesTable = () => {
           }
         }
       } else if (service.dates) {
-        total += service.dates.reduce((sum, d) => sum + (d.amount?.amount || 0), 0)
+        if (isCleaning) {
+          total += service.dates
+            .filter((d: any) => d.isExisting === false)
+            .reduce((sum, d) => sum + (d.amount?.amount || 0), 0)
+        } else {
+          total += service.dates.reduce((sum, d) => sum + (d.amount?.amount || 0), 0)
+        }
       }
     })
     return Math.round(total * 100) / 100
@@ -52,6 +59,7 @@ const ServicesTable = () => {
         {selectedServices.map((service, index) => {
           let count = 0
           let servicePrice = 0
+          let shouldDisplay = true
           
           const isBabyBed = service.serviceId === 'CMH-BAB'
           
@@ -79,9 +87,24 @@ const ServicesTable = () => {
               servicePrice = Math.round(service.count * service.price * 100) / 100
             }
           } else if (service.dates) {
-            count = service.dates.reduce((sum, d) => sum + (d.count || 1), 0)
-            servicePrice = Math.round(service.dates.reduce((sum, d) => sum + (d.amount?.amount || 0), 0) * 100) / 100
+            const serviceDetails = availableExtras.find(s => s.id === service.serviceId)
+            const isCleaning = service.serviceId === 'CMH-CLN' || serviceDetails?.name?.toLowerCase().includes('clean')
+            
+            if (isCleaning) {
+              const newDates = service.dates.filter((d: any) => d.isExisting === false)
+              count = newDates.length
+              
+              if (count === 0) {
+                shouldDisplay = false
+              } else {
+                servicePrice = Math.round(newDates.reduce((sum, d) => sum + (d.amount?.amount || 0), 0) * 100) / 100
+              }
+            } else {
+              count = service.dates.reduce((sum, d) => sum + (d.count || 1), 0)
+              servicePrice = Math.round(service.dates.reduce((sum, d) => sum + (d.amount?.amount || 0), 0) * 100) / 100
+            }
           }
+          if (!shouldDisplay) return null
 
           return (
             <div key={`service-${service.serviceId}-${index}`} className='flex items-center gap-2 inter text-sm text-dark mb-2'>

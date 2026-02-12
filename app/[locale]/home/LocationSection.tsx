@@ -122,7 +122,7 @@ const locations: Location[] = [
   {
     title: 'Checkpoint Charlie',
     mapImage: '/images/map/location-1.svg',
-    image: '/images/street.webp',
+    image: '/images/location-1.webp',
     distance: '200m',
     walkTime: '5 min', 
     position: { lat: 52.507568531531284,lng:  13.39085829584042, }
@@ -130,7 +130,7 @@ const locations: Location[] = [
   {
     title: 'Gendarmenmarkt',
     mapImage: '/images/map/location-7.svg',
-    image: '/images/location-5.svg',
+    image: '/images/location-5.webp',
     distance: '1 km',
     carTime: '5 min',
     busTime: '10 min',
@@ -186,7 +186,7 @@ const locations: Location[] = [
   {
     title: 'Alexanderplatz & TV Tower',
     mapImage: '/images/map/location-5.svg',
-    image: '/images/location-7.svg',
+    image: '/images/location-7.webp',
     distance: '2.9 km',
     carTime: '10 min',
     busTime: '15 min',
@@ -209,7 +209,7 @@ const locations: Location[] = [
   {
     title: 'Mall of Berlin',
     mapImage: '/images/map/location-2.svg',
-    image: '/images/location-9.svg',
+    image: '/images/location-9.webp',
     distance: '900 m',
     carTime: '5 min',
     walkTime: '10 min',
@@ -229,7 +229,7 @@ const locations: Location[] = [
   {
     title: 'East Side Gallery',
     mapImage: '/images/map/location-15.svg',
-    image: '/images/location-11.svg',
+    image: '/images/location-11.webp',
     distance: '3.8 km',
     carTime: '15 min',
     busTime: '20 min',

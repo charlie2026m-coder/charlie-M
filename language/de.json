@@ -46,31 +46,31 @@
       },
       
       {
-        "title": "Luggage Lockers",
+        "title": "Kofferlagerungen",
         "text": "Sichere Aufbewahrung vor dem Check-in oder nach dem Check-out.",
         "content": "Ideal zur Aufbewahrung Ihres Gepäcks vor dem Check-in oder nach dem Check-out."
       },
       
       {
-        "title": "Self-Service Closet",
+        "title": "Stays",
         "text": "Frische Handtücher, Pflegeprodukte und wichtige Zimmerutensilien jederzeit verfügbar.",
         "content": "Ein Self-Service-Schrank mit frischen Handtüchern, Pflegeprodukten und wichtigen Zimmerutensilien, jederzeit verfügbar."
       },
       
       {
-        "title": "Laundry Room",
+        "title": "Wäscheraum",
         "text": "Waschen und Trocknen, wann immer Sie es benötigen.",
         "content":"Ein voll ausgestatteter Waschraum, in dem Sie Ihre Kleidung jederzeit waschen und trocknen können."
       },
 
       {
-        "title": "In-Room Coffee Machine",
+        "title": "Kaffeemaschine im Zimmer",
         "text": "Kaffeekapseln während Ihres Aufenthalts inklusive.",
         "content":"Eine stilvolle Kaffeemaschine im Zimmer mit kostenlosen Kaffeekapseln für Ihren gesamten Aufenthalt."
       },
       
       {
-        "title": "Fast WiFi",
+        "title": "Schnelles WiFi",
         "text": "Zuverlässige Highspeed-Verbindung im gesamten Gebäude.",
         "content":"Bleiben Sie mit schnellem, zuverlässigem WLAN überall im Gebäude verbunden."
       }
@@ -110,26 +110,27 @@
     "design_items": [
       {
         "image_1": "Lobby",
-        "image_2": "Rooms"
+        "image_2": "Zimmer"
       },
       {
         "image_1": "Lobby",
-        "image_2": "Rooms"
+        "image_2": "Zimmer"
       },
       {
         "image_1": "Lobby",
-        "image_2": "Rooms"
+        "image_2": "Zimmer"
       },
       {
         "image_1": "Lobby",
-        "image_2": "Rooms"
+        "image_2": "Zimmer"
       },
       {
         "image_1": "Lobby",
-        "image_2": "Rooms"
+        "image_2": "Zimmer"
       }
     ],
 
+    "reviews_title": "Was unsere Gäste sagen",
     "faq_title": "Häufig gestellte Fragen",
     "faq_categories": [
       {
@@ -318,7 +319,7 @@
     "failedToCancelBooking": "Fehler beim Stornieren der Buchung"
   },
   "roomCard": {
-    "perNightFrom": "ab … pro Nacht",
+    "perNightFrom": "pro Nacht ab",
     "bookNow": "Jetzt buchen",
     "loading": "Wird geladen …"
   },
@@ -422,7 +423,7 @@
     "nonRefundable": "Nicht stornierbar (5% sparen)",
     "noRefundDescription": "Keine Rückerstattung im Falle einer Stornierung",
     "refundable": "Kostenlos stornierbar",
-    "refundableDescription": "Kostenfrei stornierbar bis 3 Tage vor Anreise",
+    "refundableDescription": "Kostenfrei stornierbar bis 48 Stunden vor Anreise",
     "night": "Nacht",
     "nights": "Nächte",
     "room": "Zimmer",
@@ -551,13 +552,13 @@
     "copiedToClipboard": "{label} in die Zwischenablage kopiert!",
     "failedToCopy": "Fehler beim Kopieren in die Zwischenablage",
     "backToMyReservations": "Zurück zu meinen Reservierungen",
-    "checkIn": "Check-in:",
-    "checkOut": "Check-out:",
+    "checkIn": "Check-in",
+    "checkOut": "Check-out",
     "location": "Standort",
-    "extraServices": "Zusatzleistungen:",
-    "extras": "Extras :",
-    "total": "Gesamt:",
-    "guestsWithCount": "Gäste ({guestsCount}) :",
+    "extraServices": "Zusatzleistungen",
+    "extras": "Extras",
+    "total": "Gesamt",
+    "guestsWithCount": "Gäste ({guestsCount})",
     "payNow": "Jetzt bezahlen",
     "nights": "Nächte",
     "upgradeYourStay": "Werten Sie Ihren Aufenthalt auf",
@@ -571,6 +572,8 @@
     "available": "verfügbar",
     "addExtra": "{name} hinzufügen",
     "confirm": "Bestätigen",
+    "selectDates": "Daten auswählen",
+    "selectAllAvailable": "Alle verfügbaren auswählen",
     "information": "Informationen",
     "needAnything": "Brauchen Sie etwas? Wir sind für Sie da.",
     "contactsDescription": "Unser Team ist rund um die Uhr für Sie da, um Ihren Aufenthalt reibungslos, unkompliziert und stressfrei zu gestalten. Kontaktieren Sie uns jederzeit — wir sind nur einen Klick entfernt.",
