@@ -453,7 +453,12 @@
     "loadingPaymentMethods": "Loading payment methods...",
     "servicesUnavailable": "Some services are no longer available. Please try again or contact support.",
     "bookingCreated": "Booking created!",
+    "bookingCreatedWithIssues": "Booking created, but some services could not be added. Please check details.",
     "bookingFailed": "Booking failed. Please contact support.",
+    "serverError": "Oops! Something went wrong",
+    "serverErrorMessage": "We're sorry, technical issues occurred and your booking was not created.",
+    "refundMessage": "Don't worry - your payment will be automatically refunded to your account within 48 hours.",
+    "contactSupport": "Contact support here for quick resolution:",
     "paymentFailed": "Payment failed",
     "paymentError": "Payment error",
     "paymentInitFailed": "Failed to initialize payment. Please try again.",
@@ -474,12 +479,17 @@
     "title": "Summary",
     "noBookingData": "No booking data available",
     "guests": "Guests:",
-    "bookingId": "Booking ID:"
+    "bookingId": "Booking ID:",
+    "reservationIdsInfo": "Your reservation IDs - use them to access your account and view details:",
+    "reservation": "Reservation"
   },
   "success": {
     "bookingConfirmed": "Your booking is confirmed!",
     "confirmationSent": "We sent you the confirmation to the email:",
-    "backToMainPage": "Back to Main Page"
+    "backToMainPage": "Back to Main Page",
+    "servicesWarningTitle": "Almost there!",
+    "servicesWarningMessage": "Your booking is confirmed! However, some services are no longer available. Please contact our support team to clarify the details.",
+    "contactSupport": "Contact support:"
   },
   "profile": {
     "profile": "Profile",

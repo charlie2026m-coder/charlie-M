@@ -11,7 +11,7 @@ import { useTranslations } from 'next-intl';
 const SummaryCard = () => {
   const t = useTranslations('summary')
   const tBooking = useTranslations('bookingForm')
-  const { booking, rooms, roomDetails, services, extras, apaleoBookingId } = useBookingStore()
+  const { booking, rooms, roomDetails, services, extras, apaleoBookingId, reservationIds } = useBookingStore()
 
   if (!booking || !booking.reservations) {
     return (
@@ -232,10 +232,17 @@ const SummaryCard = () => {
         <Price price={totalPrice} />
       </div>
 
-      {apaleoBookingId && (
-        <div className='flex items-center justify-between border-t pt-3'>
-          <span className='text-gray-500'>{t('bookingId')}</span>
-          <span className='font-bold text-lg'>{apaleoBookingId}</span>
+      {reservationIds && reservationIds.length > 0 && (
+        <div className='flex flex-col border-t pt-3 gap-2'>
+          <p className='text-sm text-gray-600'>{t('reservationIdsInfo')}</p>
+          <div className='flex flex-col gap-1'>
+            {reservationIds.map((id, index) => (
+              <div key={id} className='flex items-center justify-between'>
+                <span className='text-gray-500 text-sm'>{t('reservation')} {index + 1}:</span>
+                <span className='font-bold text-base'>{id}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

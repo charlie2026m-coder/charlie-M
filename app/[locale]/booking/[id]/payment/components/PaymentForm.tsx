@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import LoadingDots from "@/app/_components/ui/LoadingDots";
 import { FiArrowLeft } from "react-icons/fi";
 import { useTranslations } from "next-intl";
+import BookingError from "./BookingError";
 
 
 export default function PaymentForm({ amount }: {amount: number}) {
@@ -19,14 +20,14 @@ export default function PaymentForm({ amount }: {amount: number}) {
   const isInitialized = useRef(false);
   const [loading, setLoading] = useState(true);
   const [creatingBooking, setCreatingBooking] = useState(false);
+  const [bookingError, setBookingError] = useState(false);
   const booking = useBookingStore(state => state.booking);
   const setTransactionReference = useBookingStore(state => state.setTransactionReference);
 
   useEffect(() => {
     if (isInitialized.current) return;
     isInitialized.current = true;
-    console.log(Math.ceil(amount * 100), 'amount');
-    console.log(amount, 'amount');
+
     const init = async () => {
       try {
         // Always round up to avoid underpayment due to floating point errors
@@ -116,7 +117,6 @@ export default function PaymentForm({ amount }: {amount: number}) {
               transactionReference: transactionRef
             }
 
-
             try {
               const response = await fetch("/api/bookings/create", {
                 method: "POST",
@@ -126,9 +126,17 @@ export default function PaymentForm({ amount }: {amount: number}) {
 
               if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                const errorMessage = errorData.details?.messages?.[0] || "Failed to create booking";
+                const errorMessage = errorData.details?.messages?.[0] || errorData.error || "Failed to create booking";
                 
-                // Check if it's a service availability error
+                // Check if it's a server error (retry was already done on backend)
+                if (response.status >= 500) {
+                  toast.dismiss("create-booking");
+                  setBookingError(true);
+                  setCreatingBooking(false);
+                  return;
+                }
+                
+                // Client errors (400, 401, 403, 409, etc.)
                 if (errorMessage.includes("fully booked") || errorMessage.includes("service")) {
                   toast.error(t('servicesUnavailable'), { id: "create-booking", duration: 6000 });
                 } else {
@@ -139,17 +147,37 @@ export default function PaymentForm({ amount }: {amount: number}) {
                 return;
               }
 
+              // Success!
               const bookingData = await response.json();
-              // Save Apaleo booking ID to store
+              
+              // Save Apaleo booking ID and reservation IDs to store
               if (bookingData.id) {
                 useBookingStore.getState().setApaleoBookingId(bookingData.id);
               }
-              toast.success(t('bookingCreated'), { id: "create-booking" });
-              const successUrl = `/${urlParams.locale}/booking/${urlParams.id}/success?bookingId=${bookingData.id}`;
-              router.push(successUrl);
+              if (bookingData.reservationIds && Array.isArray(bookingData.reservationIds)) {
+                useBookingStore.getState().setReservationIds(bookingData.reservationIds);
+              }
+              
+              // Check if there were issues with services
+              if (bookingData.partialSuccess && bookingData.issues) {
+                // Booking created, but some services failed
+                toast.dismiss("create-booking");
+                toast.warning(t('bookingCreatedWithIssues'), { duration: 8000 });
+                
+                // Redirect to success page with warning flag
+                const successUrl = `/${urlParams.locale}/booking/${urlParams.id}/success?bookingId=${bookingData.id}&servicesWarning=true`;
+                router.push(successUrl);
+              } else {
+                // Full success
+                toast.success(t('bookingCreated'), { id: "create-booking" });
+                const successUrl = `/${urlParams.locale}/booking/${urlParams.id}/success?bookingId=${bookingData.id}`;
+                router.push(successUrl);
+              }
+              
             } catch (error) {
               console.error('Booking creation failed:', error);
-              toast.error(t('bookingFailed'), { id: "create-booking" });
+              toast.dismiss("create-booking");
+              setBookingError(true);
               setCreatingBooking(false);
             }
           },
@@ -191,6 +219,7 @@ export default function PaymentForm({ amount }: {amount: number}) {
     init();
   }, [amount, router, urlParams]);
 
+  if (bookingError) return <BookingError /> 
   if (creatingBooking) {
     return (
       <div className="col-span-1 xl:col-span-2 flex flex-col h-full min-h-[60vh]">

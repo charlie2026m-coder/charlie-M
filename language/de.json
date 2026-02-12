@@ -452,7 +452,12 @@
     "loadingPaymentMethods": "Zahlungsmethoden werden geladen …",
     "servicesUnavailable": "Einige Leistungen sind nicht mehr verfügbar. Bitte versuchen Sie es erneut oder kontaktieren Sie den Support.",
     "bookingCreated": "Buchung erstellt!",
+    "bookingCreatedWithIssues": "Buchung erstellt, aber einige Leistungen konnten nicht hinzugefügt werden. Bitte prüfen Sie die Details.",
     "bookingFailed": "Buchung fehlgeschlagen. Bitte kontaktieren Sie den Support.",
+    "serverError": "Hoppla! Etwas ist schiefgelaufen",
+    "serverErrorMessage": "Es tut uns leid, es sind technische Probleme aufgetreten und Ihre Buchung wurde nicht erstellt.",
+    "refundMessage": "Keine Sorge - Ihre Zahlung wird innerhalb von 48 Stunden automatisch auf Ihr Konto zurückerstattet.",
+    "contactSupport": "Hier können Sie den Support für eine schnelle Lösung kontaktieren:",
     "paymentFailed": "Zahlung fehlgeschlagen",
     "paymentError": "Zahlungsfehler",
     "paymentInitFailed": "Zahlung konnte nicht initialisiert werden. Bitte versuchen Sie es erneut.",
@@ -473,12 +478,17 @@
     "title": "Zusammenfassung",
     "noBookingData": "Keine Buchungsdaten verfügbar",
     "guests": "Gäste:",
-    "bookingId": "Buchungs-ID:"
+    "bookingId": "Buchungs-ID:",
+    "reservationIdsInfo": "Ihre Reservierungs-IDs - verwenden Sie diese, um auf Ihr Konto zuzugreifen und Details anzuzeigen:",
+    "reservation": "Reservierung"
   },
   "success": {
     "bookingConfirmed": "Ihre Buchung ist bestätigt!",
     "confirmationSent": "Wir haben Ihnen die Bestätigung per E-Mail gesendet:",
-    "backToMainPage": "Zurück zur Hauptseite"
+    "backToMainPage": "Zurück zur Hauptseite",
+    "servicesWarningTitle": "Fast geschafft!",
+    "servicesWarningMessage": "Ihre Buchung ist bestätigt! Einige Leistungen sind jedoch nicht mehr verfügbar. Bitte kontaktieren Sie unser Support-Team zur Klärung der Details.",
+    "contactSupport": "Support kontaktieren:"
   },
   "profile": {
     "profile": "Profil",

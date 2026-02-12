@@ -13,6 +13,103 @@ interface ApaleoBookingResponse {
 }
 
 
+// Helper function to check if error is retriable
+const isRetriableError = (status: number): boolean => {
+  // Retry only for server errors (500, 502, 503, 504)
+  return status >= 500 && status <= 504
+}
+
+// Helper function to delay execution
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
+// Main function to create booking in Apaleo with retry logic
+async function createApaleoBookingWithRetry(
+  bookingPayload: any,
+  token: string,
+  maxAttempts: number = 3
+): Promise<{ success: boolean; data?: ApaleoBookingResponse; error?: any; status?: number }> {
+  let lastError: any = null
+  let lastStatus: number = 500
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      if (attempt > 1) {
+        // Exponential backoff: 1s, 2s
+        const delayMs = Math.pow(2, attempt - 1) * 1000
+        console.log(`⏳ Retry attempt ${attempt}/${maxAttempts} after ${delayMs}ms delay...`)
+        await delay(delayMs)
+      } else {
+        console.log(`🔄 Attempt ${attempt}/${maxAttempts}: Creating booking in Apaleo...`)
+      }
+
+      const response = await fetch(`${APALEO_API_URL}/booking/v1/bookings`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(bookingPayload),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        lastStatus = response.status
+        lastError = errorData
+
+        console.error(`❌ Attempt ${attempt}/${maxAttempts} failed: Apaleo API error ${response.status}`)
+        console.error('Error details:', JSON.stringify(errorData, null, 2))
+
+        // Check if error is retriable
+        if (isRetriableError(response.status) && attempt < maxAttempts) {
+          // Continue to next retry
+          continue
+        }
+
+        // Non-retriable error or last attempt - return error
+        return {
+          success: false,
+          error: errorData,
+          status: response.status
+        }
+      }
+
+      // Success!
+      const apaleoData: ApaleoBookingResponse = await response.json()
+      console.log(`✅ Attempt ${attempt}/${maxAttempts} succeeded: Booking created with ID ${apaleoData.id}`)
+      console.log('📊 Full Apaleo response data:', JSON.stringify(apaleoData, null, 2))
+      
+      return {
+        success: true,
+        data: apaleoData
+      }
+
+    } catch (error) {
+      lastError = error
+      console.error(`❌ Attempt ${attempt}/${maxAttempts} failed with exception:`, error)
+
+      // Network errors are retriable
+      if (attempt < maxAttempts) {
+        continue
+      }
+
+      // Last attempt failed
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        status: 500
+      }
+    }
+  }
+
+  // All attempts failed
+  return {
+    success: false,
+    error: lastError,
+    status: lastStatus
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const booking: Booking = await request.json()
@@ -35,34 +132,30 @@ export async function POST(request: Request) {
 
     console.log('📦 Booking payload:', JSON.stringify(bookingPayload, null, 2))
 
-    // Create booking in Apaleo
-    const response = await fetch(`${APALEO_API_URL}/booking/v1/bookings`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify(bookingPayload),
-    })
+    // Create booking in Apaleo with retry logic (3 attempts: 1 initial + 2 retries)
+    const result = await createApaleoBookingWithRetry(bookingPayload, token, 3)
 
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      console.error('❌ Apaleo API error:', response.status)
-      console.error('Error details:', JSON.stringify(errorData, null, 2))
+    if (!result.success) {
+      console.error('❌ All booking attempts failed')
       
       return NextResponse.json(
         { 
-          error: 'Failed to create booking',
-          details: errorData,
-          status: response.status
+          error: 'Failed to create booking after multiple attempts',
+          details: result.error,
+          status: result.status
         },
-        { status: response.status }
+        { status: result.status || 500 }
       )
     }
 
-    const apaleoData: ApaleoBookingResponse = await response.json()
+    const apaleoData = result.data!
+    
+    // Track any issues with services or payments
+    const issues: {
+      type: 'service' | 'payment' | 'processing',
+      reservationId: string,
+      details: any
+    }[] = []
     
     // Step 2: Book services and pay folios for each reservation (sequentially for reliability)
     if (apaleoData.reservationIds && apaleoData.reservationIds.length > 0) {
@@ -91,40 +184,27 @@ export async function POST(request: Request) {
           if (failedServices.length > 0) {
             console.error(`❌ Failed to book ${failedServices.length} service(s):`, failedServices)
             
-            return NextResponse.json(
-              { 
-                error: 'Failed to book services',
-                details: { 
-                  failedServices, 
-                  bookingId: apaleoData.id,
-                  reservationId 
-                },
-                message: 'Booking created but some services could not be added'
-              },
-              { status: 500 }
-            )
+            issues.push({
+              type: 'service',
+              reservationId,
+              details: failedServices
+            })
           }
           
           // Check if payment failed
           if (result.payment && !result.payment.success) {
             console.error(`❌ Failed to pay folio for reservation ${reservationId}`)
             
-            return NextResponse.json(
-              { 
-                error: 'Failed to pay folio',
-                details: { 
-                  bookingId: apaleoData.id,
-                  reservationId,
-                  paymentError: 'error' in result.payment ? result.payment.error : 'Unknown error'
-                },
-                message: 'Services added but payment failed'
-              },
-              { status: 500 }
-            )
+            issues.push({
+              type: 'payment',
+              reservationId,
+              details: 'error' in result.payment ? result.payment.error : 'Unknown error'
+            })
           }
           
           if (reservation.services && reservation.services.length > 0) {
-            console.log(`   ✅ ${reservation.services.length} service(s) booked`)
+            const successCount = result.services.filter(r => r.success).length
+            console.log(`   ✅ ${successCount}/${reservation.services.length} service(s) booked`)
           }
           if (result.payment && 'amount' in result.payment) {
             console.log(`   ✅ Folio paid`)
@@ -133,22 +213,19 @@ export async function POST(request: Request) {
         } catch (error) {
           console.error(`❌ Error processing reservation ${reservationId}:`, error)
           
-          return NextResponse.json(
-            { 
-              error: 'Failed to process reservation',
-              details: { 
-                bookingId: apaleoData.id,
-                reservationId,
-                error: error instanceof Error ? error.message : 'Unknown error'
-              },
-              message: 'Booking created but reservation processing failed'
-            },
-            { status: 500 }
-          )
+          issues.push({
+            type: 'processing',
+            reservationId,
+            details: error instanceof Error ? error.message : 'Unknown error'
+          })
         }
       }
       
-      console.log('\n✅ Step 2 complete: All reservations processed (services + payments)')
+      if (issues.length > 0) {
+        console.log(`\n⚠️ Step 2 completed with ${issues.length} issue(s)`)
+      } else {
+        console.log('\n✅ Step 2 complete: All reservations processed (services + payments)')
+      }
     }
 
     // Save consent record if consent was given
@@ -180,7 +257,29 @@ export async function POST(request: Request) {
       // Don't fail the whole request if Supabase fails
     }
 
-    return NextResponse.json(apaleoData, { status: 201 })
+    // Return success with booking data and any issues
+    if (issues.length > 0) {
+      // Booking created successfully, but some services/payments had issues
+      return NextResponse.json(
+        {
+          ...apaleoData,
+          partialSuccess: true,
+          issues: issues,
+          reservationIds: apaleoData.reservationIds.map(r => r.id),
+          message: 'Booking created successfully, but some services could not be added'
+        },
+        { status: 201 }
+      )
+    }
+
+    // Full success - booking and all services/payments completed
+    return NextResponse.json(
+      {
+        ...apaleoData,
+        reservationIds: apaleoData.reservationIds.map(r => r.id)
+      },
+      { status: 201 }
+    )
     
   } catch (error) {
     console.error('Create booking error:', error)
