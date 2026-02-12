@@ -76,11 +76,13 @@ const ExtandYourStay = ({
 
   // Fetch rooms for extension dates
   const [availableUnits, setAvailableUnits] = useState<number | null>(null)
+  const [babyBedAvailable, setBabyBedAvailable] = useState<boolean | null>(null)
   const { mutate: fetchExtensionRooms, isPending: isLoadingRooms } = useExtensionRooms()
 
   // Reset availableUnits when dates change
   useEffect(() => {
     setAvailableUnits(null)
+    setBabyBedAvailable(null)
   }, [extensionRange])
 
   // Get all dates in the existing reservation range (excluding departure date for disabled)
@@ -116,6 +118,11 @@ const ExtandYourStay = ({
   const reservationDates = getReservationDates()
   const allReservationDates = getAllReservationDates()
   const departureDate = dayjs(departure).toDate()
+
+  // Check if baby bed service exists in existing services
+  const isBaby = existingServices?.some(service => 
+    service.service.id === 'CMH-BAB' || service.service.name?.toLowerCase().includes('baby')
+  ) || false
 
   return (
     <div className={cn(
@@ -190,9 +197,16 @@ const ExtandYourStay = ({
             {extensionRange?.from && extensionRange?.to && extensionNights > 0 && (
               <div className='flex flex-col pt-4 '>
                 {availableUnits !== null ? (
-                  <p className='mt-5 mb-4'>
-                    {t('extendYourStay.availableRoomsPrefix')} <strong>{availableUnits}</strong> {availableUnits === 1 ? t('extendYourStay.room') : t('extendYourStay.rooms')} {t('extendYourStay.availableRoomsSuffix')}
-                  </p>
+                  <>
+                    <p className='mt-5 mb-4'>
+                      {t('extendYourStay.availableRoomsPrefix')} <strong>{availableUnits}</strong> {availableUnits === 1 ? t('extendYourStay.room') : t('extendYourStay.rooms')} {t('extendYourStay.availableRoomsSuffix')}
+                    </p>
+                    {isBaby && babyBedAvailable === false && (
+                      <p className='mb-4 text-red-600 text-sm'>
+                        Baby bed is not available for the selected dates.
+                      </p>
+                    )}
+                  </>
                 ) : (
                   <p className='mt-5 mb-4'>
                     {t('extendYourStay.nightsPrefix')} <strong>{extensionNights}</strong> {t('extendYourStay.nightsSuffix')}
@@ -225,7 +239,7 @@ const ExtandYourStay = ({
                             from: fromDate,
                             to: toDate,
                             adults: (adults || 1).toString(),
-                            children: (children || 0).toString()
+                            children: isBaby ? '1' : '0'
                           })
                           router.push(`/booking/${unitGroupId}?${queryParams.toString()}`)
                         }
@@ -244,11 +258,13 @@ const ExtandYourStay = ({
                             {
                               from: extensionRange.from,
                               to: extensionRange.to,
-                              roomId: unitGroupId
+                              roomId: unitGroupId,
+                              isBaby: isBaby
                             },
                             {
-                              onSuccess: (data) => {
-                                setAvailableUnits(data)
+                              onSuccess: (data: any) => {
+                                setAvailableUnits(data.availableUnits || data)
+                                setBabyBedAvailable(data.babyBedAvailable ?? null)
                               }
                             }
                           )

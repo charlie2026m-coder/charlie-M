@@ -21,7 +21,7 @@ export const HOTEL_INFO = {
     streetAddress: "Friedrichstraße 33", 
     addressLocality: "Berlin",
     addressRegion: "Berlin",
-    postalCode: "10117",
+    postalCode: "10969",
     addressCountry: "DE"
   },
   

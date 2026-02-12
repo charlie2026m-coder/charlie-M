@@ -106,6 +106,7 @@ const AddRooms = ({
                   disableChildren={!isKidsBedAvailable}
                   maxBabyBeds={maxBabyBeds}
                   totalChildrenInAllRooms={totalChildren}
+                  maxChildrenPerRoom={1}
                 />
               }
               {state.length > 1 && <HiOutlineTrash className='size-6 cursor-pointer text-red-700 self-center' onClick={() => handleRemoveRoom(room.id)} />}

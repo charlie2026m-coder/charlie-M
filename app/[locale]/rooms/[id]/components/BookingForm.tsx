@@ -19,11 +19,12 @@ import { calculateNights } from "@/lib/utils"
 import { RATE_PLANS } from "@/lib/Constants"
 import { useTranslations } from 'next-intl'
 
-const BookingForm = ({ id, rooms, params, babyBedAvailability }: { 
+const BookingForm = ({ id, rooms, params, babyBedAvailability, isKidsBedAvailable = true }: { 
   id: string, 
   rooms: RoomOffer[], 
   params: UrlParams,
-  babyBedAvailability?: { isAvailable: boolean; count: number }
+  babyBedAvailability?: { isAvailable: boolean; count: number },
+  isKidsBedAvailable?: boolean
 }) => {
   const t = useTranslations('bookingForm')
   const tCommon = useTranslations()
@@ -45,6 +46,7 @@ const BookingForm = ({ id, rooms, params, babyBedAvailability }: {
   
 
   const calculatePrice = (adultsCount: number, childrenCount: number, nightsCount: number) => {
+    const maxPersons = room.maxPersons || 2;
     const roomsForChildren = childrenCount;
     
     const minAdultsForChildren = childrenCount;
@@ -52,16 +54,15 @@ const BookingForm = ({ id, rooms, params, babyBedAvailability }: {
     
     let remainingAdults = adultsCount - adultsAssignedToChildren;
     
-    const maxAdultsPerChildRoom = 2;
+    const maxAdultsPerChildRoom = Math.min(maxPersons, 2);
     const additionalAdultsCapacity = childrenCount * (maxAdultsPerChildRoom - 1);
     const additionalAdultsAssigned = Math.min(remainingAdults, additionalAdultsCapacity);
     remainingAdults -= additionalAdultsAssigned;
-    
-    const roomsForRemainingAdults = Math.ceil(remainingAdults / 2);
+    const roomsForRemainingAdults = Math.ceil(remainingAdults / maxPersons);
     
     const roomsNeeded = roomsForChildren + roomsForRemainingAdults;
     
-    const pricePerNight = adultsCount >= 2 
+    const pricePerNight = adultsCount >= maxPersons 
       ? (room.oneNightPriceForTwo || room.oneNightPrice || 0)
       : (room.oneNightPrice || 0);
     
@@ -200,6 +201,7 @@ const BookingForm = ({ id, rooms, params, babyBedAvailability }: {
           maxBabyBeds={babyBedAvailability?.count} 
           className="border-mute"
           maxPersons={room.availableUnits * room.maxPersons}
+          disableChildren={!isKidsBedAvailable}
         />
       </div>
       <Button 
