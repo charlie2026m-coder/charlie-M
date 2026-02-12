@@ -410,14 +410,11 @@ export const formatReservations = (
       channelCode: 'IBE' as const,
       guaranteeType: 'Prepayment' as const,
       timeSlices,
-      // Keep services in the object for state storage
-      // They will be used to add services after booking creation
       services: allServices,
       prepaymentAmount: {
         amount: reservationAmount,
         currency: 'EUR'
       },
-      // ...(childrenAges && { childrenAges }),
     }
   })
 
