@@ -4,19 +4,24 @@ import { Service } from "@/types/apaleo"
 import { useAddExtrasStore } from '@/store/useAddExtras'
 import { useEffect } from 'react'
 import { useTranslations } from 'next-intl'
+import { shouldShowCleaningService } from '@/utils/cleaningAvailability'
 
 const AddExtras = ({ 
   extras,
   existingServices,
   adults,
   nights,
-  isBabyBedAvailable
+  isBabyBedAvailable,
+  arrival,
+  departure
 }: { 
   extras: Service[],
   existingServices?: any[],
   adults: number,
   nights: number,
-  isBabyBedAvailable?: boolean
+  isBabyBedAvailable?: boolean,
+  arrival?: string,
+  departure?: string
 }) => {
   const t = useTranslations('profile')
   const setAvailableExtras = useAddExtrasStore(state => state.setAvailableExtras)
@@ -37,6 +42,20 @@ const AddExtras = ({
     }
     
     if (extra.id === 'CMH-BAB' ) return isBabyBedAvailable;
+    
+    // For cleaning: check if all available dates are already booked
+    const isCleaning = extra.id === 'CMH-CLN' || extra.name?.toLowerCase().includes('clean');
+    if (isCleaning && arrival && departure) {
+      const daysOfWeek = extra.daysOfWeek || extra.availability?.daysOfWeek;
+      const existingService = existingServices?.find(s => s.service.id === extra.id);
+      
+      return shouldShowCleaningService(
+        arrival,
+        departure,
+        daysOfWeek,
+        existingService?.dates
+      );
+    }
     
     if (!existingServiceIds.includes(extra.id)) return true;
 
@@ -91,6 +110,7 @@ const AddExtras = ({
       const existingDates = existingService?.dates || [];
       const existingDateStrings = existingDates.map((d: any) => d.serviceDate);
       const availableDates = extra.timeSlices?.slice(0, -1) || [];
+        
       const hasAvailableDates = availableDates.some(timeSlice => 
         !existingDateStrings.includes(timeSlice.serviceDate)
       );
@@ -131,6 +151,9 @@ const AddExtras = ({
               nights={nights}
               existingCount={maxExistingCount}
               existingDates={existingDateStrings}
+              existingDatesWithCount={existingDates}
+              arrival={arrival}
+              departure={departure}
             />
           );
         })}

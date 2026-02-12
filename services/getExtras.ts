@@ -115,7 +115,6 @@ const fetchExtras = async (from?: string, to?: string): Promise<Service[]> => {
 
 
 
-    console.log('formattedServices', formattedServices);
     return  formattedServices as Service[];
   } catch (error: any) {
     console.error('Failed to fetch extras:', error.message);

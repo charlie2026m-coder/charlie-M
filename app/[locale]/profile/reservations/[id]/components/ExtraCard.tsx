@@ -6,16 +6,18 @@ import { Service } from '@/types/apaleo';
 import AddUnlimitedExtra from './AddUnlimitedExtra';
 import AddLimitedExtra from './AddLimitedExtra';
 import AddCheckoutExtra from './AddCheckout';
+import AddCleaningExtra from './AddCleaningExtra';
 import { useTranslations } from 'next-intl';
 import { getExtraImage, getExtraImages } from '@/lib/getExtraImage';
 import CustomImageSlider from '@/app/_components/ui/CustomImageSlider';
 
-const ExtraCard = ({ item, adults, nights, existingCount = 0, existingDates = [] }: { item: Service, adults: number, nights: number, existingCount?: number, existingDates?: string[] }) => {
+const ExtraCard = ({ item, adults, nights, existingCount = 0, existingDates = [], existingDatesWithCount = [], arrival, departure }: { item: Service, adults: number, nights: number, existingCount?: number, existingDates?: string[], existingDatesWithCount?: any[], arrival?: string, departure?: string }) => {
   const t = useTranslations('profile');
   const [isOpen, setIsOpen] = useState(false);
   const isUnlimited = item.unlimited;
   const isBabyBed = item.id === 'CMH-BAB';
   const isParking = item.id === 'CMH-PRK' || item.id.includes('PRK');
+  const isCleaning = item.id === 'CMH-CLN' || item.name?.toLowerCase().includes('clean');
   
   const checkBabyBedAvailability = () => {
     if (isBabyBed) {
@@ -58,9 +60,11 @@ const ExtraCard = ({ item, adults, nights, existingCount = 0, existingDates = []
       {!isSoldOut && <div>
         {isCheckout 
           ? <AddCheckoutExtra extra={item} adults={adults} nights={nights} existingCount={existingCount} /> 
-          : isUnlimited 
-            ? <AddUnlimitedExtra extra={item} adults={adults} nights={nights} existingCount={existingCount} /> 
-            : <AddLimitedExtra extra={item} adults={adults} nights={nights} existingCount={existingCount} existingDates={existingDates} />
+          : isCleaning
+            ? <AddCleaningExtra extra={item} existingDatesWithCount={existingDatesWithCount} arrival={arrival} departure={departure} />
+            : isUnlimited 
+              ? <AddUnlimitedExtra extra={item} adults={adults} nights={nights} existingCount={existingCount} /> 
+              : <AddLimitedExtra extra={item} adults={adults} nights={nights} existingCount={existingCount} existingDates={existingDates} />
         }
       </div>}
 
