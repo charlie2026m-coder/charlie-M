@@ -148,6 +148,7 @@ const RoomPage = async ({ params, searchParams }: IParams) => {
   const totalAdults = adults ? Number(adults) : 1
   const maxCapacity = room.availableUnits * room.maxPersons
   const hasEnoughCapacity = totalAdults <= maxCapacity
+  const isKidsBedAvailable = room.attributes?.includes('kids') || false
 
   return (
     <div className='flex flex-col relative pt-10 flex-1'>
@@ -184,6 +185,7 @@ const RoomPage = async ({ params, searchParams }: IParams) => {
               children: children || undefined
             }}
             babyBedAvailability={babyBedAvailability}
+            isKidsBedAvailable={isKidsBedAvailable}
           />   
         </div>
       </div>

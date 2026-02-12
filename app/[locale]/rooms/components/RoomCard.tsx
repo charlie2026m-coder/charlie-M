@@ -24,6 +24,7 @@ const RoomCard = ({
   const queryString = getPath({ from: params.from, to: params.to, adults: params.adults, children: params.children })
   const adultsCount = Number(params.adults || 1);
   const childrenCount = Number(params.children || 0);
+  const maxPersons = room.maxPersons || 2; // Use room's maxPersons
   
   const roomsForChildren = childrenCount;
   
@@ -32,16 +33,16 @@ const RoomCard = ({
   
   let remainingAdults = adultsCount - adultsAssignedToChildren;
   
-  const maxAdultsPerChildRoom = 2;
+  const maxAdultsPerChildRoom = Math.min(maxPersons, 2); // Can't exceed room capacity
   const additionalAdultsCapacity = childrenCount * (maxAdultsPerChildRoom - 1);
   const additionalAdultsAssigned = Math.min(remainingAdults, additionalAdultsCapacity);
   remainingAdults -= additionalAdultsAssigned;
   
-  const roomsForRemainingAdults = Math.ceil(remainingAdults / 2);
+  const roomsForRemainingAdults = Math.ceil(remainingAdults / maxPersons);
   
   const roomsNeeded = roomsForChildren + roomsForRemainingAdults;
   
-  const pricePerNight = adultsCount >= 2 
+  const pricePerNight = adultsCount >= maxPersons 
     ? (room.oneNightPriceForTwo || room.oneNightPrice || 0)
     : (room.oneNightPrice || 0);
   const price = roomsNeeded * pricePerNight;

@@ -35,7 +35,7 @@ export const getPriceData = ({ params, room }: {params: UrlParams, room: RoomOff
   let nights = 1;
   const adults = Number(params.adults || 1);
   const children = Number(params.children || 0);
-  
+  const maxPersons = room.maxPersons || 2;
 
   const roomsForChildren = children;
   
@@ -44,12 +44,12 @@ export const getPriceData = ({ params, room }: {params: UrlParams, room: RoomOff
   
   let remainingAdults = adults - adultsAssignedToChildren;
   
-  const maxAdultsPerChildRoom = 2;
+  const maxAdultsPerChildRoom = Math.min(maxPersons, 2); // Can't exceed room capacity
   const additionalAdultsCapacity = children * (maxAdultsPerChildRoom - 1);
   const additionalAdultsAssigned = Math.min(remainingAdults, additionalAdultsCapacity);
   remainingAdults -= additionalAdultsAssigned;
   
-  const roomsForRemainingAdults = Math.ceil(remainingAdults / 2);
+  const roomsForRemainingAdults = Math.ceil(remainingAdults / maxPersons);
   
   const roomsNeeded = roomsForChildren + roomsForRemainingAdults;
   
@@ -100,6 +100,14 @@ export function sortGuestsByRooms(
   const pushRoom = (a: number, c: number) =>
     rooms.push({ id: uuidv4(), adults: a, children: c, from, to });
 
+  if (maxPersons === 1) {
+    while (remainingAdults > 0) {
+      pushRoom(1, 0);
+      remainingAdults--;
+    }
+    return rooms;
+  }
+
   for (let i = 0; i < children; i++) {
     pushRoom(0, 1);
     remainingChildren--;
@@ -111,7 +119,7 @@ export function sortGuestsByRooms(
     remainingAdults--;
   }
 
-  const maxAdultsPerChildRoom = 2;
+  const maxAdultsPerChildRoom = maxPersons - 1;
   let roomIndex = 0;
   while (remainingAdults > 0 && roomIndex < rooms.length) {
     if (rooms[roomIndex].adults < maxAdultsPerChildRoom) {
@@ -123,8 +131,9 @@ export function sortGuestsByRooms(
     if (roomIndex >= rooms.length) break;
   }
 
+  // Create additional rooms for remaining adults (use maxPersons per room)
   while (remainingAdults > 0) {
-    const roomAdults = Math.min(remainingAdults, 2);
+    const roomAdults = Math.min(remainingAdults, maxPersons);
     pushRoom(roomAdults, 0);
     remainingAdults -= roomAdults;
   }
