@@ -93,14 +93,18 @@ export function sortGuestsByRooms(
   to: string,
   maxPersons: number
 ): Room[] {
+  const validAdults = Number.isNaN(adults) ? 1 : Math.max(1, adults)
+  const validChildren = Number.isNaN(children) ? 0 : Math.max(0, children)
+  const validMaxPersons = Number.isNaN(maxPersons) || maxPersons < 1 ? 2 : maxPersons
+  
   const rooms: Room[] = [];
-  let remainingAdults = adults;
-  let remainingChildren = children;
+  let remainingAdults = validAdults;
+  let remainingChildren = validChildren;
 
   const pushRoom = (a: number, c: number) =>
     rooms.push({ id: uuidv4(), adults: a, children: c, from, to });
 
-  if (maxPersons === 1) {
+  if (validMaxPersons === 1) {
     while (remainingAdults > 0) {
       pushRoom(1, 0);
       remainingAdults--;
@@ -108,18 +112,18 @@ export function sortGuestsByRooms(
     return rooms;
   }
 
-  for (let i = 0; i < children; i++) {
+  for (let i = 0; i < validChildren; i++) {
     pushRoom(0, 1);
     remainingChildren--;
   }
 
-  const minAdultsForChildren = Math.min(adults, children);
+  const minAdultsForChildren = Math.min(validAdults, validChildren);
   for (let i = 0; i < minAdultsForChildren; i++) {
     rooms[i].adults = 1;
     remainingAdults--;
   }
 
-  const maxAdultsPerChildRoom = maxPersons - 1;
+  const maxAdultsPerChildRoom = validMaxPersons - 1;
   let roomIndex = 0;
   while (remainingAdults > 0 && roomIndex < rooms.length) {
     if (rooms[roomIndex].adults < maxAdultsPerChildRoom) {
@@ -131,9 +135,9 @@ export function sortGuestsByRooms(
     if (roomIndex >= rooms.length) break;
   }
 
-  // Create additional rooms for remaining adults (use maxPersons per room)
+  // Create additional rooms for remaining adults (use validMaxPersons per room)
   while (remainingAdults > 0) {
-    const roomAdults = Math.min(remainingAdults, maxPersons);
+    const roomAdults = Math.min(remainingAdults, validMaxPersons);
     pushRoom(roomAdults, 0);
     remainingAdults -= roomAdults;
   }
@@ -253,35 +257,45 @@ export const formatReservations = (
   storeServices?: any[],
   availableServices?: Service[]
 ) => {
+  if (!roomDetails || !roomDetails.timeSlices || !roomDetails.ratePlan) {
+    console.error('Invalid roomDetails:', roomDetails)
+    return []
+  }
+
   const timeSlices = roomDetails.timeSlices.map(_ => ({ ratePlanId: roomDetails.ratePlan.id }))
+
+  // Safe defaults
+  const maxPersons = roomDetails.maxPersons || 2
+  const price = roomDetails.price || 0
+  const priceForTwo = roomDetails.priceForTwo || price
+  const cityTax = roomDetails.cityTax || 0
+  const cityTaxForTwo = roomDetails.cityTaxForTwo || cityTax
 
   // Calculate price for each room based on guest count (WITHOUT tax)
   const calculateRoomPrice = (adultsCount: number) => {
-    const maxPersons = roomDetails.maxPersons || 2;
     const roomsNeeded = Math.ceil(adultsCount / maxPersons);
     
     if (adultsCount === 1) {
-      return roomDetails.price || 0;
+      return price;
     } else if (adultsCount % 2 === 0) {
-      return roomsNeeded * (roomDetails.priceForTwo || roomDetails.price || 0);
+      return roomsNeeded * priceForTwo;
     } else {
       const doubleRooms = Math.floor(adultsCount / 2);
-      return (doubleRooms * (roomDetails.priceForTwo || roomDetails.price || 0)) + (roomDetails.price || 0);
+      return (doubleRooms * priceForTwo) + price;
     }
   };
 
   // Calculate city tax for each room based on guest count
   const calculateRoomTax = (adultsCount: number) => {
-    const maxPersons = roomDetails.maxPersons || 2;
     const roomsNeeded = Math.ceil(adultsCount / maxPersons);
     
     if (adultsCount === 1) {
-      return roomDetails.cityTax || 0;
+      return cityTax;
     } else if (adultsCount % 2 === 0) {
-      return roomsNeeded * (roomDetails.cityTaxForTwo || roomDetails.cityTax || 0);
+      return roomsNeeded * cityTaxForTwo;
     } else {
       const doubleRooms = Math.floor(adultsCount / 2);
-      return (doubleRooms * (roomDetails.cityTaxForTwo || roomDetails.cityTax || 0)) + (roomDetails.cityTax || 0);
+      return (doubleRooms * cityTaxForTwo) + cityTax;
     }
   };
 

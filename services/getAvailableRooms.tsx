@@ -33,7 +33,7 @@ const getAvailableRoomsInternal = async (from?: string, to?: string, guests: num
 
     if (!singleRoomResponse || singleRoomResponse.length === 0) {
       console.log('No rooms available for selected dates')
-      return { error: 'No rooms available for selected dates' };
+      return [];
     }
 
     // Fetch double room data (optional, don't fail if it errors)
@@ -51,24 +51,24 @@ const getAvailableRoomsInternal = async (from?: string, to?: string, guests: num
 
     // Format rooms with all available data
     const formattedRooms = singleRoomResponse.map(room => {
-      const roomDetails = roomsDetails.find(item => item.id === room.unitGroup.id);
+      const roomDetails = roomsDetails.find(item => item.id === room.unitGroup?.id);
       const doubleRoom = doubleRoomResponse?.find(
-        dr => dr.unitGroup.id === room.unitGroup.id && dr.ratePlan.id === room.ratePlan.id
+        dr => dr.unitGroup?.id === room.unitGroup?.id && dr.ratePlan?.id === room.ratePlan?.id
       );
       
       return {
         ...room,
         images: roomDetails?.photos || [],
-        id: `${room.unitGroup.id}-${room.ratePlan.id}`, // Unique ID combining unit group and rate plan
-        name: room.unitGroup.name,
-        description: room.unitGroup.description,
-        price: room.totalGrossAmount.amount, // Price for 1 guest without tax
-        priceForTwo: (doubleRoom?.totalGrossAmount?.amount || 0), // Price for 2 guests without tax
-        oneNightPrice: (room.timeSlices?.[0]?.totalGrossAmount?.amount || 0),
-        oneNightPriceForTwo: (doubleRoom?.timeSlices?.[0]?.totalGrossAmount?.amount || 0),
-        cityTax: (room.cityTaxes?.[0]?.totalGrossAmount?.amount || 0), // City tax for 1 guest
-        cityTaxForTwo: (doubleRoom?.cityTaxes?.[0]?.totalGrossAmount?.amount || 0), // City tax for 2 guests
-        currency: room.totalGrossAmount.currency,
+        id: `${room.unitGroup?.id || ''}-${room.ratePlan?.id || ''}`,
+        name: room.unitGroup?.name || 'Unknown Room',
+        description: room.unitGroup?.description || '',
+        price: room.totalGrossAmount?.amount || 0,
+        priceForTwo: doubleRoom?.totalGrossAmount?.amount || 0,
+        oneNightPrice: room.timeSlices?.[0]?.totalGrossAmount?.amount || 0,
+        oneNightPriceForTwo: doubleRoom?.timeSlices?.[0]?.totalGrossAmount?.amount || 0,
+        cityTax: room.cityTaxes?.[0]?.totalGrossAmount?.amount || 0,
+        cityTaxForTwo: doubleRoom?.cityTaxes?.[0]?.totalGrossAmount?.amount || 0,
+        currency: room.totalGrossAmount?.currency || 'EUR',
         attributes: roomDetails?.attributes || [],
         size: roomDetails?.size || 0,
         maxPersons: roomDetails?.max_persons || 1,

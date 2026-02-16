@@ -44,6 +44,10 @@ const BookingMenu = ({
   const roomDetails = useBookingStore(state => state.roomDetails) || roomsOffers[0]
   const services = useBookingStore(state => state.services)
   const [isLoading, setIsLoading] = useState(false)
+
+  if (!roomDetails || !rooms || rooms.length === 0) {
+    return <div className="p-5 text-center">Loading room details...</div>
+  }
   const updatedRooms = rooms.map(room => {
     const updateExtras = room.extras?.map(extra => {
       return {
@@ -138,33 +142,40 @@ const BookingMenu = ({
     return acc;
   }, 0);
 
+  // Safe defaults
+  const maxPersons = roomDetails.maxPersons || 2
+  const price = roomDetails.price || 0
+  const priceForTwo = roomDetails.priceForTwo || price
+  const cityTax = roomDetails.cityTax || 0
+  const cityTaxForTwo = roomDetails.cityTaxForTwo || cityTax
+  const oneNightPrice = roomDetails.oneNightPrice || 0
+  const oneNightPriceForTwo = roomDetails.oneNightPriceForTwo || oneNightPrice
+
   // Calculate price for each room based on guest count
   const calculateRoomPrice = (adultsCount: number) => {
-    const maxPersons = roomDetails.maxPersons || 2;
     const roomsNeeded = Math.ceil(adultsCount / maxPersons);
     
     if (adultsCount === 1) {
-      return roomDetails.price || 0;
+      return price;
     } else if (adultsCount % 2 === 0) {
-      return roomsNeeded * (roomDetails.priceForTwo || roomDetails.price || 0);
+      return roomsNeeded * priceForTwo;
     } else {
       const doubleRooms = Math.floor(adultsCount / 2);
-      return (doubleRooms * (roomDetails.priceForTwo || roomDetails.price || 0)) + (roomDetails.price || 0);
+      return (doubleRooms * priceForTwo) + price;
     }
   };
 
   // Calculate city tax for each room based on guest count
   const calculateRoomTax = (adultsCount: number) => {
-    const maxPersons = roomDetails.maxPersons || 2;
     const roomsNeeded = Math.ceil(adultsCount / maxPersons);
     
     if (adultsCount === 1) {
-      return roomDetails.cityTax || 0;
+      return cityTax;
     } else if (adultsCount % 2 === 0) {
-      return roomsNeeded * (roomDetails.cityTaxForTwo || roomDetails.cityTax || 0);
+      return roomsNeeded * cityTaxForTwo;
     } else {
       const doubleRooms = Math.floor(adultsCount / 2);
-      return (doubleRooms * (roomDetails.cityTaxForTwo || roomDetails.cityTax || 0)) + (roomDetails.cityTax || 0);
+      return (doubleRooms * cityTaxForTwo) + cityTax;
     }
   };
 
@@ -209,9 +220,7 @@ const BookingMenu = ({
           {rooms.map((room, index) => {
             const roomPrice = calculateRoomPrice(room.adults);
             // Calculate price per night for this room
-            const pricePerNight = room.adults === 1 
-              ? (roomDetails.oneNightPrice || roomDetails.averagePrice || 0)
-              : (roomDetails.oneNightPriceForTwo || roomDetails.averagePrice || 0);
+            const pricePerNight = room.adults === 1 ? oneNightPrice : oneNightPriceForTwo;
             
             return (
               <div key={index} className='flex items-center gap-2 inter text-sm text-dark'>

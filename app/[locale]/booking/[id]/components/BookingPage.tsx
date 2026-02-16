@@ -37,7 +37,11 @@ const BookingPage = ({
   
   const nights = calculateNights(from as string, to as string)
   const planType = getType(nights, true)
-  const mainRoom = rooms.find(room => room.ratePlan.code === planType) || rooms[0]
+  const mainRoom = rooms.find(room => room.ratePlan?.code === planType) || rooms[0]
+
+  if (!mainRoom) {
+    return <div className="p-10 text-center">Room data not available</div>
+  }
 
   useEffect(() => {
     if (typeof window === 'undefined') return // Skip SSR
@@ -47,7 +51,7 @@ const BookingPage = ({
       return
     }
     
-    const currentBookingId = `${mainRoom?.id || mainRoom?.ratePlan.id}-${from}-${to}-${adults}-${children}`
+    const currentBookingId = `${mainRoom.id || mainRoom.ratePlan?.id}-${from}-${to}-${adults}-${children}`
     
     if (bookingId && bookingId !== currentBookingId) {
       clearBooking()
@@ -57,13 +61,13 @@ const BookingPage = ({
       setBookingId(currentBookingId)
       setRooms(filledRooms)
     }
-  }, [from, to, adults, children, mainRoom?.id, mainRoom?.ratePlan.id])
+  }, [from, to, adults, children, mainRoom.id, mainRoom.ratePlan?.id])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
     if (!useBookingStore.persist.hasHydrated()) return
     
-    const currentBookingId = `${mainRoom?.id || mainRoom?.ratePlan.id}-${from}-${to}-${adults}-${children}`
+    const currentBookingId = `${mainRoom.id || mainRoom.ratePlan?.id}-${from}-${to}-${adults}-${children}`
     const storedRoomDetails = useBookingStore.getState().roomDetails
     const storedBookingId = useBookingStore.getState().bookingId
     
@@ -72,11 +76,11 @@ const BookingPage = ({
       setRoomDetails(mainRoom)
       setExtras(extras)
     }
-  }, [from, to, adults, children, mainRoom?.id, mainRoom?.ratePlan.id, extras])
+  }, [from, to, adults, children, mainRoom.id, mainRoom.ratePlan?.id, extras])
 
   return (
     <>  
-      <PhotoGallery images={mainRoom?.images || []} />
+      <PhotoGallery images={mainRoom.images || []} />
       <div className='grid grid-cols-1  lg:grid-cols-3 mb-[30px]'>
         <div className='col-span-1 lg:col-span-2 flex flex-col lg:pr-10'>
           <RoomContent room={mainRoom} />
@@ -84,8 +88,8 @@ const BookingPage = ({
           <ExtrasSection 
             nights={nights}
             extras={extras} 
-            room={rooms[0]}
-            children={parseInt(children)}
+            room={mainRoom}
+            children={parseInt(children) || 0}
           />}
         </div>
         <div className='col-span-1 gap-5 flex flex-col'>
