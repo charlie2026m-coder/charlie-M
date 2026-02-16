@@ -5,7 +5,9 @@ import { OfferResponse, RoomOffer } from '@/types/offers';
 import { getRoomsDetails } from './getRoomsDetails';
 const propId = process.env.APALEO_PROPERTY_ID;
 
-const getSingleRoomInternal = async (roomId: string, from?: string, to?: string, adults?: string) => {
+type GetSingleRoomResult = RoomOffer[] | { error: string };
+
+const getSingleRoomInternal = async (roomId: string, from?: string, to?: string, adults?: string): Promise<GetSingleRoomResult> => {
   if (!propId) throw new Error('Property ID is required. Set APALEO_PROPERTY_ID in .env');
   let arrival = from || dayjs().format('YYYY-MM-DD');
   let departure = to || dayjs().add(1, 'day').format('YYYY-MM-DD');
