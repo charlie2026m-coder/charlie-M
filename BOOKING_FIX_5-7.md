@@ -1,9 +1,11 @@
 # Booking Page Fixes #5-7
 
 ## Problem 5: getSingleRoom undefined checks
+
 **File:** `services/getSingleRoom.ts`
 
 ### Changes:
+
 - ✅ Optional chaining: `room.unitGroup?.id`, `room.ratePlan?.id`
 - ✅ Safe defaults: `id || ''`, `name || 'Unknown Room'`
 - ✅ Changed `maxPersons` default: `1` → `2`
@@ -12,9 +14,11 @@
 ---
 
 ## Problem 6: sortGuestsByRooms NaN validation
+
 **File:** `lib/utils.ts` (lines 89-142)
 
 ### Before:
+
 ```typescript
 export function sortGuestsByRooms(
   adults: number,
@@ -29,6 +33,7 @@ export function sortGuestsByRooms(
 ```
 
 ### After:
+
 ```typescript
 export function sortGuestsByRooms(...) {
   const validAdults = Number.isNaN(adults) ? 1 : Math.max(1, adults)
@@ -41,15 +46,19 @@ export function sortGuestsByRooms(...) {
 ```
 
 ### Changes:
+
 - ✅ NaN validation for all numeric params
-- ✅ All references updated to use `validAdults`, `validChildren`, `validMaxPersons`
+- ✅ All references updated to use `validAdults`, `validChildren`,
+  `validMaxPersons`
 
 ---
 
 ## Problem 7: formatReservations undefined checks
+
 **File:** `lib/utils.ts` (line 252)
 
 ### Before:
+
 ```typescript
 export const formatReservations = (...) => {
   const timeSlices = roomDetails.timeSlices.map(...)
@@ -59,6 +68,7 @@ export const formatReservations = (...) => {
 ```
 
 ### After:
+
 ```typescript
 export const formatReservations = (...) => {
   if (!roomDetails || !roomDetails.timeSlices || !roomDetails.ratePlan) {
@@ -77,6 +87,7 @@ export const formatReservations = (...) => {
 ```
 
 ### Changes:
+
 - ✅ Early return if roomDetails invalid
 - ✅ Safe defaults extracted
 - ✅ Simplified calculations

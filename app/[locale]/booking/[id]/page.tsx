@@ -31,7 +31,7 @@ const Booking = async ({ params, searchParams }: IParams) => {
   ])
   
   if ('error' in rooms) return <ErrorCard isSingleRoom={true} link='/rooms' />
-  if (!rooms || rooms.length === 0) return <ErrorCard isSingleRoom={true} link='/rooms' message='No rooms available for selected dates' />
+  if (!rooms || rooms.length === 0) return <ErrorCard isSingleRoom={true} link='/rooms' />
   
   let filteredExtras = extras
   const isKidsBedAvailable = rooms[0].attributes?.includes('kids') || false
