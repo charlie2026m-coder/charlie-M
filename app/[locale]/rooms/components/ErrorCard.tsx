@@ -1,5 +1,9 @@
+'use client'
+
 import { Link } from '@/navigation'
 import { Button } from '@/app/_components/ui/button'
+import { useTranslations } from 'next-intl'
+import { AlertTriangle } from 'lucide-react'
 
 const ErrorCard = ({
   link,
@@ -8,15 +12,32 @@ const ErrorCard = ({
   link?: string
   isSingleRoom?: boolean
 }) => {
+  const t = useTranslations()
+
+  const handleReload = () => {
+    window.location.reload()
+  }
+
   return (
-    <div className='container px-[100px] py-20 text-center'>
-      <h2 className='text-2xl font-bold text-gray-700 mb-4'>We couldn't show the {isSingleRoom ? 'room' : 'rooms'} right now. Please try again.</h2>
-      <p className=' mb-6'>We working on it. Please try again later</p>
-     {isSingleRoom && link && <Link href={link} className='text-blue hover:underline'>
-        <Button variant='outline'>
-          ← Back to all rooms
+    <div className='container px-4 md:px-[100px] py-20 text-center'>
+      <h2 className='text-2xl font-bold text-gray-700 mb-4'>
+        {isSingleRoom ? t('errors.roomLoadError') : t('errors.roomsLoadError')}
+      </h2>
+      <p className='text-gray-600 mb-6'>
+        {t('errors.pleaseTryAgain')}
+      </p>
+      <div className='flex gap-4 justify-center'>
+        <Button onClick={handleReload} variant='default'>
+          {t('errors.reloadPage')}
         </Button>
-      </Link>}
+        {isSingleRoom && link && (
+          <Link href={link}>
+            <Button variant='outline'>
+              ← {t('errors.backToRooms')}
+            </Button>
+          </Link>
+        )}
+      </div>
     </div>
   )
 }

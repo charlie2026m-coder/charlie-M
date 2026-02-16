@@ -93,33 +93,81 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 
 const RoomsPage = async ({ searchParams } : Props) => {
   const { from, to, adults, children } = await searchParams;
-  const adultsCount = adults ? Number(adults) : 1;
-  const [rooms, babyBedAvailability] = await Promise.all([
-    getAvailableRooms(from, to, adultsCount),
-    from && to 
-      ? getServiceAvailabilityById(from, to, 'CMH-BAB')
-      : Promise.resolve({ isAvailable: false, count: 0 })
-  ]);
-  if ('error' in rooms || !rooms) return <ErrorCard />
   
-  const nights = calculateNights(from as string, to as string);
-  const ratePlan = nights > 7  ? RATE_PLANS.LONG_STAY : RATE_PLANS.STANDARD;
-  const standardPriceRooms = rooms.filter(room => room.ratePlan.code.includes(ratePlan))
-  
-  return (
-    <>
-      <StickyCheckInFormRooms params={{ from, to, adults, children }} />
-      <Filters />
-      {standardPriceRooms.length === 0
-        ? <NotFoundCard text='No rooms found' />
-        : <RoomsList 
-            rooms={standardPriceRooms} 
-            params={{ from, to, adults, children }} 
-            isBabyBedAvailable={babyBedAvailability}
-          />
-      }
-    </>
-  )
+  try {
+    const adultsCount = adults ? Number(adults) : 1;
+    
+    const [rooms, babyBedAvailability] = await Promise.all([
+      getAvailableRooms(from, to, adultsCount),
+      from && to 
+        ? getServiceAvailabilityById(from, to, 'CMH-BAB')
+        : Promise.resolve({ isAvailable: false, count: 0 })
+    ]);
+    
+    // Handle error from getAvailableRooms
+    if ('error' in rooms) {
+      console.error('Error loading rooms:', rooms.error);
+      console.error('Search params:', { from, to, adults, children });
+      return (
+        <>
+          <StickyCheckInFormRooms params={{ from, to, adults, children }} />
+          <Filters />
+          <ErrorCard />
+        </>
+      )
+    }
+    
+    // Handle empty rooms array
+    if (!rooms || rooms.length === 0) {
+      console.log('No rooms available for search params:', { from, to, adults, children });
+      return (
+        <>
+          <StickyCheckInFormRooms params={{ from, to, adults, children }} />
+          <Filters />
+          <NotFoundCard />
+        </>
+      )
+    }
+    
+    const nights = calculateNights(from as string, to as string);
+    const ratePlan = nights > 7  ? RATE_PLANS.LONG_STAY : RATE_PLANS.STANDARD;
+    const standardPriceRooms = rooms.filter(room => room.ratePlan.code.includes(ratePlan))
+    
+    // Handle no standard price rooms
+    if (standardPriceRooms.length === 0) {
+      console.log('No standard price rooms available for:', { ratePlan, nights });
+      return (
+        <>
+          <StickyCheckInFormRooms params={{ from, to, adults, children }} />
+          <Filters />
+          <NotFoundCard />
+        </>
+      )
+    }
+    
+    return (
+      <>
+        <StickyCheckInFormRooms params={{ from, to, adults, children }} />
+        <Filters />
+        <RoomsList 
+          rooms={standardPriceRooms} 
+          params={{ from, to, adults, children }} 
+          isBabyBedAvailable={babyBedAvailability}
+        />
+      </>
+    )
+  } catch (error) {
+    // Catch any unexpected errors
+    console.error('Unexpected error in RoomsPage:', error);
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    return (
+      <>
+        <StickyCheckInFormRooms params={{ from, to, adults, children }} />
+        <Filters />
+        <ErrorCard />
+      </>
+    )
+  }
 }
 
 export default RoomsPage

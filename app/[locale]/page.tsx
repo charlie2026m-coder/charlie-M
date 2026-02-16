@@ -3,6 +3,7 @@ import VideoSection from '@/app/[locale]/home/VideoSection';
 import RoomsSection from '@/app/[locale]/home/RoomsSection';
 import StickyCheckInForm from '@/app/[locale]/home/components/StickyCheckInForm';
 import RoomsFallback from '@/app/[locale]/home/components/RoomsFallback';
+import RoomsErrorBoundary from '@/app/[locale]/home/components/RoomsErrorBoundary';
 import type { Metadata } from 'next';
 import { HOTEL_INFO } from '@/lib/Constants';
 import LocationSection from '@/app/[locale]/home/LocationSection';
@@ -89,9 +90,11 @@ export default async function Home({ params }: Props) {
       <section className="flex flex-col">
         <VideoSection locale={locale} />
         <StickyCheckInForm />
-        <Suspense fallback={<RoomsFallback />}>
-          <RoomsSection locale={locale} />
-        </Suspense>
+        <RoomsErrorBoundary locale={locale}>
+          <Suspense fallback={<RoomsFallback />}>
+            <RoomsSection locale={locale} />
+          </Suspense>
+        </RoomsErrorBoundary>
         <LocationSection />
         <ConceptSection />
         <ExperienceSection />
