@@ -31,12 +31,19 @@ const Booking = async ({ params, searchParams }: IParams) => {
   ])
   
   if ('error' in rooms) return <ErrorCard isSingleRoom={true} link='/rooms' />
+  if (!rooms || rooms.length === 0) return <ErrorCard isSingleRoom={true} link='/rooms' />
   
   let filteredExtras = extras
-  const isKidsBedAvailable = rooms[0].attributes.includes('kids')
+  const isKidsBedAvailable = rooms[0].attributes?.includes('kids') || false
   if(!isKidsBedAvailable) filteredExtras = filteredExtras.filter(extra => extra.id !== 'CMH-BAB')
 
-  const filledRooms = sortGuestsByRooms(Number(adults), Number(children), from, to, rooms[0].maxPersons)
+  const filledRooms = sortGuestsByRooms(
+    Number(adults) || 1, 
+    Number(children) || 0, 
+    from, 
+    to, 
+    rooms[0]?.maxPersons || 2
+  )
   return (
     <>
       <Steps currentStep={1} />
