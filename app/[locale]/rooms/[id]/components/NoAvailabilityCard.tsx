@@ -28,19 +28,14 @@ const NoAvailabilityCard = ({ from, to, roomName }: NoAvailabilityCardProps) => 
         <div className='w-20 h-20 rounded-full bg-orange/10 flex items-center justify-center mb-6'>
           <FiAlertCircle className='w-10 h-10 text-orange' />
         </div>
-        
         <h2 className='text-2xl font-bold mb-3'>
           {t('title')}
         </h2>
-        
         <p className='text-dark mb-6 text-base'>
           {roomName ? t('roomNameIs', { roomName }) : t('roomIs')} {t('notAvailable')} 
-          {hasCustomDates ? ` ${t('forSelectedDates')}` : ` ${t('forTodayTomorrow')}`}. 
+          {hasCustomDates ? ` ${t('forSelectedDates')}` : ` ${t('forTodayTomorrow')}`}.{' '} 
           {t('tryDifferentDates')}
         </p>
-        
-
-        
         <Button 
           onClick={handleChangeSearch}
           className='w-full max-w-xs h-12'

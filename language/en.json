@@ -1240,6 +1240,18 @@
     "registrationFailed": "Registration failed",
     "emailConfirmationSent": "We have sent a link to your email address to confirm your email address. Please check your email!",
     "passwordRequirements": "Password must be at least 8 characters and contain at least 1 uppercase letter and 1 special character"
+  },
+  "errors": {
+    "roomLoadError": "We couldn't load the room right now",
+    "roomsLoadError": "We couldn't load the rooms right now",
+    "pleaseTryAgain": "Something went wrong. Please reload the page or try again later.",
+    "reloadPage": "Reload Page",
+    "backToRooms": "Back to all rooms",
+    "noRoomsFound": "No rooms found",
+    "tryDifferentDates": "Please try different dates or change your search criteria.",
+    "viewAllRooms": "View All Rooms",
+    "noRoomsAvailableNearDates": "No rooms available for the nearest dates",
+    "pleaseSelectDifferentDates": "Please try selecting different dates"
   }
 }
 
