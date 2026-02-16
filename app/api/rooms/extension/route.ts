@@ -2,7 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSingleRoom } from '@/services/getSingleRoom'
 import { getServiceAvailabilityById } from '@/lib/utils'
 
-export async function GET(request: NextRequest) {
+interface ExtensionResponse {
+  availableUnits: number
+  babyBedAvailable?: boolean
+  message?: string
+}
+
+interface ErrorResponse {
+  error: string
+}
+
+export async function GET(request: NextRequest): Promise<NextResponse<ExtensionResponse | ErrorResponse>> {
   try {
     const { searchParams } = new URL(request.url)
     const from = searchParams.get('from')
@@ -33,17 +43,24 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Check room availability
+    // Check room availability - type guard for error
     if ('error' in room) {
-      return NextResponse.json({ availableUnits: 0 })
+      return NextResponse.json({ 
+        availableUnits: 0,
+        message: room.error 
+      })
     }
 
-    if (!Array.isArray(room) || room.length === 0) {
-      return NextResponse.json({ availableUnits: 0 })
+    // room is now typed as RoomOffer[]
+    if (room.length === 0) {
+      return NextResponse.json({ 
+        availableUnits: 0,
+        message: 'No rooms available for selected dates' 
+      })
     }
 
     const firstRoom = room[0]
-    const availableUnits = firstRoom.availableUnits || 0
+    const availableUnits = firstRoom.availableUnits ?? 0
 
     return NextResponse.json({ 
       availableUnits,

@@ -262,8 +262,9 @@ const ExtandYourStay = ({
                               isBaby: isBaby
                             },
                             {
-                              onSuccess: (data: any) => {
-                                setAvailableUnits(data.availableUnits || data)
+                              onSuccess: (data) => {
+                                // data is always an object with availableUnits (number) and babyBedAvailable (boolean | undefined)
+                                setAvailableUnits(data.availableUnits)
                                 setBabyBedAvailable(data.babyBedAvailable ?? null)
                               }
                             }

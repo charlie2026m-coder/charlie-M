@@ -8,9 +8,15 @@ interface ExtensionRoomsParams {
   isBaby?: boolean
 }
 
+interface ExtensionRoomsResponse {
+  availableUnits: number
+  babyBedAvailable?: boolean
+  message?: string
+}
+
 export const useExtensionRooms = () => {
   return useMutation({
-    mutationFn: async ({ from, to, roomId, isBaby }: ExtensionRoomsParams) => {
+    mutationFn: async ({ from, to, roomId, isBaby }: ExtensionRoomsParams): Promise<ExtensionRoomsResponse> => {
       const fromStr = dayjs(from).format('YYYY-MM-DD')
       const toStr = dayjs(to).format('YYYY-MM-DD')
       const isBabyParam = isBaby ? '&isBaby=true' : ''
@@ -21,7 +27,7 @@ export const useExtensionRooms = () => {
         throw new Error('Failed to fetch extension rooms')
       }
 
-      const data = await response.json()
+      const data: ExtensionRoomsResponse = await response.json()
       console.log('Extension check result:', data)
       return data
     },
