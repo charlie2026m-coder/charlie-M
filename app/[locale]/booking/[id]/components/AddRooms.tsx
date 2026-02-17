@@ -90,7 +90,7 @@ const AddRooms = ({
           <div key={room.id} className={`flex flex-col gap-2  border-gray ${isLast ? '' : 'border-b'}`}>
             <div className='flex gap-2 mb-3 items-center'>
               <Image 
-                src={'/images/room1.webp'} 
+                src={roomDetails?.images?.[0] || '/images/room1.webp'} 
                 alt={'booking room image'} 
                 width={42} 
                 height={42} 

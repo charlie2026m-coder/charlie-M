@@ -44,11 +44,12 @@ const ReservationsTable = ({ addedReservations = [] }: ReservationsTableProps) =
 
   const adjustedPage = page === 1 && addedReservations.length > 0 ? 1 : page
   const normalQuery = useReservations(adjustedPage, reservationFilter)
-  const guestQuery = useGuestReservations(guestData)
+  const guestQuery = useGuestReservations(guestData?.data?.id)
 
   const { data, isLoading, isError, isFetching } = isGuestMode 
     ? guestQuery 
     : normalQuery
+
 
   const displayData = page === 1 && addedReservations.length > 0 && data
     ? {
@@ -83,9 +84,7 @@ const ReservationsTable = ({ addedReservations = [] }: ReservationsTableProps) =
           </div>
         )}
         
-        {displayData?.reservations.map((item: Reservation, index: number) => (
-          <ReservationCard key={item.id + index} reservation={item} />
-        ))}
+        {displayData?.reservations.map((item: Reservation, index: number) => (<ReservationCard key={item.id + index} reservation={item} />))}
         
         {!displayData && isLoading && (
           <div className='flex flex-1 items-center justify-center h-[400px]'>

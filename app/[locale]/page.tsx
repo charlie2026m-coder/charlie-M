@@ -91,9 +91,9 @@ export default async function Home({ params }: Props) {
         <VideoSection locale={locale} />
         <StickyCheckInForm />
         <RoomsErrorBoundary locale={locale}>
-          <Suspense fallback={<RoomsFallback />}>
-            <RoomsSection locale={locale} />
-          </Suspense>
+        <Suspense fallback={<RoomsFallback />}>
+          <RoomsSection locale={locale} />
+        </Suspense>
         </RoomsErrorBoundary>
         <LocationSection />
         <ConceptSection />

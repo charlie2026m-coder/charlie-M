@@ -57,11 +57,8 @@ export async function GET(request: Request) {
       allReservationsParams.append('status', filterToStatus[filter]);
     }
 
-    const apaleoResponse = await Fetch<ApaleoReservationsListResponse>(
-      `/booking/v1/reservations?${allReservationsParams.toString()}&expand=services`
-    );
+    const apaleoResponse = await Fetch<ApaleoReservationsListResponse>(`/booking/v1/reservations?${allReservationsParams.toString()}&expand=services`);
 
-    // Handle empty response or 204 No Content
     if (!apaleoResponse || !apaleoResponse.reservations || apaleoResponse.reservations.length === 0) {
       return NextResponse.json({ count: 0, reservations: [] });
     }

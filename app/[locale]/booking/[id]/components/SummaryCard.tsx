@@ -7,6 +7,7 @@ import { BsCalendar2Fill } from 'react-icons/bs';
 import dayjs from 'dayjs';
 import { getExtraPrice } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
+import { CITY_TAX_RATE } from '@/lib/Constants';
 
 const SummaryCard = () => {
   const t = useTranslations('summary')
@@ -61,14 +62,18 @@ const SummaryCard = () => {
   const calculateRoomTax = (adultsCount: number) => {
     const maxPersons = roomDetails?.maxPersons || 2;
     const roomsNeeded = Math.ceil(adultsCount / maxPersons);
+    const price = roomDetails?.price || 0;
+    const priceForTwo = roomDetails?.priceForTwo || price;
+    const cityTax = roomDetails?.cityTax || Math.round(price * CITY_TAX_RATE * 100) / 100;
+    const cityTaxForTwo = roomDetails?.cityTaxForTwo || Math.round(priceForTwo * CITY_TAX_RATE * 100) / 100;
     
     if (adultsCount === 1) {
-      return roomDetails?.cityTax || 0;
+      return cityTax;
     } else if (adultsCount % 2 === 0) {
-      return roomsNeeded * (roomDetails?.cityTaxForTwo || roomDetails?.cityTax || 0);
+      return roomsNeeded * cityTaxForTwo;
     } else {
       const doubleRooms = Math.floor(adultsCount / 2);
-      return (doubleRooms * (roomDetails?.cityTaxForTwo || roomDetails?.cityTax || 0)) + (roomDetails?.cityTax || 0);
+      return (doubleRooms * cityTaxForTwo) + cityTax;
     }
   };
 
@@ -124,7 +129,7 @@ const SummaryCard = () => {
     <div className='flex flex-col bg-white rounded-[20px] py-5 px-3 border self-start col-span-1'>
       <h2 className='text-2xl font-bold mb-3 text-center'>{t('title')}</h2>
       <Image 
-        src="/images/room1.webp" 
+        src={roomDetails?.images?.[0] || "/images/room1.webp"} 
         alt="summary" 
         width={327} 
         height={202} 
@@ -238,7 +243,7 @@ const SummaryCard = () => {
           <div className='flex flex-col gap-1'>
             {reservationIds.map((id, index) => (
               <div key={id} className='flex items-center justify-between'>
-                <span className='text-gray-500 text-sm'>{t('reservation')} {index + 1}:</span>
+                <span className='text-gray-500 text-sm'>{t('reservation')}{reservationIds.length > 1 ? index + 1 : ''}:</span>
                 <span className='font-bold text-base'>{id}</span>
               </div>
             ))}

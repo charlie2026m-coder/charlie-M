@@ -45,16 +45,24 @@ const AddExtras = ({
     
     // For cleaning: check if all available dates are already booked
     const isCleaning = extra.id === 'CMH-CLN' || extra.name?.toLowerCase().includes('clean');
-    if (isCleaning && arrival && departure) {
-      const daysOfWeek = extra.daysOfWeek || extra.availability?.daysOfWeek;
-      const existingService = existingServices?.find(s => s.service.id === extra.id);
+    if (isCleaning) {
+      // Don't show cleaning service if stay is less than 2 nights
+      if (nights < 2) {
+        return false;
+      }
       
-      return shouldShowCleaningService(
-        arrival,
-        departure,
-        daysOfWeek,
-        existingService?.dates
-      );
+      if (arrival && departure) {
+        const daysOfWeek = extra.daysOfWeek || extra.availability?.daysOfWeek;
+        const existingService = existingServices?.find(s => s.service.id === extra.id);
+        
+        return shouldShowCleaningService(
+          arrival,
+          departure,
+          daysOfWeek,
+          existingService?.dates
+        );
+      }
+      return false;
     }
     
     if (!existingServiceIds.includes(extra.id)) return true;

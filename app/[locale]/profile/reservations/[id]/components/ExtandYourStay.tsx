@@ -175,8 +175,23 @@ const ExtandYourStay = ({
                   return;
                 }
                 
-                // Allow single day selection (one night)
-                setExtensionRange(date as DateRange);
+                // Auto-select next day when only from is selected
+                if (date?.from && !date?.to) {
+                  const nextDay = new Date(date.from);
+                  nextDay.setDate(nextDay.getDate() + 1);
+                  setExtensionRange({ from: date.from, to: nextDay });
+                } else if (date?.from && date?.to) {
+                  // Check if same day selected
+                  if (date.from.getTime() === date.to.getTime()) {
+                    const nextDay = new Date(date.from);
+                    nextDay.setDate(nextDay.getDate() + 1);
+                    setExtensionRange({ from: date.from, to: nextDay });
+                  } else {
+                    setExtensionRange(date as DateRange);
+                  }
+                } else {
+                  setExtensionRange(date as DateRange);
+                }
               }}
               disabled={[
                 { before: departureDate }, // Disable all dates before departure
@@ -198,9 +213,9 @@ const ExtandYourStay = ({
               <div className='flex flex-col pt-4 '>
                 {availableUnits !== null ? (
                   <>
-                    <p className='mt-5 mb-4'>
-                      {t('extendYourStay.availableRoomsPrefix')} <strong>{availableUnits}</strong> {availableUnits === 1 ? t('extendYourStay.room') : t('extendYourStay.rooms')} {t('extendYourStay.availableRoomsSuffix')}
-                    </p>
+                  <p className='mt-5 mb-4'>
+                    {t('extendYourStay.availableRoomsPrefix')} <strong>{availableUnits}</strong> {availableUnits === 1 ? t('extendYourStay.room') : t('extendYourStay.rooms')} {t('extendYourStay.availableRoomsSuffix')}
+                  </p>
                     {isBaby && babyBedAvailable === false && (
                       <p className='mb-4 text-red-600 text-sm'>
                         Baby bed is not available for the selected dates.

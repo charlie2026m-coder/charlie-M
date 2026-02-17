@@ -43,28 +43,25 @@ const fetchExtras = async (from?: string, to?: string): Promise<Service[]> => {
   }
 
   try {
-    const response = await Fetch<ServicesResponse>(
-      `/rateplan/v1/services?propertyId=${propertyId}`
-    ).then(res => res.services.map(item =>{
-      const unlimited = !item.availability.hasOwnProperty("quantity")
-      return {
-        id: item.id,
-        name: item.name,
-        description: item.description,
-        pricingUnit: item.pricingUnit,
-        price: item.defaultGrossPrice?.amount || 0,
-        currency: item.defaultGrossPrice?.currency,
-        pricingType: item.availability.mode,
-        daysOfWeek: item.availability.daysOfWeek,
-        availability: item.availability,
-        unlimited: unlimited,
-        usageType: STATUSES[item.code as keyof typeof STATUSES],
-      }
-    }));
-
-    const availability = await Fetch<AvailabilityResponse>(
-      `/availability/v1/services?propertyId=${propertyId}&from=${arrival}&to=${departure}`
-    ).then(res => res.timeSlices)
+    const [response, availability] = await Promise.all([
+      Fetch<ServicesResponse>(`/rateplan/v1/services?propertyId=${propertyId}`).then(res => res.services.map(item =>{
+        const unlimited = !item.availability.hasOwnProperty("quantity")
+        return {
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          pricingUnit: item.pricingUnit,
+          price: item.defaultGrossPrice?.amount || 0,
+          currency: item.defaultGrossPrice?.currency,
+          pricingType: item.availability.mode,
+          daysOfWeek: item.availability.daysOfWeek,
+          availability: item.availability,
+          unlimited: unlimited,
+          usageType: STATUSES[item.code as keyof typeof STATUSES],
+        }
+      })),
+      Fetch<AvailabilityResponse>(`/availability/v1/services?propertyId=${propertyId}&from=${arrival}&to=${departure}`).then(res => res.timeSlices)
+    ]);
     const formattedServices = response.map(item => {
       const mode = item.availability.mode;
       const isParking = item.id === 'CMH-PRK' || item.id.includes('PRK');

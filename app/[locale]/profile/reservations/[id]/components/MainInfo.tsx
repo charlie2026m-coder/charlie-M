@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
 import { InvoiceButton } from '../../components/InvoiceButton';
 import { PinCodeComponent } from './PinCodeComponent';
+import { HOTEL_INFO } from '@/lib/Constants';
 
 
 const MainInfo = ({ reservation }: { reservation: any } ) => {
@@ -24,6 +25,7 @@ const MainInfo = ({ reservation }: { reservation: any } ) => {
   const isPincode = reservation.accesses;
   const isClosed = isCheckedOut || isCancelled;
   const isActive = reservation.status === bookingStatuses.Confirmed || reservation.status === bookingStatuses.InHouse;
+  const showCheckInButton = !reservation.isPreCheckedIn && !isCancelled;
   return (
     <div className='grid lg:grid-cols-2 gap-4 pb-6 '>
     <div>
@@ -40,7 +42,7 @@ const MainInfo = ({ reservation }: { reservation: any } ) => {
         <span className={cn(reservation.status === bookingStatuses.Canceled && 'text-red-500')}>{to} 11:00</span>
       </div>
       <div className='flex flex-col w-full lg:w-4/5 gap-3'>
-        {isActive && <CheckinButton reservationId={reservation.id} />}
+        {showCheckInButton && <CheckinButton reservationId={reservation.id} />}
         {isPincode && <PinCodeComponent roomNumber={111111} code={777777} />}
 
         <ReservationButton reservation={reservation} isActive={isActive} />
@@ -60,7 +62,7 @@ const MainInfo = ({ reservation }: { reservation: any } ) => {
           <h4 className='font-semibold'>{t('location')}</h4>
           <div className='flex gap-1 items-center text-sm'>
             <PiMapPinFill className='size-6 min-w-6' />
-            <span>Friedrichstraße 33, 10969 Berlin</span>
+            <span>{HOTEL_INFO.address.streetAddress}, {HOTEL_INFO.address.postalCode} {HOTEL_INFO.address.addressLocality}</span>
           </div>
         </div>
         <div className='w-2/5'>

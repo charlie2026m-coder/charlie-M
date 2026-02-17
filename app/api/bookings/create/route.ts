@@ -197,7 +197,7 @@ export async function POST(request: Request) {
             
             issues.push({
               type: 'payment',
-              reservationId,
+                  reservationId,
               details: 'error' in result.payment ? result.payment.error : 'Unknown error'
             })
           }
@@ -215,7 +215,7 @@ export async function POST(request: Request) {
           
           issues.push({
             type: 'processing',
-            reservationId,
+                reservationId,
             details: error instanceof Error ? error.message : 'Unknown error'
           })
         }
@@ -224,7 +224,7 @@ export async function POST(request: Request) {
       if (issues.length > 0) {
         console.log(`\n⚠️ Step 2 completed with ${issues.length} issue(s)`)
       } else {
-        console.log('\n✅ Step 2 complete: All reservations processed (services + payments)')
+      console.log('\n✅ Step 2 complete: All reservations processed (services + payments)')
       }
     }
 

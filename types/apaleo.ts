@@ -344,7 +344,9 @@ export interface ApaleoReservationResponse {
   payableAmount: PayableAmount;
   cancellationFee: CancellationFee;
   noShowFee: NoShowFee;
+  booker?: Booker;
   primaryGuest: Guest;
+  additionalGuests?: Guest[];
   property: Property;
   ratePlan: RatePlan;
   unitGroup: UnitGroup;

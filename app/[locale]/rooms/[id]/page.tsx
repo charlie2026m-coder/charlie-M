@@ -167,16 +167,13 @@ const RoomPage = async ({ params, searchParams }: IParams) => {
   try {
     const [rooms, babyBedAvailability] = await Promise.all([
       getSingleRoom(id, from, to, adults),
-      from && to
-        ? getServiceAvailabilityById(from, to, 'CMH-BAB')
-        : Promise.resolve({ isAvailable: false, count: 0 })
+      getServiceAvailabilityById(from, to, 'CMH-BAB')
     ])
     
     // Handle error from getSingleRoom
     if ('error' in rooms) {
       console.error('Error loading room:', rooms.error);
       console.error('Room ID:', id);
-      console.error('Search params:', { from, to, adults, children });
       return (
         <div className='flex flex-col relative pt-10 flex-1'>
           <RoomErrorCard />
