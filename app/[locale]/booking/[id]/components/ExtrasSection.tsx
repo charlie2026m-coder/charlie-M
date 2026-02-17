@@ -13,7 +13,13 @@ const ExtrasSection = ({ extras, room, nights, children }: { extras: Service[] |
   
   if(!extras || extras.length === 0) return null;
   // Filter out baby bed (CMH-BAB) - it's added automatically based on children count
-  const visibleExtras = extras.filter(extra => extra.id !== 'CMH-BAB')
+  // Filter out cleaning service if stay is less than 2 nights
+  const visibleExtras = extras.filter(extra => {
+    if (extra.id === 'CMH-BAB') return false;
+    const isCleaning = extra.id === 'CMH-CLN' || extra.name?.toLowerCase().includes('clean');
+    if (isCleaning && nights < 2) return false;
+    return true;
+  })
   
   if(visibleExtras.length === 0) return null;
   
