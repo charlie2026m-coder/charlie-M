@@ -12,9 +12,13 @@ import { type LoginFormData, loginSchema } from '@/types/schemas';
 import { Link } from '@/navigation';
 import CustomCard from '@/app/_components/ui/CustomCard';
 import { useTranslations } from 'next-intl';
+import Header from '@/app/_components/header/Header';
+import { useParams } from 'next/navigation';
 
 export default function LoginPage() {
   const t = useTranslations('login');
+  const params = useParams();
+  const locale = params.locale as string;
   const [loginError, setLoginError] = useState<string | null>(null);
   const [showReservationForm, setShowReservationForm] = useState(false);
   const loginMutation = useLogin();
@@ -62,7 +66,9 @@ export default function LoginPage() {
   // Show reservation form if user clicked "Continue with Reservation ID"
   if (showReservationForm) {
     return (
-      <div className="bg-white md:px-4 md:py-16 flex items-center justify-center py-10">
+      <>
+        <Header locale={locale} />
+        <div className="bg-white md:px-4 md:py-16 flex items-center justify-center py-10">
         <CustomCard className="w-full md:border max-w-md p-4 md:p-8">
           <div className="mb-4">
             <button 
@@ -75,11 +81,14 @@ export default function LoginPage() {
           <ReservationForm />
         </CustomCard>
       </div>
+      </>
     );
   }
 
   return (
-    <div className="bg-white md:px-4 md:py-16 flex items-center justify-center py-10">
+    <>
+      <Header locale={locale} />
+      <div className="bg-white md:px-4 md:py-16 flex items-center justify-center py-10">
       <CustomCard className="w-full md:border max-w-md p-4  md:p-8">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 relative mb-[30px]">
           <h1 className="text-3xl font-[400] text-center mb-2 ">{t('welcome')}</h1>
@@ -132,6 +141,7 @@ export default function LoginPage() {
         </div>
       </CustomCard>
     </div>
+    </>
   );
 }
 
