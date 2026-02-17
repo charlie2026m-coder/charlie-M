@@ -198,9 +198,9 @@ const ExtandYourStay = ({
               <div className='flex flex-col pt-4 '>
                 {availableUnits !== null ? (
                   <>
-                    <p className='mt-5 mb-4'>
-                      {t('extendYourStay.availableRoomsPrefix')} <strong>{availableUnits}</strong> {availableUnits === 1 ? t('extendYourStay.room') : t('extendYourStay.rooms')} {t('extendYourStay.availableRoomsSuffix')}
-                    </p>
+                  <p className='mt-5 mb-4'>
+                    {t('extendYourStay.availableRoomsPrefix')} <strong>{availableUnits}</strong> {availableUnits === 1 ? t('extendYourStay.room') : t('extendYourStay.rooms')} {t('extendYourStay.availableRoomsSuffix')}
+                  </p>
                     {isBaby && babyBedAvailable === false && (
                       <p className='mb-4 text-red-600 text-sm'>
                         Baby bed is not available for the selected dates.

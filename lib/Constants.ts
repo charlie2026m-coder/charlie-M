@@ -1,5 +1,5 @@
 // Tax
-export const CITY_TAX_RATE = 0.07; // 7% city tax on room prices
+export const CITY_TAX_RATE = 0.075; // 7.5% city tax on room prices
 export const PHONE_NUMBER = "+5 077 6764 8570"
 export const EMAIL = "info@charlie-m.de"
 

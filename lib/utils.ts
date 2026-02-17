@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Service, UrlParams } from "@/types/apaleo"
 import { Room, RoomExtra } from "@/types/types"
 import { RoomOffer } from "@/types/offers"
-import { RATE_PLANS } from "./Constants";
+import { RATE_PLANS, CITY_TAX_RATE } from "./Constants";
 import { getApaleoExtras } from "@/services/getExtras";
 import { ReservationFilter } from '@/store/useProfile'
 
@@ -268,8 +268,8 @@ export const formatReservations = (
   const maxPersons = roomDetails.maxPersons || 2
   const price = roomDetails.price || 0
   const priceForTwo = roomDetails.priceForTwo || price
-  const cityTax = roomDetails.cityTax || 0
-  const cityTaxForTwo = roomDetails.cityTaxForTwo || cityTax
+  const cityTax = roomDetails.cityTax || Math.round(price * CITY_TAX_RATE * 100) / 100
+  const cityTaxForTwo = roomDetails.cityTaxForTwo || Math.round(priceForTwo * CITY_TAX_RATE * 100) / 100
 
   // Calculate price for each room based on guest count (WITHOUT tax)
   const calculateRoomPrice = (adultsCount: number) => {
@@ -437,8 +437,8 @@ export const formatReservations = (
 
 
 export const getServiceAvailabilityById = async (
-  from: string,
-  to: string,
+  from: string | undefined,
+  to: string | undefined,
   serviceId: string
 ): Promise<{ isAvailable: boolean; count: number }> => {
   const extras = await getApaleoExtras(from, to);

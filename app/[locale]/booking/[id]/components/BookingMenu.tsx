@@ -13,6 +13,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Spinner } from '@/app/_components/ui/spinner';
 import { useState, useEffect } from 'react';
+import { CITY_TAX_RATE } from '@/lib/Constants';
 
 import { Service } from '@/types/apaleo';
 
@@ -44,22 +45,6 @@ const BookingMenu = ({
   const roomDetails = useBookingStore(state => state.roomDetails) || roomsOffers[0]
   const services = useBookingStore(state => state.services)
   const [isLoading, setIsLoading] = useState(false)
-
-  if (!roomDetails || !rooms || rooms.length === 0) {
-    return <div className="p-5 text-center">Loading room details...</div>
-  }
-  const updatedRooms = rooms.map(room => {
-    const updateExtras = room.extras?.map(extra => {
-      return {
-        ...extra,
-        totalPrice: getExtraPrice(extra, room.adults + room.children, nights, from as string, to as string),
-      }
-    })
-    return {
-      ...room,
-      extras: updateExtras,
-    }
-  })
 
   // Auto-add baby beds based on children count
   useEffect(() => {
@@ -98,6 +83,24 @@ const BookingMenu = ({
       setServices(updatedServices)
     }
   }, [rooms, isKidsBedAvailable, setServices])
+
+  // Early return after all hooks
+  if (!roomDetails || !rooms || rooms.length === 0) {
+    return <div className="p-5 text-center">Loading room details...</div>
+  }
+
+  const updatedRooms = rooms.map(room => {
+    const updateExtras = room.extras?.map(extra => {
+      return {
+        ...extra,
+        totalPrice: getExtraPrice(extra, room.adults + room.children, nights, from as string, to as string),
+      }
+    })
+    return {
+      ...room,
+      extras: updateExtras,
+    }
+  })
 
   const getText = (days: number) => days === 1 ? t('night') : t('nights')
 
@@ -146,8 +149,8 @@ const BookingMenu = ({
   const maxPersons = roomDetails.maxPersons || 2
   const price = roomDetails.price || 0
   const priceForTwo = roomDetails.priceForTwo || price
-  const cityTax = roomDetails.cityTax || 0
-  const cityTaxForTwo = roomDetails.cityTaxForTwo || cityTax
+  const cityTax = roomDetails.cityTax || Math.round(price * CITY_TAX_RATE * 100) / 100
+  const cityTaxForTwo = roomDetails.cityTaxForTwo || Math.round(priceForTwo * CITY_TAX_RATE * 100) / 100
   const oneNightPrice = roomDetails.oneNightPrice || 0
   const oneNightPriceForTwo = roomDetails.oneNightPriceForTwo || oneNightPrice
 
