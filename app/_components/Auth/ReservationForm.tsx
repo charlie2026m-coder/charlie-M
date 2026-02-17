@@ -9,8 +9,7 @@ import { useProfileStore } from '@/store/useProfile';
 
 const ReservationForm = () => {
   const t = useTranslations('login');
-  const [bookingId, setBookingId] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [reservationId, setReservationId] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
   const router = useRouter();
@@ -19,8 +18,8 @@ const ReservationForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!bookingId.trim() || !lastName.trim()) {
-      setError(t('checkBookingId'));
+    if (!reservationId.trim()) {
+      setError(t('checkBookingId') || 'Please enter reservation ID');
       return;
     }
 
@@ -28,19 +27,19 @@ const ReservationForm = () => {
     setIsPending(true);
 
     try {
-      const response = await fetch(`/api/reservations/search-booking?bookingId=${encodeURIComponent(bookingId)}&lastName=${encodeURIComponent(lastName)}`);
+      const response = await fetch(`/api/reservations/search-booking?reservationId=${encodeURIComponent(reservationId)}`);
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         
         if (response.status === 404) {
-          setError(t('checkBookingId'));
+          setError(t('checkBookingId') || 'Please check the reservation ID');
         } else if (response.status === 403) {
-          setError(t('noMatchesFound'));
+          setError(t('noMatchesFound') || 'No matches found');
         } else if (response.status >= 500) {
-          setError(t('serverErrorTryAgain'));
+          setError(t('serverErrorTryAgain') || 'Server error. Please try again.');
         } else {
-          setError(errorData.error || t('serverErrorTryAgain'));
+          setError(errorData.error || t('serverErrorTryAgain') || 'Server error. Please try again.');
         }
         setIsPending(false);
         return;
@@ -82,24 +81,12 @@ const ReservationForm = () => {
         <h2 className="text-xl text-center mb-6">{t('continueWithReservationId')}</h2>
 
         <Input 
-          name="bookingId"
+          name="reservationId"
           type="text" 
-          placeholder={t('enterBookingNumber')} 
-          value={bookingId}
+          placeholder={t('enterReservationId')} 
+          value={reservationId}
           onChange={(e) => {
-            setBookingId(e.target.value);
-            if (error) setError(null);
-          }}
-          disabled={isPending}
-          className="w-full h-12 rounded-full px-5"
-        />
-        <Input 
-          name="lastName"
-          type="text" 
-          placeholder={t('lastName')} 
-          value={lastName}
-          onChange={(e) => {
-            setLastName(e.target.value);
+            setReservationId(e.target.value);
             if (error) setError(null);
           }}
           disabled={isPending}
@@ -114,7 +101,7 @@ const ReservationForm = () => {
 
         <Button
           type="submit"
-          disabled={isPending || !bookingId.trim() || !lastName.trim()}
+          disabled={isPending || !reservationId.trim()}
           className="w-full h-12 rounded-full bg-blue hover:bg-blue/80 font-medium !mb-0"
         >
           {isPending ? t('searching') : t('continue')}

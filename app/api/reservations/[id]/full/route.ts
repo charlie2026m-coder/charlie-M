@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Fetch } from '@/services/Request';
-import { ApaleoReservationResponse } from '@/types/apaleo';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { getReservationById } from '@/services/getReservation';
 
 export async function GET(
   request: NextRequest,
@@ -17,8 +15,8 @@ export async function GET(
       );
     }
 
-    const reservation = await Fetch<ApaleoReservationResponse>(`/booking/v1/reservations/${id}?expand=services`);
-
+    const reservation = await getReservationById(id);
+    console.log(reservation, 'reservation');
     if (!reservation) {
       return NextResponse.json(
         { error: 'Reservation not found' },
@@ -26,22 +24,7 @@ export async function GET(
       );
     }
 
-    const supabase = await createSupabaseServerClient();
-    const { data: roomsData } = await supabase
-      .from('rooms')
-      .select('*')
-      .order('id', { ascending: true });
-
-    const room = roomsData?.find((r: any) => r.id === reservation.unitGroup?.id);
-
-    const formattedReservation = {
-      ...reservation,
-      name: reservation.unitGroup?.name || '',
-      images: room?.photos || [],
-      guests: reservation.adults,
-    };
-
-    return NextResponse.json(formattedReservation);
+    return NextResponse.json(reservation);
   } catch (error: any) {
     console.error('Error fetching reservation:', error);
     

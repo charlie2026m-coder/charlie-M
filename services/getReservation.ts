@@ -6,19 +6,42 @@ import { getReservationAccessesServer } from './getReservationAccessesServer';
 // Get single reservation by ID with formatted details
 export async function getReservationById(reservationId: string): Promise<Reservation | null> {
   try {
-    // Get reservation details from Apaleo
-    const reservation = await Fetch<ApaleoReservationResponse>(`/booking/v1/reservations/${reservationId}?expand=services&expand=booker`);
-    
-    if (!reservation) return null;
+    const [reservationResult, roomDetailsResult, accessDataResult] = await Promise.allSettled([
+      Fetch<ApaleoReservationResponse>(`/booking/v1/reservations/${reservationId}?expand=services&expand=booker`),
+      getRoomsDetails(),
+      getReservationAccessesServer(reservationId)
+    ]);
 
-    // Get room details from Supabase
-    const roomDetails = await getRoomsDetails();
+    // Handle reservation result (required)
+    if (reservationResult.status === 'rejected') {
+      console.error(`Failed to fetch reservation from Apaleo ${reservationId}:`, reservationResult.reason);
+      return null;
+    }
+
+    const reservation = reservationResult.value;
+    if (!reservation) {
+      return null;
+    }
+
+    // Handle room details result (optional - fallback to empty array)
+    let roomDetails: Awaited<ReturnType<typeof getRoomsDetails>> = [];
+    if (roomDetailsResult.status === 'fulfilled') {
+      roomDetails = roomDetailsResult.value || [];
+    } else {
+      console.error(`Failed to fetch room details from Supabase for reservation ${reservationId}:`, roomDetailsResult.reason);
+    }
+
     const room = roomDetails.find(room => room.id === reservation.unitGroup?.id);
 
-    // Get access data from Guestway using server service
+    // Handle access data result (optional - fallback to null)
     let accesses = null;
-    const accessDataList = await getReservationAccessesServer(reservationId);
-    accesses = accessDataList[0] || null;
+    if (accessDataResult.status === 'fulfilled') {
+      const accessDataList = accessDataResult.value || [];
+      accesses = accessDataList[0] || null;
+    } else {
+      console.error(`Failed to fetch access data from Guestway for reservation ${reservationId}:`, accessDataResult.reason);
+    }
+
     // Format reservation with room details and access data
     return {
       ...reservation,
@@ -31,7 +54,7 @@ export async function getReservationById(reservationId: string): Promise<Reserva
       accesses,
     } as Reservation;
   } catch (error: any) {
-    console.error(`Failed to fetch reservation ${reservationId}:`, error.message);
+    console.error(`Unexpected error fetching reservation ${reservationId}:`, error.message);
     return null;
   }
 }

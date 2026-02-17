@@ -10,7 +10,7 @@ interface ProfileState {
   currentPage: number
   roomDetails: RoomDetails[]
   reservationFilter: ReservationFilter
-  guestData: { type: 'reservation' | 'booking', data: any } | null
+  guestData: any | null
   
   setValue: (value: string | number | Reservation[] | RoomDetails[] | undefined, key: string) => void
   setReservations: (reservations: Reservation[]) => void
@@ -18,7 +18,7 @@ interface ProfileState {
   setTotalCount: (count: number) => void
   setCurrentPage: (page: number) => void
   setReservationFilter: (filter: ReservationFilter) => void
-  setGuestData: (data: { type: 'reservation' | 'booking', data: any } | null) => void
+  setGuestData: (data: any | null) => void
   clearGuestMode: () => void
   resetReservations: () => void
 }

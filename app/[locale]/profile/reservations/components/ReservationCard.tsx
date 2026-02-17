@@ -24,7 +24,7 @@ const ReservationCard = ({ reservation }: { reservation: ReservationType,}  ) =>
   
   const isPincode = reservation.accesses;
   const isClosed = isCheckedOut || isCancelled;
-  const isActive = status === bookingStatuses.Confirmed || status === bookingStatuses.InHouse;
+  const showCheckInButton = !reservation.isPreCheckedIn && !isCancelled;
   return (
     <div className='flex flex-col lg:flex-row bg-white border rounded-2xl p-3 relative'>
       <Image 
@@ -53,7 +53,7 @@ const ReservationCard = ({ reservation }: { reservation: ReservationType,}  ) =>
         <div className='flex gap-2.5 xl:items-center flex-col xl:flex-row '>
         {isPincode && <RoomCode roomNumber={0} code={0} />}
           <div className='flex gap-2 grow flex-col lg:flex-row '>
-            {isActive && !isCancelled  && <CheckinButton reservationId={id} />}
+            {showCheckInButton && <CheckinButton reservationId={id} />}
             {isClosed && <BookAgainButton reservation={reservation} />}
             {isClosed && <InvoiceButton reservationId={id} className='h-[30px] ' />}
             <DetailsButton id={id} />
