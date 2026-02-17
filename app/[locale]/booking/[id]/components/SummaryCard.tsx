@@ -243,7 +243,7 @@ const SummaryCard = () => {
           <div className='flex flex-col gap-1'>
             {reservationIds.map((id, index) => (
               <div key={id} className='flex items-center justify-between'>
-                <span className='text-gray-500 text-sm'>{t('reservation')} {index + 1}:</span>
+                <span className='text-gray-500 text-sm'>{t('reservation')}{reservationIds.length > 1 ? index + 1 : ''}:</span>
                 <span className='font-bold text-base'>{id}</span>
               </div>
             ))}
