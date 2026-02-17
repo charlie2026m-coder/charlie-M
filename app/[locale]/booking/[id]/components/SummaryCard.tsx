@@ -129,7 +129,7 @@ const SummaryCard = () => {
     <div className='flex flex-col bg-white rounded-[20px] py-5 px-3 border self-start col-span-1'>
       <h2 className='text-2xl font-bold mb-3 text-center'>{t('title')}</h2>
       <Image 
-        src="/images/room1.webp" 
+        src={roomDetails?.images?.[0] || "/images/room1.webp"} 
         alt="summary" 
         width={327} 
         height={202} 

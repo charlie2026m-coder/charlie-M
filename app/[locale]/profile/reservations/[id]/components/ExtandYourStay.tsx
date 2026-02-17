@@ -175,8 +175,23 @@ const ExtandYourStay = ({
                   return;
                 }
                 
-                // Allow single day selection (one night)
-                setExtensionRange(date as DateRange);
+                // Auto-select next day when only from is selected
+                if (date?.from && !date?.to) {
+                  const nextDay = new Date(date.from);
+                  nextDay.setDate(nextDay.getDate() + 1);
+                  setExtensionRange({ from: date.from, to: nextDay });
+                } else if (date?.from && date?.to) {
+                  // Check if same day selected
+                  if (date.from.getTime() === date.to.getTime()) {
+                    const nextDay = new Date(date.from);
+                    nextDay.setDate(nextDay.getDate() + 1);
+                    setExtensionRange({ from: date.from, to: nextDay });
+                  } else {
+                    setExtensionRange(date as DateRange);
+                  }
+                } else {
+                  setExtensionRange(date as DateRange);
+                }
               }}
               disabled={[
                 { before: departureDate }, // Disable all dates before departure
