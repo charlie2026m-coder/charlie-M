@@ -100,7 +100,7 @@ const ProfileMenu = () => {
       })}
 
 
-      <ReservationIdDialog />
+      {!isGuestMode && <ReservationIdDialog />}
       <Logout />
     </CustomCard>
   )

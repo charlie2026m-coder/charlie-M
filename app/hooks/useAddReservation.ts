@@ -11,16 +11,16 @@ interface AddReservationResponse {
 export function useAddReservation() {
   const queryClient = useQueryClient();
 
-  return useMutation<AddReservationResponse, Error, { reservationId: string, lastName: string }>({
-    mutationFn: async (params: { reservationId: string, lastName: string }) => {
-      const { reservationId, lastName } = params;
+  return useMutation<AddReservationResponse, Error, { reservationId: string }>({
+    mutationFn: async (params: { reservationId: string }) => {
+      const { reservationId } = params;
       console.log('🔍 Step 1: Starting reservation search for ID:', reservationId);
       
       if (!reservationId.trim()) {
         throw new Error('Reservation ID is required');
       }
 
-      const response = await fetch(`/api/reservations/search-reservation?reservationId=${encodeURIComponent(reservationId)}&lastName=${encodeURIComponent(lastName)}`);
+      const response = await fetch(`/api/reservations/search-booking?reservationId=${encodeURIComponent(reservationId)}`);
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
