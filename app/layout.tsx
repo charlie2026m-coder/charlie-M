@@ -40,14 +40,14 @@ export const metadata: Metadata = {
     images: ["/images/og-image.jpg"]
   },
   
-  // Robots - Disabled indexing temporarily
+  // Robots - Allow indexing by default (can be overridden on specific pages)
   robots: {
-    index: false,
-    follow: false,
+    index: true,
+    follow: true,
     googleBot: {
-      index: false,
-      follow: false,
-      "max-image-preview": "none",
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
       "max-snippet": -1,
     }
   },

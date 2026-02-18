@@ -1,10 +1,63 @@
 import { EMAIL } from "@/lib/Constants";
 import { getTranslations } from "next-intl/server";
 import Header from "@/app/_components/header/Header";
+import type { Metadata } from 'next';
 
 type Props = {
   params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await Promise.resolve(params);
+  const isGerman = locale === 'de';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://charlie-m.de";
+  
+  const canonicalUrl = isGerman ? `${siteUrl}/de/imprint` : `${siteUrl}/imprint`;
+
+  const metadata = {
+    en: {
+      title: 'Imprint | Charlie M Hotel Berlin',
+      description: 'Legal information and contact details for Charlie M Hotel in Berlin Mitte. Company details, registration information, and responsible parties.',
+    },
+    de: {
+      title: 'Impressum | Charlie M Hotel Berlin',
+      description: 'Rechtliche Informationen und Kontaktdaten des Charlie M Hotels in Berlin Mitte. Firmenangaben, Registerinformationen und verantwortliche Stellen.',
+    }
+  };
+
+  const currentMeta = isGerman ? metadata.de : metadata.en;
+
+  return {
+    title: currentMeta.title,
+    description: currentMeta.description,
+    
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+      }
+    },
+    
+    openGraph: {
+      title: currentMeta.title,
+      description: currentMeta.description,
+      url: canonicalUrl,
+      siteName: 'Charlie M Hotel',
+      locale: isGerman ? 'de_DE' : 'en_US',
+      type: 'website',
+    },
+    
+    alternates: {
+      canonical: canonicalUrl,
+      languages: {
+        en: `${siteUrl}/imprint`,
+        de: `${siteUrl}/de/imprint`
+      }
+    }
+  };
+}
 
 const Imprint = async ({ params }: Props) => {
   const { locale } = await Promise.resolve(params);

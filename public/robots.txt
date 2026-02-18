@@ -1,13 +1,32 @@
 # Charlie M Hotel - Robots.txt
 
-# Disallow all search engines from indexing (temporarily)
+# Allow all search engines to index public pages
 User-agent: *
-Disallow: /
+Allow: /
+Allow: /rooms
+Allow: /de/rooms
+Allow: /rooms/*
+Allow: /de/rooms/*
+Allow: /privacy-policy
+Allow: /de/privacy-policy
+Allow: /terms-and-conditions
+Allow: /de/terms-and-conditions
+Allow: /imprint
+Allow: /de/imprint
+
+# Disallow private pages
+Disallow: /profile
+Disallow: /booking
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /api
 
 # Crawl-delay for all bots
 Crawl-delay: 1
 
-# Sitemap (commented out while indexing is disabled)
-# Sitemap: https://charlie-m.de/sitemap.xml
-# Sitemap: https://www.charlie-m.de/sitemap.xml
+# Sitemap
+Sitemap: https://charlie-m.de/sitemap.xml
+Sitemap: https://www.charlie-m.de/sitemap.xml
 

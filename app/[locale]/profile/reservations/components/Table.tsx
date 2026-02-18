@@ -44,8 +44,7 @@ const ReservationsTable = ({ addedReservations = [] }: ReservationsTableProps) =
 
   const adjustedPage = page === 1 && addedReservations.length > 0 ? 1 : page
   const normalQuery = useReservations(adjustedPage, reservationFilter)
-  const guestQuery = useGuestReservations(guestData?.data?.id)
-
+  const guestQuery = useGuestReservations(guestData?.id)
   const { data, isLoading, isError, isFetching } = isGuestMode 
     ? guestQuery 
     : normalQuery

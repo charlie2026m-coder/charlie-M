@@ -49,6 +49,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: currentMeta.title,
     description: currentMeta.description,
     
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      }
+    },
+    
     openGraph: {
       title: currentMeta.title,
       description: currentMeta.description,

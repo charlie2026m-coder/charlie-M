@@ -83,7 +83,7 @@ const ReservationForm = () => {
         <Input 
           name="reservationId"
           type="text" 
-          placeholder={t('enterReservationId')} 
+          placeholder={`${t('enterReservationId')} (e.g. EXAMPLEID-0)`} 
           value={reservationId}
           onChange={(e) => {
             setReservationId(e.target.value);
