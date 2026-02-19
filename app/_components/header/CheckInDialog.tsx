@@ -66,7 +66,7 @@ const CheckInDialog = ({ trigger, onOpenChange }: CheckInDialogProps) => {
             <div className='text-[15px] mb-2 text-dark inter'>{t('enterReservationId')}</div>
             <Input
               type='text'
-              placeholder={t('reservationIdPlaceholder')}
+              placeholder={`${t('enterReservationId')} (e.g. EXAMPLE-0)`}
               className='w-full max-w-[400px] h-10 rounded-full mb-10'
               value={reservationId}
               onChange={(e) => setReservationId(e.target.value)}
