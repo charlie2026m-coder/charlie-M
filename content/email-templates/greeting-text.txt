@@ -12,7 +12,7 @@ Room type: @RoomType
 Guests: @NumberOfGuests
 
 🖥️ Online Check-inTo ensure a smooth arrival, we kindly ask you to complete your online check-in in advance.
-Your room PIN code will be available 24 hours before arrival.
+Your room PIN code will be available in the morning of your arrival.
 
 👉 Complete your online check-in here:@OnlineCheckInLink
 

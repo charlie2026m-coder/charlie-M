@@ -728,7 +728,7 @@
   },
   "checkIn": {
     "title": "Online Check-In",
-    "subtitle": "Complete your online check-in. Access codes will be available in your profile 24 hours before check-in",
+    "subtitle": "Complete your online check-in. Your room PIN code will be available in the morning of your arrival",
     "enterReservationId": "Enter your Reservation ID",
     "reservationIdPlaceholder": "e.g. ABC123",
     "reservationId": "Reservation ID",
