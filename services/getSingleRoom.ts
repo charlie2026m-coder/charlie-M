@@ -4,11 +4,12 @@ import { cache } from 'react';
 import { OfferResponse, RoomOffer } from '@/types/offers';
 import { getRoomsDetails } from './getRoomsDetails';
 import { CITY_TAX_RATE } from '@/lib/Constants';
+import { roomTranslations } from '@/content/RoomTranslations';
 const propId = process.env.APALEO_PROPERTY_ID;
 
 type GetSingleRoomResult = RoomOffer[] | { error: string };
 
-const getSingleRoomInternal = async (roomId: string, from?: string, to?: string, adults?: string): Promise<GetSingleRoomResult> => {
+const getSingleRoomInternal = async (roomId: string, from?: string, to?: string, adults?: string, locale: string = 'en'): Promise<GetSingleRoomResult> => {
   if (!propId) throw new Error('Property ID is required. Set APALEO_PROPERTY_ID in .env');
   let arrival = from || dayjs().format('YYYY-MM-DD');
   let departure = to || dayjs().add(1, 'day').format('YYYY-MM-DD');
@@ -24,14 +25,40 @@ const getSingleRoomInternal = async (roomId: string, from?: string, to?: string,
   
   
   try {
-    const roomsData = await getRoomsDetails();
-    const singleRoomResponse = await Fetch<OfferResponse>(`/booking/v1/offers?propertyId=${propId}&arrival=${arrival}&departure=${departure}&unitGroupIds=${roomId}&channelCode=Ibe&adults=1`).then(res => res.offers);
+    // Execute all requests in parallel using Promise.allSettled
+    const [roomsDataResult, singleRoomResult, doubleRoomResult] = await Promise.allSettled([
+      getRoomsDetails(),
+      Fetch<OfferResponse>(`/booking/v1/offers?propertyId=${propId}&arrival=${arrival}&departure=${departure}&unitGroupIds=${roomId}&channelCode=Ibe&adults=1`),
+      Fetch<OfferResponse>(`/booking/v1/offers?propertyId=${propId}&arrival=${arrival}&departure=${departure}&unitGroupIds=${roomId}&channelCode=Ibe&adults=2`)
+    ]);
+
+    // Handle roomsData
+    let roomsData: Awaited<ReturnType<typeof getRoomsDetails>> = [];
+    if (roomsDataResult.status === 'fulfilled') {
+      roomsData = roomsDataResult.value;
+    } else {
+      console.warn('Failed to fetch rooms details:', roomsDataResult.reason);
+    }
+
+    // Handle single room response
+    let singleRoomResponse: OfferResponse['offers'] = [];
+    if (singleRoomResult.status === 'fulfilled') {
+      singleRoomResponse = singleRoomResult.value.offers || [];
+    } else {
+      console.warn('Failed to fetch single room data:', singleRoomResult.reason);
+    }
 
     if (!singleRoomResponse || singleRoomResponse.length === 0) {
       return [];
     }
 
-    const doubleRoomResponse = await Fetch<OfferResponse>(`/booking/v1/offers?propertyId=${propId}&arrival=${arrival}&departure=${departure}&unitGroupIds=${roomId}&channelCode=Ibe&adults=2`).then(res => res.offers).catch(() => undefined);
+    // Handle double room response
+    let doubleRoomResponse: OfferResponse['offers'] | undefined;
+    if (doubleRoomResult.status === 'fulfilled') {
+      doubleRoomResponse = doubleRoomResult.value.offers;
+    } else {
+      console.warn('Failed to fetch double room data:', doubleRoomResult.reason);
+    }
     
     console.log(singleRoomResponse, 'single ');
     console.log(doubleRoomResponse, 'double');
@@ -45,11 +72,19 @@ const getSingleRoomInternal = async (roomId: string, from?: string, to?: string,
       const roomPrice = room.totalGrossAmount?.amount || 0;
       const roomPriceForTwo = doubleRoom?.totalGrossAmount?.amount || 0;
 
+      // Get translations for room
+      const roomIdForTranslation = room.unitGroup?.id;
+      const translation = roomIdForTranslation ? roomTranslations[roomIdForTranslation as keyof typeof roomTranslations] : null;
+      const lang = locale === 'de' ? 'de' : 'en';
+      
+      const translatedName = translation?.title[lang] || room.unitGroup?.name || 'Unknown Room';
+      const translatedDescription = translation?.description[lang] || room.unitGroup?.description || '';
+
       return {
         ...room,
         id: room.unitGroup?.id || '',
-        name: room.unitGroup?.name || 'Unknown Room',
-        description: room.unitGroup?.description || '',
+        name: translatedName || room.unitGroup?.name || 'Unknown Room',
+        description: translatedDescription || room.unitGroup?.description || '',
         attributes: roomDetails?.attributes || [],
         size: roomDetails?.size || 0,
         maxPersons: roomDetails?.max_persons || 1,

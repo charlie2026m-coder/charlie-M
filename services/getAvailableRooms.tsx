@@ -4,11 +4,12 @@ import { cache } from 'react';
 import { OfferResponse, RoomOffer } from '@/types/offers';
 import { getRoomsDetails } from './getRoomsDetails';
 import { CITY_TAX_RATE } from '@/lib/Constants';
+import { roomTranslations } from '@/content/RoomTranslations';
 const propId = process.env.APALEO_PROPERTY_ID;
 
 type GetAvailableRoomsResult = RoomOffer[] | { error: string };
 
-const getAvailableRoomsInternal = async (from?: string, to?: string, guests: number = 1): Promise<GetAvailableRoomsResult> => {
+const getAvailableRoomsInternal = async (from?: string, to?: string, guests: number = 1, locale: string = 'en'): Promise<GetAvailableRoomsResult> => {
   if (!propId) {
     console.error('APALEO_PROPERTY_ID is not set in environment variables')
     return { error: 'Property ID is required. Set APALEO_PROPERTY_ID in .env' }
@@ -54,12 +55,20 @@ const getAvailableRoomsInternal = async (from?: string, to?: string, guests: num
       const roomPrice = room.totalGrossAmount?.amount || 0;
       const roomPriceForTwo = doubleRoom?.totalGrossAmount?.amount || 0;
       
+      // Get translations for room
+      const roomId = room.unitGroup?.id;
+      const translation = roomId ? roomTranslations[roomId as keyof typeof roomTranslations] : null;
+      const lang = locale === 'de' ? 'de' : 'en';
+      
+      const translatedName = translation?.title[lang] || room.unitGroup?.name || 'Unknown Room';
+      const translatedDescription = translation?.description[lang] || room.unitGroup?.description || '';
+      
       return {
         ...room,
         images: roomDetails?.photos || [],
         id: `${room.unitGroup?.id || ''}-${room.ratePlan?.id || ''}`,
-        name: room.unitGroup?.name || 'Unknown Room',
-        description: room.unitGroup?.description || '',
+        name: translatedName || room.unitGroup?.name || 'Unknown Room',
+        description: translatedDescription || room.unitGroup?.description || '',
         price: roomPrice,
         priceForTwo: roomPriceForTwo,
         oneNightPrice: room.timeSlices?.[0]?.totalGrossAmount?.amount || 0,

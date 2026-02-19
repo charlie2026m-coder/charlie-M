@@ -28,7 +28,7 @@ export async function generateMetadata({ params, searchParams }: IParams): Promi
   const hasQueryParams = !!(from || to || adults || children)
   
   try {
-    const rooms = await getSingleRoom(id, from, to, adults)
+    const rooms = await getSingleRoom(id, from, to, adults, locale)
     
     if ('error' in rooms) {
       console.error('Error in generateMetadata for room:', id, rooms.error);
@@ -161,12 +161,12 @@ export async function generateMetadata({ params, searchParams }: IParams): Promi
 }
 
 const RoomPage = async ({ params, searchParams }: IParams) => {
-  const { id } = await params
+  const { id, locale } = await params
   const { from, to, adults, children } = await searchParams
   
   try {
     const [rooms, babyBedAvailability] = await Promise.all([
-      getSingleRoom(id, from, to, adults),
+      getSingleRoom(id, from, to, adults, locale),
       getServiceAvailabilityById(from, to, 'CMH-BAB')
     ])
     
