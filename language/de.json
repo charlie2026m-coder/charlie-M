@@ -517,6 +517,8 @@
     "reservationAlreadyAdded": "Diese Reservierung wurde bereits hinzugefügt",
     "reservationEmailMismatch": "Die E-Mail-Adresse der Reservierung stimmt nicht mit der E-Mail-Adresse Ihres Kontos überein",
     "errorAddingReservation": "Fehler beim Hinzufügen der Reservierung",
+    "showLess": "Weniger anzeigen",
+    "showMore": "Mehr anzeigen",
     "reservationNotFoundCheckId": "Reservierung nicht gefunden. Bitte überprüfen Sie die Nummer.",
     "reservationIdExample": "Beispiel: XXXXX-1 (muss mit -1 enden)",
     "checkBookingId": "Bitte überprüfen Sie die Buchungsnummer",
@@ -1252,6 +1254,25 @@
     "viewAllRooms": "Alle Zimmer anzeigen",
     "noRoomsAvailableNearDates": "Keine Zimmer für die nächsten Termine verfügbar",
     "pleaseSelectDifferentDates": "Bitte versuchen Sie andere Daten auszuwählen"
+  },
+  "amenities": {
+    "title": "Inklusive Ausstattung",
+    "kettle": "Wasserkocher",
+    "coffeeMachine": "Kaffeemaschine",
+    "freshTowels": "Frische Handtücher & Bettwäsche",
+    "miniFridge": "Minikühlschrank",
+    "hairdryer": "Haartrockner",
+    "smartTV": "Smart-TV",
+    "highSpeedWiFi": "Schnelles Wifi",
+    "airConditioning": "Klimaanlage",
+    "blackoutCurtains": "Verdunklungsvorhänge",
+    "selfServiceCloset": "Self-Service Closet",
+    "elevator": "Aufzug",
+    "weeklyCleaning": "Wöchentliche Zimmerreinigung (bei Aufenthalten ab 7 Nächten)",
+    "luggageStorage": "Kofferlagerungen",
+    "bicycleParking": "Fahrradstellplätze",
+    "coWorkingSpace": "Gemeinschaftsbereich mit Co-Working-Space",
+    "virtualConcierge": "Virtueller Concierge \"Charlie\" rund um die Uhr verfügbar"
   }
 }
 

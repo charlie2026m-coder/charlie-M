@@ -20,17 +20,13 @@ export async function GET(request: NextRequest): Promise<NextResponse<ExtensionR
     const roomId = searchParams.get('roomId')
     const isBaby = searchParams.get('isBaby') === 'true'
 
-    if (!from || !to) {
-      return NextResponse.json({ error: 'from and to dates are required' }, { status: 400 })
-    }
-
-    if (!roomId) {
-      return NextResponse.json({ error: 'roomId is required' }, { status: 400 })
-    }
+    if (!from || !to) return NextResponse.json({ error: 'from and to dates are required' }, { status: 400 })
+    if (!roomId) return NextResponse.json({ error: 'roomId is required' }, { status: 400 })
 
     // Execute both checks in parallel
+    // Note: API route doesn't have locale context, using 'en' as default
     const [room, babyBedAvailability] = await Promise.all([
-      getSingleRoom(roomId, from, to, '1'),
+      getSingleRoom(roomId, from, to, '1', 'en'),
       isBaby ? getServiceAvailabilityById(from, to, 'CMH-BAB') : Promise.resolve({ isAvailable: true, count: 0 })
     ])
 

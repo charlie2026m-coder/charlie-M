@@ -5,16 +5,19 @@ import { IoIosArrowUp } from 'react-icons/io'
 import { IoIosArrowDown } from 'react-icons/io'
 import { cn } from '@/lib/utils'
 import { Button } from '@/app/_components/ui/button'
+import { useTranslations } from 'next-intl'
 // import DetailsDialog from './DetailsDialog'
 import { amenities } from '@/content/content'
+const icon = 'text-mute size-6'
 
 const Amenities = ({ isTitle = true }: { isTitle?: boolean }) => {
   const [isOpen, setIsOpen] = useState(true)
+  const t = useTranslations('amenities')
 
   return (
     <div className='flex flex-col'>
       {isTitle && <h2 className='text-xl font-semibold text-mute inter mb-5 flex items-center cursor-pointer gap-3' onClick={() => setIsOpen(!isOpen)}>
-        Amenities included
+        {t('title')}
         {isOpen ? <IoIosArrowUp className={icon} /> : <IoIosArrowDown className={icon} />}
       </h2>}
       <div className={cn(
@@ -22,7 +25,7 @@ const Amenities = ({ isTitle = true }: { isTitle?: boolean }) => {
         isOpen ? 'max-h-[2000px] opacity-100 mb-[30px]' : 'max-h-0 opacity-0'
       )}>
         {amenities.map((amenity) => (
-          <AmenityButton key={amenity.title} item={amenity} />
+          <AmenityButton key={amenity.key} item={amenity} />
         )) }
       </div>
     </div>
@@ -30,21 +33,20 @@ const Amenities = ({ isTitle = true }: { isTitle?: boolean }) => {
 }
 
 const AmenityButton = ({ item }: { item: {
-  title: string;
+  key: string;
   icon: string;
-  imageUrl: string;
-  description: string;
-
 } }) => {
+  const t = useTranslations('amenities')
+  const title = t(item.key as any)
+
   return (
       <div 
         className='flex items-center bg-blue/40 rounded-full px-2.5 !h-7 items-center gap-1' 
       >
-        <Image className='size-[15px]' src={item.icon} alt={item.title} width={15} height={15} />
-        <span className=''>{item.title}</span>
+        <Image className='size-[15px]' src={item.icon} alt={title} width={15} height={15} />
+        <span className=''>{title}</span>
       </div>
   )
 }
 
 export default Amenities
-const icon = 'text-mute size-6'

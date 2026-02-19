@@ -8,7 +8,7 @@ import { RATE_PLANS } from '@/lib/Constants'
 
 const RoomsSection = async ({ locale }: { locale: string }) => {
   try {
-    const rooms = await getAvailableRooms()
+    const rooms = await getAvailableRooms(undefined, undefined, 1, locale)
     const t = await getTranslations({ locale })
     
     // Show fallback UI if error object returned
