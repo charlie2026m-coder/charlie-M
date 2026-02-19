@@ -518,6 +518,8 @@
     "reservationAlreadyAdded": "This reservation has already been added",
     "reservationEmailMismatch": "Reservation email does not match your account email",
     "errorAddingReservation": "Failed to add reservation",
+    "showLess": "Show less",
+    "showMore": "Show more",
     "reservationNotFoundCheckId": "Reservation not found. Please check the ID.",
     "reservationIdExample": "Example: XXXXX-1 (must end with -1)",
     "checkBookingId": "Please check the booking ID",
@@ -1253,6 +1255,25 @@
     "viewAllRooms": "View All Rooms",
     "noRoomsAvailableNearDates": "No rooms available for the nearest dates",
     "pleaseSelectDifferentDates": "Please try selecting different dates"
+  },
+  "amenities": {
+    "title": "Amenities",
+    "kettle": "Kettle",
+    "coffeeMachine": "Coffee machine",
+    "freshTowels": "Fresh towels & bed linen",
+    "miniFridge": "Mini Fridge",
+    "hairdryer": "Hairdryer",
+    "smartTV": "Smart TV",
+    "highSpeedWiFi": "High-speed Wi-Fi",
+    "airConditioning": "Air Conditioning",
+    "blackoutCurtains": "Blackout curtains",
+    "selfServiceCloset": "Self-Service Closet",
+    "elevator": "Elevator",
+    "weeklyCleaning": "Weekly cleaning (for stays of 7+ nights)",
+    "luggageStorage": "Luggage Storage",
+    "bicycleParking": "Bicycle parking",
+    "coWorkingSpace": "Community area with co-working space",
+    "virtualConcierge": "Virtual concierge \"Charlie\" available 24/7"
   }
 }
 

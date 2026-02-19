@@ -6,7 +6,7 @@ import ErrorCard from '@/app/[locale]/rooms/components/ErrorCard'
 import Steps from './components/Steps'
 
 interface IParams {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string; locale: string }>
   searchParams: Promise<{ 
     from: string
     to: string
@@ -16,7 +16,7 @@ interface IParams {
 }
 
 const Booking = async ({ params, searchParams }: IParams) => {
-  const { id } = await params
+  const { id, locale } = await params
   const { from, to, adults, children } = await searchParams
   
   // Validate required params
@@ -25,7 +25,7 @@ const Booking = async ({ params, searchParams }: IParams) => {
   }
   
   const [rooms, babyBedAvailability, extras] = await Promise.all([
-    getSingleRoom(id, from, to, adults),
+    getSingleRoom(id, from, to, adults, locale),
     getServiceAvailabilityById(from, to, 'CMH-BAB'),
     getApaleoExtras(from, to)
   ])

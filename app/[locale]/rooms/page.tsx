@@ -91,14 +91,15 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   };
 }
 
-const RoomsPage = async ({ searchParams } : Props) => {
+const RoomsPage = async ({ params, searchParams } : Props) => {
+  const { locale } = await params;
   const { from, to, adults, children } = await searchParams;
   
   try {
     const adultsCount = adults ? Number(adults) : 1;
     
     const [rooms, babyBedAvailability] = await Promise.all([
-      getAvailableRooms(from, to, adultsCount),
+      getAvailableRooms(from, to, adultsCount, locale),
       from && to 
         ? getServiceAvailabilityById(from, to, 'CMH-BAB')
         : Promise.resolve({ isAvailable: false, count: 0 })
