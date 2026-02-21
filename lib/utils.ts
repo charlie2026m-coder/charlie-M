@@ -104,38 +104,40 @@ export function sortGuestsByRooms(
   const pushRoom = (a: number, c: number) =>
     rooms.push({ id: uuidv4(), adults: a, children: c, from, to });
 
+  // Special case: Single occupancy rooms (maxPersons = 1)
   if (validMaxPersons === 1) {
+    // Each adult gets their own room
     while (remainingAdults > 0) {
       pushRoom(1, 0);
       remainingAdults--;
     }
+    // Each child gets their own room with one adult
+    while (remainingChildren > 0 && remainingAdults > 0) {
+      pushRoom(1, 1);
+      remainingAdults--;
+      remainingChildren--;
+    }
     return rooms;
   }
 
+  // Step 1: Create one room per child (children cannot be alone)
+  // Each child room gets 1 adult minimum
   for (let i = 0; i < validChildren; i++) {
-    pushRoom(0, 1);
-    remainingChildren--;
-  }
-
-  const minAdultsForChildren = Math.min(validAdults, validChildren);
-  for (let i = 0; i < minAdultsForChildren; i++) {
-    rooms[i].adults = 1;
+    pushRoom(1, 1); // 1 adult + 1 child
     remainingAdults--;
   }
 
-  const maxAdultsPerChildRoom = validMaxPersons - 1;
-  let roomIndex = 0;
-  while (remainingAdults > 0 && roomIndex < rooms.length) {
-    if (rooms[roomIndex].adults < maxAdultsPerChildRoom) {
-      rooms[roomIndex].adults++;
+  // Step 2: Fill remaining capacity in child rooms with more adults
+  // maxPersons applies only to adults, children are additional
+  for (let i = 0; i < validChildren && remainingAdults > 0; i++) {
+    // Add more adults to this child's room up to maxPersons adults
+    while (rooms[i].adults < validMaxPersons && remainingAdults > 0) {
+      rooms[i].adults++;
       remainingAdults--;
-    } else {
-      roomIndex++;
     }
-    if (roomIndex >= rooms.length) break;
   }
 
-  // Create additional rooms for remaining adults (use validMaxPersons per room)
+  // Step 3: Create additional rooms for remaining adults
   while (remainingAdults > 0) {
     const roomAdults = Math.min(remainingAdults, validMaxPersons);
     pushRoom(roomAdults, 0);

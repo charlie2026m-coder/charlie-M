@@ -3,6 +3,7 @@
 # Allow all search engines to index public pages
 User-agent: *
 Allow: /
+Allow: /de
 Allow: /rooms
 Allow: /de/rooms
 Allow: /rooms/*
@@ -16,12 +17,22 @@ Allow: /de/imprint
 
 # Disallow private pages
 Disallow: /profile
+Disallow: /de/profile
 Disallow: /booking
+Disallow: /de/booking
 Disallow: /login
+Disallow: /de/login
 Disallow: /signup
+Disallow: /de/signup
 Disallow: /forgot-password
+Disallow: /de/forgot-password
 Disallow: /reset-password
+Disallow: /de/reset-password
+Disallow: /auth
+Disallow: /de/auth
 Disallow: /api
+Disallow: /admin
+Disallow: /de/admin
 
 # Crawl-delay for all bots
 Crawl-delay: 1

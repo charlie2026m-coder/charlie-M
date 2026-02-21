@@ -7,6 +7,9 @@
   "discount": {
     "text": "Buchen Sie direkt bei uns zum besten Preis"
   },
+  "developmentBanner": {
+    "message": "⚠️ Website befindet sich in der Entwicklung. Alle Buchungen sind untersagt."
+  },
 
   "home":{
     "rooms_title": "Wählen Sie Ihr Zimmer",
@@ -727,7 +730,7 @@
   },
   "checkIn": {
     "title": "Online-Check-In",
-    "subtitle": "Schließen Sie Ihren Online-Check-In ab. Zugangscodes sind 24 Stunden vor dem Check-In in Ihrem Profil verfügbar",
+    "subtitle": "Schließen Sie Ihren Online-Check-In ab. Ihr Zimmer-PIN-Code wird am Morgen Ihrer Ankunft verfügbar sein",
     "enterReservationId": "Geben Sie Ihre Reservierungs-ID ein",
     "reservationIdPlaceholder": "z.B. ABC123",
     "reservationId": "Reservierungs-ID",

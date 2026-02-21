@@ -10,6 +10,7 @@ import CookieBanner from '@/app/_components/CookieBanner';
 import { Toaster } from 'sonner';
 import type { Metadata } from 'next';
 import Discount from '@/app/_components/ui/Discount';
+import DevelopmentBanner from '@/app/_components/ui/DevelopmentBanner';
 
 const getCachedMessages = cache(async (locale: string) => {
   return await getMessages({ locale });
@@ -57,6 +58,7 @@ export default async function LocaleLayout({
   return (
     <NextIntlClientProvider key={locale} messages={messages} locale={locale}>
       <ReactQueryProvider>
+        <DevelopmentBanner />
         <Discount />
 
         <ConditionalStickyHeader locale={locale} />
