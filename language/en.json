@@ -7,6 +7,9 @@
   "discount": {
     "text": "Get the best rate directly with us"
   },
+  "developmentBanner": {
+    "message": "⚠️ Website is under development. All bookings are prohibited."
+  },
 
   "home":{
     "rooms_title": "Choose Room",

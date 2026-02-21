@@ -7,6 +7,9 @@
   "discount": {
     "text": "Buchen Sie direkt bei uns zum besten Preis"
   },
+  "developmentBanner": {
+    "message": "⚠️ Website befindet sich in der Entwicklung. Alle Buchungen sind untersagt."
+  },
 
   "home":{
     "rooms_title": "Wählen Sie Ihr Zimmer",
