@@ -14,7 +14,7 @@ import { useTranslations } from 'next-intl';
 import { CheckinButton } from './CheckInButton';
 import { InvoiceButton } from './InvoiceButton';
 
-const ReservationCard = ({ reservation }: { reservation: ReservationType,}  ) => {
+const ReservationCard = ({ reservation }: { reservation: ReservationType }  ) => {
   const t = useTranslations('profile')
   const { status, arrival, departure, id, name, images, guests } = reservation;
   const from = dayjs(arrival).format('ddd D MMM YYYY');
@@ -24,7 +24,7 @@ const ReservationCard = ({ reservation }: { reservation: ReservationType,}  ) =>
   
   const isPincode = reservation.accesses?.pinCode;
   const isClosed = isCheckedOut || isCancelled;
-  const showCheckInButton = !reservation.isPreCheckedIn && !isCancelled;
+  const showCheckInButton = reservation.isPreCheckedIn && !isCancelled;
   return (
     <div className='flex flex-col lg:flex-row bg-white border rounded-2xl p-3 relative'>
       <Image 
@@ -51,7 +51,7 @@ const ReservationCard = ({ reservation }: { reservation: ReservationType,}  ) =>
           </span>
         </div>
         <div className='flex gap-2.5 xl:items-center flex-col xl:flex-row '>
-          {(isPincode && !showCheckInButton) && <RoomCode roomNumber={reservation.accesses?.roomNumber || ''} code={reservation.accesses?.pinCode || ''} />}
+          {(isPincode && !showCheckInButton) && <RoomCode roomNumber={reservation.accesses?.roomNumber || ''} code={reservation.accesses?.pinCode || ''} unitId={reservation.unit?.id || null} />}
           <div className='flex gap-2 grow flex-col lg:flex-row '>
             {showCheckInButton && <CheckinButton reservationId={id} />}
             {isClosed && <BookAgainButton reservation={reservation} />}
@@ -72,7 +72,7 @@ const ReservationCard = ({ reservation }: { reservation: ReservationType,}  ) =>
 export default ReservationCard;
 
 
-const RoomCode = ({roomNumber, code}: {roomNumber: string, code: string}) => {
+const RoomCode = ({roomNumber, code, unitId}: {roomNumber: string, code: string, unitId: string | null | undefined}) => {
   const t = useTranslations('profile')
   
   const handleCopy = async (text: string | number, label: string) => {
@@ -109,7 +109,7 @@ const RoomCode = ({roomNumber, code}: {roomNumber: string, code: string}) => {
           </div>
         </div>
         
-        <InfoButton />
+        <InfoButton unitId={unitId} />
       </div>
   )
 }

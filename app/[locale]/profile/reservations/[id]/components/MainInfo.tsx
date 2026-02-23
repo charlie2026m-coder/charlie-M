@@ -13,7 +13,7 @@ import { useTranslations } from 'next-intl';
 import { InvoiceButton } from '../../components/InvoiceButton';
 import { PinCodeComponent } from './PinCodeComponent';
 import { HOTEL_INFO } from '@/lib/Constants';
-
+import { Floor } from './Floor';
 
 const MainInfo = ({ reservation }: { reservation: any } ) => {
   const t = useTranslations('profile');
@@ -44,10 +44,13 @@ const MainInfo = ({ reservation }: { reservation: any } ) => {
       <div className='flex flex-col w-full lg:w-4/5 gap-3'>
         {showCheckInButton && <CheckinButton reservationId={reservation.id} />}
         {isPincode && !showCheckInButton && (
-          <PinCodeComponent 
-            roomNumber={reservation.accesses.roomNumber} 
-            code={reservation.accesses.pinCode} 
-          />
+          <>
+            <PinCodeComponent 
+              roomNumber={reservation.accesses.roomNumber} 
+              code={reservation.accesses.pinCode} 
+            />
+            <Floor unitId={reservation.unit?.id || null} />
+          </>
         )}
 
         <ReservationButton reservation={reservation} isActive={isActive} />

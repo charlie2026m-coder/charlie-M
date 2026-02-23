@@ -727,7 +727,14 @@
     "createAnAccount": "Create an Account",
     "signUpDescription": "Sign up to access your profile, manage your bookings, and enjoy all features.",
     "validEmailRequired": "Please enter a valid email address",
-    "createAccountButton": "Create account"
+    "createAccountButton": "Create account",
+    "codeModalInstruction1": "At the main entrance, enter your personal PIN code on the keypad located on the left side of the door.",
+    "codeModalInstruction2": "Confirm your entry by pressing the checkmark button.",
+    "codeModalInstruction3": "The door will unlock automatically — please push the door to enter.",
+    "codeModalInstruction4": "Once inside, follow the hotel signage to find your floor and room.",
+    "codeModalInstruction5": "Your PIN code works for all relevant doors, including your room.",
+    "whereToFindIt": "Where to find it:",
+    "locatedOnFloor": "Located on the {floor} floor"
   },
   "checkIn": {
     "title": "Online Check-In",

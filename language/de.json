@@ -726,7 +726,14 @@
     "createAnAccount": "Konto erstellen",
     "signUpDescription": "Registrieren Sie sich, um auf Ihr Profil zuzugreifen, Ihre Buchungen zu verwalten und alle Funktionen zu nutzen.",
     "validEmailRequired": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
-    "createAccountButton": "Konto erstellen"
+    "createAccountButton": "Konto erstellen",
+    "codeModalInstruction1": "Geben Sie am Haupteingang Ihren persönlichen PIN-Code auf dem Tastenfeld links neben der Tür ein.",
+    "codeModalInstruction2": "Bestätigen Sie die Eingabe mit der Häkchen-Taste.",
+    "codeModalInstruction3": "Die Tür entriegelt sich automatisch — bitte drücken Sie die Tür auf, um einzutreten.",
+    "codeModalInstruction4": "Folgen Sie nach dem Eintreten der Hotelbeschilderung, um Ihre Etage und Ihr Zimmer zu finden.",
+    "codeModalInstruction5": "Ihr PIN-Code funktioniert an allen relevanten Türen, einschließlich Ihrer Zimmertür.",
+    "whereToFindIt": "Wo Sie es finden:",
+    "locatedOnFloor": "Befindet sich im {floor}. Stock"
   },
   "checkIn": {
     "title": "Online-Check-In",
