@@ -22,7 +22,7 @@ const MainInfo = ({ reservation }: { reservation: any } ) => {
   const isCancelled = reservation.status === bookingStatuses.Canceled || reservation.status === bookingStatuses.NoShow;
   const isCheckedOut = reservation.status === bookingStatuses.CheckedOut;
   
-  const isPincode = reservation.accesses;
+  const isPincode = reservation.accesses?.pinCode;
   const isClosed = isCheckedOut || isCancelled;
   const isActive = reservation.status === bookingStatuses.Confirmed || reservation.status === bookingStatuses.InHouse;
   const showCheckInButton = !reservation.isPreCheckedIn && !isCancelled;
@@ -43,7 +43,12 @@ const MainInfo = ({ reservation }: { reservation: any } ) => {
       </div>
       <div className='flex flex-col w-full lg:w-4/5 gap-3'>
         {showCheckInButton && <CheckinButton reservationId={reservation.id} />}
-        {isPincode && <PinCodeComponent roomNumber={111111} code={777777} />}
+        {isPincode && !showCheckInButton && (
+          <PinCodeComponent 
+            roomNumber={reservation.accesses.roomNumber} 
+            code={reservation.accesses.pinCode} 
+          />
+        )}
 
         <ReservationButton reservation={reservation} isActive={isActive} />
         <RoomDetailsButton reservation={reservation} />

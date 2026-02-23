@@ -2,14 +2,51 @@ const API_URL = process.env.GUESTWAY_API_URL;
 const PARTNERSHIP_API_KEY = process.env.GUESTWAY_API_KEY;
 const ACCESS_TOKEN = process.env.GUESTWAY_ACCESS_TOKEN;
 
+// Guestway API response interfaces
+interface GuestwayCode {
+  id: string;
+  pinCode: string;
+  pinCodeSuffix: string;
+  isFallbackCode: boolean;
+  isDisabled: boolean;
+  validFrom: string;
+  validTo: string;
+}
+
+interface GuestwayLock {
+  id: string;
+  name: string;
+  doorName: string;
+}
+
+interface GuestwayAccess {
+  lock: GuestwayLock;
+  code: GuestwayCode | null;
+}
+
+interface GuestwayReservation {
+  id: string;
+  organizationId: string;
+  checkIn: string;
+  checkOut: string;
+  confirmationCode: string;
+  channelExternalCode: string | null;
+  accesses: GuestwayAccess[];
+}
+
+interface GuestwayApiResponse {
+  data: GuestwayReservation[];
+  meta: {
+    count: number;
+    cursor: string | null;
+  };
+}
+
+// Our transformed data interface
 interface ReservationAccessData {
   reservationId: string;
-  confirmationCode: string;
   roomNumber: string | null;
-  pinCode: string | null;
-  fullPinCode: string | null;
-  validFrom: string | null;
-  validTo: string | null;
+  pinCode: string | null | undefined;
 }
 
 /**
@@ -26,7 +63,11 @@ export async function getReservationAccessesServer(
   }
 
   try {
-    const filters = [{ field: 'id', operator: 'in', value: ids }];
+    // For single ID, use 'eq' operator; for multiple IDs, use 'in'
+    const filters = ids.length === 1 
+      ? [{ field: 'confirmationCode', operator: 'eq', value: ids[0] }]
+      : [{ field: 'confirmationCode', operator: 'in', value: ids }];
+    
     const url = `${API_URL}/reservation-accesses?filters=${encodeURIComponent(JSON.stringify(filters))}`;
 
     const response = await fetch(url, {
@@ -37,28 +78,32 @@ export async function getReservationAccessesServer(
       },
     });
 
+
     if (!response.ok) {
-      console.error(`Failed to fetch reservation accesses: ${response.status}`);
+      const errorText = await response.text();
+      console.error(`❌ [Guestway] Failed to fetch reservation accesses: ${response.status}`);
+      console.error(`❌ [Guestway] Error response:`, errorText);
       return [];
     }
 
-    const data = await response.json();
-
+    const data: GuestwayApiResponse = await response.json();
+    console.log('✅ [Guestway] Full response data:', JSON.stringify(data, null, 2));
+    
+    // Check if data is empty
+    if (!data.data || data.data.length === 0) {
+      console.warn('⚠️ [Guestway] No access data found for confirmation codes:', ids);
+      return [];
+    }
+    
     // Transform Guestway API response to our format
-    const accesses: ReservationAccessData[] = data.data?.map((reservation: any) => {
-      const firstAccess = reservation.accesses?.[0];
+    const accesses: ReservationAccessData[] = data.data.map((reservation: GuestwayReservation) => {
+      const firstAccess = reservation.accesses[0];
       return {
         reservationId: reservation.id,
-        confirmationCode: reservation.confirmationCode,
-        roomNumber: firstAccess?.lock?.doorName || firstAccess?.lock?.name || null,
-        pinCode: firstAccess?.code?.pinCode || null,
-        fullPinCode: firstAccess?.code?.pinCode && firstAccess?.code?.pinCodeSuffix 
-          ? `${firstAccess.code.pinCode}${firstAccess.code.pinCodeSuffix}` 
-          : firstAccess?.code?.pinCode || null,
-        validFrom: firstAccess?.code?.validFrom || null,
-        validTo: firstAccess?.code?.validTo || null,
+        roomNumber: firstAccess?.lock?.name || firstAccess?.lock?.doorName || null,
+        pinCode: firstAccess?.code?.pinCode,
       };
-    }) || [];
+    });
 
     return accesses;
   } catch (error) {
