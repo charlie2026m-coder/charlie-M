@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Welcome Message - Charlie M</title>
+  <style type="text/css">
+    /* Reset styles */
+    body {
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    table {
+      border-collapse: collapse;
+    }
+    
+    img {
+      border: 0;
+      -ms-interpolation-mode: bicubic;
+    }
+    
+    /* Media queries for mobile */
+    @media only screen and (max-width: 600px) {
+      .email-container {
+        width: 100% !important;
+      }
+      .email-body {
+        padding: 30px 20px !important;
+      }
+      .email-body h1 {
+        font-size: 20px !important;
+      }
+      .email-body h2 {
+        font-size: 18px !important;
+      }
+      .email-body p {
+        font-size: 15px !important;
+      }
+      .access-details td {
+        font-size: 14px !important;
+      }
+    }
+  </style>
+  <!--[if mso]>
+  <style type="text/css">
+    body, table, td {font-family: Arial, sans-serif !important;}
+  </style>
+  <![endif]-->
+</head>
+<body style="margin: 0; padding: 0; background-color: #F5F6F7; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;">
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0; padding: 0; background-color: #F5F6F7;">
+    <tr>
+      <td style="padding: 20px 0;">
+        <table role="presentation" class="email-container" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: 0 auto; background-color: #FFFFFF; border-radius: 10px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);" align="center">
+          
+          <!-- Header with Logo -->
+          <tr>
+            <td style="background-color: #2B2A29; padding: 30px 20px; text-align: center; border-radius: 10px 10px 0 0;">
+              <img src="https://sbohsfnalbugtasmzemo.supabase.co/storage/v1/object/public/public-logo/Logo.png" alt="Charlie M Hotel" width="140" style="display: block; margin: 0 auto; max-width: 140px; height: auto; border: 0;" />
+            </td>
+          </tr>
+
+          <!-- Email Body -->
+          <tr>
+            <td class="email-body" style="padding: 30px 25px;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                  <td>
+                    <h1 style="margin: 0 0 12px 0; padding: 0; font-size: 20px; font-weight: 600; color: #555555; line-height: 1.3; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;">Dear {{guestFirstName}},</h1>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 10px 0; padding: 0; font-size: 14px; color: #555555; line-height: 1.5; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;">Welcome to Charlie M Hotel. We're delighted to host you today.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 20px 0; padding: 0; font-size: 14px; color: #555555; line-height: 1.5; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;">Below you'll find your access details for a smooth arrival.</p>
+                  </td>
+                </tr>
+
+                <!-- Access Details Section -->
+                <tr>
+                  <td style="padding-bottom: 20px;">
+                    <table role="presentation" class="access-details" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #DEEAF4; border-radius: 8px;">
+                      <tr>
+                        <td style="padding: 12px 20px 6px 20px;">
+                          <p style="margin: 0; padding: 0; font-size: 13px; color: #555555; line-height: 1.6; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;">
+                            <strong style="color: #555555;">📍 Your PIN Code:</strong> {{reservationCodes}}
+                          </p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 6px 20px;">
+                          <p style="margin: 0; padding: 0; font-size: 13px; color: #555555; line-height: 1.6; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;">
+                            <strong style="color: #555555;">📍 Your Room Number:</strong> {{listingApartment}}
+                          </p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 6px 20px 12px 20px;">
+                          <p style="margin: 0; padding: 0; font-size: 13px; color: #555555; line-height: 1.6; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;">
+                            <strong style="color: #555555;">📍 Floor:</strong> {{listingFloor}}
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 20px 0; padding: 0; font-size: 14px; color: #555555; line-height: 1.5; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;">Your PIN code grants access to both the main entrance, intermediate door and your room.</p>
+                  </td>
+                </tr>
+
+                <!-- Check-in Time Section -->
+                <tr>
+                  <td>
+                    <h2 style="margin: 0 0 12px 0; padding: 0; font-size: 16px; font-weight: 600; color: #555555; line-height: 1.3; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;">🕒 Check-in Time</h2>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 10px 0; padding: 0; font-size: 14px; color: #555555; line-height: 1.5; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;">Standard check-in begins at 15:00.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 20px 0; padding: 0; font-size: 14px; color: #555555; line-height: 1.5; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;">If you requested an early check-in, we will inform you via message as soon as your room becomes available.</p>
+                  </td>
+                </tr>
+
+                <!-- How to Access Section -->
+                <tr>
+                  <td>
+                    <h2 style="margin: 0 0 12px 0; padding: 0; font-size: 16px; font-weight: 600; color: #555555; line-height: 1.3; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;">📍 How to Access the Building</h2>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 5px 0; padding: 0; font-size: 14px; color: #555555; line-height: 1.5; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;">1. At the main entrance, enter your PIN code.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 5px 0; padding: 0; font-size: 14px; color: #555555; line-height: 1.5; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;">2. Confirm with the checkmark button.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 20px 0; padding: 0; font-size: 14px; color: #555555; line-height: 1.5; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;">3. Use the same PIN code for intermediate and your room door.</p>
+                  </td>
+                </tr>
+
+                <!-- WiFi Section -->
+                <tr>
+                  <td>
+                    <h2 style="margin: 0 0 12px 0; padding: 0; font-size: 16px; font-weight: 600; color: #555555; line-height: 1.3; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;">📍 WiFi</h2>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 5px 0; padding: 0; font-size: 14px; color: #555555; line-height: 1.5; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;"><strong style="color: #555555;">Network:</strong> CharlieMGuest</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 20px 0; padding: 0; font-size: 14px; color: #555555; line-height: 1.5; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;"><strong style="color: #555555;">Password:</strong> CharlieM_Guest#</p>
+                  </td>
+                </tr>
+
+                <!-- Need Assistance Section -->
+                <tr>
+                  <td>
+                    <h2 style="margin: 0 0 12px 0; padding: 0; font-size: 16px; font-weight: 600; color: #555555; line-height: 1.3; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;">📍 Need Assistance?</h2>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 10px 0; padding: 0; font-size: 14px; color: #555555; line-height: 1.5; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;">If you require support at any time, please contact us via Whatsapp:</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 20px 0; padding: 0; font-size: 14px; color: #555555; line-height: 1.5; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;"><a href="https://wa.me/507767648570" style="color: #555555; text-decoration: underline; font-weight: 500;">+5 077 6764 8570</a></p>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 20px 0; padding: 0; font-size: 14px; color: #555555; line-height: 1.5; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;">For additional information about your stay, you can create your personal guest account at: <a href="https://www.charlie-m.de" style="color: #555555; text-decoration: underline; font-weight: 500;">www.charlie-m.de</a></p>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 20px 0; padding: 0; font-size: 14px; color: #555555; line-height: 1.5; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;">There you can access your reservation details and important information at any time.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 20px 0; padding: 0; font-size: 14px; color: #555555; line-height: 1.5; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;">We wish you a wonderful stay at Charlie M Hotel.</p>
+                  </td>
+                </tr>
+                
+                <tr>
+                  <td style="padding-top: 20px;">
+                    <p style="margin: 0; padding: 0; font-size: 14px; font-weight: 500; color: #555555; line-height: 1.5; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;">Warm regards,<br>The Charlie M Team</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #F7F5F2; padding: 30px; text-align: center; border-top: 1px solid #DEEAF4; border-radius: 0 0 10px 10px;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 8px 0; padding: 0; font-size: 14px; color: #555555; line-height: 1.6; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;"><strong>Charlie M Hotel</strong></p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-top: 15px;">
+                    <p style="margin: 0 0 4px 0; padding: 0; font-size: 13px; color: #555555; line-height: 1.6; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;">Friedrichstraße 33, 10969 Berlin</p>
+                    <p style="margin: 0 0 4px 0; padding: 0; font-size: 13px; line-height: 1.6; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;"><a href="mailto:info@charlie-m.de" style="color: #555555; text-decoration: none;">info@charlie-m.de</a></p>
+                    <p style="margin: 0; padding: 0; font-size: 13px; line-height: 1.6; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;"><a href="https://www.charlie-m.de" style="color: #555555; text-decoration: none;">www.charlie-m.de</a></p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-top: 20px;">
+                    <p style="margin: 0; padding: 0; font-size: 12px; color: #555555; line-height: 1.6; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;">© 2026 Charlie M Hotel. All rights reserved.</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
