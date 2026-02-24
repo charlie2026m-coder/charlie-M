@@ -385,6 +385,7 @@ export interface ReservationAccessData {
 }
 
 export interface Reservation extends ApaleoReservationResponse {
+  unit: Unit;
   name: string;
   image: string;
   guests: number;

@@ -14,10 +14,13 @@ const ExtrasSection = ({ extras, room, nights, children }: { extras: Service[] |
   if(!extras || extras.length === 0) return null;
   // Filter out baby bed (CMH-BAB) - it's added automatically based on children count
   // Filter out cleaning service if stay is less than 2 nights
+  // Filter out test service
   const visibleExtras = extras.filter(extra => {
     if (extra.id === 'CMH-BAB') return false;
     const isCleaning = extra.id === 'CMH-CLN' || extra.name?.toLowerCase().includes('clean');
     if (isCleaning && nights < 2) return false;
+    const isTest = extra.name?.toLowerCase().includes('тест') || extra.name?.toLowerCase().includes('test') || extra.id?.toLowerCase().includes('test');
+    if (isTest) return false;
     return true;
   })
   

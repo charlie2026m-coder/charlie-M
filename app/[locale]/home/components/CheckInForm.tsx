@@ -21,6 +21,7 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
   const [dateError, setDateError] = useState(false);
   const nextMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
 
+  // Handle URL params
   useEffect(() => {
     if (params) {
       if (params.from && params.to) {
@@ -42,6 +43,21 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
       }
     }
   }, [params, setValue])
+
+  // Set default dates only once on mount if no params and no dateRange
+  useEffect(() => {
+    if (!params && (!dateRange?.from || !dateRange?.to)) {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      const dayAfterTomorrow = new Date(tomorrow);
+      dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
+      
+      setValue({ from: tomorrow, to: dayAfterTomorrow }, 'dateRange');
+      setCurrentMonth(new Date(tomorrow.getFullYear(), tomorrow.getMonth(), 1));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Run only once on mount
 
 
   const handleSubmit = (e: React.FormEvent) => {

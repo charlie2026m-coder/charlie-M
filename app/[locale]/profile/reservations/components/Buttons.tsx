@@ -15,13 +15,13 @@ export const AddExtrasButton = () => {
     <Button variant='outline' className='h-[30px] text-sm'><IoAddCircleSharp className='size-4' /> {t('addExtras')} </Button>
   )
 }
-export const InfoButton = () => {
+export const InfoButton = ({ unitId }: { unitId?: string | null | undefined }) => {
   const t = useTranslations('profile')
   const [showInfo, setShowInfo] = useState(false);
   return (
     <>
-    <Button onClick={() => setShowInfo(true)} variant='outline' className='h-[30px] text-sm px-2 gap-1 '><AiFillInfoCircle className='size-4' /> {t('info')} </Button>
-    <CodeModal open={showInfo} onOpenChange={setShowInfo} />
+      <Button onClick={() => setShowInfo(true)} variant='outline' className='h-[40px] md:h-[30px] text-sm px-2 gap-1 '><AiFillInfoCircle className='size-4' /> {t('info')} </Button>
+      <CodeModal open={showInfo} onOpenChange={setShowInfo} unitId={unitId} />
     </>
   )
 }

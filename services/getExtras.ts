@@ -110,9 +110,15 @@ const fetchExtras = async (from?: string, to?: string): Promise<Service[]> => {
       }
     })
 
+    // Filter out test services
+    const filteredServices = formattedServices.filter(service => {
+      const isTest = service.name?.toLowerCase().includes('тест') || 
+                    service.name?.toLowerCase().includes('test') || 
+                    service.id?.toLowerCase().includes('test');
+      return !isTest;
+    });
 
-
-    return  formattedServices as Service[];
+    return filteredServices as Service[];
   } catch (error: any) {
     console.error('Failed to fetch extras:', error.message);
     return [];

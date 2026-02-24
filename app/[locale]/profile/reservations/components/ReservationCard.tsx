@@ -14,7 +14,7 @@ import { useTranslations } from 'next-intl';
 import { CheckinButton } from './CheckInButton';
 import { InvoiceButton } from './InvoiceButton';
 
-const ReservationCard = ({ reservation }: { reservation: ReservationType,}  ) => {
+const ReservationCard = ({ reservation }: { reservation: ReservationType }  ) => {
   const t = useTranslations('profile')
   const { status, arrival, departure, id, name, images, guests } = reservation;
   const from = dayjs(arrival).format('ddd D MMM YYYY');
@@ -22,7 +22,7 @@ const ReservationCard = ({ reservation }: { reservation: ReservationType,}  ) =>
   const isCancelled = status === bookingStatuses.Canceled || status === bookingStatuses.NoShow;
   const isCheckedOut = status === bookingStatuses.CheckedOut;
   
-  const isPincode = reservation.accesses;
+  const isPincode = reservation.accesses?.pinCode;
   const isClosed = isCheckedOut || isCancelled;
   const showCheckInButton = !reservation.isPreCheckedIn && !isCancelled;
   return (
@@ -51,7 +51,7 @@ const ReservationCard = ({ reservation }: { reservation: ReservationType,}  ) =>
           </span>
         </div>
         <div className='flex gap-2.5 xl:items-center flex-col xl:flex-row '>
-        {isPincode && <RoomCode roomNumber={0} code={0} />}
+          {(isPincode && !showCheckInButton) && <RoomCode roomNumber={reservation.accesses?.roomNumber || ''} code={reservation.accesses?.pinCode || ''} unitId={reservation.unit?.id || null} />}
           <div className='flex gap-2 grow flex-col lg:flex-row '>
             {showCheckInButton && <CheckinButton reservationId={id} />}
             {isClosed && <BookAgainButton reservation={reservation} />}
@@ -72,7 +72,7 @@ const ReservationCard = ({ reservation }: { reservation: ReservationType,}  ) =>
 export default ReservationCard;
 
 
-const RoomCode = ({roomNumber, code}: {roomNumber: number, code: number}) => {
+const RoomCode = ({roomNumber, code, unitId}: {roomNumber: string, code: string, unitId: string | null | undefined}) => {
   const t = useTranslations('profile')
   
   const handleCopy = async (text: string | number, label: string) => {
@@ -86,17 +86,17 @@ const RoomCode = ({roomNumber, code}: {roomNumber: number, code: number}) => {
 
   return (
       <div className='flex gap-2 w-full lg:w-fit'>
-        <div className='flex-1 lg:flex-initial bg-gradient-to-br from-blue/5 to-blue/10 rounded-lg px-3 py-1.5 border border-blue/20 h-[30px] flex items-center justify-center'>
+        <div className='flex-1 lg:flex-initial rounded-full px-3 py-1.5 border border-blue/20 h-[30px] flex items-center justify-center'>
           <div className='flex items-center gap-2'>
-            <span className='text-[10px] uppercase tracking-wider text-blue/70 font-semibold'>{t('room')}</span>
-            <div className='text-sm font-bold text-blue flex items-center gap-1'>
+            <span className='text-[10px] uppercase tracking-wider  font-semibold'>{t('room')}</span>
+            <div className='text-sm font-bold  flex items-center gap-1'>
               {roomNumber}
             </div>
           </div>
         </div>
 
         <div 
-          className='flex-1 lg:flex-initial bg-gradient-to-br from-green/5 to-green/10 rounded-lg px-3 py-1.5 border border-green/20 hover:border-green/40 transition-all duration-300 hover:shadow-sm group h-[30px] flex items-center justify-center cursor-copy'
+          className='flex-1 lg:flex-initial bg-gradient-to-br from-green/5 to-green/10 rounded-full px-3 py-1.5 border border-green/20 hover:border-green/40 transition-all duration-300 hover:shadow-sm group h-[30px] flex items-center justify-center cursor-copy'
           onClick={() => handleCopy(code, t('code'))}
           title={t('clickToCopy')}
         >
@@ -109,7 +109,7 @@ const RoomCode = ({roomNumber, code}: {roomNumber: number, code: number}) => {
           </div>
         </div>
         
-        <InfoButton />
+        <InfoButton unitId={unitId} />
       </div>
   )
 }

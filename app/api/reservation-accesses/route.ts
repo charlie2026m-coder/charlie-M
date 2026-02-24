@@ -50,14 +50,8 @@ export async function POST(request: NextRequest) {
       const firstAccess = reservation.accesses?.[0];
       return {
         reservationId: reservation.id,
-        confirmationCode: reservation.confirmationCode,
         roomNumber: firstAccess?.lock?.doorName || firstAccess?.lock?.name || null,
         pinCode: firstAccess?.code?.pinCode || null,
-        fullPinCode: firstAccess?.code?.pinCode && firstAccess?.code?.pinCodeSuffix 
-          ? `${firstAccess.code.pinCode}${firstAccess.code.pinCodeSuffix}` 
-          : firstAccess?.code?.pinCode || null,
-        validFrom: firstAccess?.code?.validFrom || null,
-        validTo: firstAccess?.code?.validTo || null,
       };
     }) || [];
 
