@@ -47,13 +47,14 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
   // Set default dates only once on mount if no params and no dateRange
   useEffect(() => {
     if (!params && (!dateRange?.from || !dateRange?.to)) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const tomorrow = new Date(today);
+      const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      const dayAfterTomorrow = new Date(tomorrow);
+      dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
       
-      setValue({ from: today, to: tomorrow }, 'dateRange');
-      setCurrentMonth(new Date(today.getFullYear(), today.getMonth(), 1));
+      setValue({ from: tomorrow, to: dayAfterTomorrow }, 'dateRange');
+      setCurrentMonth(new Date(tomorrow.getFullYear(), tomorrow.getMonth(), 1));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // Run only once on mount
