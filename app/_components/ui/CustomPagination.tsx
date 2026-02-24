@@ -16,22 +16,20 @@ export function CustomPagination({
   // Generate page numbers to display
   const getPageNumbers = () => {
     // If 6 or fewer pages, show all
-    if (totalPages <= 6) {
+    if (totalPages <= 7) {
       return Array.from({ length: totalPages }, (_, i) => i)
     }
 
-    // Show first 4 pages, dots, last page
     if (currentPage <= 2) {
-      return [0, 1, 2, 3, -1, totalPages - 1]
+      return [0, 1, 2, 3, 4, -1, totalPages - 1]
     }
 
-    // Show first page, dots, last 4 pages
     if (currentPage >= totalPages - 3) {
-      return [0, -1, totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1]
+      return [0, -1, totalPages - 5, totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1]
     }
 
     // Show first page, dots, current-1/current, dots, last page
-    return [0, -1, currentPage - 1, currentPage, -1, totalPages - 1]
+    return [0, -1, currentPage - 1, currentPage, currentPage + 1,  -1, totalPages - 1]
   }
 
   const pageNumbers = getPageNumbers()

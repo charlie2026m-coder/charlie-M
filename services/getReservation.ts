@@ -7,7 +7,7 @@ import { getReservationAccessesServer } from './getReservationAccessesServer';
 export async function getReservationById(reservationId: string): Promise<Reservation | null> {
   try {
     const [reservationResult, roomDetailsResult, accessDataResult] = await Promise.allSettled([
-      Fetch<ApaleoReservationResponse>(`/booking/v1/reservations/${reservationId}?expand=services&expand=booker`),
+      Fetch<ApaleoReservationResponse>(`/booking/v1/reservations/${reservationId}?propertyIds=${process.env.APALEO_PROPERTY_ID}&expand=services&expand=booker`),
       getRoomsDetails(),
       getReservationAccessesServer(reservationId)
     ]);
