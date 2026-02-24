@@ -8,10 +8,14 @@ export async function GET(request: Request) {
   const error = requestUrl.searchParams.get('error');
   const error_description = requestUrl.searchParams.get('error_description');
   
-  // Get locale from cookie or default to 'en'
+  // Get locale from query parameter (passed from OAuth init) or fallback to cookie
+  const localeFromQuery = requestUrl.searchParams.get('locale');
   const cookieStore = await cookies();
-  const localeCookie = cookieStore.get('NEXT_LOCALE')?.value || 'en';
-  const localePrefix = localeCookie === 'en' ? '' : `/${localeCookie}`;
+  const locale = localeFromQuery || cookieStore.get('NEXT_LOCALE')?.value || 'en';
+  
+  const localePrefix = locale === 'en' ? '' : `/${locale}`;
+  
+  console.log('OAuth callback - Locale from query:', localeFromQuery, 'Final locale:', locale);
 
   // Handle OAuth errors
   if (error) {
@@ -105,11 +109,11 @@ export async function GET(request: Request) {
           console.error('Failed to save consent:', consentError)
         }
         
-        return NextResponse.redirect(`${requestUrl.origin}${localePrefix}/profile?email_confirmed=true`);
+        return NextResponse.redirect(`${requestUrl.origin}${localePrefix}/profile/reservations?email_confirmed=true`);
       }
       
-      // Default redirect to profile for other auth flows (OAuth, etc.)
-      return NextResponse.redirect(`${requestUrl.origin}${localePrefix}/profile`);
+      // Default redirect to reservations for other auth flows (OAuth, etc.)
+      return NextResponse.redirect(`${requestUrl.origin}${localePrefix}/profile/reservations`);
     } catch (err) {
       console.error('Unexpected error during code exchange:', err);
       return NextResponse.redirect(
@@ -118,6 +122,6 @@ export async function GET(request: Request) {
     }
   }
 
-  // No code provided - redirect to home
-  return NextResponse.redirect(`${requestUrl.origin}${localePrefix}/profile`);
+  // No code provided - redirect to reservations
+  return NextResponse.redirect(`${requestUrl.origin}${localePrefix}/profile/reservations`);
 }

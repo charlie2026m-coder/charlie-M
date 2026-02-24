@@ -117,9 +117,16 @@ export async function logout(): Promise<AuthResult> {
 
 export async function signInWithOAuth(provider: 'google' | 'apple'): Promise<{ success: boolean; error?: string }> {
   try {
-    const redirectTo = typeof window !== 'undefined' 
-      ? `${window.location.origin}/auth/callback`
-      : undefined;
+    let redirectTo: string | undefined;
+    
+    if (typeof window !== 'undefined') {
+      // Extract locale from current URL path
+      const currentPath = window.location.pathname;
+      const locale = currentPath.startsWith('/de') ? 'de' : 'en';
+      
+      // Add locale as query parameter to preserve it through OAuth
+      redirectTo = `${window.location.origin}/auth/callback?locale=${locale}`;
+    }
 
     const { error } = await supabase.auth.signInWithOAuth({ provider, options: { redirectTo } });
 
@@ -132,14 +139,15 @@ export async function signInWithOAuth(provider: 'google' | 'apple'): Promise<{ s
 }
 
 
-// Send password reset email 
 export async function resetPassword(email: string): Promise<AuthResult> {
   try {
-    let redirectTo: string | undefined;
-    
-    if (typeof window !== 'undefined') {
-      redirectTo = `${window.location.origin}/auth/callback`;
+    if (typeof window === 'undefined') {
+      return { success: false, error: 'Reset password only available on client' };
     }
+
+    const currentPath = window.location.pathname;
+    const locale = currentPath.startsWith('/de') ? 'de' : 'en';
+    const redirectTo = `${window.location.origin}/auth/callback?locale=${locale}`;
 
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, { 
       redirectTo
