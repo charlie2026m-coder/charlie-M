@@ -22,7 +22,6 @@ const ConceptSlider = ({ items, activeIndex = 0, height = 638 }: ConceptSliderPr
 
   React.useEffect(() => {
     if (swiperInstance && activeIndex !== undefined) {
-      console.log('Sliding to index:', activeIndex)
       swiperInstance.slideTo(activeIndex)
     }
   }, [activeIndex, swiperInstance])

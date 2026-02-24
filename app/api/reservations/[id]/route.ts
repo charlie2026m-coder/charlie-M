@@ -17,7 +17,7 @@ export async function GET(
       );
     }
 
-    const reservation = await Fetch<ApaleoReservationResponse>(`/booking/v1/reservations/${id}?expand=services`);
+    const reservation = await Fetch<ApaleoReservationResponse>(`/booking/v1/reservations/${id}?propertyIds=${process.env.APALEO_PROPERTY_ID}&expand=services`);
 
     if (!reservation) {
       return NextResponse.json(

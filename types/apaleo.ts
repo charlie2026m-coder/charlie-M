@@ -376,12 +376,12 @@ export interface ReservationAccess {
 
 export interface ReservationAccessData {
   reservationId: string;
-  confirmationCode: string;
   roomNumber: string | null;
   pinCode: string | null;
-  fullPinCode: string | null;
-  validFrom: string | null;
-  validTo: string | null;
+  confirmationCode?: string;
+  fullPinCode?: string | null;
+  validFrom?: string | null;
+  validTo?: string | null;
 }
 
 export interface Reservation extends ApaleoReservationResponse {

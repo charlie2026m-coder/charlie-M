@@ -1,3 +1,5 @@
+import { ReservationAccessData } from '@/types/apaleo';
+
 const API_URL = process.env.GUESTWAY_API_URL;
 const PARTNERSHIP_API_KEY = process.env.GUESTWAY_API_KEY;
 const ACCESS_TOKEN = process.env.GUESTWAY_ACCESS_TOKEN;
@@ -40,13 +42,6 @@ interface GuestwayApiResponse {
     count: number;
     cursor: string | null;
   };
-}
-
-// Our transformed data interface
-interface ReservationAccessData {
-  reservationId: string;
-  roomNumber: string | null;
-  pinCode: string | null | undefined;
 }
 
 /**
@@ -98,10 +93,11 @@ export async function getReservationAccessesServer(
     // Transform Guestway API response to our format
     const accesses: ReservationAccessData[] = data.data.map((reservation: GuestwayReservation) => {
       const firstAccess = reservation.accesses[0];
+      
       return {
-        reservationId: reservation.id,
+        reservationId: reservation.confirmationCode,
         roomNumber: firstAccess?.lock?.name || firstAccess?.lock?.doorName || null,
-        pinCode: firstAccess?.code?.pinCode,
+        pinCode: firstAccess?.code?.pinCode || null,
       };
     });
 

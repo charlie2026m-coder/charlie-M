@@ -1,6 +1,6 @@
 'use client'
 import FAQCard from './components/FAQCard';
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Header from './components/Header';
 import FAQList from './components/FAQList';
 import { useTranslations } from 'next-intl';
@@ -9,9 +9,9 @@ import { cn } from '@/lib/utils';
 const FAQSection = () => {
   const t = useTranslations('home')
   const [activeTab, setActiveTab] = useState(0)
-  const [activeFAQ, setActiveFAQ] = useState(t.raw('faq_categories.0.title'))
+  const [activeFAQ, setActiveFAQ] = useState<string | null>(null)
 
-  const faqPoints = [
+  const faqPoints = useMemo(() => [
     {
       title: t.raw('faq_categories.0.title'),
       items: [
@@ -47,7 +47,14 @@ const FAQSection = () => {
         { title: t.raw('faq_categories.3.items.1.title'),p:[t.raw('faq_categories.3.items.1.p.0'),]},
       ]
     },
-  ]
+  ], [t])
+
+  useEffect(() => {
+    if (!activeFAQ && faqPoints.length > 0) {
+      setActiveFAQ(faqPoints[0].title)
+    }
+  }, [activeFAQ, faqPoints])
+
   const handleActiveIndexChange = (index: number) => {
     setActiveFAQ(faqPoints[index].title)
   }
@@ -72,7 +79,7 @@ const FAQSection = () => {
         </div>
         <div className='lg:col-span-6 flex flex-col '>
           <div className='flex flex-col gap-5 '>
-            {faqPoints.filter((item) => item.title === activeFAQ)[0].items.map((item, index) => (
+            {activeFAQ && faqPoints.filter((item) => item.title === activeFAQ)[0]?.items.map((item, index) => (
               <FAQCard 
                 key={item.title} 
                 index={index} 

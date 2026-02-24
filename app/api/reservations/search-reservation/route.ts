@@ -18,9 +18,7 @@ export async function GET(request: NextRequest) {
     console.log(reservationId, 'reservationId');
     let reservation: any;
     try {
-      reservation = await Fetch<ApaleoReservationResponse>(
-        `/booking/v1/reservations/${reservationId}?expand=booker`
-      );
+      reservation = await Fetch<ApaleoReservationResponse>(`/booking/v1/reservations/${reservationId}?propertyIds=${process.env.APALEO_PROPERTY_ID}&expand=booker`);
       console.log(reservation, 'reservation');
     } catch (error: any) {
       console.error('Fetch error:', error);

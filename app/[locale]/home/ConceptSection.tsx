@@ -15,7 +15,6 @@ const ConceptSection = () => {
   const [activeIndex, setActiveIndex] = useState(0)
   
   const handleActiveIndexChange = useCallback((index: number) => {
-    console.log('ConceptSection received index:', index)
     setActiveIndex(index)
   }, [])
 

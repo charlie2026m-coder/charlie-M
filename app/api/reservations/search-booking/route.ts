@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     // Fetch reservation by ID only
     let reservation: ApaleoReservationResponse;
     try {
-      reservation = await Fetch<ApaleoReservationResponse>(`/booking/v1/reservations/${reservationId}?expand=booker,services`);
+      reservation = await Fetch<ApaleoReservationResponse>(`/booking/v1/reservations/${reservationId}?propertyIds=${process.env.APALEO_PROPERTY_ID}&expand=booker,services`);
     } catch (error: any) {
       if (error.message?.includes('404') || error.message?.includes('not found')) {
         return NextResponse.json(
