@@ -24,7 +24,7 @@ const ReservationCard = ({ reservation }: { reservation: ReservationType }  ) =>
   
   const isPincode = reservation.accesses?.pinCode;
   const isClosed = isCheckedOut || isCancelled;
-  const showCheckInButton = reservation.isPreCheckedIn && !isCancelled;
+  const showCheckInButton = !reservation.isPreCheckedIn && !isCancelled;
   return (
     <div className='flex flex-col lg:flex-row bg-white border rounded-2xl p-3 relative'>
       <Image 

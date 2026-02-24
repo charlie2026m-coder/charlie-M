@@ -66,7 +66,7 @@ export default LocationCard
 const MainCard = () => {
   const t = useTranslations('locationCard')
   const hotelAddress = "Friedrichstraße 33, 10969 Berlin"
-  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(hotelAddress)}`
+  const googleMapsUrl = 'https://maps.app.goo.gl/f5pcoqnd5V6NTwAw6'
 
   return (
     <div className='flex flex-col gap-5 items-center w-full md:w-1/2 xl:w-1/3'>
