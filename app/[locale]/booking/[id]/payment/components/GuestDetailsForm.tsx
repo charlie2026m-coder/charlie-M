@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import CustomInput from '@/app/_components/ui/customInput'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/app/_components/ui/button'
 import { Checkbox } from '@/app/_components/ui/checkbox'
@@ -11,6 +11,7 @@ import { Link, useRouter } from '@/navigation'
 import LoadingDots from '@/app/_components/ui/LoadingDots'
 import { useTranslations } from 'next-intl'
 import { useParams } from 'next/navigation'
+import { CountrySelect } from '@/app/_components/ui/CountrySelect'
 
 interface GuestDetailsFormProps {
   onSubmit: (data: GuestDetailsFormData) => void
@@ -22,8 +23,20 @@ const GuestDetailsForm = ({ onSubmit,  isLoading = false }: GuestDetailsFormProp
   const router = useRouter()
   const params = useParams()
   const locale = params.locale as 'en' | 'de'
-  const defaultValues = {name: '', last_name: '', email: '', phone: '', consent: false}
-  const { register, handleSubmit, formState: { errors }, reset, watch, setValue: setFormValue } = useForm<GuestDetailsFormData>({ 
+  const defaultValues = {
+    name: '', 
+    last_name: '', 
+    email: '', 
+    phone: '', 
+    company_name: '',
+    street_address: '',
+    house_number: '',
+    postal_code: '',
+    city: '',
+    country: '',
+    consent: false
+  }
+  const { register, handleSubmit, formState: { errors }, reset, watch, setValue: setFormValue, control } = useForm<GuestDetailsFormData>({ 
     resolver: zodResolver(guestDetailsSchema), 
     defaultValues,
   })
@@ -48,6 +61,17 @@ const GuestDetailsForm = ({ onSubmit,  isLoading = false }: GuestDetailsFormProp
     const lastName = bookerData?.lastName || guestData?.lastName || ''
     const email = bookerData?.email || guestData?.email || ''
     const phone = bookerData?.phone || guestData?.phone || ''
+        // Get address data
+    const addressData = (bookerData as any)?.address || (guestData as any)?.address
+    const streetAddress = addressData?.addressLine1 || ''
+    const houseNumber = addressData?.addressLine2 || ''
+    const postalCode = addressData?.postalCode || ''
+    const city = addressData?.city || ''
+    const country = addressData?.countryCode || ''
+    
+    // Get company data
+    const companyData = (bookerData as any)?.company || (guestData as any)?.company
+    const companyName = companyData?.name || ''
     
     if (firstName || lastName || email || phone) {
       reset({
@@ -55,6 +79,12 @@ const GuestDetailsForm = ({ onSubmit,  isLoading = false }: GuestDetailsFormProp
         last_name: lastName,
         email: email,
         phone: phone,
+        company_name: companyName,
+        street_address: streetAddress,
+        house_number: houseNumber,
+        postal_code: postalCode,
+        city: city,
+        country: country,
         consent: false,
       })
     }
@@ -122,6 +152,101 @@ const GuestDetailsForm = ({ onSubmit,  isLoading = false }: GuestDetailsFormProp
           />
           {errors.phone && (
             <span className='absolute bottom-0 left-0 text-red text-xs pl-4'>{errors.phone.message}</span>
+          )}
+        </div>
+      </div>
+
+      <h3 className='text-[18px] font-bold mb-4 mt-6'>{t('addressDetails')}</h3>
+      
+      <div className='grid md:grid-cols-2 gap-4 md:mb-4'>
+        <div className='relative flex flex-col gap-1 pb-5'>
+          <CustomInput 
+            register={register}
+            name='company_name' 
+            type='text' 
+            placeholder={t('companyName')}
+            icon='company'
+            isError={!!errors.company_name}
+          />
+          {errors.company_name && (
+            <span className='absolute bottom-0 left-0 text-red text-xs pl-4'>{errors.company_name.message}</span>
+          )}
+        </div>
+
+        <div className='relative flex flex-col gap-1 pb-5'>
+          <CustomInput 
+            register={register}
+            name='street_address' 
+            type='text' 
+            placeholder={t('streetAddress')}
+            icon='postal'
+            isError={!!errors.street_address}
+          />
+          {errors.street_address && (
+            <span className='absolute bottom-0 left-0 text-red text-xs pl-4'>{errors.street_address.message}</span>
+          )}
+        </div>
+
+        <div className='relative flex flex-col gap-1 pb-5'>
+          <CustomInput 
+            register={register}
+            name='house_number' 
+            type='text' 
+            placeholder={t('houseNumber')}
+            icon='postal'
+            isError={!!errors.house_number}
+          />
+          {errors.house_number && (
+            <span className='absolute bottom-0 left-0 text-red text-xs pl-4'>{errors.house_number.message}</span>
+          )}
+        </div>
+
+        <div className='relative flex flex-col gap-1 pb-5'>
+          <CustomInput 
+            register={register}
+            name='postal_code' 
+            type='text' 
+            placeholder={t('postalCode')}
+            icon='postal'
+            isError={!!errors.postal_code}
+          />
+          {errors.postal_code && (
+            <span className='absolute bottom-0 left-0 text-red text-xs pl-4'>{errors.postal_code.message}</span>
+          )}
+        </div>
+
+        <div className='relative flex flex-col gap-1 pb-5'>
+          <CustomInput 
+            register={register}
+            name='city' 
+            type='text' 
+            placeholder={t('city')}
+            icon='postal'
+            isError={!!errors.city}
+          />
+          {errors.city && (
+            <span className='absolute bottom-0 left-0 text-red text-xs pl-4'>{errors.city.message}</span>
+          )}
+        </div>
+
+        <div className='relative flex flex-col gap-1 pb-5'>
+          <Controller
+            name="country"
+            control={control}
+            render={({ field }) => (
+              <CountrySelect
+                value={field.value || ''}
+                onValueChange={field.onChange}
+                locale={locale}
+                placeholder={t('country')}
+                searchPlaceholder={locale === 'en' ? 'Search country...' : 'Land suchen...'}
+                emptyText={locale === 'en' ? 'No country found.' : 'Kein Land gefunden.'}
+                error={!!errors.country}
+              />
+            )}
+          />
+          {errors.country && (
+            <span className='absolute bottom-0 left-0 text-red text-xs pl-4'>{errors.country.message}</span>
           )}
         </div>
       </div>

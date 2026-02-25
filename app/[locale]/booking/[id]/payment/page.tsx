@@ -18,6 +18,17 @@ const PaymentPage = () => {
       console.error('Booking data is missing')
       return
     }
+        // Prepare address object for Apaleo
+    const address = {
+      addressLine1: data.street_address,
+      addressLine2: data.house_number,
+      postalCode: data.postal_code,
+      city: data.city,
+      countryCode: data.country,
+    }
+
+    // Prepare company object if company name is provided
+    const company = data.company_name ? { name: data.company_name } : undefined
 
     const updatedReservations = booking.reservations.map(reservation => ({
       ...reservation,
@@ -27,6 +38,8 @@ const PaymentPage = () => {
         lastName: data.last_name,
         email: data.email,
         phone: data.phone,
+        address,
+        company,
       }
     }))
     
@@ -36,6 +49,8 @@ const PaymentPage = () => {
         lastName: data.last_name,
         email: data.email,
         phone: data.phone,
+        address,
+        company,
       },
       consent: data.consent,
       totalAmount: booking.totalAmount,
