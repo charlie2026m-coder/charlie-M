@@ -33,6 +33,7 @@ interface BookingState {
   extras: Service[];
 
   isRefundable: boolean;
+  isExtend: boolean;
   params: { from: string; to: string; nights: number; }
   bookingId: string | undefined;
 
@@ -47,6 +48,7 @@ interface BookingState {
   setExtras: (extras: Service[]) => void;
 
   setIsRefundable: (isRefundable: boolean) => void;
+  setIsExtend: (isExtend: boolean) => void;
   setParams: (params: { from: string; to: string; nights: number }) => void;
   setBookingId: (id: string) => void;
 
@@ -90,6 +92,10 @@ export const useBookingStore = create<BookingState>()(
 
       isRefundable: true,
       setIsRefundable: (isRefundable: boolean) => set((state) => ({ ...state, isRefundable })),
+      
+      isExtend: false,
+      setIsExtend: (isExtend: boolean) => set((state) => ({ ...state, isExtend })),
+      
       params: {
         from: '',
         to: '',
@@ -128,6 +134,7 @@ export const useBookingStore = create<BookingState>()(
           roomDetails: undefined,
           bookingId: undefined,
           isRefundable: true,
+          isExtend: false,
           transactionReference: null,
           reservationId: null,
           apaleoBookingId: null,
@@ -145,6 +152,7 @@ export const useBookingStore = create<BookingState>()(
         roomDetails: state.roomDetails,
         bookingId: state.bookingId,
         isRefundable: state.isRefundable,
+        isExtend: state.isExtend,
         reservationId: state.reservationId,
         apaleoBookingId: state.apaleoBookingId,
         reservationIds: state.reservationIds,

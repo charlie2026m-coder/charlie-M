@@ -9,7 +9,9 @@ import { Button } from '@/app/_components/ui/button'
 import { useExtensionRooms } from '@/app/hooks/useExtensionRooms'
 import { useTranslations } from 'next-intl'
 import { useAddExtrasStore } from '@/store/useAddExtras'
+import { useBookingStore } from '@/store/useBookingStore'
 import { cn } from '@/lib/utils'
+import { Guest } from '@/types/apaleo'
 
 const ExtandYourStay = ({ 
   existingServices, 
@@ -19,7 +21,8 @@ const ExtandYourStay = ({
   availableExtras,
   unitGroupId,
   adults,
-  children
+  booker,
+  primaryGuest
 }: { 
   existingServices?: any[], 
   nights: number,
@@ -28,7 +31,9 @@ const ExtandYourStay = ({
   availableExtras: any[],
   unitGroupId?: string,
   adults?: number,
-  children?: number
+  children?: number,
+  booker?: Guest,
+  primaryGuest?: Guest
 }) => {
   const t = useTranslations('reservations')
   const params = useParams()
@@ -36,6 +41,8 @@ const ExtandYourStay = ({
   const arrivalDate = new Date(arrival)
   const router = useRouter()
   const { openExtendYourStay, services  } = useAddExtrasStore();
+  const setBooking = useBookingStore(state => state.setBooking)
+  const setIsExtend = useBookingStore(state => state.setIsExtend)
   const [isNavigating, setIsNavigating] = useState(false)
   // Day after departure is the start of extension
   // Load extension dates from localStorage if available
@@ -45,15 +52,8 @@ const ExtandYourStay = ({
       if (stored) {
         try {
           const { from, to } = JSON.parse(stored)
-          if (from && to) {
-            return {
-              from: new Date(from),
-              to: new Date(to)
-            }
-          }
-        } catch (e) {
-          // Ignore parse errors
-        }
+          if (from && to) return { from: new Date(from), to: new Date(to)}
+        } catch (e) {}
       }
     }
     return undefined
@@ -256,6 +256,15 @@ const ExtandYourStay = ({
                             adults: (adults || 1).toString(),
                             children: isBaby ? '1' : '0'
                           })
+                          
+                          const bookerData = primaryGuest || booker
+                          if (bookerData) {
+                            setBooking({
+                              booker: bookerData,
+                              reservations: []
+                            })
+                          }
+                          setIsExtend(true)
                           router.push(`/booking/${unitGroupId}?${queryParams.toString()}`)
                         }
                       }}

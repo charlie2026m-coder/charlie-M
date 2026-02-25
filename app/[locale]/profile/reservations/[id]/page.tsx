@@ -52,6 +52,8 @@ const ReservationPage = async ({ params }: { params: { id: string } }) => {
           unitGroupId={reservation.unitGroup?.id}
           adults={reservation.adults}
           children={reservation.childrenAges?.length || 0}
+          booker={reservation.booker}
+          primaryGuest={reservation.primaryGuest}
         />
         {canAddExtras && extras.length > 0 && (
           <AddExtras 

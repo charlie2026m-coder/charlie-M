@@ -41,6 +41,7 @@ const BookingMenu = ({
   const { from, to } = params
   const nights = calculateNights(from as string, to as string)
   const { setBooking, setServices } = useBookingStore()
+  const booking = useBookingStore(state => state.booking)
   const rooms = useBookingStore(state => state.rooms) || roomsOffers
   const roomDetails = useBookingStore(state => state.roomDetails) || roomsOffers[0]
   const services = useBookingStore(state => state.services)
@@ -202,8 +203,8 @@ const BookingMenu = ({
       services,
       extras // Pass extras array
     )
-    
     setBooking({ 
+      ...(booking?.booker && { booker: booking.booker }),
       reservations,
       totalAmount: totalPrice
     })
