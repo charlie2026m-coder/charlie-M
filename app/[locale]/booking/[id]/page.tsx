@@ -19,10 +19,7 @@ const Booking = async ({ params, searchParams }: IParams) => {
   const { id, locale } = await params
   const { from, to, adults, children } = await searchParams
   
-  // Validate required params
-  if (!from || !to) {
-    return <ErrorCard isSingleRoom={true} link='/rooms' />
-  }
+  if (!from || !to) return <ErrorCard isSingleRoom={true} link='/rooms' />
   
   const [rooms, babyBedAvailability, extras] = await Promise.all([
     getSingleRoom(id, from, to, adults, locale),
@@ -37,13 +34,7 @@ const Booking = async ({ params, searchParams }: IParams) => {
   const isKidsBedAvailable = rooms[0].attributes?.includes('kids') || false
   if(!isKidsBedAvailable) filteredExtras = filteredExtras.filter(extra => extra.id !== 'CMH-BAB')
 
-  const filledRooms = sortGuestsByRooms(
-    Number(adults) || 1, 
-    Number(children) || 0, 
-    from, 
-    to, 
-    rooms[0]?.maxPersons || 2
-  )
+  const filledRooms = sortGuestsByRooms( Number(adults) || 1, Number(children) || 0, from, to, rooms[0]?.maxPersons || 2)
   return (
     <>
       <Steps currentStep={1} />

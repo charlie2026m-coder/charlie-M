@@ -8,7 +8,7 @@ export default function ProfileInfo({ isWhite = false }: { isWhite?: boolean }) 
 
   const forstLetter = profile?.name?.charAt(0) ;
   return (
-    <Link href="/profile" className={cn("flex items-center justify-center border border-mute bg-blue size-10 rounded-full cursor-pointer group text-mute", isWhite ? "border-white bg-white" : "border-blue hover:bg-dark-gold hover:text-white")}>
+    <Link href="/profile/reservations" className={cn("flex items-center justify-center border border-mute bg-blue size-10 rounded-full cursor-pointer group text-mute", isWhite ? "border-white bg-white" : "border-blue hover:bg-dark-gold hover:text-white")}>
       <span className={cn(" transition-all duration-300")}>{forstLetter || <AiOutlineUser className="size-5" />}</span>
     </Link>
   )

@@ -34,7 +34,10 @@ const BookingPage = ({
   const clearBooking = useBookingStore(state => state.clearBooking)
   const bookingId = useBookingStore(state => state.bookingId)
   const setBookingId = useBookingStore(state => state.setBookingId)
-  
+  const isExtend = useBookingStore(state => state.isExtend)
+  const setIsExtend = useBookingStore(state => state.setIsExtend)
+  const booking = useBookingStore(state => state.booking)
+  const setBooking = useBookingStore(state => state.setBooking)
   const nights = calculateNights(from as string, to as string)
   const planType = getType(nights, true)
   const mainRoom = rooms.find(room => room.ratePlan?.code === planType) || rooms[0]
@@ -54,7 +57,15 @@ const BookingPage = ({
     const currentBookingId = `${mainRoom.id || mainRoom.ratePlan?.id}-${from}-${to}-${adults}-${children}`
     
     if (bookingId && bookingId !== currentBookingId) {
-      clearBooking()
+      // If isExtend is true, preserve booker data
+      if (isExtend) {
+        const bookerData = booking?.booker
+        clearBooking()
+        if (bookerData) setBooking({ booker: bookerData, reservations: []})
+        setIsExtend(false)
+      } else {
+        clearBooking()
+      }
       setRooms(filledRooms)
       setBookingId(currentBookingId)
     } else if (!bookingId) {

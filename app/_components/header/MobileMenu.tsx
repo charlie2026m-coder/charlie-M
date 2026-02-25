@@ -113,7 +113,7 @@ const MobileMenu = ({ isWhite = false }: { isWhite?: boolean }) => {
             <MobileCheckInForm />
 
             {!loading && user &&
-              <Link href="/profile" className="flex gap-2 items-center justify-center font-bold " onClick={() => setOpen(false)}>
+              <Link href="/profile/reservations" className="flex gap-2 items-center justify-center font-bold " onClick={() => setOpen(false)}>
                 <div className="size-12 bg-blue rounded-full flex items-center justify-center">
                   {profile?.name?.charAt(0)}
                 </div>

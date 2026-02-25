@@ -21,9 +21,7 @@ const AddCleaningExtra = ({ extra, rooms, roomName }: { extra: Service, rooms: R
   const setServices = useBookingStore(state => state.setServices);
   const savedDates = allServices.find(s => s.serviceId === extra.id)?.dates || [];
   const [dailyCounts, setDailyCounts] = useState<{ [date: string]: number }>({});
-  
-  console.log(savedDates, 'savedDates')
-  console.log(dailyCounts, 'dailyCounts')
+
   const maxRooms = rooms.length;
 
   useEffect(()=>{
@@ -140,17 +138,7 @@ const AddCleaningExtra = ({ extra, rooms, roomName }: { extra: Service, rooms: R
 
 export default AddCleaningExtra;
 
-const DayRow = ({ 
-  item, 
-  count, 
-  onCountChange,
-  maxRooms
-}: { 
-  item: AvailabilityServiceItem, 
-  count: number, 
-  onCountChange: (date: string, count: number) => void,
-  maxRooms: number
-}) => {
+const DayRow = ({ item, count,  onCountChange, maxRooms }: {  item: AvailabilityServiceItem,  count: number,  onCountChange: (date: string, count: number) => void, maxRooms: number}) => {
   const maxLimit = maxRooms;
   const formattedDate = dayjs(item.serviceDate).format('YYYY-MM-DD');
 
