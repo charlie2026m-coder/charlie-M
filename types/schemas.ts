@@ -83,6 +83,21 @@ export const guestDetailsSchema = z.object({
   phone: z.string()
     .min(10, 'Phone number must be at least 10 digits')
     .regex(/^[0-9+\s()-]+$/, 'Invalid phone number format'),
+    company_name: z.string().optional().or(z.literal('')),
+    street_address: z.string()
+      .min(2, 'Street address must be at least 2 characters')
+      .max(100, 'Street address must be less than 100 characters'),
+    house_number: z.string()
+      .min(1, 'House number is required')
+      .max(20, 'House number must be less than 20 characters'),
+    postal_code: z.string()
+      .min(4, 'Postal code must be at least 4 characters'),
+    city: z.string()
+      .min(2, 'City must be at least 2 characters')
+      .max(50, 'City must be less than 50 characters'),
+    country: z.string()
+      .min(2, 'Country is required')
+      .max(50, 'Country must be less than 50 characters'),
   consent: z.boolean().refine((val) => val === true, {
     message: 'You must agree to the Privacy Policy to continue',
   }),

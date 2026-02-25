@@ -1,7 +1,7 @@
 import { TbMailFilled } from "react-icons/tb";
 import { Input } from "./input";
 import { FieldValues, UseFormRegister, Path } from "react-hook-form";
-import { FaUser } from "react-icons/fa6";
+import { FaUser, FaBuilding } from "react-icons/fa6";
 import { MdLock } from "react-icons/md";
 import { useState } from "react";
 import { IoEyeSharp, IoEyeOffSharp } from "react-icons/io5";
@@ -10,6 +10,7 @@ import { BsFillTelephoneFill } from "react-icons/bs";
 import { BiSolidIdCard } from "react-icons/bi";
 import { FaGlobeAsia } from "react-icons/fa";
 import { TbDirectionsFilled } from "react-icons/tb";
+import { HiMiniHome } from "react-icons/hi2";
 
 
 interface CustomInputProps<T extends FieldValues> {
@@ -17,7 +18,7 @@ interface CustomInputProps<T extends FieldValues> {
   name: Path<T>;
   type: 'email' | 'password' | 'text' | 'phone';
   placeholder: string;
-  icon?: 'email' | 'password' | 'name' | 'booking' | 'phone' | 'id' | 'nationality' | 'address';
+  icon?: 'email' | 'password' | 'name' | 'booking' | 'phone' | 'id' | 'nationality' | 'address' | 'postal' | 'company';
   isError?: boolean;
   className?: string;
 }
@@ -35,14 +36,16 @@ function CustomInput<T extends FieldValues>({
   const [showPassword, setShowPassword] = useState(false);
 
   const icons: Record<string, React.ReactNode> = {
-    email: <TbMailFilled className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-blue" />,
-    password: <MdLock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-blue" />,
-    name: <FaUser className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-blue" />,
+    email: <TbMailFilled className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-blue" />,
+    password: <MdLock className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-blue" />,
+    name: <FaUser className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-blue" />,
     booking: <h1 className="absolute left-3 top-1/2 -translate-y-1/2  text-blue text-2xl font-bold">B.</h1>,
-    phone: <BsFillTelephoneFill className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-blue" />,
-    id: <BiSolidIdCard className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-blue" />,
-    nationality: <FaGlobeAsia className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-blue" />,
-    address: <TbDirectionsFilled className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-blue" />,
+    phone: <BsFillTelephoneFill className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-blue" />,
+    id: <BiSolidIdCard className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-blue" />,
+    nationality: <FaGlobeAsia className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-blue" />,
+    address: <TbDirectionsFilled className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-blue" />,
+    postal: <HiMiniHome className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-blue" />,
+    company: <FaBuilding className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-blue" />,
   };
   
   return (

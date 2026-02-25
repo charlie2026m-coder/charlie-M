@@ -195,11 +195,25 @@ export interface VehicleRegistration {
   countryCode: string;
 }
 
+export interface Address {
+  addressLine1?: string;
+  addressLine2?: string;
+  postalCode?: string;
+  city?: string;
+  countryCode?: string;
+}
+
+export interface Company {
+  name?: string;
+}
+
 export interface Guest {
   firstName: string;
   lastName: string;
   email: string;
   phone: string;
+  address?: Address;
+  company?: Company;
 }
 
 export interface Booker extends Guest {
@@ -207,6 +221,8 @@ export interface Booker extends Guest {
   lastName: string;
   email: string;
   phone: string;
+  address?: Address;
+  company?: Company;
 }
 
 export interface PaymentAccount {

@@ -1,9 +1,13 @@
+import { Address, Company } from './apaleo'
+
 export interface Booking {
   booker?: {
     firstName: string;
     lastName: string;
     email: string;
     phone: string;
+    address?: Address;
+    company?: Company;
   },
 
   consent?: boolean; // GDPR consent flag
@@ -22,6 +26,8 @@ export interface Booking {
       lastName: string;
       email: string;
       phone: string;
+      address?: Address;
+      company?: Company;
     };
 
     guaranteeType: "Prepayment",
