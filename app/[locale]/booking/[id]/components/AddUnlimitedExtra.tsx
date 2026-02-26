@@ -86,9 +86,18 @@ const AddUnlimitedExtra = ({ extra, rooms, nights, isParking = false }: { extra:
       const filteredExtras = currentExtras.filter(e => e.id !== extra.id);
       
       if (count > 0) {
+        let totalPrice = 0;
+        
+        if (mode === 'Daily') {
+          totalPrice = Math.round(extra.price * count * nights * 100) / 100;
+        } else {
+          totalPrice = Math.round(extra.price * count * 100) / 100;
+        }
+        
         const roomExtra: RoomExtra = {
           ...extra,
           count: count,
+          totalPrice: totalPrice,
         };
         editRoom(room.id, {
           ...room,

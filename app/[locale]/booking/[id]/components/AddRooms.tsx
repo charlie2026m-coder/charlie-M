@@ -24,6 +24,7 @@ const AddRooms = ({
   const rooms = useBookingStore(state => state.rooms)
   const roomDetails = useBookingStore(state => state.roomDetails)
   const extras = useBookingStore(state => state.extras)
+  const params = useBookingStore(state => state.params)
   const setRooms = useBookingStore(state => state.setRooms)
   const addRoom = useBookingStore(state => state.addRoom)
   const removeRoom = useBookingStore(state => state.removeRoom)
@@ -73,7 +74,11 @@ const AddRooms = ({
         }
         
         if (guests.children > 0 && isKidsBedAvailable && babyBedService) {
-          updatedRoom.extras = [...extrasWithoutBabyBed, { ...babyBedService }]
+          const nights = params?.nights || 1
+          updatedRoom.extras = [...extrasWithoutBabyBed, { 
+            ...babyBedService,
+            totalPrice: Math.round(babyBedService.price * nights * 100) / 100
+          }]
         } else {
           updatedRoom.extras = extrasWithoutBabyBed
         }

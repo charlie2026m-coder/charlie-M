@@ -74,9 +74,14 @@ const AddCleaningExtra = ({ extra, rooms }: { extra: Service, rooms: Room[] }) =
       const filteredExtras = currentExtras.filter(e => e.id !== extra.id);
       
       if (selectedDates.length > 0) {
+        // Calculate totalPrice for this room's cleaning services
+        const totalPrice = selectedDates.reduce((sum, date) => 
+          sum + (date.count * extra.price), 0);
+        
         const roomExtra: RoomExtra = {
           ...extra,
           selectedDates,
+          totalPrice: Math.round(totalPrice * 100) / 100,
         };
         editRoom(room.id, {
           ...room,
@@ -147,9 +152,12 @@ const AddCleaningExtra = ({ extra, rooms }: { extra: Service, rooms: Room[] }) =
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <div className='absolute flex top-2.5 right-2.5 items-center justify-center rounded transition-all duration-300 cursor-pointer size-10 shadow-lg bg-blue border-blue text-white'>
+        <button 
+          type="button"
+          className='absolute flex top-2.5 right-2.5 items-center justify-center rounded transition-all duration-300 cursor-pointer size-10 shadow-lg bg-blue border-blue text-white'
+        >
           <FaPlus className='size-6' />
-        </div>
+        </button>
       </DialogTrigger>
       <DialogContent className="rounded-xl max-w-[600px] max-h-[80vh] w-full overflow-hidden flex flex-col bg-white">
         <DialogHeader>

@@ -43,7 +43,7 @@ const BookingPage = ({
   const mainRoom = rooms.find(room => room.ratePlan?.code === planType) || rooms[0]
   const tCommon = useTranslations()
   if (!mainRoom) return <div className="p-10 text-center">{tCommon('loading')}</div>
-
+  
   useEffect(() => {
     if (typeof window === 'undefined') return // Skip SSR
     
@@ -61,7 +61,10 @@ const BookingPage = ({
       if (room.children > 0 && isKidsBedAvailable && babyBedService) {
         return {
           ...room,
-          extras: [{ ...babyBedService }],
+          extras: [{
+            ...babyBedService,
+            totalPrice: Math.round(babyBedService.price * nights * 100) / 100
+          }],
         }
       }
       return room

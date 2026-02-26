@@ -2,7 +2,7 @@ import { clsx, type ClassValue } from "clsx"
 import dayjs from "dayjs"
 import { twMerge } from "tailwind-merge"
 import { v4 as uuidv4 } from 'uuid';
-import { Service, UrlParams } from "@/types/apaleo"
+import { UrlParams } from "@/types/apaleo"
 import { Room, RoomExtra } from "@/types/types"
 import { RoomOffer } from "@/types/offers"
 import { RATE_PLANS, CITY_TAX_RATE } from "./Constants";
@@ -299,12 +299,26 @@ export const formatReservations = (
   const reservations = updatedRooms.map((item, index) => {
     const roomPrice = calculateRoomPrice(item.adults);
     const roomTax = calculateRoomTax(item.adults);
-    const reservationAmount = Math.round((roomPrice + roomTax) * 100) / 100
     
-    type ServiceWithCount = { serviceId: string; count: number };
-    type ServiceWithDates = { serviceId: string; dates: { serviceDate: string; amount: { amount: number; currency: string } }[] };
-    type SimpleService = { serviceId: string };
-    type FormattedService = ServiceWithCount | ServiceWithDates | SimpleService;
+    let extrasPrice = 0;
+    if (item.extras && item.extras.length > 0) {
+      extrasPrice = item.extras.reduce((sum, extra) => {
+        return sum + (extra.totalPrice || extra.price || 0);
+      }, 0);
+    }
+    
+    const reservationAmount = Math.round((roomPrice + roomTax + extrasPrice) * 100) / 100
+    
+    console.log(`📊 Reservation ${index + 1}: Room ${roomPrice}, Tax ${roomTax}, Extras ${extrasPrice}, Total ${reservationAmount}`);
+    
+    type ServiceWithDates = { 
+      serviceId: string; 
+      dates: { serviceDate: string }[] 
+    };
+    type SimpleService = { 
+      serviceId: string;
+    };
+    type FormattedService = ServiceWithDates | SimpleService;
     
     let allServices: FormattedService[] = [];
     
@@ -314,19 +328,8 @@ export const formatReservations = (
           return {
             serviceId: extra.id,
             dates: extra.selectedDates.map(date => ({
-              serviceDate: date.serviceDate,
-              amount: {
-                amount: Math.round(extra.price * date.count * 100) / 100,
-                currency: extra.currency || 'EUR'
-              }
+              serviceDate: date.serviceDate
             }))
-          };
-        }
-        
-        if (extra.count && extra.count > 1) {
-          return {
-            serviceId: extra.id,
-            count: extra.count
           };
         }
         

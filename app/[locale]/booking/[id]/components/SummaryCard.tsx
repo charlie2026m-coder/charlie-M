@@ -26,40 +26,6 @@ const SummaryCard = () => {
   const totalGuests = reservations[0].adults
   const nights = calculateNights(reservations[0].arrival, reservations[0].departure)
 
-  const updatedRooms = rooms.map(room => {
-    const updateExtras = room.extras?.map(extra => {
-      let totalPrice = 0;
-      
-      if (extra.selectedDates && extra.selectedDates.length > 0) {
-        const sum = extra.selectedDates.reduce((acc, date) => 
-          acc + (extra.price * date.count), 0);
-        totalPrice = Math.round(sum * 100) / 100;
-      } else if (extra.count) {
-        const mode = extra.availability?.mode;
-        const pricingUnit = extra.pricingUnit;
-        
-        if (mode === 'Daily' && pricingUnit === 'Room') {
-          totalPrice = Math.round(extra.price * extra.count * nights * 100) / 100;
-        } else if (mode === 'Daily' && pricingUnit === 'Person') {
-          totalPrice = Math.round(extra.price * extra.count * nights * 100) / 100;
-        } else {
-          totalPrice = Math.round(extra.price * extra.count * 100) / 100;
-        }
-      } else {
-        totalPrice = extra.price;
-      }
-      
-      return {
-        ...extra,
-        totalPrice,
-      }
-    })
-    return {
-      ...room,
-      extras: updateExtras,
-    }
-  })
-
   const getText = (days: number) => days === 1 ? tBooking('night') : tBooking('nights')
   
   const calculateRoomPrice = (adultsCount: number) => {
@@ -94,7 +60,7 @@ const SummaryCard = () => {
     }
   };
 
-  const extrasTotalPrice = updatedRooms.reduce((acc, room) => {
+  const extrasTotalPrice = rooms.reduce((acc, room) => {
     const roomExtrasTotal = room.extras?.reduce((sum, extra) => sum + (extra.totalPrice || 0), 0) || 0;
     return acc + roomExtrasTotal;
   }, 0);
@@ -145,16 +111,16 @@ const SummaryCard = () => {
         </div>
       </div>
 
-      {updatedRooms.some(room => room.extras && room.extras.length > 0) && (
+      {rooms.some(room => room.extras && room.extras.length > 0) && (
         <div className='flex flex-col mb-5'>
           <span className='font-semibold mb-4 text-[15px]'>{tBooking('addExtras')}</span>
           <div className='flex flex-col gap-1 mb-2'>
-            {updatedRooms.map((room, index) => {
+            {rooms.map((room, index) => {
               if (!room.extras || room.extras.length === 0) return null;
               
               return (
                 <div key={index} className='flex flex-col gap-1'>
-                  {updatedRooms.length > 1 && (
+                  {rooms.length > 1 && (
                     <span className='text-xs font-semibold text-green mt-2'>{tBooking('room')} {index + 1}</span>
                   )}
                   {room.extras.map(extra => {

@@ -41,46 +41,14 @@ const BookingMenu = ({
 
   if (!roomDetails || !rooms || rooms.length === 0) return <div className="p-5 text-center">{tCommon('loading')}</div>
 
-  const updatedRooms = rooms.map(room => {
-    const updateExtras = room.extras?.map(extra => {
-      let totalPrice = 0;
-      
-      if (extra.selectedDates && extra.selectedDates.length > 0) {
-        const sum = extra.selectedDates.reduce((acc, date) => 
-          acc + (extra.price * date.count), 0);
-        totalPrice = Math.round(sum * 100) / 100;
-      } else if (extra.count) {
-        const mode = extra.availability?.mode;
-        const pricingUnit = extra.pricingUnit;
-        
-        if (mode === 'Daily' && pricingUnit === 'Room') {
-          totalPrice = Math.round(extra.price * extra.count * nights * 100) / 100;
-        } else if (mode === 'Daily' && pricingUnit === 'Person') {
-          totalPrice = Math.round(extra.price * extra.count * nights * 100) / 100;
-        } else {
-          totalPrice = Math.round(extra.price * extra.count * 100) / 100;
-        }
-      } else {
-        totalPrice = extra.price;
-      }
-      
-      return {
-        ...extra,
-        totalPrice,
-      }
-    })
-    return {
-      ...room,
-      extras: updateExtras,
-    }
-  })
+  console.log('🛏️ Booking menu rooms:', rooms)
 
-  const getText = (days: number) => days === 1 ? t('night') : t('nights')
-
-  const extrasTotalPrice = updatedRooms.reduce((acc, room) => {
+  const extrasTotalPrice = rooms.reduce((acc, room) => {
     const roomExtrasTotal = room.extras?.reduce((sum, extra) => sum + (extra.totalPrice || 0), 0) || 0;
     return acc + roomExtrasTotal;
   }, 0);
+
+  const getText = (days: number) => days === 1 ? t('night') : t('nights')
 
   const maxPersons = roomDetails.maxPersons || 2
   const price = roomDetails.price || 0
@@ -127,7 +95,7 @@ const BookingMenu = ({
       from as string, 
       to as string, 
       roomDetails, 
-      updatedRooms as Room[]
+      rooms as Room[]
     )
     setBooking({ 
       ...(booking?.booker && { booker: booking.booker }),
@@ -165,15 +133,15 @@ const BookingMenu = ({
           <span className='text-bale font-semibold ml-auto'>€ {cityTaxAmount.toFixed(2)}</span>
         </div>
         </div>
-        {updatedRooms.some(room => room.extras && room.extras.length > 0) && <>
+        {rooms.some(room => room.extras && room.extras.length > 0) && <>
           <span className='font-semibold mb-1.5 '>{t('addExtras')}</span>
           <div className='flex flex-col gap-1 mb-5'>
-            {updatedRooms.map((room, index) => {
+            {rooms.map((room, index) => {
               if (!room.extras || room.extras.length === 0) return null;
               
               return (
                 <div key={index} className='flex flex-col gap-1'>
-                  {updatedRooms.length > 1 && (
+                  {rooms.length > 1 && (
                     <span className=' mt-2'>{t('room')} {index + 1}</span>
                   )}
                   {room.extras.map(extra => {
@@ -198,6 +166,11 @@ const BookingMenu = ({
                 </div>
               )
             })}
+          </div>
+          
+          <div className='flex items-center justify-between gap-2 inter text-sm text-dark mb-2'>
+            <span>{t('total')}</span>
+            <span className='text-bale font-semibold'>€ {extrasTotalPrice.toFixed(2)}</span>
           </div>
         </>}
       </div>

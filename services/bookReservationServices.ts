@@ -66,7 +66,7 @@ async function payReservationFolio(
     const balance = folio.balance?.amount || 0;
     const allowedPayment = folio.allowedPayment || 0;
     
-    console.log(`   💰 Folio ${reservationId}: Balance ${balance}, Allowed ${allowedPayment}`);
+    console.log(` 💰 Folio ${reservationId}: Balance ${balance}, Allowed ${allowedPayment}`);
     
     // If no payment allowed or balance is positive (we owe them), skip payment
     if (allowedPayment <= 0 || balance >= 0) {

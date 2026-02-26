@@ -87,6 +87,7 @@ const AddCheckoutExtra = ({ extra, rooms }: { extra: Service, rooms: Room[]}) =>
       if (count > 0) {
         const roomExtra: RoomExtra = {
           ...extra,
+          totalPrice: extra.price, // Checkout services are one-time, not per night
         };
         editRoom(room.id, {
           ...room,
