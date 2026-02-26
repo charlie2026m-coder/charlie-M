@@ -30,8 +30,7 @@ export default function PaymentForm({ amount }: {amount: number}) {
 
     const init = async () => {
       try {
-        // Always round up to avoid underpayment due to floating point errors
-        const amountInCents = Math.ceil(amount * 100);
+        const amountInCents = Math.round(amount * 100);
 
         const paymentMethodsRes = await fetch("/api/payments/payment-methods", {
           method: "POST",
@@ -126,7 +125,39 @@ export default function PaymentForm({ amount }: {amount: number}) {
 
               if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                const errorMessage = errorData.details?.messages?.[0] || errorData.error || "Failed to create booking";
+                console.error('❌ Booking creation failed:', {
+                  status: response.status,
+                  errorData
+                });
+                
+                let errorMessage = "Failed to create booking";
+                
+                // Extract error message from various possible formats
+                if (errorData.details) {
+                  // Check for Apaleo validation errors (422)
+                  if (errorData.details.messages && Array.isArray(errorData.details.messages) && errorData.details.messages.length > 0) {
+                    errorMessage = errorData.details.messages[0];
+                  } 
+                  // Check for Apaleo error title/detail
+                  else if (errorData.details.title) {
+                    errorMessage = errorData.details.title;
+                    if (errorData.details.detail) {
+                      errorMessage += `: ${errorData.details.detail}`;
+                    }
+                  }
+                  // Check for nested error message
+                  else if (errorData.details.message) {
+                    errorMessage = errorData.details.message;
+                  }
+                  // Fallback to stringified details
+                  else if (typeof errorData.details === 'string') {
+                    errorMessage = errorData.details;
+                  }
+                }
+                // Fallback to top-level error
+                else if (errorData.error) {
+                  errorMessage = errorData.error;
+                }
                 
                 // Check if it's a server error (retry was already done on backend)
                 if (response.status >= 500) {
@@ -136,7 +167,7 @@ export default function PaymentForm({ amount }: {amount: number}) {
                   return;
                 }
                 
-                // Client errors (400, 401, 403, 409, etc.)
+                // Client errors (400, 401, 403, 409, 422, etc.)
                 if (errorMessage.includes("fully booked") || errorMessage.includes("service")) {
                   toast.error(t('servicesUnavailable'), { id: "create-booking", duration: 6000 });
                 } else {

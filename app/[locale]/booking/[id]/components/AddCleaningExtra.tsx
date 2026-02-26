@@ -8,31 +8,19 @@ import {
   DialogTitle,
 } from "@/app/_components/ui/dialog"
 import { Button } from "@/app/_components/ui/button";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { AvailabilityServiceItem, Service } from "@/types/apaleo";
 import { ButtonIcon } from "@/app/_components/ui/ButtonIcon";
 import { useBookingStore } from "@/store/useBookingStore";
 import dayjs from "dayjs";
-import { Room } from "@/types/types";
+import { Room, RoomExtra } from "@/types/types";
+import { useTranslations } from "next-intl";
 
-const AddCleaningExtra = ({ extra, rooms, roomName }: { extra: Service, rooms: Room[], roomName: string }) => {
+const AddCleaningExtra = ({ extra, rooms }: { extra: Service, rooms: Room[] }) => {
+  const t = useTranslations('bookingForm');
   const [isOpen, setIsOpen] = useState(false);
-  const allServices = useBookingStore(state => state.services);
-  const setServices = useBookingStore(state => state.setServices);
-  const savedDates = allServices.find(s => s.serviceId === extra.id)?.dates || [];
-  const [dailyCounts, setDailyCounts] = useState<{ [date: string]: number }>({});
-
-  const maxRooms = rooms.length;
-
-  useEffect(()=>{
-    const initValues: { [date: string]: number } = {};
-    savedDates.forEach(item => {
-      initValues[item.serviceDate] = item.count;
-    });
-    setDailyCounts(initValues);
-  }, [savedDates.length])
+  const editRoom = useBookingStore(state => state.editRoom);
   
-  // Calculate available time slices
   const allTimeSlices = extra.timeSlices?.slice(1, -1) || [];
   const daysOfWeek = extra.daysOfWeek || extra.availability?.daysOfWeek || [];
   const availableTimeSlices = daysOfWeek.length > 0
@@ -43,92 +31,177 @@ const AddCleaningExtra = ({ extra, rooms, roomName }: { extra: Service, rooms: R
       })
     : allTimeSlices;
 
+  const getSavedDatesForRoom = (room: Room) => {
+    const roomExtra = room.extras?.find(e => e.id === extra.id);
+    if (roomExtra?.selectedDates) {
+      const datesObj: { [date: string]: number } = {};
+      roomExtra.selectedDates.forEach(item => {
+        datesObj[item.serviceDate] = item.count;
+      });
+      return datesObj;
+    }
+    return {};
+  };
+  
+  const [roomDailyCounts, setRoomDailyCounts] = useState<{ [roomId: string]: { [date: string]: number } }>(() => {
+    const initValues: { [roomId: string]: { [date: string]: number } } = {};
+    rooms.forEach((room) => {
+      initValues[room.id] = getSavedDatesForRoom(room);
+    });
+    return initValues;
+  });
+
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (open) {
+      const initValues: { [roomId: string]: { [date: string]: number } } = {};
+      rooms.forEach((room) => {
+        initValues[room.id] = getSavedDatesForRoom(room);
+      });
+      setRoomDailyCounts(initValues);
+    }
+  };
 
   const handleConfirm = () => {
-    const newDates = availableTimeSlices.map(item => {
-      const formattedDate = dayjs(item.serviceDate).format('YYYY-MM-DD');
-      return {
-        serviceDate: formattedDate,
-        count: dailyCounts[formattedDate] || 0,
-        amount: {
-          amount: extra.price * (dailyCounts[formattedDate] || 0),
-          currency: extra.currency || 'EUR'
-        }
-      };
-    }).filter(d => d.count > 0);
-
-    const existingServices = allServices.filter(s => s.serviceId !== extra.id);
-    
-    if (newDates.length === 0) {
-      setServices(existingServices);
-    } else {
-      setServices([...existingServices, { serviceId: extra.id, dates: newDates }]);
-    }
+    rooms.forEach((room) => {
+      const roomCounts = roomDailyCounts[room.id] || {};
+      
+      const selectedDates = Object.entries(roomCounts)
+        .filter(([_, count]) => count > 0)
+        .map(([date, count]) => ({ serviceDate: date, count }));
+      
+      const currentExtras = room.extras || [];
+      const filteredExtras = currentExtras.filter(e => e.id !== extra.id);
+      
+      if (selectedDates.length > 0) {
+        const roomExtra: RoomExtra = {
+          ...extra,
+          selectedDates,
+        };
+        editRoom(room.id, {
+          ...room,
+          extras: [...filteredExtras, roomExtra],
+        });
+      } else {
+        editRoom(room.id, {
+          ...room,
+          extras: filteredExtras,
+        });
+      }
+    });
     
     setIsOpen(false);
   };
 
   const selectAll = () => {
-    const newCounts: { [date: string]: number } = {};
-    availableTimeSlices.forEach(item => {
-      const formattedDate = dayjs(item.serviceDate).format('YYYY-MM-DD');
-      newCounts[formattedDate] = maxRooms;
+    const newCounts: { [roomId: string]: { [date: string]: number } } = {};
+    rooms.forEach((room) => {
+      const roomDates: { [date: string]: number } = {};
+      availableTimeSlices.forEach(item => {
+        const formattedDate = dayjs(item.serviceDate).format('YYYY-MM-DD');
+        roomDates[formattedDate] = 1;
+      });
+      newCounts[room.id] = roomDates;
     });
-    setDailyCounts(newCounts);
+    setRoomDailyCounts(newCounts);
   };
 
-  const handleDayCountChange = (date: string, newCount: number) => {
-    setDailyCounts(prev => ({ ...prev, [date]: newCount }));
+  const clearAll = () => {
+    const newCounts: { [roomId: string]: { [date: string]: number } } = {};
+    rooms.forEach((room) => {
+      newCounts[room.id] = {};
+    });
+    setRoomDailyCounts(newCounts);
+  };
+
+  const handleDayCountChange = (roomId: string, date: string, newCount: number) => {
+    setRoomDailyCounts(prev => ({
+      ...prev,
+      [roomId]: {
+        ...prev[roomId],
+        [date]: newCount
+      }
+    }));
   };
 
   const getTotalPrice = () => {
-    return Object.values(dailyCounts).reduce((sum, count) => sum + (count * extra.price), 0);
+    let total = 0;
+    Object.values(roomDailyCounts).forEach(roomCounts => {
+      Object.values(roomCounts).forEach(count => {
+        total += count * extra.price;
+      });
+    });
+    return Math.round(total * 100) / 100;
   };
 
   const getTotalCount = () => {
-    return Object.values(dailyCounts).reduce((sum, count) => sum + count, 0);
+    let total = 0;
+    Object.values(roomDailyCounts).forEach(roomCounts => {
+      Object.values(roomCounts).forEach(count => {
+        total += count;
+      });
+    });
+    return total;
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <div className='absolute flex top-2.5 right-2.5 items-center justify-center rounded transition-all duration-300 cursor-pointer size-10 shadow-lg bg-blue border-blue text-white'>
           <FaPlus className='size-6' />
         </div>
       </DialogTrigger>
-      <DialogContent className="rounded-xl max-w-[600px] max-h-[80vh] w-full overflow-hidden flex flex-col">
+      <DialogContent className="rounded-xl max-w-[600px] max-h-[80vh] w-full overflow-hidden flex flex-col bg-white">
         <DialogHeader>
-          <DialogTitle className='font-semibold text-xl'>
-            Add {extra.name} (€{extra.price})
+          <DialogTitle className='font-[900] text-xl'>
+            {t('addExtra', { name: extra.name, price: extra.price })}
           </DialogTitle>
         </DialogHeader>
 
-        <div className='py-2.5 border-b border-t flex items-center gap-4 min-w-0'>
-          <div className='text-lg font-semibold truncate min-w-0 flex-1'>{roomName}</div>
-          <Button variant="outline" className='h-[45px] flex-shrink-0 whitespace-nowrap' onClick={selectAll}>
-            Select all available
+        <div className='flex items-center justify-start gap-2 pt-2.5 pb-2 border-b'>
+          <Button variant="outline" className='h-[35px] flex-shrink-0 whitespace-nowrap' onClick={clearAll}>
+            {t('clearAll')}
+          </Button>
+          <Button variant="outline" className='h-[35px] flex-shrink-0 whitespace-nowrap' onClick={selectAll}>
+            {t('selectAllAvailable')}
           </Button>
         </div>
 
-        <div className='flex flex-col gap-5 pt-2.5 pb-5 max-h-[400px] overflow-y-auto overflow-x-hidden min-w-0'>
-          {availableTimeSlices.map(item => {
-            const formattedDate = dayjs(item.serviceDate).format('YYYY-MM-DD');
+        <div className='flex flex-col gap-4 pt-4 pb-5 max-h-[400px] overflow-y-auto overflow-x-hidden min-w-0 pr-2'>
+          {rooms.map((room, index) => {
+            const roomCounts = roomDailyCounts[room.id] || {};
+            
             return (
-              <DayRow 
-                key={item.serviceDate} 
-                item={item} 
-                count={dailyCounts[formattedDate] || 0}
-                onCountChange={handleDayCountChange}
-                maxRooms={maxRooms}
-              />
+              <div key={room.id} className='flex flex-col gap-1 pr-2'>
+                {rooms.length > 1 && (
+                  <div className='relative flex items-center w-fit gap-2'>
+                    <span className='relative text-base font-semibold text-green'>{t('room')} {index + 1}</span>
+                  </div>
+                )}
+                
+                <div className='flex flex-col gap-3'>
+                  {availableTimeSlices.map(item => {
+                    const formattedDate = dayjs(item.serviceDate).format('YYYY-MM-DD');
+                    return (
+                      <DayRow 
+                        key={`${room.id}-${item.serviceDate}`}
+                        item={item} 
+                        count={roomCounts[formattedDate] || 0}
+                        onCountChange={(date, newCount) => handleDayCountChange(room.id, date, newCount)}
+                        maxLimit={1}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
             );
           })}
         </div>
 
         <div className='flex items-center justify-between pt-5 min-w-0 gap-4'>
-          <span className='truncate min-w-0'>Total: {getTotalCount()} {extra.name}</span>
+          <span className='font-[900] truncate min-w-0'>{t('total')}: {getTotalCount()} {extra.name}</span>
           <Button onClick={handleConfirm} className='h-[45px] flex-shrink-0'>
-            Confirm <span className='font-semibold'>€ {getTotalPrice().toFixed(2)}</span>
+            {t('confirm')} <span className='font-semibold'>€ {getTotalPrice().toFixed(2)}</span>
           </Button>
         </div>
       </DialogContent>
@@ -138,8 +211,17 @@ const AddCleaningExtra = ({ extra, rooms, roomName }: { extra: Service, rooms: R
 
 export default AddCleaningExtra;
 
-const DayRow = ({ item, count,  onCountChange, maxRooms }: {  item: AvailabilityServiceItem,  count: number,  onCountChange: (date: string, count: number) => void, maxRooms: number}) => {
-  const maxLimit = maxRooms;
+const DayRow = ({ 
+  item, 
+  count, 
+  onCountChange,
+  maxLimit
+}: { 
+  item: AvailabilityServiceItem, 
+  count: number, 
+  onCountChange: (date: string, count: number) => void,
+  maxLimit: number
+}) => {
   const formattedDate = dayjs(item.serviceDate).format('YYYY-MM-DD');
 
   const add = () => {

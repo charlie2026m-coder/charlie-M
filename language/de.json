@@ -436,7 +436,15 @@
     "cityTax": "City Tax:",
     "totalPrice": "Gesamtpreis:",
     "bookNow": "Jetzt buchen",
-    "total": "Gesamt"
+    "total": "Gesamt",
+    "add": "Hinzufügen",
+    "available": "verfügbar",
+    "confirm": "Bestätigen",
+    "addExtra": "{name} hinzufügen - €{price}",
+    "clearAll": "Alle löschen",
+    "selectAllAvailable": "Alle verfügbaren auswählen",
+    "selectDates": "Daten auswählen",
+    "chooseQuantityPerDay": "Menge pro Tag wählen"
   },
   "payment": {
     "guestDetails": "Angaben zum Gast",
@@ -756,7 +764,9 @@
     "error": "Reservierung nicht gefunden. Bitte überprüfen Sie Ihre ID und versuchen Sie es erneut.",
     "found": "Reservierung gefunden!",
     "bookingFound": "Buchung gefunden!",
-    "proceedToCheckIn": "Online-Check-In starten"
+    "proceedToCheckIn": "Online-Check-In starten",
+    "bookingCancelled": "Diese Buchung wurde storniert.",
+    "cannotProceedCheckIn": "Online-Check-In ist für stornierte Buchungen nicht verfügbar."
   },
   "termsAndConditions": {
     "title": "Allgemeine Geschäftsbedingungen",

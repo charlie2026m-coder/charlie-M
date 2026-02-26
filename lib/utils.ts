@@ -256,8 +256,6 @@ export const formatReservations = (
   to: string, 
   roomDetails: RoomOffer, 
   updatedRooms: Room[], 
-  storeServices?: any[],
-  availableServices?: Service[]
 ) => {
   if (!roomDetails || !roomDetails.timeSlices || !roomDetails.ratePlan) {
     console.error('Invalid roomDetails:', roomDetails)
@@ -266,14 +264,12 @@ export const formatReservations = (
 
   const timeSlices = roomDetails.timeSlices.map(_ => ({ ratePlanId: roomDetails.ratePlan.id }))
 
-  // Safe defaults
   const maxPersons = roomDetails.maxPersons || 2
   const price = roomDetails.price || 0
   const priceForTwo = roomDetails.priceForTwo || price
   const cityTax = roomDetails.cityTax || Math.round(price * CITY_TAX_RATE * 100) / 100
   const cityTaxForTwo = roomDetails.cityTaxForTwo || Math.round(priceForTwo * CITY_TAX_RATE * 100) / 100
 
-  // Calculate price for each room based on guest count (WITHOUT tax)
   const calculateRoomPrice = (adultsCount: number) => {
     const roomsNeeded = Math.ceil(adultsCount / maxPersons);
     
@@ -287,7 +283,6 @@ export const formatReservations = (
     }
   };
 
-  // Calculate city tax for each room based on guest count
   const calculateRoomTax = (adultsCount: number) => {
     const roomsNeeded = Math.ceil(adultsCount / maxPersons);
     
@@ -301,122 +296,44 @@ export const formatReservations = (
     }
   };
 
-  // Track remaining services to distribute across rooms
-  const remainingServices: { [key: string]: number } = {};
-  const remainingServiceDates: { [key: string]: { [date: string]: number } } = {};
-  
-  // Helper to get pricing unit for a service
-  const getServicePricingUnit = (serviceId: string): 'Person' | 'Room' => {
-    const service = availableServices?.find(s => s.id === serviceId);
-    return service?.pricingUnit || 'Person'; // Default to Person if not found
-  };
-  
-  // Initialize remaining counts
-  if (storeServices && storeServices.length > 0) {
-    storeServices.forEach(service => {
-      if (service.count) {
-        remainingServices[service.serviceId] = service.count;
-      }
-      if (service.dates && service.dates.length > 0) {
-        remainingServiceDates[service.serviceId] = {};
-        service.dates.forEach((date: any) => {
-          remainingServiceDates[service.serviceId][date.serviceDate] = date.count;
-        });
-      }
-    });
-  }
-
   const reservations = updatedRooms.map((item, index) => {
-    // const childrenAges = item.children > 0 ? Array(item.children).fill(1) as number[] : undefined
-    
     const roomPrice = calculateRoomPrice(item.adults);
     const roomTax = calculateRoomTax(item.adults);
-    
-
     const reservationAmount = Math.round((roomPrice + roomTax) * 100) / 100
     
-    // Distribute services: take from remaining pool, don't multiply
     type ServiceWithCount = { serviceId: string; count: number };
-    type ServiceWithDates = { serviceId: string; dates: any[] };
+    type ServiceWithDates = { serviceId: string; dates: { serviceDate: string; amount: { amount: number; currency: string } }[] };
     type SimpleService = { serviceId: string };
     type FormattedService = ServiceWithCount | ServiceWithDates | SimpleService;
     
     let allServices: FormattedService[] = [];
-    if (storeServices && storeServices.length > 0) {
-      const formattedStoreServices = storeServices
-        .map((service): FormattedService | null => {
-          const pricingUnit = getServicePricingUnit(service.serviceId);
-          
-          // For services with count (unlimited/checkout) - distribute based on pricing unit
-          if (service.count) {
-            const available = remainingServices[service.serviceId] || 0;
-            if (available <= 0) return null;
-            
-            const isParking = service.serviceId === 'CMH-PRK' || service.serviceId.includes('PRK')
-            
-            let roomShare = 0;
-            
-            if (isParking) {
-              roomShare = Math.min(available, 1);
-            } else if (pricingUnit === 'Room') {
-              roomShare = Math.min(available, 1);
-            } else {
-              roomShare = Math.min(available, item.adults);
-            }
-            
-            remainingServices[service.serviceId] -= roomShare;
-            
-            if (roomShare > 0) {
-              return {
-                serviceId: service.serviceId,
-                count: roomShare
-              };
-            }
-            return null;
-          }
-          
-          // For services with dates (limited) - distribute based on pricing unit for each date
-          if (service.dates && service.dates.length > 0) {
-            const serviceDates = service.dates
-              .map((date: any) => {
-                const available = remainingServiceDates[service.serviceId]?.[date.serviceDate] || 0;
-                if (available <= 0) return null;
-                
-                let roomShare = 0;
-                
-                if (pricingUnit === 'Room') {
-                  // Room services: max 1 per room per date
-                  roomShare = Math.min(available, 1);
-                } else {
-                  // Person services: max 1 per person per date
-                  roomShare = Math.min(available, item.adults);
-                }
-                
-                remainingServiceDates[service.serviceId][date.serviceDate] -= roomShare;
-                
-                if (roomShare > 0) {
-                  return {
-                    serviceDate: date.serviceDate,
-                    count: roomShare
-                  };
-                }
-                return null;
-              })
-              .filter((d: any): d is { serviceDate: string; count: number } => d !== null);
-            
-            if (serviceDates.length > 0) {
-              return {
-                serviceId: service.serviceId,
-                dates: serviceDates
-              };
-            }
-            return null;
-          }
-          return null;
-        })
-        .filter((service): service is FormattedService => service !== null);
-      
-      allServices = formattedStoreServices;
+    
+    if (item.extras && item.extras.length > 0) {
+      allServices = item.extras.map((extra): FormattedService => {
+        if (extra.selectedDates && extra.selectedDates.length > 0) {
+          return {
+            serviceId: extra.id,
+            dates: extra.selectedDates.map(date => ({
+              serviceDate: date.serviceDate,
+              amount: {
+                amount: Math.round(extra.price * date.count * 100) / 100,
+                currency: extra.currency || 'EUR'
+              }
+            }))
+          };
+        }
+        
+        if (extra.count && extra.count > 1) {
+          return {
+            serviceId: extra.id,
+            count: extra.count
+          };
+        }
+        
+        return {
+          serviceId: extra.id
+        };
+      });
     }
     
     return {

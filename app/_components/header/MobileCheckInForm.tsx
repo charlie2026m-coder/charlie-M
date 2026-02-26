@@ -44,6 +44,20 @@ const MobileCheckInForm = () => {
         <div className='text-dark text-sm text-center'>
           {t('reservationId')}: <span className='font-semibold'>{data.confirmationCode}</span>
         </div>
+        {data.status === 'Canceled' ? (
+          <div className='flex flex-col gap-2 text-center'>
+            <p className='text-red-600 font-semibold text-sm'>{t('bookingCancelled')}</p>
+            <p className='text-gray-500 text-sm'>{t('cannotProceedCheckIn')}</p>
+            <Button 
+              variant='outline' 
+              className='w-full h-[55px]' 
+              onClick={handleReset}
+            >
+              {t('cancel')}
+            </Button>
+          </div>
+        ) : (
+          <>
         <Button 
           className='w-full h-[55px]' 
           onClick={handleProceedToCheckIn}
@@ -57,6 +71,8 @@ const MobileCheckInForm = () => {
         >
           {t('cancel')}
         </Button>
+          </>
+        )}
       </div>
     )
   }

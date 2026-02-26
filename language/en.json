@@ -436,7 +436,15 @@
     "cityTax": "City tax:",
     "totalPrice": "Total price:",
     "bookNow": "Book Now",
-    "total": "Total"
+    "total": "Total",
+    "add": "Add",
+    "available": "available",
+    "confirm": "Confirm",
+    "addExtra": "Add {name} - €{price}",
+    "clearAll": "Clear All",
+    "selectAllAvailable": "Select All Available",
+    "selectDates": "Select dates",
+    "chooseQuantityPerDay": "Choose quantity per day"
   },
   "payment": {
     "guestDetails": "Guest Details",
@@ -756,7 +764,9 @@
     "error": "Reservation not found. Please check your ID and try again.",
     "found": "Reservation found!",
     "bookingFound": "Booking found!",
-    "proceedToCheckIn": "Start Online Check-In"
+    "proceedToCheckIn": "Start Online Check-In",
+    "bookingCancelled": "This booking has been cancelled.",
+    "cannotProceedCheckIn": "Online check-in is not available for cancelled bookings."
   },
   "termsAndConditions": {
     "title": "Terms and Conditions",

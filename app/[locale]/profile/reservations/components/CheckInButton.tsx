@@ -11,6 +11,7 @@ interface CheckinButtonProps {
 
 export const CheckinButton = ({ reservationId }: CheckinButtonProps) => {
   const t = useTranslations('profile')
+  const tCheckIn = useTranslations('checkIn')
   const { mutate, isPending } = usePreCheckIn()
   const [isLoading, setIsLoading] = useState(false)
 
@@ -20,6 +21,12 @@ export const CheckinButton = ({ reservationId }: CheckinButtonProps) => {
     setIsLoading(true)
     mutate(reservationId, {
       onSuccess: (data) => {
+        if (data?.status === 'Canceled') {
+          toast.error(tCheckIn('cannotProceedCheckIn') || 'Online check-in is not available for cancelled bookings.')
+          setIsLoading(false)
+          return
+        }
+        
         if (data?.guestAppUrl) {
           window.open(data.guestAppUrl, '_blank')
           toast.success(t('redirectingToCheckIn') || 'Redirecting to check-in...')
