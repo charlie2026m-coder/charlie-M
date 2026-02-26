@@ -1,6 +1,11 @@
 import { clsx, type ClassValue } from "clsx"
 import dayjs from "dayjs"
+import utc from "dayjs/plugin/utc"
+import timezone from "dayjs/plugin/timezone"
 import { twMerge } from "tailwind-merge"
+
+dayjs.extend(utc)
+dayjs.extend(timezone)
 import { v4 as uuidv4 } from 'uuid';
 import { UrlParams } from "@/types/apaleo"
 import { Room, RoomExtra } from "@/types/types"
@@ -322,6 +327,10 @@ export const formatReservations = (
     
     let allServices: FormattedService[] = [];
     
+    // Check if early check-in or late check-out services are present
+    const hasEarlyCheckIn = item.extras?.some(extra => extra.id === 'CMH-ECI');
+    const hasLateCheckOut = item.extras?.some(extra => extra.id === 'CMH-LCO');
+    
     if (item.extras && item.extras.length > 0) {
       allServices = item.extras.map((extra): FormattedService => {
         if (extra.selectedDates && extra.selectedDates.length > 0) {
@@ -339,9 +348,20 @@ export const formatReservations = (
       });
     }
     
+    // Format arrival date with time if early check-in is present
+    // Using Europe/Berlin timezone - dayjs will automatically calculate the correct UTC offset
+    const arrivalDate = hasEarlyCheckIn 
+      ? dayjs.tz(`${from} 13:00`, 'Europe/Berlin').format()
+      : from;
+    
+    // Format departure date with time if late check-out is present
+    const departureDate = hasLateCheckOut 
+      ? dayjs.tz(`${to} 13:00`, 'Europe/Berlin').format()
+      : to;
+    
     return {
-      arrival: from,
-      departure: to,
+      arrival: arrivalDate,
+      departure: departureDate,
       adults: item.adults,
       channelCode: 'IBE' as const,
       guaranteeType: 'Prepayment' as const,
