@@ -10,7 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { UrlParams } from "@/types/apaleo"
 import { Room, RoomExtra } from "@/types/types"
 import { RoomOffer } from "@/types/offers"
-import { RATE_PLANS, CITY_TAX_RATE } from "./Constants";
+import { RATE_PLANS, CITY_TAX_RATE, HOTEL_INFO } from "./Constants";
 import { getApaleoExtras } from "@/services/getExtras";
 import { ReservationFilter } from '@/store/useProfile'
 
@@ -348,16 +348,11 @@ export const formatReservations = (
       });
     }
     
-    // Format arrival date with time if early check-in is present
-    // Using Europe/Berlin timezone - dayjs will automatically calculate the correct UTC offset
-    const arrivalDate = hasEarlyCheckIn 
-      ? dayjs.tz(`${from} 13:00`, 'Europe/Berlin').format()
-      : from;
+    const arrivalTime = hasEarlyCheckIn ? '13:00' : HOTEL_INFO.checkinTime;
+    const arrivalDate = dayjs.tz(`${from} ${arrivalTime}`, 'Europe/Berlin').format();
     
-    // Format departure date with time if late check-out is present
-    const departureDate = hasLateCheckOut 
-      ? dayjs.tz(`${to} 13:00`, 'Europe/Berlin').format()
-      : to;
+    const departureTime = hasLateCheckOut ? '13:00' : HOTEL_INFO.checkoutTime;
+    const departureDate = dayjs.tz(`${to} ${departureTime}`, 'Europe/Berlin').format();
     
     return {
       arrival: arrivalDate,
