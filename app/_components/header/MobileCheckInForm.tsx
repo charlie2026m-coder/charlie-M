@@ -28,7 +28,7 @@ const MobileCheckInForm = () => {
 
   const handleProceedToCheckIn = () => {
     if (data?.guestAppUrl) {
-      window.location.href = data.guestAppUrl
+      window.open(data.guestAppUrl, '_blank')
     }
   }
 

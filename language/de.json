@@ -405,7 +405,7 @@
     "apply": "Anwenden"
   },
   "changeDate": {
-    "cancel": "Vorgang Abbrechen",
+    "cancel": "Abbrechen",
     "apply": "Übernehmen"
   },
   "addRooms": {
@@ -440,10 +440,10 @@
     "add": "Hinzufügen",
     "available": "verfügbar",
     "confirm": "Bestätigen",
-    "addExtra": "{name} hinzufügen - €{price}",
+    "addExtra": "{name} - €{price}",
     "clearAll": "Alle löschen",
-    "selectAllAvailable": "Alle verfügbaren auswählen",
-    "selectDates": "Daten auswählen",
+    "selectAllAvailable": "Alle auswählen",
+    "selectDates": "Daten",
     "chooseQuantityPerDay": "Menge pro Tag wählen"
   },
   "payment": {
@@ -568,6 +568,7 @@
     "invoiceDownloadFailed": "Fehler beim Herunterladen der Rechnung",
     "downloading": "Wird heruntergeladen...",
     "completeCheckIn": "Check-In abschließen",
+    "checkedIn": "Eingecheckt",
     "redirectingToCheckIn": "Weiterleitung zum Check-In...",
     "checkInUrlNotFound": "Check-In-URL nicht gefunden",
     "checkInError": "Check-In-Prozess konnte nicht gestartet werden",
@@ -601,10 +602,10 @@
     "oneTime": "einmalig",
     "allNights": "Alle Nächte",
     "available": "verfügbar",
-    "addExtra": "{name} hinzufügen",
+    "addExtra": "{name}",
     "confirm": "Bestätigen",
-    "selectDates": "Daten auswählen",
-    "selectAllAvailable": "Alle verfügbaren auswählen",
+    "selectDates": "Daten",
+    "selectAllAvailable": "Alle auswählen",
     "information": "Informationen",
     "needAnything": "Brauchen Sie etwas? Wir sind für Sie da.",
     "contactsDescription": "Unser Team ist rund um die Uhr für Sie da, um Ihren Aufenthalt reibungslos, unkompliziert und stressfrei zu gestalten. Kontaktieren Sie uns jederzeit — wir sind nur einen Klick entfernt.",
@@ -1296,11 +1297,11 @@
     "blackoutCurtains": "Verdunklungsvorhänge",
     "selfServiceCloset": "Self-Service Closet",
     "elevator": "Aufzug",
-    "weeklyCleaning": "Wöchentliche Zimmerreinigung (bei Aufenthalten ab 7 Nächten)",
+    "weeklyCleaning": "Wöchentliche Reinigung (ab 7 Nächten)",
     "luggageStorage": "Kofferlagerungen",
     "bicycleParking": "Fahrradstellplätze",
-    "coWorkingSpace": "Gemeinschaftsbereich mit Co-Working-Space",
-    "virtualConcierge": "Virtueller Concierge \"Charlie\" rund um die Uhr verfügbar"
+    "coWorkingSpace": "Co-Working-Space",
+    "virtualConcierge": "Concierge \"Charlie\" 24/7"
   }
 }
 

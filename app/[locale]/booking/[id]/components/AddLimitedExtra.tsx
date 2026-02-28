@@ -171,7 +171,7 @@ const AddLimitedExtra = ({ extra, rooms, room, guests  }: { extra: Service, room
         </div>
 
         <div className='flex items-center justify-between pt-5'>
-          <span>Total: {getTotalCount()} {extra.name}</span>
+          <span>Total: {getTotalCount()}</span>
           <Button onClick={handleConfirm} className='h-[45px]'>
             Confirm <span className='font-semibold'>€ {getTotalPrice().toFixed(2)}</span>
           </Button>

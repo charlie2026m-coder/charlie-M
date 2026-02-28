@@ -141,10 +141,10 @@ const AddUnlimitedExtra = ({ extra, rooms, nights, isParking = false }: { extra:
                   </div>
                 )}
                 
-                <div className='flex items-center justify-between'>
-                  <div className='flex items-end gap-2'>
-                    <span className='font-semibold'>{extra.name}</span>
-                    <span className='text-sm text-gray-500'>
+                <div className='flex items-center justify-between gap-2 overflow-hidden'>
+                  <div className='flex flex-col gap-1 min-w-0 flex-1 overflow-hidden'>
+                    <span className='font-semibold truncate'>{extra.name}</span>
+                    <span className='text-sm text-gray-500 truncate'>
                       {isParking 
                         ? `€${extra.price} × ${nights} nights × parking spots (max ${maxLimit})`
                         : mode === 'Daily' && pricingUnit === 'Room' ? `€${extra.price} × ${nights} nights × rooms (max ${maxLimit})` :
@@ -171,7 +171,7 @@ const AddUnlimitedExtra = ({ extra, rooms, nights, isParking = false }: { extra:
         </div>
 
         <div className='flex items-center justify-between pt-5'>
-          <span>{t('total')}: {getTotalCount()} {extra.name}</span>
+          <span>{t('total')}: {getTotalCount()}</span>
           <Button onClick={handleConfirm} className='h-[45px]'>
             {t('confirm')} <span className='font-semibold'>€ {getTotalPrice().toFixed(2)}</span>
           </Button>

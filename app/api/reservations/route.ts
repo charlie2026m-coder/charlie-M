@@ -10,7 +10,7 @@ const filterToStatus: Record<string, string> = {
   'Ongoing': 'InHouse',
   'Upcoming': 'Confirmed',
   'Completed': 'CheckedOut',
-  'Cancelled': 'Canceled',
+  'Canceled': 'Canceled',
 };
 
 interface ApaleoReservationsListResponse {
@@ -94,7 +94,7 @@ export async function GET(request: Request) {
       console.log('🔑 Reservation Accesses:', accessDataList);
 
       paginatedReservations = paginatedReservations.map(reservation => {
-        const accessInfo = accessDataList.find(item => item.reservationId === reservation.id);
+        const accessInfo = accessDataList.find(item => item.confirmationCode === reservation.id);
         return {
           ...reservation,
           accesses: accessInfo || null

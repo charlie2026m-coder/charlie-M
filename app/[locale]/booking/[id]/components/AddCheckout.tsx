@@ -137,9 +137,9 @@ const AddCheckoutExtra = ({ extra, rooms }: { extra: Service, rooms: Room[]}) =>
                   </div>
                 )}
                 
-                <div className='flex items-center justify-between'>
-                  <div className='flex items-center gap-2'>
-                    <span className='font-bold'>
+                <div className='flex items-center justify-between gap-2 overflow-hidden'>
+                  <div className='flex items-center gap-2 min-w-0 flex-1 overflow-hidden'>
+                    <span className='font-bold truncate'>
                       {timeSlice ? dayjs(timeSlice.serviceDate).format('ddd DD MMM') : mode}
                     </span>
                   </div>
@@ -158,7 +158,7 @@ const AddCheckoutExtra = ({ extra, rooms }: { extra: Service, rooms: Room[]}) =>
         </div>
 
         <div className='flex items-center justify-between pt-5'>
-          <span>{t('total')}: {getTotalCount()} {extra.name}</span>
+          <span>{t('total')}: {getTotalCount()}</span>
           <Button onClick={handleConfirm} className='h-[45px]'>
             {t('confirm')} <span className='font-semibold'>€ {getTotalPrice().toFixed(2)}</span>
           </Button>

@@ -24,7 +24,7 @@ const Contacts = async ({ locale }: { locale: string }) => {
             <span className='text-white text-[28px] text-[#E0E0E0] font-semibold'>{t('getSocial')}</span>
             <span className='text-white text-[#E0E0E0] '>{t('tagUs')}</span>
           </div>
-          <ul className="flex gap-5 text-[#eoeoeo] justify-around md:justify-start">
+          <ul className="flex gap-5  justify-start">
               <li className="flex size-14 rounded-full border border-blue items-center justify-center hover:bg-blue transition-colors cursor-pointer">
                 <a 
                   href="https://www.facebook.com/profile.php?id=61587365155032" 

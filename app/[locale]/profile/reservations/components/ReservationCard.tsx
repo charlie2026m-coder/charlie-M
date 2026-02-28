@@ -13,6 +13,7 @@ import { Link } from '@/navigation';
 import { useTranslations } from 'next-intl';
 import { CheckinButton } from './CheckInButton';
 import { InvoiceButton } from './InvoiceButton';
+import { CheckedInLabel } from './CheckedInLabel';
 
 const ReservationCard = ({ reservation }: { reservation: ReservationType }  ) => {
   const t = useTranslations('profile')
@@ -25,6 +26,7 @@ const ReservationCard = ({ reservation }: { reservation: ReservationType }  ) =>
   const isPincode = reservation.accesses?.pinCode;
   const isClosed = isCheckedOut || isCancelled;
   const showCheckInButton = !reservation.isPreCheckedIn && !isCancelled;
+  const isCheckedIn = reservation.isPreCheckedIn && !isCancelled;
   return (
     <div className='flex flex-col lg:flex-row bg-white border rounded-2xl p-3 relative'>
       <Image 
@@ -53,7 +55,11 @@ const ReservationCard = ({ reservation }: { reservation: ReservationType }  ) =>
         <div className='flex gap-2.5 xl:items-center flex-col xl:flex-row '>
           {(isPincode && !showCheckInButton) && <RoomCode roomNumber={reservation.accesses?.roomNumber || ''} code={reservation.accesses?.pinCode || ''} unitId={reservation.unit?.id || null} />}
           <div className='flex gap-2 grow flex-col lg:flex-row '>
-            {showCheckInButton && <CheckinButton reservationId={id} />}
+            {showCheckInButton ? (
+              <CheckinButton reservationId={id} />
+            ) : (
+              isCheckedIn && <CheckedInLabel isBig={false} />
+            )}
             {isClosed && <BookAgainButton reservation={reservation} />}
             {isClosed && <InvoiceButton reservationId={id} className='h-[30px] ' />}
             <DetailsButton id={id} />

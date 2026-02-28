@@ -190,7 +190,7 @@ const AddCleaningExtra = ({ extra, existingDatesWithCount = [], arrival, departu
         </div>
 
         <div className='flex items-center justify-between pt-5 min-w-0 gap-4'>
-          <span className='truncate min-w-0'>{t('total')}: {getTotalCount()} {extra.name}</span>
+          <span className='truncate min-w-0'>{t('total')}: {getTotalCount()}</span>
           <Button onClick={handleConfirm} className='h-[45px] flex-shrink-0'>
             {t('confirm')} <span className='font-semibold'>€ {getTotalPrice().toFixed(2)}</span>
           </Button>
@@ -229,12 +229,12 @@ const DayRow = ({
   };
 
   return (
-    <div className='flex items-center justify-between'>
-      <div className='flex items-center gap-2'>
-        <span className={`font-bold ${isPast ? 'line-through text-gray' : ''}`}>
+    <div className='flex items-center justify-between gap-2 overflow-hidden'>
+      <div className='flex items-center gap-2 min-w-0 flex-1 overflow-hidden'>
+        <span className={`font-bold truncate ${isPast ? 'line-through text-gray' : ''}`}>
           {dayjs(item.serviceDate).format('ddd DD MMM')}
         </span>
-        {isPast && <span className="text-gray text-sm">{t('past')}</span>}
+        {isPast && <span className="text-gray text-sm truncate">{t('past')}</span>}
       </div>
 
       <div className="flex items-center gap-2">

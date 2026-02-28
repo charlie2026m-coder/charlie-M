@@ -140,14 +140,14 @@ const AddCheckoutExtra = ({ extra, adults, nights, existingCount = 0 }: { extra:
 
 
         <div className='flex flex-col gap-5  pb-5 border-t pt-10'>
-          <div className='flex items-center justify-between'>
-            <div className='flex items-center gap-2'>
-              <span className={cn('font-bold', availableCount === 0 && 'line-through text-gray')}>
+          <div className='flex items-center justify-between gap-2 overflow-hidden'>
+            <div className='flex items-center gap-2 min-w-0 flex-1 overflow-hidden'>
+              <span className={cn('font-bold truncate', availableCount === 0 && 'line-through text-gray')}>
                 {isBabyBed || isParking ? t('allNights') : (timeSlice ? dayjs(timeSlice.serviceDate).format('ddd DD MMM') : mode)}
               </span>
               {availableCount === 0 
-                ? <span className="text-gray text-sm">{t('soldOut')}</span>
-                : <span className="text-gray text-sm">({availableCount} {t('available')})</span>
+                ? <span className="text-gray text-sm truncate">{t('soldOut')}</span>
+                : <span className="text-gray text-sm truncate">({availableCount} {t('available')})</span>
               }
             </div>
 
@@ -162,7 +162,7 @@ const AddCheckoutExtra = ({ extra, adults, nights, existingCount = 0 }: { extra:
         </div>
 
         <div className='flex items-center justify-between pt-5'>
-          <span>{t('total')} {count} {extra.name}</span>
+          <span>{t('total')} {count}</span>
           <Button onClick={handleConfirm} className='h-[45px]'>
             {t('confirm')} <span className='font-semibold'>€ {getTotalPrice().toFixed(2)}</span>
           </Button>

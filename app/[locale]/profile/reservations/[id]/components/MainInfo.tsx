@@ -14,6 +14,7 @@ import { InvoiceButton } from '../../components/InvoiceButton';
 import { PinCodeComponent } from './PinCodeComponent';
 import { HOTEL_INFO } from '@/lib/Constants';
 import { Floor } from './Floor';
+import { CheckedInLabel } from '../../components/CheckedInLabel';
 
 const MainInfo = ({ reservation }: { reservation: any } ) => {
   const t = useTranslations('profile');
@@ -26,6 +27,7 @@ const MainInfo = ({ reservation }: { reservation: any } ) => {
   const isClosed = isCheckedOut || isCancelled;
   const isActive = reservation.status === bookingStatuses.Confirmed || reservation.status === bookingStatuses.InHouse;
   const showCheckInButton = !reservation.isPreCheckedIn && !isCancelled;
+  const isCheckedIn = reservation.isPreCheckedIn && !isCancelled;
   return (
     <div className='grid lg:grid-cols-2 gap-4 pb-6 '>
     <div>
@@ -42,7 +44,11 @@ const MainInfo = ({ reservation }: { reservation: any } ) => {
         <span className={cn(reservation.status === bookingStatuses.Canceled && 'text-red-500')}>{to} 11:00</span>
       </div>
       <div className='flex flex-col w-full lg:w-4/5 gap-3'>
-        {showCheckInButton && <CheckinButton reservationId={reservation.id} />}
+        {showCheckInButton ? (
+          <CheckinButton reservationId={reservation.id} />
+        ) : (
+          isCheckedIn && <CheckedInLabel isBig={true} />
+        )}
         {isPincode && !showCheckInButton && (
           <>
             <PinCodeComponent 

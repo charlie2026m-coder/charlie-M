@@ -33,18 +33,20 @@ const LocationCard = ({ item }: { item: Location | null, index: number }) => {
         rel="noopener noreferrer"
         className='flex md:flex-col rounded-xl md:rounded-[30px] bg-[rgba(255,255,255,0.8)] md:bg-light-bg w-full md:shadow-xl overflow-hidden hover:scale-102 transition-all duration-300 cursor-pointer'
       >
-        <Image src={image} alt='location' width={457} height={310} className='object-cover h-[200px] md:max-h-[400px] object-center w-1/2 md:w-full'/>
+        <div className='relative w-1/2 md:w-full md:flex-1 min-h-[200px] md:min-h-[400px]'>
+          <Image src={image} alt='location' fill className='object-cover object-center'/>
+        </div>
         <div className='flex flex-col p-2.5 md:p-6 gap-2 md:gap-3 text-mute flex-1'>
           <div className='text-end text-mute px-2 border rounded-full w-fit border-mute'>{distance}</div>
-          {carTime && <div className=' flex items-center text-xs md:text-base '>
+          {carTime && <div className=' flex  text-xs md:text-base '>
             <LiaCarSideSolid className='hidden md:block size-6 mr-2' />
-            {t('drive')} <span className='font-bold ml-auto'>{carTime}</span>
+            {t('drive')} <span className='font-bold ml-auto min-w-10'>{carTime}</span>
           </div>}
-          {busTime && <div className=' flex items-center text-xs md:text-base '>
-            <LiaBusAltSolid className='hidden md:block size-6 mr-2' />{t('publicTransport')} <span className='font-bold ml-auto'>{busTime}</span>
+          {busTime && <div className=' flex  text-xs md:text-base '>
+            <LiaBusAltSolid className='hidden md:block size-6 mr-2' />{t('publicTransport')} <span className='font-bold ml-auto min-w-10 '>{busTime}</span>
           </div>}
-          {walkTime && <div className=' flex items-center text-xs md:text-base '>
-            <FaWalking className='hidden md:block size-6 mr-2' />{t('walk')} <span className='font-bold ml-auto'>{walkTime}</span>
+          {walkTime && <div className=' flex  text-xs md:text-base '>
+            <FaWalking className='hidden md:block size-6 mr-2' />{t('walk')} <span className='font-bold ml-auto min-w-10'>{walkTime}</span>
           </div>}
         </div>
       </a>
@@ -76,31 +78,33 @@ const MainCard = () => {
         rel="noopener noreferrer"
         className='flex md:flex-col rounded-xl bg-[rgba(255,255,255,0.8)] md:rounded-[30px] md:bg-light-bg w-full md:shadow-xl overflow-hidden hover:scale-105 transition-all duration-300 cursor-pointer'
       >
-        <Image src='/images/hotel-image.webp' alt='location' width={457} height={310} className='object-cover max-h-[400px] object-center w-1/2 md:w-full' />
+        <div className='relative w-1/2 md:w-full md:flex-1 min-h-[200px] md:min-h-[400px]'>
+          <Image src='/images/hotel-image.webp' alt='location' fill className='object-cover object-center'/>
+        </div>
         <div className='flex flex-col p-2.5 md:p-6 gap-2 md:gap-3 text-mute'>
-          <h3 className='gap-2 flex items-center text-xs md:text-[20px] pb-4 border-b font-bold'>
-            <PiMapPinFill className='size-5 min-w-5' />
-            Friedrichstraße 33, 10969 Berlin
+          <h3 className='gap-2 flex text-xs md:text-[20px] pb-4 border-b font-bold'>
+            <PiMapPinFill className='size-5 min-w-5 mt-0.5' />
+            {hotelAddress}
           </h3>
           <span className='gap-2 flex items-center text-xs md:text-[20px] font-bold'>
             {t('centralStation')}
           </span>
-          <div className='flex items-center text-xs md:text-base italic md:pl-2'>
-            <LiaBusAltSolid className='hidden md:block size-6 mr-2' />{t('publicTransport')} <span className='font-bold ml-auto'>15 min</span>
+          <div className='flex text-xs md:text-base italic md:pl-2'>
+            <LiaBusAltSolid className='hidden md:block size-6 mr-2' />{t('publicTransport')} <span className='font-bold ml-auto min-w-10'>15 min</span>
           </div>
-          <div className=' flex items-center text-xs md:text-base italic md:pl-2'>
+          <div className=' flex  text-xs md:text-base italic md:pl-2'>
             <LiaCarSideSolid className='hidden md:block size-6 mr-2' />
-            {t('taxi')} <span className='font-bold ml-auto'>10 min</span>
+            {t('taxi')} <span className='font-bold ml-auto min-w-10'>10 min</span>
           </div>
 
           <span className='gap-2 flex items-center text-xs md:text-[20px] font-bold'>
             {t('airport')}
           </span>
-          <div className=' flex items-center italic text-xs md:text-base md:pl-2'>
-              <LiaBusAltSolid className='hidden md:block size-6 mr-2' />{t('publicTransport')} <span className='font-bold ml-auto'>40 min</span>
+          <div className=' flex  italic text-xs md:text-base md:pl-2'>
+              <LiaBusAltSolid className='hidden md:block size-6 mr-2' />{t('publicTransport')} <span className='font-bold ml-auto min-w-10'>40 min</span>
           </div>
-          <div className=' flex items-center italic text-xs md:text-base md:pl-2'>
-            <LiaCarSideSolid className='hidden md:block size-6 mr-2' />{t('taxi')} <span className='font-bold ml-auto'>35 min</span>
+          <div className=' flex  italic text-xs md:text-base md:pl-2'>
+            <LiaCarSideSolid className='hidden md:block size-6 mr-2' />{t('taxi')} <span className='font-bold ml-auto min-w-10'>35 min</span>
           </div>
         </div>
       </a>

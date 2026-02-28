@@ -1,11 +1,13 @@
+'use client'
 import { Button } from '@/app/_components/ui/button'
 import PhotoSlider from '@/app/[locale]/home/components/PhotoSlider'
 import { Link, useRouter } from '@/navigation'
-import { getPath } from '@/lib/utils'
+import { getPath, getDate } from '@/lib/utils'
 import { UrlParams } from '@/types/apaleo'
 import { RoomOffer } from '@/types/offers'
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { useStore } from '@/store/useStore'
 
 import RoomParamsRow from '@/app/_components/ui/RoomParamsRow'
 import Price from '@/app/_components/ui/price'
@@ -20,10 +22,23 @@ const RoomCard = ({
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const t = useTranslations('roomCard');
+  const { dateRange, guests } = useStore();
 
-  const queryString = getPath({ from: params.from, to: params.to, adults: params.adults, children: params.children })
-  const adultsCount = Number(params.adults || 1);
-  const childrenCount = Number(params.children || 0);
+  // Priority: 1. params from URL, 2. store
+  const getQueryParams = () => {
+    const from = params.from || (dateRange.from ? getDate(dateRange.from) : undefined);
+    const to = params.to || (dateRange.to ? getDate(dateRange.to) : undefined);
+    const adults = params.adults || guests.adults.toString();
+    const children = params.children || guests.children.toString();
+
+    return { from, to, adults, children };
+  };
+
+  const queryParams = getQueryParams();
+  const queryString = getPath(queryParams);
+  
+  const adultsCount = Number(queryParams.adults || 1);
+  const childrenCount = Number(queryParams.children || 0);
   const maxPersons = room.maxPersons || 2; // Use room's maxPersons
   
   const roomsForChildren = childrenCount;

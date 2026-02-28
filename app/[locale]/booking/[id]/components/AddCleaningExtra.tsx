@@ -207,7 +207,7 @@ const AddCleaningExtra = ({ extra, rooms }: { extra: Service, rooms: Room[] }) =
         </div>
 
         <div className='flex items-center justify-between pt-5 min-w-0 gap-4'>
-          <span className='font-[900] truncate min-w-0'>{t('total')}: {getTotalCount()} {extra.name}</span>
+          <span className='font-[900] truncate min-w-0'>{t('total')}: {getTotalCount()}</span>
           <Button onClick={handleConfirm} className='h-[45px] flex-shrink-0'>
             {t('confirm')} <span className='font-semibold'>€ {getTotalPrice().toFixed(2)}</span>
           </Button>
@@ -243,9 +243,9 @@ const DayRow = ({
   };
 
   return (
-    <div className='flex items-center justify-between'>
-      <div className='flex items-center gap-2'>
-        <span className='font-bold'>
+    <div className='flex items-center justify-between gap-2 overflow-hidden'>
+      <div className='flex items-center gap-2 min-w-0 flex-1 overflow-hidden'>
+        <span className='font-bold truncate'>
           {dayjs(item.serviceDate).format('ddd DD MMM')}
         </span>
       </div>
