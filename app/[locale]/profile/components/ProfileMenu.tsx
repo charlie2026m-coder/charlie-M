@@ -59,14 +59,14 @@ const ProfileMenu = () => {
         
         const icon = tab.value === '' 
           ? <FaUser className={cn('size-5', isActive ? 'text-white' : 'text-blue')} />
-          : <PiCalendarBlankFill className={cn('size-5', isActive ? 'text-white' : 'text-blue')} />
+          : <PiCalendarBlankFill className={cn('size-5 mt-1', isActive ? 'text-white' : 'text-blue')} />
         
         return (
           <div key={tab.label} className='flex flex-col gap-2'>
             <Link
               href={href}
               className={cn(
-                'flex items-center p-2.5 rounded-[16px] gap-2 w-full cursor-pointer transition-all duration-300',
+                'flex p-2.5 rounded-[16px] gap-2 w-full cursor-pointer transition-all duration-300',
                 isActive 
                   ? 'bg-black text-white hover:bg-black/80' 
                   : 'hover:bg-light-bg'

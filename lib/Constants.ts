@@ -10,6 +10,8 @@ export const RATE_PLANS = {
   LONG_STAY : 'FLEX_WEB7', // we will use this price in booking more then 7 nights 
   NON_REFUNDABLE_LONG_STAY: 'NR_WEB7', // we will use this price in booking more then 7 nights and non refundable
 }
+export const DEFAULT_CHECKIN_TIME = "15:00 - 00:00"
+export const DEFAULT_CHECKOUT_TIME = "11:00"
 // Hotel Information
 export const HOTEL_INFO = {
   name: "Charlie M Hotel",
