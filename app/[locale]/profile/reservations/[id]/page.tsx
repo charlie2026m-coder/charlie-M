@@ -11,8 +11,8 @@ import Contacts from "./components/Contacts";
 import ExtandYourStay from "./components/ExtandYourStay";
 import { Suspense } from 'react';
 
-const ReservationPage = async ({ params }: { params: { id: string } }) => {
-  const { id } = await params;
+const ReservationPage = async ({ params }: { params: Promise<{ id: string; locale: string }> }) => {
+  const { id, locale } = await params;
   const reservation = await getReservationById(id);
   if(!reservation) return <ErrorCard isSingleRoom={false} />
   
@@ -35,7 +35,7 @@ const ReservationPage = async ({ params }: { params: { id: string } }) => {
   const nights = nightsDiff === 0 ? 1 : nightsDiff;
   
   // Only fetch extras if reservation is active and not past
-  const extras = canAddExtras ? await getApaleoExtras(extrasStartDate, departureDate) : [];
+  const extras = canAddExtras ? await getApaleoExtras(extrasStartDate, departureDate, locale) : [];
   return (
     <div >
       <div className='flex flex-col flex-1 p-3 lg:p-[30px]'>

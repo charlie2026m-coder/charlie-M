@@ -104,7 +104,7 @@ const GuestDetailsForm = ({ onSubmit,  isLoading = false }: GuestDetailsFormProp
             register={register} 
             name='name' 
             type='text' 
-            placeholder={t('name')}
+            placeholder={`${t('name')} *`}
             icon='name'
             isError={!!errors.name}
           />
@@ -118,7 +118,7 @@ const GuestDetailsForm = ({ onSubmit,  isLoading = false }: GuestDetailsFormProp
             register={register}
             name='last_name' 
             type='text' 
-            placeholder={t('lastName')}
+            placeholder={`${t('lastName')} *`}
             icon='name'
             isError={!!errors.last_name}
           />
@@ -132,7 +132,7 @@ const GuestDetailsForm = ({ onSubmit,  isLoading = false }: GuestDetailsFormProp
             register={register}
             name='email' 
             type='email' 
-            placeholder={t('email')}
+            placeholder={`${t('email')} *`}
             icon='email'
             isError={!!errors.email}
           />
@@ -146,7 +146,7 @@ const GuestDetailsForm = ({ onSubmit,  isLoading = false }: GuestDetailsFormProp
             register={register}
             name='phone' 
             type='phone' 
-            placeholder={t('phone')}
+            placeholder={`${t('phone')} *`}
             icon='phone'
             isError={!!errors.phone}
           />
@@ -178,7 +178,7 @@ const GuestDetailsForm = ({ onSubmit,  isLoading = false }: GuestDetailsFormProp
             register={register}
             name='street_address' 
             type='text' 
-            placeholder={t('streetAddress')}
+            placeholder={`${t('streetAddress')} *`}
             icon='postal'
             isError={!!errors.street_address}
           />
@@ -192,7 +192,7 @@ const GuestDetailsForm = ({ onSubmit,  isLoading = false }: GuestDetailsFormProp
             register={register}
             name='house_number' 
             type='text' 
-            placeholder={t('houseNumber')}
+            placeholder={`${t('houseNumber')} *`}
             icon='postal'
             isError={!!errors.house_number}
           />
@@ -206,7 +206,7 @@ const GuestDetailsForm = ({ onSubmit,  isLoading = false }: GuestDetailsFormProp
             register={register}
             name='postal_code' 
             type='text' 
-            placeholder={t('postalCode')}
+            placeholder={`${t('postalCode')} *`}
             icon='postal'
             isError={!!errors.postal_code}
           />
@@ -220,7 +220,7 @@ const GuestDetailsForm = ({ onSubmit,  isLoading = false }: GuestDetailsFormProp
             register={register}
             name='city' 
             type='text' 
-            placeholder={t('city')}
+            placeholder={`${t('city')} *`}
             icon='postal'
             isError={!!errors.city}
           />
@@ -238,7 +238,7 @@ const GuestDetailsForm = ({ onSubmit,  isLoading = false }: GuestDetailsFormProp
                 value={field.value || ''}
                 onValueChange={field.onChange}
                 locale={locale}
-                placeholder={t('country')}
+                placeholder={`${t('country')} *`}
                 searchPlaceholder={locale === 'en' ? 'Search country...' : 'Land suchen...'}
                 emptyText={locale === 'en' ? 'No country found.' : 'Kein Land gefunden.'}
                 error={!!errors.country}
@@ -273,6 +273,7 @@ const GuestDetailsForm = ({ onSubmit,  isLoading = false }: GuestDetailsFormProp
             >
               {t('privacyPolicy')}
             </Link>
+            {' *'}
           </div>
         </div>
         {errors.consent && (

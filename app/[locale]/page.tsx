@@ -14,6 +14,7 @@ import DesignSection from './home/DesignSection';
 import FAQSection from './home/FAQSection';
 import ReviewsSection from './home/ReviewsSection';
 export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 type Props = {
   params: Promise<{ locale: string }>;

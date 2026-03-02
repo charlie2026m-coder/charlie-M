@@ -2,6 +2,7 @@ import { Service, ServicesResponse, AvailabilityResponse } from '@/types/apaleo'
 import { Fetch } from './Request';
 import { cache } from 'react';
 import dayjs from 'dayjs';
+import { serviceTranslations } from '@/content/ServiceTranslations';
 
 export enum usageType {
   Once = "once",
@@ -21,7 +22,7 @@ const STATUSES = {
 }
 
 // Get all services/extras from Apaleo
-const fetchExtras = async (from?: string, to?: string): Promise<Service[]> => {
+const fetchExtras = async (from?: string, to?: string, locale: string = 'en'): Promise<Service[]> => {
   const propertyId = process.env.APALEO_PROPERTY_ID;
 
 
@@ -91,6 +92,14 @@ const fetchExtras = async (from?: string, to?: string): Promise<Service[]> => {
         isSoldOut = stayDays.length > 0 && stayDays.every(timeSlice => timeSlice.services.find(service => service.service.id === item.id)?.availableCount === 0);
       }
 
+      // Get translations for service
+      const serviceId = item.id;
+      const translation = serviceId ? serviceTranslations[serviceId] : null;
+      const lang = locale === 'de' ? 'de' : 'en';
+      
+      const translatedName = translation?.title[lang] || item.name;
+      const translatedDescription = translation?.description[lang] || item.description;
+
       const timeSlices = availability.map(timeSlice => {
         const serviceData = timeSlice.services.find(service => service.service.id === item.id);
         return {
@@ -98,12 +107,14 @@ const fetchExtras = async (from?: string, to?: string): Promise<Service[]> => {
           soldCount: serviceData?.soldCount || 0,
           availableCount: serviceData?.availableCount || 0,
           quantity: serviceData?.quantity || 0,
-          service: serviceData?.service || { id: item.id, name: item.name }
+          service: serviceData?.service || { id: item.id, name: translatedName }
         }
       })
 
       return {
         ...item,
+        name: translatedName,
+        description: translatedDescription,
         timeSlices: timeSlices,
         isSoldOut: isSoldOut,
         minAvailable: minAvailable

@@ -1260,6 +1260,7 @@
     "email": "E-Mail",
     "password": "Passwort",
     "rePassword": "Passwort wiederholen",
+    "confirmPassword": "Passwort bestätigen",
     "agreeTo": "Ich stimme der",
     "privacyPolicy": "Datenschutzerklärung",
     "loading": "Wird geladen …",

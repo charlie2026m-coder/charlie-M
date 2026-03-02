@@ -1,5 +1,5 @@
 'use client'
-import { formatReservations, calculateNights } from '@/lib/utils';
+import { formatReservations, calculateNights, getTranslatedServiceName } from '@/lib/utils';  
 import { useBookingStore } from '@/store/useBookingStore'
 import { UrlParams } from "@/types/apaleo";
 import { RoomOffer } from '@/types/offers';
@@ -31,6 +31,7 @@ const BookingMenu = ({
   const tCommon = useTranslations()
   const router = useRouter()
   const urlParams = useParams()
+  const locale = urlParams.locale as 'en' | 'de'
   const { from, to } = params
   const nights = calculateNights(from as string, to as string)
   const setBooking = useBookingStore(state => state.setBooking)
@@ -145,13 +146,14 @@ const BookingMenu = ({
                     <span className=' mt-2'>{t('room')} {index + 1}</span>
                   )}
                   {room.extras.map(extra => {
-                    let displayText = extra.name;
+                    const serviceName = getTranslatedServiceName(extra.id, extra.name, locale);
+                    let displayText = serviceName;
                     
                     if (extra.selectedDates && extra.selectedDates.length > 0) {
                       const totalCount = extra.selectedDates.reduce((sum, date) => sum + date.count, 0);
-                      displayText = `${extra.name} (x${totalCount})`;
+                      displayText = `${serviceName} (x${totalCount})`;
                     } else if (extra.count && extra.count > 1) {
-                      displayText = `${extra.name} (x${extra.count})`;
+                      displayText = `${serviceName} (x${extra.count})`;
                     }
                     
                     return (

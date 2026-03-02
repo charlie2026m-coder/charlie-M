@@ -47,11 +47,22 @@ export async function POST(request: NextRequest) {
     console.log('Full reservation accesses response:', JSON.stringify(data, null, 2));
 
     const accesses = data.data?.map((reservation: any) => {
-      const firstAccess = reservation.accesses?.[0];
+      // Find access where doorName contains "room door" and name is a number
+      const roomDoorAccess = reservation.accesses?.find((access: any) => {
+        const doorName = access.lock?.doorName?.toLowerCase() || '';
+        const name = access.lock?.name || '';
+        const hasRoomDoor = doorName.includes('room door');
+        const isNameNumber = /^\d+$/.test(name);
+        return hasRoomDoor && isNameNumber;
+      });
+      
+      // Use room door access if found, otherwise fallback to first access
+      const selectedAccess = roomDoorAccess || reservation.accesses?.[0];
+      
       return {
         reservationId: reservation.id,
-        roomNumber: firstAccess?.lock?.doorName || firstAccess?.lock?.name || null,
-        pinCode: firstAccess?.code?.pinCode || null,
+        roomNumber: selectedAccess?.lock?.name || selectedAccess?.lock?.doorName || null,
+        pinCode: selectedAccess?.code?.pinCode || null,
       };
     }) || [];
 

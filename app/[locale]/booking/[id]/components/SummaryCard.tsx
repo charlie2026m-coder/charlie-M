@@ -2,15 +2,18 @@
 import { useBookingStore } from '@/store/useBookingStore'
 import Price from "@/app/_components/ui/price";
 import Image from 'next/image';
-import { calculateNights } from '@/lib/utils';
+import { calculateNights, getTranslatedServiceName } from '@/lib/utils';
 import { BsCalendar2Fill } from 'react-icons/bs';
 import dayjs from 'dayjs';
 import { useTranslations } from 'next-intl';
+import { useParams } from 'next/navigation';
 import { CITY_TAX_RATE } from '@/lib/Constants';
 
 const SummaryCard = () => {
   const t = useTranslations('summary')
   const tBooking = useTranslations('bookingForm')
+  const params = useParams()
+  const locale = params.locale as 'en' | 'de'
   const { booking, rooms, roomDetails, reservationIds } = useBookingStore()
 
   if (!booking || !booking.reservations) {
@@ -124,13 +127,14 @@ const SummaryCard = () => {
                     <span className='text-xs font-semibold text-green mt-2'>{tBooking('room')} {index + 1}</span>
                   )}
                   {room.extras.map(extra => {
-                    let displayText = extra.name;
+                    const serviceName = getTranslatedServiceName(extra.id, extra.name, locale);
+                    let displayText = serviceName;
                     
                     if (extra.selectedDates && extra.selectedDates.length > 0) {
                       const totalCount = extra.selectedDates.reduce((sum, date) => sum + date.count, 0);
-                      displayText = `${extra.name} (x${totalCount})`;
+                      displayText = `${serviceName} (x${totalCount})`;
                     } else if (extra.count && extra.count > 1) {
-                      displayText = `${extra.name} (x${extra.count})`;
+                      displayText = `${serviceName} (x${extra.count})`;
                     }
                     
                     return (
