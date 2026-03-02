@@ -34,7 +34,20 @@ export interface Params extends Guests {
 
 
 export type RoomExtra = Omit<Service, 'description'> & {
-  totalPrice?: number; // Calculated total price for this extra
+  totalPrice?: number;
+  count?: number;
+  dates?: {
+    serviceDate: string;
+    count: number;
+    amount?: {
+      amount: number;
+      currency: string;
+    };
+  }[];
+  selectedDates?: {
+    serviceDate: string;
+    count: number;
+  }[];
 };
 
 export interface Room {

@@ -68,8 +68,8 @@ export default async function TermsAndConditions({ params }: Props) {
     <>
       <Header locale={locale} />
       <section className="flex flex-col items-center justify-center container px-4 md:px-10 xl:px-[100px] py-[50px]">
-        <div className='flex items-center gap-5 mb-10'>
-          <div className='size-10 md:size-[76px] bg-blue rounded-full flex items-center justify-center text-white '>
+        <div className='flex flex-col md:flex-row text-center md:text-left items-center md:gap-5 mb-10'>
+          <div className='size-10 min-w-10 md:min-w-20 md:size-20  bg-blue rounded-full flex items-center justify-center text-white '>
             <PiListBulletsFill className='size-6 md:size-[40px]' />
           </div>
           <h1 className='text-3xl text-mute md:text-6xl font-bold jakarta'>{t('title')}</h1>

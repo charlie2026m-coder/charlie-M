@@ -4,8 +4,6 @@ import { ClientCustomDialog } from "@/app/_components/ui/ClientCustomDialog";
 import { useState } from "react";
 import { Service } from '@/types/apaleo';
 import AddUnlimitedExtra from './AddUnlimitedExtra';
-import { RoomOffer } from '@/types/offers';
-import AddLimitedExtra from './AddLimitedExtra';
 import AddCheckoutExtra from './AddCheckout';
 import AddCleaningExtra from './AddCleaningExtra';
 import { Room } from '@/types/types'
@@ -13,18 +11,15 @@ import { useTranslations } from 'next-intl'
 import { getExtraImage, getExtraImages } from '@/lib/getExtraImage'
 import CustomImageSlider from '@/app/_components/ui/CustomImageSlider'
 
-const ExtraCard = ({ item, room, guests, children, rooms, nights }: { item: Service, room: RoomOffer, guests: number, children: number, rooms: Room[], nights: number }) => {
+const ExtraCard = ({ item, rooms, nights }: { item: Service, rooms: Room[], nights: number }) => {
   const t = useTranslations('bookingForm')
   const [isOpen, setIsOpen] = useState(false);
-  const isUnlimited = item.unlimited;
   const isSoldOut = item.isSoldOut;
   const isCheckout = item.id === 'CMH-LCO' || item.id === 'CMH-ECI';
   const isParking = item.id === 'CMH-PRK' || item.name?.toLowerCase().includes('park');
   const isCleaning = item.id === 'CMH-CLN' || item.name?.toLowerCase().includes('clean');
 
-  // Получаем все изображения для слайдера
   const images = getExtraImages(item.id, item.name);
-  // Первое изображение для обложки карточки
   const coverImage = getExtraImage(item.id, item.name)
   return (
     <div className='flex sm:flex-col gap-2 relative'>
@@ -47,10 +42,8 @@ const ExtraCard = ({ item, room, guests, children, rooms, nights }: { item: Serv
         {isCheckout 
           ? <AddCheckoutExtra extra={item} rooms={rooms} /> 
           : isCleaning
-            ? <AddCleaningExtra extra={item} rooms={rooms} roomName={room.name} />
-            : (isUnlimited || isParking)
-              ? <AddUnlimitedExtra extra={item} room={room} guests={guests} rooms={rooms} nights={nights} isParking={isParking} /> 
-              : <AddLimitedExtra extra={item} rooms={rooms} room={room} guests={guests} children={children} />
+            ? <AddCleaningExtra extra={item} rooms={rooms} />
+            : <AddUnlimitedExtra extra={item} rooms={rooms} nights={nights} isParking={isParking} /> 
         }
       </div>}
 

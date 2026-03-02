@@ -23,15 +23,15 @@ const AddRooms = ({
   const t = useTranslations('addRooms')
   const rooms = useBookingStore(state => state.rooms)
   const roomDetails = useBookingStore(state => state.roomDetails)
+  const extras = useBookingStore(state => state.extras)
+  const params = useBookingStore(state => state.params)
   const setRooms = useBookingStore(state => state.setRooms)
   const addRoom = useBookingStore(state => state.addRoom)
   const removeRoom = useBookingStore(state => state.removeRoom)
   
-  // Initialize state: use filledRooms first, then switch to rooms from store when available
   const [state, setState] = useState<Room[]>(filledRooms)
 
   useEffect(() => {
-    // If rooms exist in store, use them; otherwise initialize store with filledRooms
     if (rooms && rooms.length > 0) {
       setState(rooms)
     } else if (filledRooms && filledRooms.length > 0) {
@@ -43,32 +43,49 @@ const AddRooms = ({
 
   const maxPersons = roomDetails?.maxPersons || 2
   
-  // Calculate total children across all rooms
   const totalChildren = state.reduce((acc, room) => acc + (room.children || 0), 0)
   const maxBabyBeds = babyBedAvailability?.count || 0
   
   const addGuests = (id: string, guests: { adults: number, children: number }) => {
-    // Only check adults count against maxPersons (children don't count)
     if (guests.adults > maxPersons) {
       console.warn(`Cannot add more than ${maxPersons} adults per room`);
       return;
     }
     
-    // Calculate new total children if this change is applied
     const currentRoomChildren = state.find(r => r.id === id)?.children || 0
     const newTotalChildren = totalChildren - currentRoomChildren + guests.children
     
-    // Check if adding this child would exceed available baby beds
     if (maxBabyBeds > 0 && newTotalChildren > maxBabyBeds) {
       console.warn(`Cannot add more than ${maxBabyBeds} children (baby beds available)`);
       return;
     }
     
-    const updatedRooms = state.map((room) => 
-      room.id === id 
-        ? { ...room, adults: guests.adults, children: guests.children } 
-        : room
-    )
+    const babyBedService = extras.find(extra => extra.id === 'CMH-BAB')
+    
+    const updatedRooms = state.map((room) => {
+      if (room.id === id) {
+        const currentExtras = room.extras || []
+        const extrasWithoutBabyBed = currentExtras.filter(e => e.id !== 'CMH-BAB')
+        
+        const updatedRoom = { 
+          ...room, 
+          adults: guests.adults, 
+          children: guests.children 
+        }
+        
+        if (guests.children > 0 && isKidsBedAvailable && babyBedService) {
+          const nights = params?.nights || 1
+          updatedRoom.extras = [...extrasWithoutBabyBed, { 
+            ...babyBedService,
+            totalPrice: Math.round(babyBedService.price * nights * 100) / 100
+          }]
+        } else {
+          updatedRoom.extras = extrasWithoutBabyBed
+        }
+        return updatedRoom
+      }
+      return room
+    })
     
     setState(updatedRooms)
     setRooms(updatedRooms)

@@ -12,7 +12,6 @@ interface ApaleoBookingResponse {
   reservationIds: { id: string }[]
 }
 
-
 // Helper function to check if error is retriable
 const isRetriableError = (status: number): boolean => {
   // Retry only for server errors (500, 502, 503, 504)
@@ -114,20 +113,17 @@ export async function POST(request: Request) {
   try {
     const booking: Booking = await request.json()
 
+    console.log('💰 Payment amount:', booking.totalAmount, 'EUR')
+
     if (booking.transactionReference) {
       console.log('💳 Transaction reference:', booking.transactionReference)
     }
 
     const token = await getOrRefreshToken()
 
-    // Create clean reservations without services for booking creation
-    // Services will be added after booking is created
     const bookingPayload = {
       ...booking,
-      reservations: booking.reservations.map(res => {
-        const { services, ...cleanReservation } = res as any
-        return cleanReservation
-      })
+      reservations: booking.reservations
     }
 
     console.log('📦 Booking payload:', JSON.stringify(bookingPayload, null, 2))
@@ -150,82 +146,32 @@ export async function POST(request: Request) {
 
     const apaleoData = result.data!
     
-    // Track any issues with services or payments
-    const issues: {
-      type: 'service' | 'payment' | 'processing',
-      reservationId: string,
-      details: any
-    }[] = []
-    
-    // Step 2: Book services and pay folios for each reservation (sequentially for reliability)
-    if (apaleoData.reservationIds && apaleoData.reservationIds.length > 0) {
-      console.log('📋 Step 2: Booking services and paying folios for reservations...')
+    // Step 2: Pay all folios with single payment
+    if (apaleoData.reservationIds && apaleoData.reservationIds.length > 0 && booking.transactionReference) {
+      console.log('📋 Step 2: Paying folios...')
       
-      for (let i = 0; i < booking.reservations.length; i++) {
-        const reservation = booking.reservations[i] as any
+      for (let i = 0; i < apaleoData.reservationIds.length; i++) {
         const reservationId = apaleoData.reservationIds[i]?.id
         
-        if (!reservationId) {
-          console.log(`⚠️ Reservation ${i + 1}: No reservation ID found`)
-          continue;
-        }
-        
+        if (!reservationId) continue;
         
         try {
-          // Book services and pay folio in one call
           const result = await bookReservationServices(
             reservationId, 
-            reservation.services || [],
-            booking.transactionReference // Pass transaction reference for payment
+            [],
+            booking.transactionReference
           )
           
-          // Check if services failed
-          const failedServices = result.services.filter(r => !r.success)
-          if (failedServices.length > 0) {
-            console.error(`❌ Failed to book ${failedServices.length} service(s):`, failedServices)
-            
-            issues.push({
-              type: 'service',
-              reservationId,
-              details: failedServices
-            })
-          }
-          
-          // Check if payment failed
-          if (result.payment && !result.payment.success) {
-            console.error(`❌ Failed to pay folio for reservation ${reservationId}`)
-            
-            issues.push({
-              type: 'payment',
-                  reservationId,
-              details: 'error' in result.payment ? result.payment.error : 'Unknown error'
-            })
-          }
-          
-          if (reservation.services && reservation.services.length > 0) {
-            const successCount = result.services.filter(r => r.success).length
-            console.log(`   ✅ ${successCount}/${reservation.services.length} service(s) booked`)
-          }
           if (result.payment && 'amount' in result.payment) {
-            console.log(`   ✅ Folio paid`)
+            console.log(`   ✅ Folio ${i + 1} paid: ${result.payment.amount} EUR`)
           }
           
         } catch (error) {
-          console.error(`❌ Error processing reservation ${reservationId}:`, error)
-          
-          issues.push({
-            type: 'processing',
-                reservationId,
-            details: error instanceof Error ? error.message : 'Unknown error'
-          })
+          console.error(`❌ Error paying folio for reservation ${reservationId}:`, error)
         }
       }
       
-      if (issues.length > 0) {
-        console.log(`\n⚠️ Step 2 completed with ${issues.length} issue(s)`)
-      } else {
-      console.log('\n✅ Step 2 complete: All reservations processed (services + payments)')
-      }
+      console.log('\n✅ Step 2 complete: All folios paid')
     }
 
     // Save consent record if consent was given
@@ -254,25 +200,8 @@ export async function POST(request: Request) {
       }
     } catch (supabaseError) {
       console.error('Failed to save consent to Supabase:', supabaseError)
-      // Don't fail the whole request if Supabase fails
     }
 
-    // Return success with booking data and any issues
-    if (issues.length > 0) {
-      // Booking created successfully, but some services/payments had issues
-      return NextResponse.json(
-        {
-          ...apaleoData,
-          partialSuccess: true,
-          issues: issues,
-          reservationIds: apaleoData.reservationIds.map(r => r.id),
-          message: 'Booking created successfully, but some services could not be added'
-        },
-        { status: 201 }
-      )
-    }
-
-    // Full success - booking and all services/payments completed
     return NextResponse.json(
       {
         ...apaleoData,

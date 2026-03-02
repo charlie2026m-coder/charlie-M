@@ -1,11 +1,16 @@
 import { clsx, type ClassValue } from "clsx"
 import dayjs from "dayjs"
+import utc from "dayjs/plugin/utc"
+import timezone from "dayjs/plugin/timezone"
 import { twMerge } from "tailwind-merge"
+
+dayjs.extend(utc)
+dayjs.extend(timezone)
 import { v4 as uuidv4 } from 'uuid';
-import { Service, UrlParams } from "@/types/apaleo"
+import { UrlParams } from "@/types/apaleo"
 import { Room, RoomExtra } from "@/types/types"
 import { RoomOffer } from "@/types/offers"
-import { RATE_PLANS, CITY_TAX_RATE } from "./Constants";
+import { RATE_PLANS, CITY_TAX_RATE, HOTEL_INFO } from "./Constants";
 import { getApaleoExtras } from "@/services/getExtras";
 import { ReservationFilter } from '@/store/useProfile'
 
@@ -256,8 +261,6 @@ export const formatReservations = (
   to: string, 
   roomDetails: RoomOffer, 
   updatedRooms: Room[], 
-  storeServices?: any[],
-  availableServices?: Service[]
 ) => {
   if (!roomDetails || !roomDetails.timeSlices || !roomDetails.ratePlan) {
     console.error('Invalid roomDetails:', roomDetails)
@@ -266,14 +269,12 @@ export const formatReservations = (
 
   const timeSlices = roomDetails.timeSlices.map(_ => ({ ratePlanId: roomDetails.ratePlan.id }))
 
-  // Safe defaults
   const maxPersons = roomDetails.maxPersons || 2
   const price = roomDetails.price || 0
   const priceForTwo = roomDetails.priceForTwo || price
   const cityTax = roomDetails.cityTax || Math.round(price * CITY_TAX_RATE * 100) / 100
   const cityTaxForTwo = roomDetails.cityTaxForTwo || Math.round(priceForTwo * CITY_TAX_RATE * 100) / 100
 
-  // Calculate price for each room based on guest count (WITHOUT tax)
   const calculateRoomPrice = (adultsCount: number) => {
     const roomsNeeded = Math.ceil(adultsCount / maxPersons);
     
@@ -287,7 +288,6 @@ export const formatReservations = (
     }
   };
 
-  // Calculate city tax for each room based on guest count
   const calculateRoomTax = (adultsCount: number) => {
     const roomsNeeded = Math.ceil(adultsCount / maxPersons);
     
@@ -301,127 +301,62 @@ export const formatReservations = (
     }
   };
 
-  // Track remaining services to distribute across rooms
-  const remainingServices: { [key: string]: number } = {};
-  const remainingServiceDates: { [key: string]: { [date: string]: number } } = {};
-  
-  // Helper to get pricing unit for a service
-  const getServicePricingUnit = (serviceId: string): 'Person' | 'Room' => {
-    const service = availableServices?.find(s => s.id === serviceId);
-    return service?.pricingUnit || 'Person'; // Default to Person if not found
-  };
-  
-  // Initialize remaining counts
-  if (storeServices && storeServices.length > 0) {
-    storeServices.forEach(service => {
-      if (service.count) {
-        remainingServices[service.serviceId] = service.count;
-      }
-      if (service.dates && service.dates.length > 0) {
-        remainingServiceDates[service.serviceId] = {};
-        service.dates.forEach((date: any) => {
-          remainingServiceDates[service.serviceId][date.serviceDate] = date.count;
-        });
-      }
-    });
-  }
-
   const reservations = updatedRooms.map((item, index) => {
-    // const childrenAges = item.children > 0 ? Array(item.children).fill(1) as number[] : undefined
-    
     const roomPrice = calculateRoomPrice(item.adults);
     const roomTax = calculateRoomTax(item.adults);
     
-
-    const reservationAmount = Math.round((roomPrice + roomTax) * 100) / 100
-    
-    // Distribute services: take from remaining pool, don't multiply
-    type ServiceWithCount = { serviceId: string; count: number };
-    type ServiceWithDates = { serviceId: string; dates: any[] };
-    type SimpleService = { serviceId: string };
-    type FormattedService = ServiceWithCount | ServiceWithDates | SimpleService;
-    
-    let allServices: FormattedService[] = [];
-    if (storeServices && storeServices.length > 0) {
-      const formattedStoreServices = storeServices
-        .map((service): FormattedService | null => {
-          const pricingUnit = getServicePricingUnit(service.serviceId);
-          
-          // For services with count (unlimited/checkout) - distribute based on pricing unit
-          if (service.count) {
-            const available = remainingServices[service.serviceId] || 0;
-            if (available <= 0) return null;
-            
-            const isParking = service.serviceId === 'CMH-PRK' || service.serviceId.includes('PRK')
-            
-            let roomShare = 0;
-            
-            if (isParking) {
-              roomShare = Math.min(available, 1);
-            } else if (pricingUnit === 'Room') {
-              roomShare = Math.min(available, 1);
-            } else {
-              roomShare = Math.min(available, item.adults);
-            }
-            
-            remainingServices[service.serviceId] -= roomShare;
-            
-            if (roomShare > 0) {
-              return {
-                serviceId: service.serviceId,
-                count: roomShare
-              };
-            }
-            return null;
-          }
-          
-          // For services with dates (limited) - distribute based on pricing unit for each date
-          if (service.dates && service.dates.length > 0) {
-            const serviceDates = service.dates
-              .map((date: any) => {
-                const available = remainingServiceDates[service.serviceId]?.[date.serviceDate] || 0;
-                if (available <= 0) return null;
-                
-                let roomShare = 0;
-                
-                if (pricingUnit === 'Room') {
-                  // Room services: max 1 per room per date
-                  roomShare = Math.min(available, 1);
-                } else {
-                  // Person services: max 1 per person per date
-                  roomShare = Math.min(available, item.adults);
-                }
-                
-                remainingServiceDates[service.serviceId][date.serviceDate] -= roomShare;
-                
-                if (roomShare > 0) {
-                  return {
-                    serviceDate: date.serviceDate,
-                    count: roomShare
-                  };
-                }
-                return null;
-              })
-              .filter((d: any): d is { serviceDate: string; count: number } => d !== null);
-            
-            if (serviceDates.length > 0) {
-              return {
-                serviceId: service.serviceId,
-                dates: serviceDates
-              };
-            }
-            return null;
-          }
-          return null;
-        })
-        .filter((service): service is FormattedService => service !== null);
-      
-      allServices = formattedStoreServices;
+    let extrasPrice = 0;
+    if (item.extras && item.extras.length > 0) {
+      extrasPrice = item.extras.reduce((sum, extra) => {
+        return sum + (extra.totalPrice || extra.price || 0);
+      }, 0);
     }
     
+    const reservationAmount = Math.round((roomPrice + roomTax + extrasPrice) * 100) / 100
+    
+    console.log(`📊 Reservation ${index + 1}: Room ${roomPrice}, Tax ${roomTax}, Extras ${extrasPrice}, Total ${reservationAmount}`);
+    
+    type ServiceWithDates = { 
+      serviceId: string; 
+      dates: { serviceDate: string }[] 
+    };
+    type SimpleService = { 
+      serviceId: string;
+    };
+    type FormattedService = ServiceWithDates | SimpleService;
+    
+    let allServices: FormattedService[] = [];
+    
+    // Check if early check-in or late check-out services are present
+    const hasEarlyCheckIn = item.extras?.some(extra => extra.id === 'CMH-ECI');
+    const hasLateCheckOut = item.extras?.some(extra => extra.id === 'CMH-LCO');
+    
+    if (item.extras && item.extras.length > 0) {
+      allServices = item.extras.map((extra): FormattedService => {
+        if (extra.selectedDates && extra.selectedDates.length > 0) {
+          return {
+            serviceId: extra.id,
+            dates: extra.selectedDates.map(date => ({
+              serviceDate: date.serviceDate
+            }))
+          };
+        }
+        
+        return {
+          serviceId: extra.id
+        };
+      });
+    }
+    
+    const arrivalTime = hasEarlyCheckIn ? '13:00' : HOTEL_INFO.checkinTime;
+    const arrivalDate = dayjs.tz(`${from} ${arrivalTime}`, 'Europe/Berlin').format();
+    
+    const departureTime = hasLateCheckOut ? '13:00' : HOTEL_INFO.checkoutTime;
+    const departureDate = dayjs.tz(`${to} ${departureTime}`, 'Europe/Berlin').format();
+    
     return {
-      arrival: from,
-      departure: to,
+      arrival: arrivalDate,
+      departure: departureDate,
       adults: item.adults,
       channelCode: 'IBE' as const,
       guaranteeType: 'Prepayment' as const,

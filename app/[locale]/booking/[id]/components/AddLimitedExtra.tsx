@@ -18,7 +18,7 @@ import { RoomOffer } from "@/types/offers";
 import { Room } from "@/types/types";
 import { ChevronDown } from "lucide-react";
 
-const AddLimitedExtra = ({ extra, rooms, room, guests, children }: { extra: Service, rooms: Room[], room: RoomOffer, guests: number, children: number }) => {
+const AddLimitedExtra = ({ extra, rooms, room, guests  }: { extra: Service, rooms: Room[], room: RoomOffer, guests: number }) => {
   const [isOpen, setIsOpen] = useState(false);
   const services = useBookingStore(state => state.services);
   const setServices = useBookingStore(state => state.setServices);
@@ -26,7 +26,6 @@ const AddLimitedExtra = ({ extra, rooms, room, guests, children }: { extra: Serv
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
   
   const maxRooms = rooms.length;
-  // Exclude last day (departure day) - we only count nights, not the checkout day
   const allTimeSlices = extra.timeSlices?.slice(0, -1) || [];
   
   // Filter by daysOfWeek if specified
@@ -172,7 +171,7 @@ const AddLimitedExtra = ({ extra, rooms, room, guests, children }: { extra: Serv
         </div>
 
         <div className='flex items-center justify-between pt-5'>
-          <span>Total: {getTotalCount()} {extra.name}</span>
+          <span>Total: {getTotalCount()}</span>
           <Button onClick={handleConfirm} className='h-[45px]'>
             Confirm <span className='font-semibold'>€ {getTotalPrice().toFixed(2)}</span>
           </Button>

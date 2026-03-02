@@ -3,6 +3,19 @@ import { LoginCredentials, RegisterCredentials, AuthResult } from '@/types/auth'
 import { AuthError } from '@supabase/supabase-js';
 
 
+function getLocaleFromPath(pathname: string): 'en' | 'de' {
+  return pathname.startsWith('/de') ? 'de' : 'en';
+}
+
+function buildAuthCallbackUrl(origin: string): string {
+  return `${origin}/auth/callback`;
+}
+
+function persistLocaleCookie(locale: 'en' | 'de') {
+  if (typeof document === 'undefined') return;
+  document.cookie = `NEXT_LOCALE=${locale}; Path=/; Max-Age=31536000; SameSite=Lax`;
+}
+
 export function parseAuthError(error: AuthError | Error): string {
   const message = error.message || 'An unexpected error occurred';
 
@@ -46,6 +59,10 @@ export async function login(credentials: LoginCredentials): Promise<AuthResult> 
 
 export async function register(credentials: RegisterCredentials): Promise<AuthResult> {
   try {
+    if (typeof window !== 'undefined') {
+      persistLocaleCookie(getLocaleFromPath(window.location.pathname));
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email: credentials.email,
       password: credentials.password,
@@ -53,9 +70,10 @@ export async function register(credentials: RegisterCredentials): Promise<AuthRe
         data: {
           full_name: credentials.name,
         },
-        emailRedirectTo: typeof window !== 'undefined' 
-          ? `${window.location.origin}/auth/callback`
-          : undefined,
+        emailRedirectTo:
+          typeof window !== 'undefined'
+            ? buildAuthCallbackUrl(window.location.origin)
+            : undefined,
       },
     });
 
@@ -120,20 +138,30 @@ export async function signInWithOAuth(provider: 'google' | 'apple'): Promise<{ s
     let redirectTo: string | undefined;
     
     if (typeof window !== 'undefined') {
-      // Extract locale from current URL path
       const currentPath = window.location.pathname;
-      const locale = currentPath.startsWith('/de') ? 'de' : 'en';
+      const locale = getLocaleFromPath(currentPath);
+      persistLocaleCookie(locale);
+      const origin = window.location.origin;
+      redirectTo = buildAuthCallbackUrl(origin);
       
-      // Add locale as query parameter to preserve it through OAuth
-      redirectTo = `${window.location.origin}/auth/callback?locale=${locale}`;
+      console.log('🔐 OAuth redirect:', { provider, redirectTo, locale, currentPath });
     }
 
-    const { error } = await supabase.auth.signInWithOAuth({ provider, options: { redirectTo } });
+    const { error } = await supabase.auth.signInWithOAuth({ 
+      provider, 
+      options: { 
+        redirectTo
+      } 
+    });
 
-    if (error) return { success: false, error: parseAuthError(error) };
+    if (error) {
+      console.error('❌ OAuth error:', error);
+      return { success: false, error: parseAuthError(error) };
+    }
 
     return { success: true };
   } catch (error) {
+    console.error('❌ OAuth catch error:', error);
     return { success: false, error: parseAuthError(error as Error) };
   }
 }
@@ -146,8 +174,15 @@ export async function resetPassword(email: string): Promise<AuthResult> {
     }
 
     const currentPath = window.location.pathname;
-    const locale = currentPath.startsWith('/de') ? 'de' : 'en';
-    const redirectTo = `${window.location.origin}/auth/callback?locale=${locale}`;
+    const locale = getLocaleFromPath(currentPath);
+    persistLocaleCookie(locale);
+    const redirectTo = buildAuthCallbackUrl(window.location.origin);
+
+    console.log('🔐 Reset password redirect:', {
+      redirectTo,
+      locale,
+      currentPath
+    });
 
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, { 
       redirectTo

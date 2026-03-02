@@ -180,7 +180,7 @@ const AddLimitedExtra = ({ extra, adults, nights, existingCount = 0, existingDat
         </div>
 
         <div className='flex items-center justify-between pt-5'>
-          <span>Total: {getTotalCount()} {extra.name}</span>
+          <span>Total: {getTotalCount()}</span>
           <Button onClick={handleConfirm} className='h-[45px]'>
             Confirm <span className='font-semibold'>€ {getTotalPrice().toFixed(2)}</span>
           </Button>
@@ -239,13 +239,13 @@ const DayRow = ({
   };
 
   return (
-    <div className='flex items-center justify-between'>
-      <div className='flex items-center gap-2'>
-        <span className={cn('font-bold', isDisabled && 'line-through text-gray')}>{dayjs(item.serviceDate).format('ddd DD MMM')}</span>
-        {isPast ? <span className="text-gray text-sm">Past</span>
-        : isOccupied ? <span className="text-gray text-sm">Added</span>
-        : availableCount <= 0 ? <span className="text-gray text-sm">Sold Out</span>
-        : <span className="text-gray text-sm">({availableCount})</span>}
+    <div className='flex items-center justify-between gap-2 overflow-hidden'>
+      <div className='flex items-center gap-2 min-w-0 flex-1 overflow-hidden'>
+        <span className={cn('font-bold truncate', isDisabled && 'line-through text-gray')}>{dayjs(item.serviceDate).format('ddd DD MMM')}</span>
+        {isPast ? <span className="text-gray text-sm truncate">Past</span>
+        : isOccupied ? <span className="text-gray text-sm truncate">Added</span>
+        : availableCount <= 0 ? <span className="text-gray text-sm truncate">Sold Out</span>
+        : <span className="text-gray text-sm truncate">({availableCount})</span>}
       </div>
 
       <div className="flex items-center gap-2">

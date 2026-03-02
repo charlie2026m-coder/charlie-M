@@ -4,6 +4,8 @@ import { PiMapPinFill } from "react-icons/pi";
 import MapWindow from '@/app/_components/footer/MapWindow';
 import Image from 'next/image';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
 import { ReservationButton } from './ReservationDetails';
 import { RoomDetailsButton } from './RoomDetails';
 import StatusBadge from '@/app/_components/ui/StatusBadge';
@@ -12,13 +14,36 @@ import { cn } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
 import { InvoiceButton } from '../../components/InvoiceButton';
 import { PinCodeComponent } from './PinCodeComponent';
-import { HOTEL_INFO } from '@/lib/Constants';
+import { HOTEL_INFO, DEFAULT_CHECKIN_TIME, DEFAULT_CHECKOUT_TIME } from '@/lib/Constants';
 import { Floor } from './Floor';
+import { CheckedInLabel } from '../../components/CheckedInLabel';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 const MainInfo = ({ reservation }: { reservation: any } ) => {
   const t = useTranslations('profile');
-  const from = dayjs(reservation.arrival).format('ddd D MMM YYYY');
-  const to = dayjs(reservation.departure).format('ddd D MMM YYYY');
+  
+  const arrivalTimeMatch = reservation.arrival?.match(/T(\d{2}:\d{2})/);
+  const departureTimeMatch = reservation.departure?.match(/T(\d{2}:\d{2})/);
+  
+  const arrivalTime = arrivalTimeMatch ? arrivalTimeMatch[1] : '00:00';
+  const departureTime = departureTimeMatch ? departureTimeMatch[1] : '00:00';
+  
+  const arrivalDate = dayjs(reservation.arrival);
+  const departureDate = dayjs(reservation.departure);
+  const from = arrivalDate.format('ddd D MMM YYYY');
+  const to = departureDate.format('ddd D MMM YYYY');
+  
+  // Convert to Berlin timezone if time exists, otherwise use default
+  const checkInTime = arrivalTime !== '00:00' 
+    ? `${dayjs.utc(reservation.arrival).tz('Europe/Berlin').format('HH:mm')} - 00:00`
+    : DEFAULT_CHECKIN_TIME;
+  
+  const checkOutTime = departureTime !== '00:00'
+    ? dayjs.utc(reservation.departure).tz('Europe/Berlin').format('HH:mm')
+    : DEFAULT_CHECKOUT_TIME;
+  
   const isCancelled = reservation.status === bookingStatuses.Canceled || reservation.status === bookingStatuses.NoShow;
   const isCheckedOut = reservation.status === bookingStatuses.CheckedOut;
   
@@ -26,6 +51,7 @@ const MainInfo = ({ reservation }: { reservation: any } ) => {
   const isClosed = isCheckedOut || isCancelled;
   const isActive = reservation.status === bookingStatuses.Confirmed || reservation.status === bookingStatuses.InHouse;
   const showCheckInButton = !reservation.isPreCheckedIn && !isCancelled;
+  const isCheckedIn = reservation.isPreCheckedIn && !isCancelled;
   return (
     <div className='grid lg:grid-cols-2 gap-4 pb-6 '>
     <div>
@@ -35,14 +61,18 @@ const MainInfo = ({ reservation }: { reservation: any } ) => {
       </div>
       <div className='flex items-center gap-3 text-mute text-sm mb-3'>
         {t('checkIn')}:
-        <span className={cn(reservation.status === bookingStatuses.Canceled && 'text-red-500')}>{from} 15:00 - 00:00</span>
+        <span className={cn(reservation.status === bookingStatuses.Canceled && 'text-red-500')}>{from} {checkInTime}</span>
       </div>
       <div className='flex items-center gap-3 text-mute text-sm mb-5'>
         {t('checkOut')}:
-        <span className={cn(reservation.status === bookingStatuses.Canceled && 'text-red-500')}>{to} 11:00</span>
+        <span className={cn(reservation.status === bookingStatuses.Canceled && 'text-red-500')}>{to} {checkOutTime}</span>
       </div>
       <div className='flex flex-col w-full lg:w-4/5 gap-3'>
-        {showCheckInButton && <CheckinButton reservationId={reservation.id} />}
+        {showCheckInButton ? (
+          <CheckinButton reservationId={reservation.id} />
+        ) : (
+          isCheckedIn && <CheckedInLabel isBig={true} />
+        )}
         {isPincode && !showCheckInButton && (
           <>
             <PinCodeComponent 

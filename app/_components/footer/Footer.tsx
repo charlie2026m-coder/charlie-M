@@ -40,7 +40,7 @@ export default async function Footer({ locale }: { locale: string }) {
           <div className="flex flex-col w-full md:flex-row md:justify-between items-center pt-[30px] lg:pt-[50px] md:pb-8  md:border-b border-white/40">
 
             <div className="flex flex-col items-center md:items-start col-span-1 h-full w-full md:w-1/4">
-              <Link href="/">
+              <Link href="/" locale={locale as 'en' | 'de'}>
                 <Image 
                   src="/images/Logo.svg" 
                   alt="logo" 

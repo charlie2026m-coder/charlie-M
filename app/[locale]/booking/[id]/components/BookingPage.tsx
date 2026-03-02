@@ -10,6 +10,7 @@ import { Service } from "@/types/apaleo"
 import { RoomOffer } from "@/types/offers"
 import { useBookingStore } from "@/store/useBookingStore"
 import { calculateNights, getType } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 const BookingPage = ({
   params,
@@ -32,7 +33,6 @@ const BookingPage = ({
   const setParams = useBookingStore(state => state.setParams)
   const setExtras = useBookingStore(state => state.setExtras)
   const clearBooking = useBookingStore(state => state.clearBooking)
-  const bookingId = useBookingStore(state => state.bookingId)
   const setBookingId = useBookingStore(state => state.setBookingId)
   const isExtend = useBookingStore(state => state.isExtend)
   const setIsExtend = useBookingStore(state => state.setIsExtend)
@@ -41,11 +41,9 @@ const BookingPage = ({
   const nights = calculateNights(from as string, to as string)
   const planType = getType(nights, true)
   const mainRoom = rooms.find(room => room.ratePlan?.code === planType) || rooms[0]
-
-  if (!mainRoom) {
-    return <div className="p-10 text-center">Room data not available</div>
-  }
-
+  const tCommon = useTranslations()
+  if (!mainRoom) return <div className="p-10 text-center">{tCommon('loading')}</div>
+  
   useEffect(() => {
     if (typeof window === 'undefined') return // Skip SSR
     
@@ -54,25 +52,50 @@ const BookingPage = ({
       return
     }
     
-    const currentBookingId = `${mainRoom.id || mainRoom.ratePlan?.id}-${from}-${to}-${adults}-${children}`
+    const storedBookingId = useBookingStore.getState().bookingId
+    const storedRooms = useBookingStore.getState().rooms
     
-    if (bookingId && bookingId !== currentBookingId) {
-      // If isExtend is true, preserve booker data
-      if (isExtend) {
-        const bookerData = booking?.booker
+    const currentBookingId = `${mainRoom.id || mainRoom.ratePlan?.id}-${from}-${to}-${adults}-${children}`
+    const babyBedService = extras.find(extra => extra.id === 'CMH-BAB')
+    const roomsWithBabyBeds: Room[] = filledRooms.map(room => {
+      if (room.children > 0 && isKidsBedAvailable && babyBedService) {
+        return {
+          ...room,
+          extras: [{
+            ...babyBedService,
+            totalPrice: Math.round(babyBedService.price * nights * 100) / 100
+          }],
+        }
+      }
+      return room
+    })
+    
+    if (storedBookingId && storedBookingId !== currentBookingId) {
+      if (isExtend && booking?.booker) {
+        const savedBooker = booking.booker
+        
         clearBooking()
-        if (bookerData) setBooking({ booker: bookerData, reservations: []})
+        
+        setBooking({
+          booker: savedBooker,
+          reservations: []
+        })
         setIsExtend(false)
       } else {
         clearBooking()
       }
-      setRooms(filledRooms)
+      
+      setRooms(roomsWithBabyBeds)
       setBookingId(currentBookingId)
-    } else if (!bookingId) {
-      setBookingId(currentBookingId)
-      setRooms(filledRooms)
+    } else if (!storedBookingId) {
+      if (!storedRooms || storedRooms.length === 0) {
+        setBookingId(currentBookingId)
+        setRooms(roomsWithBabyBeds)
+      } else {
+        setBookingId(currentBookingId)
+      }
     }
-  }, [from, to, adults, children, mainRoom.id, mainRoom.ratePlan?.id])
+  }, [from, to, adults, children, mainRoom.id, mainRoom.ratePlan?.id, isKidsBedAvailable])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -98,9 +121,7 @@ const BookingPage = ({
           {extras.length > 0 && 
           <ExtrasSection 
             nights={nights}
-            extras={extras} 
-            room={mainRoom}
-            children={parseInt(children) || 0}
+            extras={extras}
           />}
         </div>
         <div className='col-span-1 gap-5 flex flex-col'>
@@ -110,8 +131,6 @@ const BookingPage = ({
             params={{ from, to, adults, children }} 
             filledRooms={filledRooms}
             isKidsBedAvailable={isKidsBedAvailable}
-            extras={extras}
-            nights={nights}
             babyBedAvailability={babyBedAvailability}
           />
         </div>

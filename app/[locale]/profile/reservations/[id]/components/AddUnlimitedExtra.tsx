@@ -110,10 +110,10 @@ const AddUnlimitedExtra = ({ extra, adults, nights, existingCount = 0 }: { extra
           </Button>
         </div>
 
-        <div className='flex items-center justify-between pt-2.5 pb-5'>
-          <div className='flex flex-col '>
-            <span className='font-semibold'>{extra.name}</span>
-            <span className='text-sm text-gray-500'>
+        <div className='flex items-center justify-between pt-2.5 pb-5 gap-2 overflow-hidden'>
+          <div className='flex flex-col min-w-0 flex-1 overflow-hidden'>
+            <span className='font-semibold truncate'>{extra.name}</span>
+            <span className='text-sm text-gray-500 truncate'>
               €{extra.price} {mode === 'Daily' ? 'per day' : 'one time'}
             </span>
           </div>
@@ -127,7 +127,7 @@ const AddUnlimitedExtra = ({ extra, adults, nights, existingCount = 0 }: { extra
         </div>
 
         <div className='flex items-center justify-between pt-5'>
-          <span>Total: {count} {extra.name}</span>
+          <span>Total: {count}</span>
           <Button onClick={handleConfirm} className='h-[45px]'>
             Confirm <span className='font-semibold'>€ {getTotalPrice().toFixed(2)}</span>
           </Button>
