@@ -13,6 +13,7 @@ import { RoomOffer } from "@/types/offers"
 import { RATE_PLANS, CITY_TAX_RATE, HOTEL_INFO } from "./Constants";
 import { getApaleoExtras } from "@/services/getExtras";
 import { ReservationFilter } from '@/store/useProfile'
+import { serviceTranslations } from '@/content/ServiceTranslations';
 
 export function cn(...inputs: ClassValue[]) {return twMerge(clsx(inputs))}
 export const getDate = (date: Date) => {return date?dayjs(date).format('YYYY-MM-DD'): undefined}
@@ -373,12 +374,34 @@ export const formatReservations = (
 }
 
 
+export const getServiceTranslation = (serviceId: string, locale: string = 'en'): { name: string; description: string } | null => {
+  const translation = serviceTranslations[serviceId];
+  if (!translation) return null;
+  
+  const lang = locale === 'de' ? 'de' : 'en';
+  return {
+    name: translation.title[lang],
+    description: translation.description[lang]
+  };
+};
+
+export const getTranslatedServiceName = (serviceId: string, defaultName: string, locale: string = 'en'): string => {
+  const translation = getServiceTranslation(serviceId, locale);
+  return translation?.name || defaultName;
+};
+
+export const getTranslatedServiceDescription = (serviceId: string, defaultDescription: string, locale: string = 'en'): string => {
+  const translation = getServiceTranslation(serviceId, locale);
+  return translation?.description || defaultDescription;
+};
+
 export const getServiceAvailabilityById = async (
   from: string | undefined,
   to: string | undefined,
-  serviceId: string
+  serviceId: string,
+  locale: string = 'en'
 ): Promise<{ isAvailable: boolean; count: number }> => {
-  const extras = await getApaleoExtras(from, to);
+  const extras = await getApaleoExtras(from, to, locale);
   const service = extras.find(extra => extra.id === serviceId);
   
   if (!service || service.isSoldOut || !service.timeSlices || service.timeSlices.length === 0) {

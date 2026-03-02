@@ -122,7 +122,7 @@ export const ReservationButton = ({ reservation, isActive }: { reservation: any,
             </div>
           </div>
             {isClosed && <InvoiceButton reservationId={reservation.id} className='h-[45px]' />}
-            {isActive && (
+            {isConfirmed && (
               <CancelBookingButton 
                 reservationId={id} 
                 onClose={() => setOpen(false)} 

@@ -23,8 +23,8 @@ const Booking = async ({ params, searchParams }: IParams) => {
   
   const [rooms, babyBedAvailability, extras] = await Promise.all([
     getSingleRoom(id, from, to, adults, locale),
-    getServiceAvailabilityById(from, to, 'CMH-BAB'),
-    getApaleoExtras(from, to)
+    getServiceAvailabilityById(from, to, 'CMH-BAB', locale),
+    getApaleoExtras(from, to, locale)
   ])
   
   if ('error' in rooms) return <ErrorCard isSingleRoom={true} link='/rooms' />

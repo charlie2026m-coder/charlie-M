@@ -4,6 +4,7 @@ import { Service } from '@/types/apaleo'
 import { Button } from '@/app/_components/ui/button'
 import { useRouter, useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
+import { getTranslatedServiceName } from '@/lib/utils'
 
 const ExistingExtras = ({ 
   services, 
@@ -17,6 +18,7 @@ const ExistingExtras = ({
   const t = useTranslations('profile')
   const router = useRouter()
   const params = useParams()
+  const locale = params.locale as 'en' | 'de'
   const reservationId = params.id as string
   const selectedServices = useAddExtrasStore(state => state.services)
   const setNights = useAddExtrasStore(state => state.setNights)
@@ -104,10 +106,12 @@ const ExistingExtras = ({
             quantity = 1
           }
 
+          const serviceName = getTranslatedServiceName(service.id, service.name, locale);
+          
           return (
             <div key={`existing-${service.id}-${index}`} className='flex justify-between items-center w-full text-sm'>
               <span className='text-dark'>
-                {service.name} ({quantity})
+                {serviceName} ({quantity})
               </span>
               <span className='font-semibold'>€{totalAmount.grossAmount}</span>
             </div>
@@ -172,10 +176,12 @@ const ExistingExtras = ({
 
           if (!shouldDisplay) return null
 
+          const serviceName = getTranslatedServiceName(serviceDetails.id, serviceDetails.name, locale);
+
           return (
             <div key={`new-${selectedService.serviceId}-${index}`} className='flex justify-between items-center w-full text-sm text-green'>
               <span>
-                + {serviceDetails.name} ({quantityText})
+                + {serviceName} ({quantityText})
               </span>
               <span className='font-semibold'>€{price.toFixed(2)}</span>
             </div>
