@@ -10,7 +10,6 @@ import AddCleaningExtra from './AddCleaningExtra';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { getExtraImage, getExtraImages } from '@/lib/getExtraImage';
-import { getTranslatedServiceName, getTranslatedServiceDescription } from '@/lib/utils';
 import CustomImageSlider from '@/app/_components/ui/CustomImageSlider';
 
 const ExtraCard = ({ item, adults, nights, existingCount = 0, existingDates = [], existingDatesWithCount = [], arrival, departure }: { item: Service, adults: number, nights: number, existingCount?: number, existingDates?: string[], existingDatesWithCount?: any[], arrival?: string, departure?: string }) => {
@@ -42,10 +41,10 @@ const ExtraCard = ({ item, adults, nights, existingCount = 0, existingDates = []
   const isCheckout = item.id === 'CMH-LCO' || item.id === 'CMH-ECI' || item.id === 'CMH-BAB' || isParking;
   const pricingType = item.pricingType;
 
-  const serviceName = getTranslatedServiceName(item.id, item.name, locale);
-  const serviceDescription = getTranslatedServiceDescription(item.id, item.description || '', locale);
-  const images = getExtraImages(item.id, item.name);
-  const coverImage = getExtraImage(item.id, item.name)
+  const serviceName = item.name;
+  const serviceDescription = item.description ?? '';
+  const images = getExtraImages(item.id, item.name, item.imageUrl);
+  const coverImage = getExtraImage(item.id, item.name, item.imageUrl)
   return (
     <div className='flex sm:flex-col gap-2 relative'>
       <div className='relative'>

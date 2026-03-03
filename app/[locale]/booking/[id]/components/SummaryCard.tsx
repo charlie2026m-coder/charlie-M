@@ -2,7 +2,7 @@
 import { useBookingStore } from '@/store/useBookingStore'
 import Price from "@/app/_components/ui/price";
 import Image from 'next/image';
-import { calculateNights, getTranslatedServiceName } from '@/lib/utils';
+import { calculateNights } from '@/lib/utils'
 import { BsCalendar2Fill } from 'react-icons/bs';
 import dayjs from 'dayjs';
 import { useTranslations } from 'next-intl';
@@ -127,7 +127,7 @@ const SummaryCard = () => {
                     <span className='text-xs font-semibold text-green mt-2'>{tBooking('room')} {index + 1}</span>
                   )}
                   {room.extras.map(extra => {
-                    const serviceName = getTranslatedServiceName(extra.id, extra.name, locale);
+                    const serviceName = extra.name;
                     let displayText = serviceName;
                     
                     if (extra.selectedDates && extra.selectedDates.length > 0) {

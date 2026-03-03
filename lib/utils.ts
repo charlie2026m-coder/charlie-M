@@ -375,25 +375,17 @@ export const formatReservations = (
 
 
 export const getServiceTranslation = (serviceId: string, locale: string = 'en'): { name: string; description: string } | null => {
-  const translation = serviceTranslations[serviceId];
-  if (!translation) return null;
-  
+  const t = serviceTranslations[serviceId];
+  if (!t) return null;
   const lang = locale === 'de' ? 'de' : 'en';
-  return {
-    name: translation.title[lang],
-    description: translation.description[lang]
-  };
+  return { name: t.title[lang], description: t.description[lang] };
 };
 
-export const getTranslatedServiceName = (serviceId: string, defaultName: string, locale: string = 'en'): string => {
-  const translation = getServiceTranslation(serviceId, locale);
-  return translation?.name || defaultName;
-};
+export const getTranslatedServiceName = (serviceId: string, defaultName: string, locale: string = 'en'): string =>
+  getServiceTranslation(serviceId, locale)?.name || defaultName;
 
-export const getTranslatedServiceDescription = (serviceId: string, defaultDescription: string, locale: string = 'en'): string => {
-  const translation = getServiceTranslation(serviceId, locale);
-  return translation?.description || defaultDescription;
-};
+export const getTranslatedServiceDescription = (serviceId: string, defaultDescription: string, locale: string = 'en'): string =>
+  getServiceTranslation(serviceId, locale)?.description || defaultDescription;
 
 export const getServiceAvailabilityById = async (
   from: string | undefined,

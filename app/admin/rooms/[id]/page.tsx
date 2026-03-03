@@ -24,7 +24,10 @@ export default function EditRoomPage() {
   const [deletePhotoUrl, setDeletePhotoUrl] = useState<string | null>(null)
 
   // Form state
-  const [groupName, setGroupName] = useState('')
+  const [titleEn, setTitleEn] = useState('')
+  const [titleDe, setTitleDe] = useState('')
+  const [descriptionEn, setDescriptionEn] = useState('')
+  const [descriptionDe, setDescriptionDe] = useState('')
   const [attributes, setAttributes] = useState('')
   const [maxPersons, setMaxPersons] = useState(1)
   const [size, setSize] = useState(0)
@@ -71,7 +74,10 @@ export default function EditRoomPage() {
     }
 
     setRoom(roomData)
-    setGroupName(roomData.group_name)
+    setTitleEn(roomData.title_en)
+    setTitleDe(roomData.title_de)
+    setDescriptionEn(roomData.description_en ?? '')
+    setDescriptionDe(roomData.description_de ?? '')
     setAttributes(roomData.attributes.join(', '))
     setMaxPersons(roomData.max_persons)
     setSize(roomData.size)
@@ -89,7 +95,10 @@ export default function EditRoomPage() {
     updateRoom.mutate(
       {
         id: roomId,
-        group_name: groupName,
+        title_en: titleEn,
+        title_de: titleDe,
+        description_en: descriptionEn || null,
+        description_de: descriptionDe || null,
         attributes: attributesArray,
         max_persons: maxPersons,
         size: size,
@@ -182,21 +191,58 @@ export default function EditRoomPage() {
         <form onSubmit={handleSubmit} className="space-y-6 mb-6">
           <div className="border-2 border-gray-200 rounded-lg p-6">
             <div className="space-y-4">
-              {/* First row: Name, Max Guests, Size */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="md:col-span-1">
+              {/* First row: Title EN, Title DE, Max Guests, Size */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1.5 uppercase">
-                    Room Name
+                    Title (EN)
                   </label>
                   <input
                     type="text"
                     required
-                    value={groupName}
-                    onChange={(e) => setGroupName(e.target.value)}
+                    value={titleEn}
+                    onChange={(e) => setTitleEn(e.target.value)}
                     className="w-full px-3 py-2 text-sm border-2 border-gray-200 rounded-lg focus:outline-none focus:border-black transition-colors"
                   />
                 </div>
-
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1.5 uppercase">
+                    Title (DE)
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={titleDe}
+                    onChange={(e) => setTitleDe(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border-2 border-gray-200 rounded-lg focus:outline-none focus:border-black transition-colors"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1.5 uppercase">
+                    Description (EN)
+                  </label>
+                  <textarea
+                    value={descriptionEn}
+                    onChange={(e) => setDescriptionEn(e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2 text-sm border-2 border-gray-200 rounded-lg focus:outline-none focus:border-black transition-colors resize-y"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1.5 uppercase">
+                    Description (DE)
+                  </label>
+                  <textarea
+                    value={descriptionDe}
+                    onChange={(e) => setDescriptionDe(e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2 text-sm border-2 border-gray-200 rounded-lg focus:outline-none focus:border-black transition-colors resize-y"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1.5 uppercase">
                     Max Guests

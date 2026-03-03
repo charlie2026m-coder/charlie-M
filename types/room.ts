@@ -1,6 +1,9 @@
 export interface Room {
   id: string
-  group_name: string
+  title_en: string
+  title_de: string
+  description_en: string | null
+  description_de: string | null
   attributes: string[]
   max_persons: number
   size: number

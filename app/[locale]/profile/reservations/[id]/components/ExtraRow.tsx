@@ -8,13 +8,12 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useRouter, useParams } from "next/navigation";
 import { useTranslations } from 'next-intl';
-import { getTranslatedServiceName } from '@/lib/utils';
 
 export const ExtraRow = ({ service, nights, price, isActive, reservationId }: { service: ServiceDetails, nights: number, price: number, isActive: boolean, reservationId: string }) => {
   const t = useTranslations('reservations');
   const params = useParams();
   const locale = params.locale as 'en' | 'de';
-  const serviceName = getTranslatedServiceName(service.id, service.name, locale);
+  const serviceName = service.name;
   const textUnit = service.pricingUnit === 'Room' ? `x ${nights} ${nights === 1 ? 'night' : 'nights'}` : 'x Person';
   const [open, setOpen] = useState(false);
   const router = useRouter();

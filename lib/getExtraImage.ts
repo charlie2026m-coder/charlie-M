@@ -1,5 +1,4 @@
-
-export function getExtraImages(serviceId: string, serviceName?: string): string[] {
+export function getExtraImages(serviceId: string, serviceName?: string, imageUrl?: string | null): string[] {
   const imageMap: Record<string, string[]> = {
     // Baby Bed
     'CMH-BAB': ['/images/services/baby-1.webp', '/images/services/baby-2.webp'],
@@ -25,13 +24,10 @@ export function getExtraImages(serviceId: string, serviceName?: string): string[
     'CMH-PETS': ['/images/services/pets-1.webp', '/images/services/pets-2.webp'],
   };
 
-  // Сначала проверяем точное совпадение ID
-  if (imageMap[serviceId]) {
-    return imageMap[serviceId];
-  }
-
-  // Если нет точного совпадения, проверяем по названию (case-insensitive)
-  if (serviceName) {
+  const list = imageMap[serviceId]
+    ? imageMap[serviceId]
+    : (() => {
+        if (!serviceName) return ['/images/extra.webp'];
     const nameLower = serviceName.toLowerCase();
     
     if (nameLower.includes('baby') || nameLower.includes('crib') || nameLower.includes('bed')) {
@@ -55,14 +51,12 @@ export function getExtraImages(serviceId: string, serviceName?: string): string[
     if (nameLower.includes('pet') || nameLower.includes('dog') || nameLower.includes('cat')) {
       return ['/images/services/pets-1.webp', '/images/services/pets-2.webp'];
     }
-  }
-
-  // Fallback на дефолтное изображение
-  return ['/images/extra.webp'];
+        return ['/images/extra.webp'];
+      })();
+  if (imageUrl?.trim()) return [imageUrl.trim(), ...list];
+  return list;
 }
 
-
-export function getExtraImage(serviceId: string, serviceName?: string): string {
-  const images = getExtraImages(serviceId, serviceName);
-  return images[0];
+export function getExtraImage(serviceId: string, serviceName?: string, imageUrl?: string | null): string {
+  return getExtraImages(serviceId, serviceName, imageUrl)[0];
 }

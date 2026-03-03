@@ -1,5 +1,5 @@
 'use client'
-import { formatReservations, calculateNights, getTranslatedServiceName } from '@/lib/utils';  
+import { formatReservations, calculateNights } from '@/lib/utils'
 import { useBookingStore } from '@/store/useBookingStore'
 import { UrlParams } from "@/types/apaleo";
 import { RoomOffer } from '@/types/offers';
@@ -146,7 +146,7 @@ const BookingMenu = ({
                     <span className=' mt-2'>{t('room')} {index + 1}</span>
                   )}
                   {room.extras.map(extra => {
-                    const serviceName = getTranslatedServiceName(extra.id, extra.name, locale);
+                    const serviceName = extra.name;
                     let displayText = serviceName;
                     
                     if (extra.selectedDates && extra.selectedDates.length > 0) {
