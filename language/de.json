@@ -38,7 +38,7 @@
     "concept_ip_1_text": "Dank unseres Online-Check-ins können Sie den Empfang komplett überspringen.",
     "concept_ip_2_text": "Ein persönlicher Code ermöglicht einen nahtlosen und sicheren Zugang.",
     "concept_ip_3_text": "Wir wissen, wie wertvoll Ihre Zeit ist – genießen Sie einen kontaktfreien und entspannten Aufenthalt.",
-    "concept_ip_4_text": "Unser smarter Assistent unterstützt Sie rund um die Uhr bei allen Fragen.",
+    "concept_ip_4_text": "Unser Team unterstützt Sie rund um die Uhr bei allen Fragen.",
 
     "experience_title": "Charlie M Erfahrungen",
     "items": [
@@ -431,8 +431,11 @@
     "night": "Nacht",
     "nights": "Nächte",
     "room": "Zimmer",
+    "rooms": "Zimmer",
     "guest": "Gast",
     "guests": "Gäste",
+    "baby": "Baby",
+    "babies": "Babys",
     "cityTax": "City Tax:",
     "totalPrice": "Gesamtpreis:",
     "bookNow": "Jetzt buchen",

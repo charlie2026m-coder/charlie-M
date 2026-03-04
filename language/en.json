@@ -40,7 +40,7 @@
     "concept_ip_1_text": "With our online check-in system, you can skip the reception entirely",
     "concept_ip_2_text": "Using a personalized code ensures a seamless and secure registration",
     "concept_ip_3_text": "We understand that your time is valuable. Enjoy a seamless and contact-free stay with us",
-    "concept_ip_4_text": "Our smart bot is ready to assist you with any questions",
+    "concept_ip_4_text": "Our team is ready to assist you with any questions",
 
 
 
@@ -430,9 +430,12 @@
     "refundableDescription": "Cancel free until 48 hours prior",
     "night": "night",
     "nights": "nights",
-    "room": "Room",
+    "room": "room",
+    "rooms": "rooms",
     "guest": "guest",
     "guests": "guests",
+    "baby": "baby",
+    "babies": "babies",
     "cityTax": "City tax:",
     "totalPrice": "Total price:",
     "bookNow": "Book Now",

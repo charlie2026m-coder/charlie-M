@@ -26,7 +26,7 @@ const LocationCard = ({ item }: { item: Location | null, index: number }) => {
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(title)}&query_place_id=${position.lat},${position.lng}`
 
   return (
-    <div className='flex flex-col gap-5 items-center w-full w-full md:w-1/2 lg:w-1/3 z-10'>
+    <div className='flex flex-col gap-5 items-center  w-full md:w-1/2 lg:w-1/3 z-10'>
       <a
         href={googleMapsUrl}
         target="_blank"
@@ -71,7 +71,7 @@ const MainCard = () => {
   const googleMapsUrl = 'https://maps.app.goo.gl/f5pcoqnd5V6NTwAw6'
 
   return (
-    <div className='flex flex-col gap-5 items-center w-full md:w-1/2 xl:w-1/3'>
+    <div className='flex flex-col gap-5 items-center w-full md:w-1/2 xl:w-1/3 min-w-[460px]'>
       <a
         href={googleMapsUrl}
         target="_blank"
