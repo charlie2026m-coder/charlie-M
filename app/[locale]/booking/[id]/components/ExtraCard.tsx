@@ -10,23 +10,21 @@ import { Room } from '@/types/types'
 import { useTranslations } from 'next-intl'
 import { useParams } from 'next/navigation'
 import { getExtraImage, getExtraImages } from '@/lib/getExtraImage'
-import { getTranslatedServiceName, getTranslatedServiceDescription } from '@/lib/utils'
 import CustomImageSlider from '@/app/_components/ui/CustomImageSlider'
 
 const ExtraCard = ({ item, rooms, nights }: { item: Service, rooms: Room[], nights: number }) => {
   const t = useTranslations('bookingForm')
   const params = useParams()
-  const locale = params.locale as 'en' | 'de'
   const [isOpen, setIsOpen] = useState(false);
   const isSoldOut = item.isSoldOut;
   const isCheckout = item.id === 'CMH-LCO' || item.id === 'CMH-ECI';
   const isParking = item.id === 'CMH-PRK' || item.name?.toLowerCase().includes('park');
   const isCleaning = item.id === 'CMH-CLN' || item.name?.toLowerCase().includes('clean');
 
-  const serviceName = getTranslatedServiceName(item.id, item.name, locale);
-  const serviceDescription = getTranslatedServiceDescription(item.id, item.description || '', locale);
-  const images = getExtraImages(item.id, item.name);
-  const coverImage = getExtraImage(item.id, item.name)
+  const serviceName = item.name;
+  const serviceDescription = item.description ?? '';
+  const images = getExtraImages(item.id, item.name, item.imageUrl);
+  const coverImage = getExtraImage(item.id, item.name, item.imageUrl)
   return (
     <div className='flex sm:flex-col gap-2 relative'>
       <div className='relative'>

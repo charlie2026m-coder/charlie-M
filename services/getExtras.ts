@@ -3,6 +3,7 @@ import { Fetch } from './Request';
 import { cache } from 'react';
 import dayjs from 'dayjs';
 import { serviceTranslations } from '@/content/ServiceTranslations';
+import { getServicesDetails } from './getServicesDetails';
 
 export enum usageType {
   Once = "once",
@@ -44,7 +45,8 @@ const fetchExtras = async (from?: string, to?: string, locale: string = 'en'): P
   }
 
   try {
-    const [response, availability] = await Promise.all([
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+    const [response, availability, dbServices] = await Promise.all([
       Fetch<ServicesResponse>(`/rateplan/v1/services?propertyId=${propertyId}`).then(res => res.services.map(item =>{
         const unlimited = !item.availability.hasOwnProperty("quantity")
         return {
@@ -61,8 +63,10 @@ const fetchExtras = async (from?: string, to?: string, locale: string = 'en'): P
           usageType: STATUSES[item.code as keyof typeof STATUSES],
         }
       })),
-      Fetch<AvailabilityResponse>(`/availability/v1/services?propertyId=${propertyId}&from=${arrival}&to=${departure}`).then(res => res.timeSlices)
+      Fetch<AvailabilityResponse>(`/availability/v1/services?propertyId=${propertyId}&from=${arrival}&to=${departure}`).then(res => res.timeSlices),
+      getServicesDetails()
     ]);
+    const lang = locale === 'de' ? 'de' : 'en';
     const formattedServices = response.map(item => {
       const mode = item.availability.mode;
       const isParking = item.id === 'CMH-PRK' || item.id.includes('PRK');
@@ -92,13 +96,11 @@ const fetchExtras = async (from?: string, to?: string, locale: string = 'en'): P
         isSoldOut = stayDays.length > 0 && stayDays.every(timeSlice => timeSlice.services.find(service => service.service.id === item.id)?.availableCount === 0);
       }
 
-      // Get translations for service
-      const serviceId = item.id;
-      const translation = serviceId ? serviceTranslations[serviceId] : null;
-      const lang = locale === 'de' ? 'de' : 'en';
-      
-      const translatedName = translation?.title[lang] || item.name;
-      const translatedDescription = translation?.description[lang] || item.description;
+      const db = dbServices.find(s => s.id === item.id);
+      const staticT = serviceTranslations[item.id];
+      const name = db ? (lang === 'de' ? db.title_de : db.title_en) : (staticT?.title[lang] || item.name);
+      const description = db ? (lang === 'de' ? db.description_de : db.description_en) ?? '' : (staticT?.description[lang] || item.description || '');
+      const imageUrl = db?.image_path ? `${supabaseUrl}/storage/v1/object/public/services/${db.image_path}` : undefined;
 
       const timeSlices = availability.map(timeSlice => {
         const serviceData = timeSlice.services.find(service => service.service.id === item.id);
@@ -107,18 +109,19 @@ const fetchExtras = async (from?: string, to?: string, locale: string = 'en'): P
           soldCount: serviceData?.soldCount || 0,
           availableCount: serviceData?.availableCount || 0,
           quantity: serviceData?.quantity || 0,
-          service: serviceData?.service || { id: item.id, name: translatedName }
+          service: serviceData?.service || { id: item.id, name }
         }
-      })
+      });
 
       return {
         ...item,
-        name: translatedName,
-        description: translatedDescription,
-        timeSlices: timeSlices,
-        isSoldOut: isSoldOut,
-        minAvailable: minAvailable
-      }
+        name,
+        description,
+        imageUrl,
+        timeSlices,
+        isSoldOut,
+        minAvailable
+      };
     })
 
     // Filter out test services

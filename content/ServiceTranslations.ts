@@ -38,8 +38,8 @@ export const serviceTranslations: Record<string, ServiceTranslation> = {
       de: 'Früher Check-in'
     },
     description: {
-      en: 'Check in earlier than the regular time and settle into your room as soon as it’s ready. Ideal for guests arriving before noon who want a smooth, relaxed start to their stay in Berlin.',
-      de: 'Checken Sie früher als zur regulären Uhrzeit ein und beziehen Sie Ihr Zimmer, sobald es bereit ist. Ideal für Gäste, die vor Mittag ankommen und entspannt in ihren Aufenthalt in Berlin starten möchten.'
+      en: "Check in earlier than the regular time and settle into your room as soon as it's ready. Ideal for guests arriving before noon who want a smooth, relaxed start to their stay in Berlin. It is possible to move in already at 13:00.",
+      de: 'Checken Sie früher als zur regulären Uhrzeit ein und beziehen Sie Ihr Zimmer, sobald es bereit ist. Ideal für Gäste, die vor Mittag ankommen und entspannt in ihren Aufenthalt in Berlin starten möchten. Es ist möglich, bereits um 13:00 Uhr einzuziehen.'
     }
   },
   [SERVICE_IDS.LATE_CHECK_OUT]: {
@@ -48,8 +48,8 @@ export const serviceTranslations: Record<string, ServiceTranslation> = {
       de: 'Später Check-out'
     },
     description: {
-      en: 'Extend your stay and check out later than the regular time, giving you extra time to relax, pack, or enjoy your morning in Berlin without rush.',
-      de: 'Verlängern Sie Ihren Aufenthalt und checken Sie später als zur regulären Uhrzeit aus – perfekt, um entspannt zu packen oder den Morgen in Berlin ohne Eile zu genießen.'
+      en: 'Extend your stay and check out later than the regular time, giving you extra time to relax, pack, or enjoy your morning in Berlin without rush. Late check out is possible until 13:00.',
+      de: 'Verlängern Sie Ihren Aufenthalt und checken Sie später als zur regulären Uhrzeit aus – perfekt, um entspannt zu packen oder den Morgen in Berlin ohne Eile zu genießen. Ein Late Check-out ist bis 13:00 Uhr möglich.'
     }
   },
   [SERVICE_IDS.BREAKFAST]: {

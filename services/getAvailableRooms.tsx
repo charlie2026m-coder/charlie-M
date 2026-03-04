@@ -55,13 +55,14 @@ const getAvailableRoomsInternal = async (from?: string, to?: string, guests: num
       const roomPrice = room.totalGrossAmount?.amount || 0;
       const roomPriceForTwo = doubleRoom?.totalGrossAmount?.amount || 0;
       
-      // Get translations for room
+      // Title & description: Supabase (roomDetails) → RoomTranslations → Apaleo
       const roomId = room.unitGroup?.id;
+      const lang = locale === 'de' ? 'de' : 'en' as 'en' | 'de';
       const translation = roomId ? roomTranslations[roomId as keyof typeof roomTranslations] : null;
-      const lang = locale === 'de' ? 'de' : 'en';
-      
-      const translatedName = translation?.title[lang] || room.unitGroup?.name || 'Unknown Room';
-      const translatedDescription = translation?.description[lang] || room.unitGroup?.description || '';
+      const titleFromDb = lang === 'de' ? roomDetails?.title_de : roomDetails?.title_en;
+      const descFromDb = lang === 'de' ? roomDetails?.description_de : roomDetails?.description_en;
+      const translatedName = titleFromDb || translation?.title[lang] || room.unitGroup?.name || 'Unknown Room';
+      const translatedDescription = descFromDb ?? translation?.description[lang] ?? room.unitGroup?.description ?? '';
       
       return {
         ...room,

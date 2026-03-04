@@ -37,42 +37,64 @@ export const getPath = (params: {
   return queryString;
 }
 
-export const getPriceData = ({ params, room }: {params: UrlParams, room: RoomOffer}) => {
+export type PriceDataTranslations = {
+  room: string;
+  rooms: string;
+  guest: string;
+  guests: string;
+  night: string;
+  nights: string;
+  baby: string;
+  babies: string;
+};
+
+const defaultTranslations: PriceDataTranslations = {
+  room: 'room',
+  rooms: 'rooms',
+  guest: 'guest',
+  guests: 'guests',
+  night: 'night',
+  nights: 'nights',
+  baby: 'baby',
+  babies: 'babies',
+};
+
+export const getPriceData = ({ params, room, t }: { params: UrlParams; room: RoomOffer; t?: PriceDataTranslations }) => {
+  const tr = t ?? defaultTranslations;
   let nights = 1;
   const adults = Number(params.adults || 1);
   const children = Number(params.children || 0);
   const maxPersons = room.maxPersons || 2;
 
   const roomsForChildren = children;
-  
+
   const minAdultsForChildren = children;
   const adultsAssignedToChildren = Math.min(adults, minAdultsForChildren);
-  
+
   let remainingAdults = adults - adultsAssignedToChildren;
-  
-  const maxAdultsPerChildRoom = Math.min(maxPersons, 2); // Can't exceed room capacity
+
+  const maxAdultsPerChildRoom = Math.min(maxPersons, 2);
   const additionalAdultsCapacity = children * (maxAdultsPerChildRoom - 1);
   const additionalAdultsAssigned = Math.min(remainingAdults, additionalAdultsCapacity);
   remainingAdults -= additionalAdultsAssigned;
-  
+
   const roomsForRemainingAdults = Math.ceil(remainingAdults / maxPersons);
-  
+
   const roomsNeeded = roomsForChildren + roomsForRemainingAdults;
-  
+
   if (params.from && params.to) {
     const fromDate = new Date(params.from);
     const toDate = new Date(params.to);
     nights = Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24));
     if (nights === 0) nights = 1;
   }
-  const r = roomsNeeded === 1 ? 'room' : 'rooms';
-  const g = adults === 1 ? 'guest' : 'guests';
-  const n = nights === 1 ? 'night' : 'nights';
-  
-  // Build price text with adults and children
+  const r = roomsNeeded === 1 ? tr.room : tr.rooms;
+  const g = adults === 1 ? tr.guest : tr.guests;
+  const n = nights === 1 ? tr.night : tr.nights;
+
   let priceText = `${adults} ${g}`;
   if (children > 0) {
-    const c = children === 1 ? 'baby' : 'babies';
+    const c = children === 1 ? tr.baby : tr.babies;
     priceText += ` + ${children} ${c}`;
   }
   priceText += `, ${nights} ${n}, ${roomsNeeded} ${r}`;
@@ -375,25 +397,17 @@ export const formatReservations = (
 
 
 export const getServiceTranslation = (serviceId: string, locale: string = 'en'): { name: string; description: string } | null => {
-  const translation = serviceTranslations[serviceId];
-  if (!translation) return null;
-  
+  const t = serviceTranslations[serviceId];
+  if (!t) return null;
   const lang = locale === 'de' ? 'de' : 'en';
-  return {
-    name: translation.title[lang],
-    description: translation.description[lang]
-  };
+  return { name: t.title[lang], description: t.description[lang] };
 };
 
-export const getTranslatedServiceName = (serviceId: string, defaultName: string, locale: string = 'en'): string => {
-  const translation = getServiceTranslation(serviceId, locale);
-  return translation?.name || defaultName;
-};
+export const getTranslatedServiceName = (serviceId: string, defaultName: string, locale: string = 'en'): string =>
+  getServiceTranslation(serviceId, locale)?.name || defaultName;
 
-export const getTranslatedServiceDescription = (serviceId: string, defaultDescription: string, locale: string = 'en'): string => {
-  const translation = getServiceTranslation(serviceId, locale);
-  return translation?.description || defaultDescription;
-};
+export const getTranslatedServiceDescription = (serviceId: string, defaultDescription: string, locale: string = 'en'): string =>
+  getServiceTranslation(serviceId, locale)?.description || defaultDescription;
 
 export const getServiceAvailabilityById = async (
   from: string | undefined,

@@ -4,8 +4,6 @@ import { Service } from '@/types/apaleo'
 import { Button } from '@/app/_components/ui/button'
 import { useRouter, useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { getTranslatedServiceName } from '@/lib/utils'
-
 const ExistingExtras = ({ 
   services, 
   nights,
@@ -106,7 +104,7 @@ const ExistingExtras = ({
             quantity = 1
           }
 
-          const serviceName = getTranslatedServiceName(service.id, service.name, locale);
+          const serviceName = service.name;
           
           return (
             <div key={`existing-${service.id}-${index}`} className='flex justify-between items-center w-full text-sm'>
@@ -176,7 +174,7 @@ const ExistingExtras = ({
 
           if (!shouldDisplay) return null
 
-          const serviceName = getTranslatedServiceName(serviceDetails.id, serviceDetails.name, locale);
+          const serviceName = serviceDetails.name;
 
           return (
             <div key={`new-${selectedService.serviceId}-${index}`} className='flex justify-between items-center w-full text-sm text-green'>

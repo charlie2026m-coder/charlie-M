@@ -138,6 +138,7 @@ export interface Service {
   id: string;
   name: string;
   description?: string;
+  imageUrl?: string | null;
   pricingUnit: 'Person' | 'Room';
   price: number;
   currency: string;

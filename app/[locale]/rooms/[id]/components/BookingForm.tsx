@@ -37,8 +37,19 @@ const BookingForm = ({ id, rooms, params, babyBedAvailability, isKidsBedAvailabl
   const guestsStore = useStore(state => state.guests);
   const setValue = useStore(state => state.setValue);
 
+  const priceT = {
+    room: t('room'),
+    rooms: t('rooms'),
+    guest: t('guest'),
+    guests: t('guests'),
+    night: t('night'),
+    nights: t('nights'),
+    baby: t('baby'),
+    babies: t('babies'),
+  };
+
   const [guests, setGuests] = useState({adults: parseInt(params?.adults || guestsStore?.adults.toString() || '1'), children: parseInt(params?.children || guestsStore?.children.toString() || '0')});
-  const { priceText } = getPriceData({ params, room: room })
+  const { priceText } = getPriceData({ params, room: room, t: priceT })
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: dateRangeStore.from || (params.from ? dayjs(params.from).toDate() : undefined),
     to: dateRangeStore.to || (params.to ? dayjs(params.to).toDate() : undefined),
@@ -100,7 +111,8 @@ const BookingForm = ({ id, rooms, params, babyBedAvailability, isKidsBedAvailabl
         adults: guests.adults.toString(),
         children: guests.children.toString(),
       }, 
-      room 
+      room,
+      t: priceT,
     });
 
     const nightsCount = calculateNights(fromDate, toDate);
