@@ -7,15 +7,15 @@ import { useTranslations } from 'next-intl'
 
 // Images for each information card
 const INFO_CARD_IMAGES: Record<number, string[]> = {
-  1: ['/images/laundry-image.webp', '/images/coffee-image.webp', '/images/wifi-image.webp'],
-  2: ['/images/laundry-image.webp', '/images/coffee-image.webp', '/images/wifi-image.webp'],
-  3: ['/images/room.jpg', '/images/room2.jpg', '/images/room3.jpg'],
-  4: ['/images/laundry-image.webp', '/images/coffee-image.webp', '/images/wifi-image.webp'],
-  5: ['/images/laundry-image.webp', '/images/coffee-image.webp', '/images/wifi-image.webp'],
-  6: ['/images/laundry-image.webp', '/images/coffee-image.webp', '/images/wifi-image.webp'],
-  7: ['/images/lost-image.webp'],
-  8: ['/images/laundry-image.webp', '/images/coffee-image.webp', '/images/wifi-image.webp'],
-  9: ['/images/garbage-image.webp']
+  1: ['/images/exp-1.webp'],
+  2: ['/images/profile/luggage.webp'],
+  3: ['/images/profile/self-service.webp'],
+  4: ['/images/profile/laundry.webp'],
+  5: ['/images/profile/coffee-machine.webp'],
+  6: ['/images/wifi-image.webp'],
+  7: ['/images/profile/lost.webp'],
+  8: ['/images/profile/room-refresh.webp'],
+  9: ['/images/profile/garbage.webp']
 }
 
 const InfoCard = ({ card }: { card: { id: number, title: string, image: string }}) => {

@@ -19,6 +19,7 @@ import { ExtraRow } from "./ExtraRow";
 import { InvoiceButton } from "../../components/InvoiceButton";
 import { useTranslations } from "next-intl";
 import { CITY_TAX_RATE } from "@/lib/Constants";
+import { Reservation } from "@/types/apaleo";
 
 export const ReservationButton = ({ reservation }: { reservation: Reservation }) => {
   const { id, services, arrival, departure, adults, totalGrossAmount } = reservation;
@@ -69,7 +70,7 @@ export const ReservationButton = ({ reservation }: { reservation: Reservation })
           <DialogHeader>
             <DialogTitle className='mb-5'>{t('reservationDetails')}</DialogTitle>
           </DialogHeader>
-          <StatusBadge status={reservation.status} className="h-[35px] items-center justify-center mb-5" />
+          <StatusBadge status={reservation.status as bookingStatuses} className="h-[35px] items-center justify-center mb-5" />
         
           <div className='flex flex-col gap-3 mb-7'>
             <div className='flex items-center gap-2 text-lg font-semibold'>
@@ -114,7 +115,7 @@ export const ReservationButton = ({ reservation }: { reservation: Reservation })
             )}
           </div>
 
-          {services?.length > 0 && 
+          {services && services.length > 0 && 
             <div className='flex flex-col gap-3 mb-7'>
               <div className='flex items-center gap-2 text-lg font-semibold'>
                 <FaSquarePlus className='size-5' /><h3 className='text-lg font-semibold' >{t('extras')}</h3>

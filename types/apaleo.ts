@@ -265,7 +265,7 @@ export interface Commission {
   beforeCommissionAmount: Money;
 }
 
-export interface Reservation {
+export interface ReservationPayload {
   attributes?: string[];
   size?: number;
   arrival: string;
@@ -289,7 +289,7 @@ export interface Reservation {
 export interface BookingPayload {
   paymentAccount: PaymentAccount;
   booker: Booker;
-  reservations: Reservation[];
+  reservations: ReservationPayload[];
   transactionReference: string;
 }
 
@@ -372,6 +372,8 @@ export interface ApaleoReservationResponse {
   isOpenForCharges: boolean;
   isPreCheckedIn: boolean;
   allFoliosHaveInvoice: boolean;
+  services?: ServicesPaidDetails[];
+  attributes?: string[];
 }
 
 export interface ReservationAccess {
@@ -401,12 +403,16 @@ export interface ReservationAccessData {
   validTo?: string | null;
 }
 
-export interface Reservation extends ApaleoReservationResponse {
+export interface Reservation extends Omit<ApaleoReservationResponse, 'services'> {
   unit: Unit;
   name: string;
   image: string;
   guests: number;
   accesses?: ReservationAccessData | null;
+  services?: ServicesPaidDetails[];
+  attributes?: string[];
+  images?: string[];
+  size?: number;
 }
 
 //_____________________________OFFERS

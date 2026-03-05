@@ -25,7 +25,9 @@ export default function CardContent({
     <div className='flex flex-col pt-5'>
       {images.length > 1 && (<CustomImageSlider images={images} />)}
       {images.length === 1 && (
-        <Image src={images[0]} alt='image' width={600} height={300} className='w-full h-[250px] md:h-[400px] rounded-lg mb-5' />
+        <div className='relative w-full h-[250px] md:h-[400px] rounded-lg mb-5 overflow-hidden'>
+          <Image src={images[0]} alt='image' fill className='object-cover' />
+        </div>
       )}
       <div className='flex flex-col gap-5 mb-6'>
         {description.map((item) => (
