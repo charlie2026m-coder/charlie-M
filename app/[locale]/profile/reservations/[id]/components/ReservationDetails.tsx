@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { PiCalendarBlankFill } from "react-icons/pi";
 import dayjs from "dayjs";
 import { BsFillPersonFill } from "react-icons/bs";
+import { AddressSection } from "./AddressSection";
 import { FaSquarePlus } from "react-icons/fa6";
 import { RiMoneyEuroCircleFill } from "react-icons/ri";
 import { bookingStatuses } from "@/types/types";
@@ -19,9 +20,10 @@ import { InvoiceButton } from "../../components/InvoiceButton";
 import { useTranslations } from "next-intl";
 import { CITY_TAX_RATE } from "@/lib/Constants";
 
-export const ReservationButton = ({ reservation, isActive }: { reservation: any, isActive: boolean }) => {
+export const ReservationButton = ({ reservation }: { reservation: Reservation }) => {
   const { id, services, arrival, departure, adults, totalGrossAmount } = reservation;
   const [open, setOpen] = useState(false);
+  const [currentAddress, setCurrentAddress] = useState(reservation.primaryGuest?.address);
   const t = useTranslations('profile');
   const { firstName, lastName } = reservation.primaryGuest;
   let guests = `${firstName} ${lastName}`;
@@ -91,9 +93,25 @@ export const ReservationButton = ({ reservation, isActive }: { reservation: any,
             <div className='flex items-center gap-2 text-lg font-semibold'>
               <BsFillPersonFill className='size-5' />{t('guestsWithCount', { guestsCount })}
             </div>
-            <div className='flex  text-lg '>
-              {guests} 
+            <div className='flex text-lg'>
+              {guests}
             </div>
+            {currentAddress && (
+              <div className='p-3 rounded-xl border border-gray-200 bg-gray-50'>
+                <AddressSection
+                  address={currentAddress}
+                  guestData={{
+                    firstName: reservation.primaryGuest.firstName,
+                    lastName: reservation.primaryGuest.lastName,
+                    email: reservation.primaryGuest.email,
+                    phone: reservation.primaryGuest.phone,
+                    ...(reservation.primaryGuest.company && { company: reservation.primaryGuest.company }),
+                  }}
+                  reservationId={id}
+                  onAddressUpdate={(updatedAddress) => setCurrentAddress(updatedAddress)}
+                />
+              </div>
+            )}
           </div>
 
           {services?.length > 0 && 

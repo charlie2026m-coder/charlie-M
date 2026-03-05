@@ -594,6 +594,7 @@
     "extras": "Extras",
     "total": "Total",
     "guestsWithCount": "Guests ({guestsCount}) :",
+    "address": "Address",
     "payNow": "Pay Now",
     "nights": "nights",
     "upgradeYourStay": "Upgrade your stay",
@@ -753,7 +754,14 @@
     "codeModalInstruction4": "Once inside, follow the hotel signage to find your floor and room.",
     "codeModalInstruction5": "Your PIN code works for all relevant doors, including your room.",
     "whereToFindIt": "Where to find it:",
-    "locatedOnFloor": "Located on the {floor} floor"
+    "locatedOnFloor": "Located on the {floor} floor",
+    "editAddress": "Edit address",
+    "streetAddress": "Street Address",
+    "houseNumber": "House / Building Number",
+    "postalCode": "Postal Code",
+    "city": "City",
+    "country": "Country",
+    "save": "Save"
   },
   "checkIn": {
     "title": "Online Check-In",

@@ -15,7 +15,6 @@ const ReservationPage = async ({ params }: { params: Promise<{ id: string; local
   const { id, locale } = await params;
   const reservation = await getReservationById(id);
   if(!reservation) return <ErrorCard isSingleRoom={false} />
-  
   // Convert ISO date strings to YYYY-MM-DD format
   const arrivalDate = dayjs(reservation.arrival).format('YYYY-MM-DD');
   const departureDate = dayjs(reservation.departure).format('YYYY-MM-DD');
