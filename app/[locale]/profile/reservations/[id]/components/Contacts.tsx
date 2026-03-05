@@ -3,10 +3,12 @@ import Image from "next/image";
 import { TbBrandWhatsappFilled } from "react-icons/tb";
 import { IoMail } from "react-icons/io5";
 import { useTranslations } from 'next-intl';
+import { PHONE_NUMBER, EMAIL } from '@/lib/Constants';
 
 const Contacts = () => {
   const t = useTranslations('profile');
-  
+  const whatsappHref = `https://wa.me/${PHONE_NUMBER.replace(/\D/g, '')}`;
+
   return (
     <div className='bg-gradient-to-r from-[#FFF6DF] to-[#EADCB0] flex flex-col lg:flex-row justify-between'>
       <div className='flex w-full px-2 lg:px-4 lg:w-3/5 xl:w-1/2  pt-3 items-center gap-6 '>
@@ -19,7 +21,7 @@ const Contacts = () => {
 
       <div className='flex flex-col gap-3 w-full lg:w-2/5 text-sm justify-center px-2 lg:px-8 py-5'>
         <a 
-          href='https://wa.me/49XXXXXXXXX' 
+          href={whatsappHref}
           target='_blank' 
           rel='noopener noreferrer'
           className='flex flex-col px-5 py-2 border border-black rounded-3xl w-full cursor-pointer hover:bg-blue hover:border-blue hover:text-white'
@@ -28,17 +30,17 @@ const Contacts = () => {
             <TbBrandWhatsappFilled className='size-6' />
             <span>{t('whatsappUs')}</span>
           </div>
-          <span className='font-semibold'>+49 XXX XXXX XXX</span>
+          <span className='font-semibold'>{PHONE_NUMBER}</span>
         </a>
         <a 
-          href='mailto:hello@charliem.stay'
+          href={`mailto:${EMAIL}`}
           className='flex flex-col px-5 py-2 border border-black rounded-3xl w-full cursor-pointer hover:bg-blue hover:border-blue hover:text-white'
         >
           <div className='flex items-center gap-2'>
             <IoMail className='size-6' />
             <span>{t('emailUs')}</span>
           </div>
-          <span className='font-semibold'>hello@charliem.stay</span>
+          <span className='font-semibold'>{EMAIL}</span>
         </a>
 
       </div>

@@ -19,7 +19,7 @@ interface AddressSectionProps {
     lastName: string;
     email: string;
     phone: string;
-    company?: { name: string };
+    company?: { name?: string };
   };
   reservationId: string;
   onAddressUpdate?: (updatedAddress: Address) => void;

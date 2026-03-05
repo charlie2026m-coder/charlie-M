@@ -83,7 +83,7 @@ const MainInfo = ({ reservation }: { reservation: any } ) => {
           </>
         )}
 
-        <ReservationButton reservation={reservation} isActive={isActive} />
+        <ReservationButton reservation={reservation} />
         <RoomDetailsButton reservation={reservation} />
 
         {isClosed && <BookAgainButton reservation={reservation} />}

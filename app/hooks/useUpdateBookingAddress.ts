@@ -15,7 +15,7 @@ interface UpdateAddressData {
       countryCode: string;
     };
     company?: {
-      name: string;
+      name?: string;
     };
   };
 }
