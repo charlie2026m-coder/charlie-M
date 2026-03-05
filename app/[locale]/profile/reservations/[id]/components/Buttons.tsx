@@ -2,7 +2,6 @@
 import { Button } from "@/app/_components/ui/button";
 import { BsCheckCircleFill } from "react-icons/bs";
 import { IoCard } from "react-icons/io5";
-import { RiSofaFill } from "react-icons/ri";
 import { FaCalendar } from "react-icons/fa";
 import { Link } from "@/navigation";
 import { Reservation } from "@/types/apaleo";
@@ -62,18 +61,6 @@ export const CheckinButton = ({ reservationId }: CheckinButtonProps) => {
       <BsCheckCircleFill /> 
       {isLoading || isPending ? t('loading') || 'Loading...' : t('completeCheckIn')}
     </Button>
-  )
-}
-
-export const ReservationButton = () => {
-  return (
-    <Button variant='outline' className='h-[35px]  text-sm px-5 gap-2 justify-start'><IoCard />Reservation Details</Button>
-  )
-}
-
-export const RoomButton = () => {
-  return (
-    <Button variant='outline' className='h-[35px] text-sm px-5 gap-2 justify-start'><RiSofaFill />Room info</Button>
   )
 }
 

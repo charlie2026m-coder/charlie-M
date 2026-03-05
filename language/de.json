@@ -594,6 +594,7 @@
     "extras": "Extras",
     "total": "Gesamt",
     "guestsWithCount": "Gäste ({guestsCount})",
+    "address": "Adresse",
     "payNow": "Jetzt bezahlen",
     "nights": "Nächte",
     "upgradeYourStay": "Werten Sie Ihren Aufenthalt auf",
@@ -753,7 +754,14 @@
     "codeModalInstruction4": "Folgen Sie nach dem Eintreten der Hotelbeschilderung, um Ihre Etage und Ihr Zimmer zu finden.",
     "codeModalInstruction5": "Ihr PIN-Code funktioniert an allen relevanten Türen, einschließlich Ihrer Zimmertür.",
     "whereToFindIt": "Wo Sie es finden:",
-    "locatedOnFloor": "Befindet sich im {floor}. Stock"
+    "locatedOnFloor": "Befindet sich im {floor}. Stock",
+    "editAddress": "Adresse bearbeiten",
+    "streetAddress": "Straße",
+    "houseNumber": "Hausnummer",
+    "postalCode": "Postleitzahl",
+    "city": "Ort",
+    "country": "Land",
+    "save": "Speichern"
   },
   "checkIn": {
     "title": "Online-Check-In",
