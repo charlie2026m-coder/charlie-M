@@ -6,7 +6,7 @@ import {
   CarouselContent,
   CarouselItem,
 } from '../../../_components/ui/carousel'
-import RoomCard from '@/app/[locale]/home/components/RoomCard'
+import RoomCard from '@/app/[locale]/_home/components/RoomCard'
 import type { RoomOffer } from '@/types/offers'
 import { GoArrowLeft, GoArrowRight } from "react-icons/go";
 

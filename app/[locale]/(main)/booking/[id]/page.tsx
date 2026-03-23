@@ -2,7 +2,7 @@ import { getSingleRoom } from '@/services/getSingleRoom'
 import {  sortGuestsByRooms, getServiceAvailabilityById } from '@/lib/utils'
 import BookingPage from './components/BookingPage'
 import { getApaleoExtras } from '@/services/getExtras'
-import ErrorCard from '@/app/[locale]/rooms/components/ErrorCard'
+import ErrorCard from '@/app/[locale]/(main)/rooms/components/ErrorCard'
 import Steps from './components/Steps'
 
 interface IParams {

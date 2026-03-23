@@ -1,7 +1,7 @@
 'use client'
 import { useEffect } from "react";
-import PhotoGallery from "@/app/[locale]/rooms/[id]/components/PhotoGallery"
-import RoomContent from "@/app/[locale]/rooms/[id]/components/RoomContent"
+import PhotoGallery from "@/app/[locale]/(main)/rooms/[id]/components/PhotoGallery"
+import RoomContent from "@/app/[locale]/(main)/rooms/[id]/components/RoomContent"
 import ExtrasSection from "./ExtrasSection"
 import RefundCard from "./RefundCard"
 import BookingMenu from "./BookingMenu"

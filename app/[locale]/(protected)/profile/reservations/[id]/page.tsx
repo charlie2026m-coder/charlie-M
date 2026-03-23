@@ -5,7 +5,7 @@ import InformationSection from "./components/InformationSection";
 import { getReservationById } from "@/services/getReservation";
 import { getApaleoExtras } from "@/services/getExtras";
 import { bookingStatuses } from "@/types/types";
-import ErrorCard from "@/app/[locale]/rooms/components/ErrorCard";
+import ErrorCard from "@/app/[locale]/(main)/rooms/components/ErrorCard";
 import dayjs from "dayjs";
 import Contacts from "./components/Contacts";
 import ExtandYourStay from "./components/ExtandYourStay";

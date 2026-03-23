@@ -1,6 +1,6 @@
 'use client'
 import { Button } from '@/app/_components/ui/button'
-import PhotoSlider from '@/app/[locale]/home/components/PhotoSlider'
+import PhotoSlider from '@/app/[locale]/_home/components/PhotoSlider'
 import { Link, useRouter } from '@/navigation'
 import { getPath, getDate } from '@/lib/utils'
 import { UrlParams } from '@/types/apaleo'

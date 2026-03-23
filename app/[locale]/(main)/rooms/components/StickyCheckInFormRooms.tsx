@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import CheckInForm from '@/app/[locale]/home/components/CheckInForm';
+import CheckInForm from '@/app/[locale]/_home/components/CheckInForm';
 import { UrlParams } from '@/types/apaleo';
 
 interface StickyCheckInFormRoomsProps {

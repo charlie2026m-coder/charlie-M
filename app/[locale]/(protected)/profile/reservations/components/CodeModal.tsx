@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/app/_components/ui/ClientDialog"
-import { Floor } from '@/app/[locale]/profile/reservations/[id]/components/Floor'
+import { Floor } from '@/app/[locale]/(protected)/profile/reservations/[id]/components/Floor'
 import Dot from '@/app/_components/ui/dot'
 interface CodeModalProps {
   open: boolean

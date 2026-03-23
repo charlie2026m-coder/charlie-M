@@ -1,7 +1,7 @@
 import Filters from './components/Filters'
 import RoomsList from './components/RoomsList'
 import { UrlParams } from '@/types/apaleo'
-import ErrorCard from '@/app/[locale]/rooms/components/ErrorCard'
+import ErrorCard from '@/app/[locale]/(main)/rooms/components/ErrorCard'
 import NotFoundCard from './[id]/components/NotFoundCard'
 import { getAvailableRooms } from '@/services/getAvailableRooms'
 import type { Metadata } from 'next'

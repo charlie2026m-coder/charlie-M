@@ -1,9 +1,9 @@
-import { RoomsCarousel } from '@/app/[locale]/home/components/RoomsCarousel'
+import { RoomsCarousel } from '@/app/[locale]/_home/components/RoomsCarousel'
 import { getAvailableRooms } from '@/services/getAvailableRooms'
-import ErrorCard from '@/app/[locale]/rooms/components/ErrorCard'
-import NoRoomsAvailable from '@/app/[locale]/home/components/NoRoomsAvailable'
+import ErrorCard from '@/app/[locale]/(main)/rooms/components/ErrorCard'
+import NoRoomsAvailable from '@/app/[locale]/_home/components/NoRoomsAvailable'
 import { getTranslations } from 'next-intl/server'
-import Header from '@/app/[locale]/home/components/Header'
+import Header from '@/app/[locale]/_home/components/Header'
 import { RATE_PLANS } from '@/lib/Constants'
 
 const RoomsSection = async ({ locale }: { locale: string }) => {
