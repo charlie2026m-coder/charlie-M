@@ -81,6 +81,13 @@ const getSingleRoomInternal = async (roomId: string, from?: string, to?: string,
       const translatedName = titleFromDb || translation?.title[lang] || room.unitGroup?.name || 'Unknown Room';
       const translatedDescription = descFromDb ?? translation?.description[lang] ?? room.unitGroup?.description ?? '';
 
+      const avgPrice = room.timeSlices && room.timeSlices.length > 0
+        ? room.timeSlices.reduce((sum, s) => sum + (s.totalGrossAmount?.amount || 0), 0) / room.timeSlices.length
+        : 0;
+      const avgPriceForTwo = doubleRoom?.timeSlices && doubleRoom.timeSlices.length > 0
+        ? doubleRoom.timeSlices.reduce((sum, s) => sum + (s.totalGrossAmount?.amount || 0), 0) / doubleRoom.timeSlices.length
+        : 0;
+
       return {
         ...room,
         id: room.unitGroup?.id || '',
@@ -96,7 +103,8 @@ const getSingleRoomInternal = async (roomId: string, from?: string, to?: string,
         oneNightPriceForTwo: doubleRoom?.timeSlices?.[0]?.totalGrossAmount?.amount || 0,
         cityTax: room.cityTaxes?.[0]?.totalGrossAmount?.amount || Math.round(roomPrice * CITY_TAX_RATE * 100) / 100,
         cityTaxForTwo: doubleRoom?.cityTaxes?.[0]?.totalGrossAmount?.amount || Math.round(roomPriceForTwo * CITY_TAX_RATE * 100) / 100,
-        averagePrice: room.timeSlices?.[0]?.totalGrossAmount?.amount || 0,
+        averagePrice: avgPrice,
+        averagePriceForTwo: avgPriceForTwo,
       };
     });
       return formattedRooms as RoomOffer[];

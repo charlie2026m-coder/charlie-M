@@ -10,8 +10,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { UrlParams } from "@/types/apaleo"
 import { Room, RoomExtra } from "@/types/types"
 import { RoomOffer } from "@/types/offers"
-import { RATE_PLANS, CITY_TAX_RATE, HOTEL_INFO } from "./Constants";
-import { getApaleoExtras } from "@/services/getExtras";
+import { RATE_PLANS, CITY_TAX_RATE, HOTEL_INFO, getRatePlanByNights } from "./Constants";
+import { getApaleoExtras } from '@/app/actions/apaleo/services/getExtras';
 import { ReservationFilter } from '@/store/useProfile'
 import { serviceTranslations } from '@/content/ServiceTranslations';
 
@@ -269,13 +269,33 @@ export const getPriceType = (arrival: string , departure: string, isNonRef?: boo
   return 'bar_web';
 }
 
-export const getType = (nights: number, isRefundable: boolean) => {
-  // For stays >= 7 nights
-  if (nights >= 7) {
-    return isRefundable ? RATE_PLANS.LONG_STAY : RATE_PLANS.NON_REFUNDABLE_LONG_STAY;
-  }
-  // For stays < 7 nights
-  return isRefundable ? RATE_PLANS.STANDARD : RATE_PLANS.NON_REFUNDABLE;
+export const getType = (nights: number, isRefundable: boolean): string => {
+  return getRatePlanByNights(nights, isRefundable);
+}
+
+// Picks the best offer per room for the given stay length.
+// Apaleo returns one offer per rate plan per room — this selects the correct one.
+export const selectBestRoomOffers = (rooms: RoomOffer[], nights: number): RoomOffer[] => {
+  const targetRatePlan = getRatePlanByNights(nights);
+
+  // Group all offers by unitGroup ID (each room can have multiple rate plan offers)
+  const roomsMap = new Map<string, RoomOffer[]>();
+  rooms.forEach(room => {
+    const roomId = room.unitGroup?.id || room.id;
+    if (!roomsMap.has(roomId)) roomsMap.set(roomId, []);
+    roomsMap.get(roomId)!.push(room);
+  });
+
+  const bestOffers: RoomOffer[] = [];
+  roomsMap.forEach(offers => {
+    // 1. Try exact match for the stay length
+    let selected = offers.find(o => o.ratePlan?.code === targetRatePlan);
+    // 2. Fallback to STANDARD (1-night) if not found
+    if (!selected) selected = offers.find(o => o.ratePlan?.code === RATE_PLANS.STANDARD);
+    if (selected) bestOffers.push(selected);
+  });
+
+  return bestOffers;
 }
 
 

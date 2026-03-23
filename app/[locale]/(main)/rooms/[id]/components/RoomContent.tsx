@@ -14,13 +14,26 @@ const RoomContent = ({
   isRoomInfo?: boolean,
 }) => {
   const t = useTranslations('roomContent')
+  const tParams = useTranslations('roomParams')
   return (
     <>
       <div className='flex flex-col-reverse md:flex-row justify-between mb-5 items-start gap-2'>
         <h2 className='text-[30px] md:text-[40px] font-semibold w-4/5 leading-[0.95]'>{room.name}</h2>
       </div>
       <div className={cn('pb-3 mb-5 w-full  flex flex-col md:flex-row  justify-between', isRoomInfo && 'border-b')}>
-        <RoomParamsRow attributes={room.attributes} maxPersons={room.maxPersons} size={room.size} />
+        <RoomParamsRow 
+          attributes={room.attributes} 
+          maxPersons={room.maxPersons} 
+          size={room.size} 
+          translations={{
+            max: tParams('max'),
+            kingSize: tParams('kingSize'),
+            queenSize: tParams('queenSize'),
+            single: tParams('single'),
+            balcony: tParams('balcony'),
+            terrace: tParams('terrace'),
+          }}
+        />
         <div className='flex items-center gap-3 ml-auto'>
         </div>
       </div>

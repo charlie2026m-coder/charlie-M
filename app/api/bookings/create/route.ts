@@ -4,6 +4,7 @@ import { getOrRefreshToken } from "@/services/Request"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { Booking } from "@/types/booking"
 import { bookReservationServices } from "@/services/bookReservationServices"
+import { reversePayment } from "@/app/actions/adyen/reversePayment"
 
 const APALEO_API_URL = 'https://api.apaleo.com'
 
@@ -120,11 +121,28 @@ export async function POST(request: Request) {
     }
 
     const token = await getOrRefreshToken()
+    const supabase = await createSupabaseServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    const bookingPayload = {
-      ...booking,
-      reservations: booking.reservations
+    // Idempotency lock — prevents duplicate bookings on double-submit or retry
+    // If same transactionReference already exists → 23505 unique violation → booking already created
+    if (booking.transactionReference) {
+      const { error: lockError } = await supabase.from('bookings').insert({
+        transaction_reference: booking.transactionReference,
+        user_id: user?.id || null,
+        status: 'processing',
+      })
+
+      if (lockError) {
+        if (lockError.code === '23505') {
+          console.log('⚠️ [CREATE BOOKING] duplicate transactionReference — booking already exists, skipping')
+          return NextResponse.json({ error: 'Booking already exists for this payment' }, { status: 409 })
+        }
+        console.error('Failed to insert booking lock:', lockError)
+      }
     }
+
+    const bookingPayload = { ...booking, reservations: booking.reservations }
 
     console.log('📦 Booking payload:', JSON.stringify(bookingPayload, null, 2))
 
@@ -133,9 +151,23 @@ export async function POST(request: Request) {
 
     if (!result.success) {
       console.error('❌ All booking attempts failed')
-      
+
+      // Mark lock as failed
+      if (booking.transactionReference) {
+        await supabase.from('bookings')
+          .update({ status: 'failed' })
+          .eq('transaction_reference', booking.transactionReference)
+          .eq('status', 'processing')
+      }
+
+      // Reverse the payment — customer gets refunded automatically
+      if (booking.transactionReference) {
+        console.log('💸 [CREATE BOOKING] payment was charged but booking failed — initiating reversal')
+        await reversePayment(booking.transactionReference)
+      }
+
       return NextResponse.json(
-        { 
+        {
           error: 'Failed to create booking after multiple attempts',
           details: result.error,
           status: result.status
@@ -147,6 +179,9 @@ export async function POST(request: Request) {
     const apaleoData = result.data!
     
     // Step 2: Pay all folios with single payment
+    let folioPaymentSuccess = true
+    const folioErrors: string[] = []
+    
     if (apaleoData.reservationIds && apaleoData.reservationIds.length > 0 && booking.transactionReference) {
       console.log('📋 Step 2: Paying folios...')
       
@@ -167,18 +202,52 @@ export async function POST(request: Request) {
           }
           
         } catch (error) {
+          folioPaymentSuccess = false
+          const errorMsg = error instanceof Error ? error.message : 'Unknown error'
+          folioErrors.push(`Reservation ${reservationId}: ${errorMsg}`)
           console.error(`❌ Error paying folio for reservation ${reservationId}:`, error)
         }
       }
       
-      console.log('\n✅ Step 2 complete: All folios paid')
+      if (folioPaymentSuccess) {
+        console.log('\n✅ Step 2 complete: All folios paid')
+      } else {
+        console.error('\n⚠️ Step 2 PARTIAL FAILURE: Some folios failed to pay')
+        console.error('Failed folios:', folioErrors)
+      }
+    }
+
+    // Mark booking lock with appropriate status
+    if (booking.transactionReference) {
+      const finalStatus = folioPaymentSuccess ? 'completed' : 'partial_success'
+      const updateData: any = {
+        status: finalStatus,
+        apaleo_booking_id: apaleoData.id,
+        reservation_ids: apaleoData.reservationIds.map(r => r.id)
+      }
+      
+      // Store folio errors if any occurred
+      if (!folioPaymentSuccess) {
+        updateData.error_details = JSON.stringify({
+          type: 'folio_payment_failure',
+          errors: folioErrors,
+          timestamp: new Date().toISOString()
+        })
+        
+        // Log alert for operations team
+        console.error('🚨 ALERT: Booking created but folio payment failed')
+        console.error('🚨 Booking ID:', apaleoData.id)
+        console.error('🚨 Transaction Reference:', booking.transactionReference)
+        console.error('🚨 MANUAL ACTION REQUIRED: Complete folio payment in Apaleo')
+      }
+      
+      await supabase.from('bookings')
+        .update(updateData)
+        .eq('transaction_reference', booking.transactionReference)
     }
 
     // Save consent record if consent was given
     try {
-      const supabase = await createSupabaseServerClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      
       if (booking.consent && apaleoData.id) {
         const headersList = await headers()
         const ip = 
@@ -201,6 +270,7 @@ export async function POST(request: Request) {
     } catch (supabaseError) {
       console.error('Failed to save consent to Supabase:', supabaseError)
     }
+
 
     return NextResponse.json(
       {

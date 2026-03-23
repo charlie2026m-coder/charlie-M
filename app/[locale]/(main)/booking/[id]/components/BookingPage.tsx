@@ -8,6 +8,8 @@ import BookingMenu from "./BookingMenu"
 import { Room } from "@/types/types"
 import { Service } from "@/types/apaleo"
 import { RoomOffer } from "@/types/offers"
+import { RoomDetails } from "@/app/actions/supabase/rooms/getRoomDetails"
+import ChangeDate from "./ChangeDate"
 import { useBookingStore } from "@/store/useBookingStore"
 import { calculateNights, getType } from "@/lib/utils"
 import { useTranslations } from "next-intl"
@@ -21,13 +23,15 @@ const BookingPage = ({
     adults: string
     children: string
     rooms: RoomOffer[]
+    roomDetail?: RoomDetails
     filledRooms: Room[]
     extras: Service[]
     isKidsBedAvailable?: boolean
     babyBedAvailability?: { isAvailable: boolean; count: number }
+    isUnavailable?: boolean
   }
 }) => {
-  const { from, to, adults, children, rooms, filledRooms, extras, isKidsBedAvailable = true, babyBedAvailability } = params
+  const { from, to, adults, children, rooms, roomDetail, filledRooms, extras, isKidsBedAvailable = true, babyBedAvailability, isUnavailable = false } = params
   const setRooms = useBookingStore(state => state.setRooms)
   const setRoomDetails = useBookingStore(state => state.setRoomDetails)
   const setParams = useBookingStore(state => state.setParams)
@@ -42,6 +46,29 @@ const BookingPage = ({
   const planType = getType(nights, true)
   const mainRoom = rooms.find(room => room.ratePlan?.code === planType) || rooms[0]
   const tCommon = useTranslations()
+
+  // When Apaleo is unavailable, show Supabase content with date picker only
+  if (isUnavailable && roomDetail) {
+    return (
+      <>
+        <PhotoGallery images={roomDetail.photos || []} />
+        <div className='grid grid-cols-1 lg:grid-cols-3 mb-[30px]'>
+          <div className='col-span-1 lg:col-span-2 flex flex-col lg:pr-10'>
+            <RoomContent room={{ name: roomDetail.title_en, attributes: roomDetail.attributes, maxPersons: roomDetail.max_persons, size: roomDetail.size, description: roomDetail.description_en ?? '', images: roomDetail.photos } as any} />
+          </div>
+          <div className='col-span-1 gap-5 flex flex-col'>
+            <div className='flex flex-col bg-white rounded-[20px] py-5 px-3 border'>
+              <ChangeDate arrival={from} departure={to} />
+              <p className='my-8 text-center text-gray-500 text-sm px-2'>
+                {tCommon('bookingForm.unavailableForDates')}
+              </p>
+            </div>
+          </div>
+        </div>
+      </>
+    )
+  }
+
   if (!mainRoom) return <div className="p-10 text-center">{tCommon('loading')}</div>
   
   useEffect(() => {

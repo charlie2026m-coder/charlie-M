@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Client, CheckoutAPI, EnvironmentEnum } from "@adyen/api-library";
 
+const isLive = process.env.NEXT_PUBLIC_ADYEN_ENVIRONMENT === 'live';
 const client = new Client({
   apiKey: process.env.ADYEN_API_KEY!,
-  environment: EnvironmentEnum.TEST,
+  environment: isLive ? EnvironmentEnum.LIVE : EnvironmentEnum.TEST,
+  ...(isLive && process.env.ADYEN_LIVE_URL_PREFIX && {
+    liveEndpointUrlPrefix: process.env.ADYEN_LIVE_URL_PREFIX,
+  }),
 });
 const checkout = new CheckoutAPI(client);
 
@@ -17,9 +21,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(response);
   } catch (error: any) {
     console.error("Payment details error:", error);
-    return NextResponse.json(
-      { error: "Payment details failed", details: error.message },
-      { status: 500 }
-    );
+    // Adyen SDK throws on Refused/Cancelled/Error resultCodes
+    // Extract the response body and return as 200 so Drop-in fires onPaymentFailed correctly
+    const adyenResponse = error?.responseBody
+      ? JSON.parse(error.responseBody)
+      : error?.response ?? null;
+
+    if (adyenResponse?.resultCode) {
+      return NextResponse.json(adyenResponse);
+    }
+
+    return NextResponse.json({ error: "Payment details failed" }, { status: 500 });
   }
 }

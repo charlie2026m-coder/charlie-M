@@ -22,6 +22,7 @@ const RoomCard = ({
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const t = useTranslations('roomCard');
+  const tParams = useTranslations('roomParams');
   const { dateRange, guests } = useStore();
 
   // Priority: 1. params from URL, 2. store
@@ -76,7 +77,19 @@ const RoomCard = ({
         <Link href={`/rooms/${roomDetailId}?${queryString}`}>
           <h2 className='text-xl font-medium jakarta mb-3 hover:text-blue transition-colors cursor-pointer'>{roomsNeeded > 1 ? `${roomsNeeded} X ` : ''}{room.name}</h2>
         </Link>
-        <RoomParamsRow attributes={room.attributes} maxPersons={room.maxPersons} size={room.size} />
+        <RoomParamsRow 
+          attributes={room.attributes} 
+          maxPersons={room.maxPersons} 
+          size={room.size} 
+          translations={{
+            max: tParams('max'),
+            kingSize: tParams('kingSize'),
+            queenSize: tParams('queenSize'),
+            single: tParams('single'),
+            balcony: tParams('balcony'),
+            terrace: tParams('terrace'),
+          }}
+        />
         <div className='text-mute mb-5 mt-auto'>{t('perNightFrom')}</div>
 
         <div className='flex xxs:flex-row flex-col items-center gap-2 md:gap-8 justify-between w-full'>

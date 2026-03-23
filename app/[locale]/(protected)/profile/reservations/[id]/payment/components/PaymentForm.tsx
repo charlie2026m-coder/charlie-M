@@ -62,6 +62,23 @@ export default function PaymentForm({
             try {
               const reference = crypto.randomUUID();
               
+              // Save pending services before payment (webhook fallback)
+              try {
+                await fetch("/api/services/save-pending", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    reference,
+                    reservationId,
+                    services: selectedServices
+                  }),
+                });
+                console.log('✅ Pending services saved for reference:', reference);
+              } catch (error) {
+                console.error('⚠️ Failed to save pending services:', error);
+                // Don't block payment
+              }
+              
               const response = await fetch("/api/payments/make-payment", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },

@@ -325,7 +325,8 @@
   "roomCard": {
     "perNightFrom": "per night from",
     "bookNow": "Book Now",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "booked": "Not available for these dates"
   },
   "noAvailability": {
     "title": "No Rooms Available",
@@ -447,7 +448,8 @@
     "clearAll": "Clear All",
     "selectAllAvailable": "Select All Available",
     "selectDates": "Select dates",
-    "chooseQuantityPerDay": "Choose quantity per day"
+    "chooseQuantityPerDay": "Choose quantity per day",
+    "unavailableForDates": "This room is not available for the selected dates. Please choose different dates."
   },
   "payment": {
     "guestDetails": "Guest Details",
@@ -482,6 +484,10 @@
     "contactSupport": "Contact support here for quick resolution:",
     "paymentFailed": "Payment failed",
     "paymentError": "Payment error",
+    "paymentDeclinedTitle": "Payment Declined",
+    "paymentDeclinedMessage": "Your payment was declined. Please check your card details and try again.",
+    "tryAgain": "Try Again",
+    "browseRooms": "Browse Rooms",
     "paymentInitFailed": "Failed to initialize payment. Please try again.",
     "noServicesSelected": "No services selected",
     "pleaseGoBackAndSelect": "Please go back and select services to pay for.",

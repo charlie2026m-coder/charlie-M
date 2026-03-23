@@ -3,11 +3,11 @@ import RoomsList from './components/RoomsList'
 import { UrlParams } from '@/types/apaleo'
 import ErrorCard from '@/app/[locale]/(main)/rooms/components/ErrorCard'
 import NotFoundCard from './[id]/components/NotFoundCard'
-import { getAvailableRooms } from '@/services/getAvailableRooms'
+import { getRooms } from '@/app/actions/apaleo/rooms/getRooms'
 import type { Metadata } from 'next'
-import { HOTEL_INFO, RATE_PLANS } from '@/lib/Constants';
+import { HOTEL_INFO } from '@/lib/Constants';
 import StickyCheckInFormRooms from './components/StickyCheckInFormRooms'
-import { calculateNights, getServiceAvailabilityById } from '@/lib/utils'
+import { calculateNights, getServiceAvailabilityById, selectBestRoomOffers } from '@/lib/utils'
 
 export const revalidate = 60
   
@@ -99,13 +99,13 @@ const RoomsPage = async ({ params, searchParams } : Props) => {
     const adultsCount = adults ? Number(adults) : 1;
     
     const [rooms, babyBedAvailability] = await Promise.all([
-      getAvailableRooms(from, to, adultsCount, locale),
+      getRooms(from, to, adultsCount, locale),
       from && to 
         ? getServiceAvailabilityById(from, to, 'CMH-BAB')
         : Promise.resolve({ isAvailable: false, count: 0 })
     ]);
     
-    // Handle error from getAvailableRooms
+    // Handle error from getRooms
     if ('error' in rooms) {
       console.error('Error loading rooms:', rooms.error);
       console.error('Search params:', { from, to, adults, children });
@@ -131,12 +131,9 @@ const RoomsPage = async ({ params, searchParams } : Props) => {
     }
     
     const nights = calculateNights(from as string, to as string);
-    const ratePlan = nights > 7  ? RATE_PLANS.LONG_STAY : RATE_PLANS.STANDARD;
-    const standardPriceRooms = rooms.filter(room => room.ratePlan.code.includes(ratePlan))
-    
-    // Handle no standard price rooms
-    if (standardPriceRooms.length === 0) {
-      console.log('No standard price rooms available for:', { ratePlan, nights });
+    const bestRooms = selectBestRoomOffers(rooms, nights);
+
+    if (bestRooms.length === 0) {
       return (
         <>
           <StickyCheckInFormRooms params={{ from, to, adults, children }} />
@@ -150,9 +147,9 @@ const RoomsPage = async ({ params, searchParams } : Props) => {
       <>
         <StickyCheckInFormRooms params={{ from, to, adults, children }} />
         <Filters />
-        <RoomsList 
-          rooms={standardPriceRooms} 
-          params={{ from, to, adults, children }} 
+        <RoomsList
+          rooms={bestRooms}
+          params={{ from, to, adults, children }}
           isBabyBedAvailable={babyBedAvailability}
         />
       </>

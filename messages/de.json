@@ -325,7 +325,8 @@
   "roomCard": {
     "perNightFrom": "pro Nacht ab",
     "bookNow": "Jetzt buchen",
-    "loading": "Wird geladen …"
+    "loading": "Wird geladen …",
+    "booked": "Für diese Daten nicht verfügbar"
   },
   "noAvailability": {
     "title": "Keine Zimmer verfügbar",
@@ -447,7 +448,8 @@
     "clearAll": "Alle löschen",
     "selectAllAvailable": "Alle auswählen",
     "selectDates": "Daten",
-    "chooseQuantityPerDay": "Menge pro Tag wählen"
+    "chooseQuantityPerDay": "Menge pro Tag wählen",
+    "unavailableForDates": "Dieses Zimmer ist für die ausgewählten Daten nicht verfügbar. Bitte wählen Sie andere Daten."
   },
   "payment": {
     "guestDetails": "Angaben zum Gast",
@@ -482,6 +484,10 @@
     "contactSupport": "Hier können Sie den Support für eine schnelle Lösung kontaktieren:",
     "paymentFailed": "Zahlung fehlgeschlagen",
     "paymentError": "Zahlungsfehler",
+    "paymentDeclinedTitle": "Zahlung abgelehnt",
+    "paymentDeclinedMessage": "Ihre Zahlung wurde abgelehnt. Bitte überprüfen Sie Ihre Kartendaten und versuchen Sie es erneut.",
+    "tryAgain": "Erneut versuchen",
+    "browseRooms": "Zimmer ansehen",
     "paymentInitFailed": "Zahlung konnte nicht initialisiert werden. Bitte versuchen Sie es erneut.",
     "noServicesSelected": "Keine Leistungen ausgewählt",
     "pleaseGoBackAndSelect": "Bitte gehen Sie zurück und wählen Sie Leistungen aus, die Sie bezahlen möchten.",

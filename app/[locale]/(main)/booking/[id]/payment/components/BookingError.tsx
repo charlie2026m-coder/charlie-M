@@ -2,7 +2,7 @@ import { FiArrowLeft } from "react-icons/fi";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/navigation";
 
-export default function BookingError() {
+export default function BookingError({ roomUnavailable = false }: { roomUnavailable?: boolean }) {
   const t = useTranslations('payment')
   const router = useRouter()
   return (
@@ -37,11 +37,11 @@ export default function BookingError() {
           </a>
         </div>
         <button
-          onClick={() => router.back()}
+          onClick={() => roomUnavailable ? router.push('/rooms') : router.back()}
           className="flex items-center gap-2 text-blue hover:underline mt-10"
         >
           <FiArrowLeft className="size-5" />
-          {t('backToBookingDetails')}
+          {roomUnavailable ? t('browseRooms') : t('backToBookingDetails')}
         </button>
       </div>
     </div>

@@ -1,7 +1,8 @@
 import { getSingleRoom } from '@/services/getSingleRoom'
-import {  sortGuestsByRooms, getServiceAvailabilityById } from '@/lib/utils'
+import { sortGuestsByRooms, getServiceAvailabilityById, selectBestRoomOffers, calculateNights } from '@/lib/utils'
 import BookingPage from './components/BookingPage'
-import { getApaleoExtras } from '@/services/getExtras'
+import { getApaleoExtras } from '@/app/actions/apaleo/services/getExtras'
+import { getRoomDetails } from '@/app/actions/supabase/rooms/getRoomDetails'
 import ErrorCard from '@/app/[locale]/(main)/rooms/components/ErrorCard'
 import Steps from './components/Steps'
 
@@ -21,35 +22,54 @@ const Booking = async ({ params, searchParams }: IParams) => {
   
   if (!from || !to) return <ErrorCard isSingleRoom={true} link='/rooms' />
   
-  const [rooms, babyBedAvailability, extras] = await Promise.all([
+  const [apaleoResult, allRoomsDetails, babyBedAvailability, extras] = await Promise.all([
     getSingleRoom(id, from, to, adults, locale),
+    getRoomDetails(),
     getServiceAvailabilityById(from, to, 'CMH-BAB', locale),
     getApaleoExtras(from, to, locale)
   ])
-  
-  if ('error' in rooms) return <ErrorCard isSingleRoom={true} link='/rooms' />
-  if (!rooms || rooms.length === 0) return <ErrorCard isSingleRoom={true} link='/rooms' />
-  
-  let filteredExtras = extras
-  const isKidsBedAvailable = rooms[0].attributes?.includes('kids') || false
-  if(!isKidsBedAvailable) filteredExtras = filteredExtras.filter(extra => extra.id !== 'CMH-BAB')
 
-  const filledRooms = sortGuestsByRooms( Number(adults) || 1, Number(children) || 0, from, to, rooms[0]?.maxPersons || 2)
+  // Supabase data — always available
+  const roomDetail = allRoomsDetails.find(r => r.id === id)
+  if (!roomDetail) return <ErrorCard isSingleRoom={true} link='/rooms' />
+
+  // Apaleo data — optional
+  const hasApaleoError = 'error' in apaleoResult
+  const nights = calculateNights(from, to)
+  const rooms = hasApaleoError ? [] : selectBestRoomOffers(apaleoResult, nights)
+  const isUnavailable = rooms.length === 0
+
+  const isKidsBedAvailable = roomDetail.attributes?.includes('kids') || false
+  const filteredExtras = isKidsBedAvailable
+    ? extras
+    : extras.filter(extra => extra.id !== 'CMH-BAB')
+
+  const mainRoom = rooms[0]
+  const filledRooms = sortGuestsByRooms(
+    Number(adults) || 1,
+    Number(children) || 0,
+    from,
+    to,
+    mainRoom?.maxPersons ?? roomDetail.max_persons
+  )
+
   return (
     <>
       <Steps currentStep={1} />
-      <BookingPage 
-        params={{ 
-          rooms, 
+      <BookingPage
+        params={{
+          rooms,
+          roomDetail: isUnavailable ? roomDetail : undefined,
           extras: filteredExtras,
-          from, 
-          to, 
-          adults: adults || '1', 
-          children: children || '0', 
+          from,
+          to,
+          adults: adults || '1',
+          children: children || '0',
           filledRooms,
           isKidsBedAvailable,
-          babyBedAvailability
-        }} 
+          babyBedAvailability,
+          isUnavailable,
+        }}
       />
     </>
   )

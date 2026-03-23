@@ -7,7 +7,7 @@ import {
   CarouselItem,
 } from '../../../_components/ui/carousel'
 import RoomCard from '@/app/[locale]/_home/components/RoomCard'
-import type { RoomOffer } from '@/types/offers'
+import type { HomeRoomCard } from '@/types/offers'
 import { GoArrowLeft, GoArrowRight } from "react-icons/go";
 
 export function RoomsCarousel({
@@ -15,12 +15,21 @@ export function RoomsCarousel({
   locale,
   translations,
 }: {
-  items: RoomOffer[]
+  items: HomeRoomCard[]
   locale: string
   translations: {
     perNightFrom: string
     loading: string
     bookNow: string
+    booked?: string
+    roomParams: {
+      max: string
+      kingSize: string
+      queenSize: string
+      single: string
+      balcony: string
+      terrace: string
+    }
   }
 }) {
   const [api, setApi] = React.useState<CarouselApi>()

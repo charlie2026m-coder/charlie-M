@@ -5,10 +5,25 @@ export const EMAIL = "info@charlie-m.de"
 
 
 export const RATE_PLANS = {
-  STANDARD: 'FLEX_WEB', // standard prices for room refundable price that we get to show initial room price
-  NON_REFUNDABLE: 'NR_WEB', // non refundable prices for room, when we choose non refundable in room info page we use this price
-  LONG_STAY : 'FLEX_WEB7', // we will use this price in booking more then 7 nights 
-  NON_REFUNDABLE_LONG_STAY: 'NR_WEB7', // we will use this price in booking more then 7 nights and non refundable
+  STANDARD: 'FLEX_WEB',                   // 1 night, refundable
+  LONG_STAY2: 'FLEX_WEB2',                // 2 nights, refundable
+  LONG_STAY3: 'FLEX_WEB3',                // 3+ nights, refundable
+  NON_REFUNDABLE: 'NR_WEB',               // 1 night, non-refundable
+  NON_REFUNDABLE_LONG_STAY2: 'NR_WEB2',   // 2 nights, non-refundable
+  NON_REFUNDABLE_LONG_STAY3: 'NR_WEB3',   // 3+ nights, non-refundable
+}
+
+// Returns the correct rate plan code based on stay length
+// Must match rate plan codes configured in the Apaleo dashboard
+export const getRatePlanByNights = (nights: number, isRefundable: boolean = true): string => {
+  if (isRefundable) {
+    if (nights >= 3) return RATE_PLANS.LONG_STAY3;
+    if (nights >= 2) return RATE_PLANS.LONG_STAY2;
+    return RATE_PLANS.STANDARD;
+  }
+  if (nights >= 3) return RATE_PLANS.NON_REFUNDABLE_LONG_STAY3;
+  if (nights >= 2) return RATE_PLANS.NON_REFUNDABLE_LONG_STAY2;
+  return RATE_PLANS.NON_REFUNDABLE;
 }
 export const DEFAULT_CHECKIN_TIME = "15:00 - 00:00"
 export const DEFAULT_CHECKOUT_TIME = "11:00"

@@ -1,24 +1,23 @@
 'use client'
-import { useState } from 'react'
+import { useRouter, useParams } from 'next/navigation'
 import { useBookingStore } from '@/store/useBookingStore'
 import { GuestDetailsFormData } from '@/types/schemas'
-import Steps from '../components/Steps'
 import GuestDetailsForm from './components/GuestDetailsForm'
-import PaymentForm from './components/PaymentForm'
+import Steps from '../components/Steps'
 import SummaryCard from '../components/SummaryCard'
-import PaymentBanner from '@/app/_components/ui/PaymentBanner'
 
-const PaymentPage = () => {
+const GuestDetailsPage = () => {
+  const router = useRouter()
+  const params = useParams()
   const setBooking = useBookingStore(state => state.setBooking)
   const booking = useBookingStore(state => state.booking)
-  const [showPaymentForm, setShowPaymentForm] = useState(false)
 
   const handleSubmit = (data: GuestDetailsFormData) => {
-    if (!booking || !booking.reservations) {
+    if (!booking?.reservations) {
       console.error('Booking data is missing')
       return
     }
-        // Prepare address object for Apaleo
+
     const address = {
       addressLine1: data.street_address,
       addressLine2: data.house_number,
@@ -27,7 +26,6 @@ const PaymentPage = () => {
       countryCode: data.country,
     }
 
-    // Prepare company object if company name is provided
     const company = data.company_name ? { name: data.company_name } : undefined
 
     const updatedReservations = booking.reservations.map(reservation => ({
@@ -42,8 +40,8 @@ const PaymentPage = () => {
         company,
       }
     }))
-    
-    const bookingModel = {
+
+    setBooking({
       booker: {
         firstName: data.name,
         lastName: data.last_name,
@@ -55,31 +53,20 @@ const PaymentPage = () => {
       consent: data.consent,
       totalAmount: booking.totalAmount,
       reservations: updatedReservations
-    }
-    
-    setBooking(bookingModel)
-    setShowPaymentForm(true)
+    })
+
+    router.push(`/${params.locale}/booking/${params.id}/payment/checkout`)
   }
-  
+
   return (
     <>
       <Steps currentStep={2} />
-      {showPaymentForm && (
-        <PaymentBanner />
-      )}
-      <div className={`grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-10 pb-[30px] ${showPaymentForm ? 'pt-16' : ''}`}>
-        {!showPaymentForm ? (
-          <GuestDetailsForm 
-            onSubmit={handleSubmit}
-            isLoading={false}
-          />
-        ) : (
-          <PaymentForm amount={booking?.totalAmount || 0} />
-        )}
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-10 pb-[30px]">
+        <GuestDetailsForm onSubmit={handleSubmit} isLoading={false} />
         <SummaryCard />
       </div>
     </>
   )
 }
 
-export default PaymentPage
+export default GuestDetailsPage

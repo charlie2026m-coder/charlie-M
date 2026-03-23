@@ -1,14 +1,14 @@
 import PhotoGallery from './components/PhotoGallery'
 import BookingForm from './components/BookingForm'
 import RoomContent from './components/RoomContent'
-import { getSingleRoom } from '@/services/getSingleRoom'
+import { getRoom } from '@/app/actions/apaleo/rooms/getRoom'
+import { getRoomDetails } from '@/app/actions/supabase/rooms/getRoomDetails'
 import Availability from './components/Availability'
 import NoCapacityWarning from './components/NoCapacityWarning'
 import NoAvailabilityCard from './components/NoAvailabilityCard'
 import RoomErrorCard from './components/RoomErrorCard'
-import { calculateNights, getServiceAvailabilityById } from '@/lib/utils'
+import { calculateNights, getServiceAvailabilityById, selectBestRoomOffers } from '@/lib/utils'
 import type { Metadata } from 'next'
-import { RATE_PLANS } from '@/lib/Constants';
 interface IParams {
   params: Promise<{ id: string; locale: string }>
   searchParams: Promise<{ 
@@ -28,7 +28,7 @@ export async function generateMetadata({ params, searchParams }: IParams): Promi
   const hasQueryParams = !!(from || to || adults || children)
   
   try {
-    const rooms = await getSingleRoom(id, from, to, adults, locale)
+    const rooms = await getRoom(id, from, to, adults, locale)
     
     if ('error' in rooms) {
       console.error('Error in generateMetadata for room:', id, rooms.error);
@@ -55,8 +55,7 @@ export async function generateMetadata({ params, searchParams }: IParams): Promi
     }
 
     const nights = calculateNights(from as string, to as string)
-    const type = nights > 7 ? RATE_PLANS.LONG_STAY : RATE_PLANS.STANDARD;
-    const filteredRooms = rooms.filter(room => room.ratePlan.code.includes(type))
+    const filteredRooms = selectBestRoomOffers(rooms, nights)
     const room = filteredRooms[0]
     
     if (!room) {
@@ -165,15 +164,15 @@ const RoomPage = async ({ params, searchParams }: IParams) => {
   const { from, to, adults, children } = await searchParams
   
   try {
-    const [rooms, babyBedAvailability] = await Promise.all([
-      getSingleRoom(id, from, to, adults, locale),
+    const [apaleoResult, allRoomsDetails, babyBedAvailability] = await Promise.all([
+      getRoom(id, from, to, adults, locale),
+      getRoomDetails(),
       getServiceAvailabilityById(from, to, 'CMH-BAB')
     ])
-    
-    // Handle error from getSingleRoom
-    if ('error' in rooms) {
-      console.error('Error loading room:', rooms.error);
-      console.error('Room ID:', id);
+
+    // Supabase data — always available
+    const roomDetail = allRoomsDetails.find(r => r.id === id)
+    if (!roomDetail) {
       return (
         <div className='flex flex-col relative pt-10 flex-1'>
           <RoomErrorCard />
@@ -181,53 +180,47 @@ const RoomPage = async ({ params, searchParams }: IParams) => {
       )
     }
 
-    // Handle empty rooms array
-    if (!rooms || rooms.length === 0) {
-      console.log('No rooms found for ID:', id);
-      console.log('Search params:', { from, to, adults, children });
-      return (
-        <div className='flex flex-col relative pt-10 flex-1'>
-          <NoAvailabilityCard from={from} to={to} />
-        </div>
-      )
-    }
+    // Apaleo data — optional
+    const hasApaleoError = 'error' in apaleoResult
+    const nights = calculateNights(from as string, to as string)
+    const filteredRooms = hasApaleoError ? [] : selectBestRoomOffers(apaleoResult, nights)
+    const room = filteredRooms[0] ?? null
 
-    const room = rooms[0]
-    
-    // Handle missing room data
-    if (!room) {
-      console.error('Room data is undefined for ID:', id);
-      return (
-        <div className='flex flex-col relative pt-10 flex-1'>
-          <div className='grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-y-10 md:gap-10 mb-[30px]'>
-            <RoomErrorCard />
-          </div>
-        </div>
-      )
+    // Build a display object from Supabase — used for photos, content, attributes
+    const displayRoom = room ?? {
+      id: roomDetail.id,
+      name: roomDetail.title_en,
+      description: roomDetail.description_en ?? '',
+      images: roomDetail.photos,
+      attributes: roomDetail.attributes,
+      size: roomDetail.size,
+      maxPersons: roomDetail.max_persons,
     }
 
     const totalAdults = adults ? Number(adults) : 1
-    const maxCapacity = room.availableUnits * room.maxPersons
+    const maxCapacity = room ? room.availableUnits * room.maxPersons : roomDetail.max_persons
     const hasEnoughCapacity = totalAdults <= maxCapacity
-    const isKidsBedAvailable = room.attributes?.includes('kids') || false
+    const isKidsBedAvailable = roomDetail.attributes?.includes('kids') || false
+    const isUnavailable = !room
 
     return (
       <div className='flex flex-col relative pt-10 flex-1'>
-        <PhotoGallery images={room.images} roomName={room.name} />
-        <div className='grid grid-cols-1  lg:grid-cols-3 xl:grid-cols-4 gap-y-10 md:gap-10 mb-[30px]'>
-
-        {hasEnoughCapacity 
-          ? <div className='col-span-2 xl:col-span-3 flex flex-col'>
-              <RoomContent room={room} isRoomInfo={true} />
-              <Availability 
-                id={id}
-                from={from}
-                to={to}
-                children={children}
-                adults={adults}
-              />
-            </div>
-            : <NoCapacityWarning 
+        <PhotoGallery images={displayRoom.images} roomName={displayRoom.name} />
+        <div className='grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-y-10 md:gap-10 mb-[30px]'>
+          {hasEnoughCapacity
+            ? <div className='col-span-2 xl:col-span-3 flex flex-col'>
+                <RoomContent room={displayRoom as any} isRoomInfo={true} />
+                {!isUnavailable && (
+                  <Availability
+                    id={id}
+                    from={from}
+                    to={to}
+                    children={children}
+                    adults={adults}
+                  />
+                )}
+              </div>
+            : <NoCapacityWarning
                 totalAdults={totalAdults}
                 from={from}
                 to={to}
@@ -236,28 +229,27 @@ const RoomPage = async ({ params, searchParams }: IParams) => {
               />
           }
           <div className='col-span-1'>
-            <BookingForm 
-              id={id} 
-              rooms={rooms}
-              params={{ 
-                from: from || undefined,
-                to: to || undefined, 
-                adults: adults || undefined, 
-                children: children || undefined
-              }}
-              babyBedAvailability={babyBedAvailability}
-              isKidsBedAvailable={isKidsBedAvailable}
-            />   
+            {isUnavailable
+              ? <NoAvailabilityCard from={from} to={to} />
+              : <BookingForm
+                  id={id}
+                  rooms={filteredRooms}
+                  params={{
+                    from: from || undefined,
+                    to: to || undefined,
+                    adults: adults || undefined,
+                    children: children || undefined
+                  }}
+                  babyBedAvailability={babyBedAvailability}
+                  isKidsBedAvailable={isKidsBedAvailable}
+                />
+            }
           </div>
         </div>
       </div>
     )
   } catch (error) {
-    // Catch any unexpected errors
     console.error('Unexpected error in RoomPage:', error);
-    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-    console.error('Room ID:', id);
-    console.error('Search params:', { from, to, adults, children });
     return (
       <div className='flex flex-col relative pt-10 flex-1'>
         <div className='grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-y-10 md:gap-10 mb-[30px]'>

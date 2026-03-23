@@ -278,9 +278,66 @@ app/[locale]/
 
 ---
 
+## Payment Flow Audit (2026-03-23)
+
+### [ISSUE-22] Stale `booking` closure in PaymentForm.tsx
+**File:** `app/[locale]/(main)/booking/[id]/payment/components/PaymentForm.tsx:118`
+**Problem:**
+```ts
+if (!transactionRef || !booking?.reservations) return;
+```
+`booking` is captured from React state at component mount via `useBookingStore`. If Zustand hydrates after the `useEffect` runs (e.g. SSR mismatch), `booking` is `undefined` in the closure. The check silently fails with no error shown to the user.
+**Fix:** Replace `booking?.reservations` with `useBookingStore.getState().booking?.reservations`.
+**Status:** 🔴 Open
+
+---
+
+### [ISSUE-23] Adyen environment hardcoded as TEST in 3 routes
+**Files:** `make-payment/route.ts:7`, `payment-details/route.ts:7`, `payment-methods/route.ts:7`
+**Problem:** `environment: EnvironmentEnum.TEST` is hardcoded. `reversePayment.ts` correctly uses `NEXT_PUBLIC_ADYEN_ENVIRONMENT`. Production payments will never go live.
+**Fix:** Apply the same `isLive` pattern from `reversePayment.ts`.
+**Status:** 🔴 Open (same as ISSUE-01, more specific)
+
+---
+
+### [ISSUE-24] Folio payment failure doesn't block booking success
+**File:** `app/api/bookings/create/route.ts:200-206`
+**Problem:** If `payReservationFolio` throws, the error is caught and logged but execution continues. The booking is still marked `completed` (line 212). The customer paid Adyen but the Apaleo folio has no linked payment.
+**Fix:** Track folio payment result. If it fails, mark booking as `partial_success` and alert operations team. Don't silently complete.
+**Status:** 🟠 Open
+
+---
+
+### [ISSUE-25] Service purchase has no idempotency protection
+**File:** `app/api/services/route.ts`
+**Problem:** No duplicate request check. A double-submit (network retry, user double-click) books services twice in Apaleo and charges the folio twice.
+**Fix:** Add an idempotency key (e.g. `reservationId + transactionReference` hash) stored in `pending_services` table before booking services.
+**Status:** 🟠 Open
+
+---
+
+### [ISSUE-26] `payment/layout.tsx` uses `usePathname` for conditional rendering (antipattern)
+**File:** `app/[locale]/(main)/booking/[id]/payment/layout.tsx`
+**Problem:** Layout uses `pathname.includes('/payment/checkout')` to conditionally render `<PaymentBanner />` and `{!isSuccess && <SummaryCard />}`. `isSuccess` is always false (success page is outside the payment layout). Additionally, `checkout/page.tsx` renders its own grid + `SummaryCard`, creating nested grids and duplicate SummaryCards.
+**Fix:** Make `payment/layout.tsx` a passthrough. Each page renders its own Steps + grid + SummaryCard.
+**Status:** 🔴 Open
+
+---
+
 ## ✅ Fixed
 
-_Nothing fixed yet._
+### [ISSUE-22] Stale `booking` closure in PaymentForm — ✅ Fixed 2026-03-23
+Replaced `booking?.reservations` (React state closure) with `useBookingStore.getState().booking?.reservations`. Also removed unused React state selector for `booking`. Added error toast when booking data is missing.
+
+### [ISSUE-23] Adyen environment hardcoded as TEST — ✅ Fixed 2026-03-23
+Applied `isLive` pattern to all 3 Adyen routes (`payment-methods`, `make-payment`, `payment-details`). Now reads from `NEXT_PUBLIC_ADYEN_ENVIRONMENT`. Also added `liveEndpointUrlPrefix` support.
+
+### Webhook reversal + pending_services schema — ✅ Fixed 2026-03-23
+- `createBookingFromPending`: добавлен вызов `reversePayment(pspReference, reference)` после неудачного создания брони в Apaleo. Теперь деньги автоматически возвращаются и через webhook.
+- `addServicesFromPending`: исправлен запрос (`.eq('reference', reference)` вместо `.eq('transaction_reference', ...)`), поле `services` вместо `services_payload`, убраны несуществующие колонки `lock_key` и `error_details`, убран несуществующий статус `processing`.
+
+### [ISSUE-26] payment/layout.tsx conditional pathname logic — ✅ Fixed 2026-03-23
+Replaced layout with a simple passthrough. Each page now renders its own `Steps` + grid + `SummaryCard`. Eliminated nested grids and duplicate `SummaryCard` renders. `checkout/page.tsx` renders `PaymentBanner` directly.
 
 ---
 

@@ -3,23 +3,32 @@ import { Button } from '@/app/_components/ui/button'
 import PhotoSlider from './PhotoSlider'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import {  RoomOffer } from '@/types/offers'
+import { HomeRoomCard } from '@/types/offers'
 import Price from '@/app/_components/ui/price'
 import RoomParamsRow from '@/app/_components/ui/RoomParamsRow'
 import { useStore } from '@/store/useStore'
 import { getDate, getPath } from '@/lib/utils'
 import { useState } from 'react'
-const RoomCard = ({ 
+const RoomCard = ({
   item,
   locale,
   translations,
-}: { 
-  item: RoomOffer
+}: {
+  item: HomeRoomCard
   locale: string
   translations: {
     perNightFrom: string
     loading: string
     bookNow: string
+    booked?: string
+    roomParams: {
+      max: string
+      kingSize: string
+      queenSize: string
+      single: string
+      balcony: string
+      terrace: string
+    }
   }
 }) => {
   const router = useRouter();
@@ -47,20 +56,25 @@ const RoomCard = ({
         <Link href={`/${locale}/rooms/${item.unitGroup.id}?${queryString}`}>
           <h2 className='text-xl font-medium jakarta mb-3 hover:text-blue transition-colors cursor-pointer'>{item.name}</h2>
         </Link>
-          <RoomParamsRow attributes={item.attributes } maxPersons={item.maxPersons} size={item.size} />
+          <RoomParamsRow attributes={item.attributes } maxPersons={item.maxPersons} size={item.size} translations={translations.roomParams} />
           <div className='text-mute mb-5 mt-auto'>{translations.perNightFrom}</div>
 
-        <div className='flex xxs:flex-row flex-col items-center gap-2 md:gap-8 justify-between w-full'>
-          <Price price={item.oneNightPrice || 0} className='h-[50px] w-full xs:w-auto' />
-          <Button 
-            onClick={handleBookNow}
-            disabled={isLoading}
-            variant='outline' 
-            className='h-[50px]  hover:bg-mute hover:text-white active:bg-mute active:text-white'
-          >
-            {isLoading ? translations.loading : translations.bookNow}
-          </Button>
-        </div>
+        {item.isBooked
+          ? <div className='text-sm font-medium text-gray-400 px-2 py-3'>
+              {translations.booked ?? 'Not available for these dates'}
+            </div>
+          : <div className='flex xxs:flex-row flex-col items-center gap-2 md:gap-8 justify-between w-full'>
+              <Price price={item.oneNightPrice || 0} className='h-[50px] w-full xs:w-auto' />
+              <Button
+                onClick={handleBookNow}
+                disabled={isLoading}
+                variant='outline'
+                className='h-[50px] hover:bg-mute hover:text-white active:bg-mute active:text-white'
+              >
+                {isLoading ? translations.loading : translations.bookNow}
+              </Button>
+            </div>
+        }
       </div>
     </div>
   )

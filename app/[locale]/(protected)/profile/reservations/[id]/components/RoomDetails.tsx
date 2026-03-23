@@ -11,6 +11,7 @@ import { useTranslations } from "next-intl";
 export const RoomDetailsButton = ({ reservation }: { reservation: Reservation }) => {
   const images = reservation.images || [];
   const t = useTranslations('profile');
+  const tParams = useTranslations('roomParams');
   return (
     <>
       <Dialog>
@@ -28,7 +29,19 @@ export const RoomDetailsButton = ({ reservation }: { reservation: Reservation })
             </div>
           <ImagesSlider images={images} />
           <div className='flex flex-col lg:flex-row gap-2 lg:items-center my-5'>
-            <RoomParamsRow attributes={reservation.attributes || []} maxPersons={reservation.guests || 0} size={reservation.size || 0} />
+            <RoomParamsRow 
+              attributes={reservation.attributes || []} 
+              maxPersons={reservation.guests || 0} 
+              size={reservation.size || 0} 
+              translations={{
+                max: tParams('max'),
+                kingSize: tParams('kingSize'),
+                queenSize: tParams('queenSize'),
+                single: tParams('single'),
+                balcony: tParams('balcony'),
+                terrace: tParams('terrace'),
+              }}
+            />
           </div>
           <Amenities />
           <p className='text-mute text-sm mt-5'>

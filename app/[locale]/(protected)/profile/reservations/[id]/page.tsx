@@ -3,7 +3,7 @@ import BackButton from './components/BackButton';
 import AddExtras from './components/AddExtras';
 import InformationSection from "./components/InformationSection";
 import { getReservationById } from "@/services/getReservation";
-import { getApaleoExtras } from "@/services/getExtras";
+import { getApaleoExtras } from '@/app/actions/apaleo/services/getExtras';
 import { bookingStatuses } from "@/types/types";
 import ErrorCard from "@/app/[locale]/(main)/rooms/components/ErrorCard";
 import dayjs from "dayjs";

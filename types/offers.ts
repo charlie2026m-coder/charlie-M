@@ -110,13 +110,28 @@ export interface RoomOffer extends Offer {
   attributes: string[];
   size: number;
   maxPersons: number;
-  price?: number; // Total price for 1 guest (without tax)
-  priceForTwo?: number; // Total price for 2 guests (without tax)
-  oneNightPrice: number; // Price per night for 1 guest (without tax)
-  oneNightPriceForTwo?: number; // Price per night for 2 guests (without tax)
-  cityTax?: number; // City tax for 1 guest
-  cityTaxForTwo?: number; // City tax for 2 guests
-  averagePrice?: number; // Average price per night
+  price?: number;             // total for 1 guest (all nights, without tax)
+  priceForTwo?: number;       // total for 2 guests (all nights, without tax)
+  oneNightPrice: number;      // price for first night, 1 guest
+  oneNightPriceForTwo?: number;
+  cityTax?: number;           // city tax for 1 guest
+  cityTaxForTwo?: number;     // city tax for 2 guests
+  averagePrice?: number;      // avg per night, 1 guest (sum of timeSlices / count)
+  averagePriceForTwo?: number; // avg per night, 2 guests
+}
+
+// Used on the home page — always shows all rooms from Supabase.
+// Apaleo pricing is optional: if unavailable, oneNightPrice=0 and isBooked=true.
+export interface HomeRoomCard {
+  id: string;
+  name: string;
+  images: string[];
+  attributes: string[];
+  size: number;
+  maxPersons: number;
+  unitGroup: { id: string };
+  oneNightPrice: number;
+  isBooked: boolean;
 }
 
 // Simple room type for displaying room cards (without full Apaleo offer data)
