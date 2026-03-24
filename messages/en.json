@@ -1,6 +1,7 @@
 {
   
   "book_now_btn": "Book Now",
+  "noCapacity": "Not enough capacity for this number of guests",
   "check_in_btn": "Check In",
   "sign_in_btn": "Login",
   "loading": "Loading...",

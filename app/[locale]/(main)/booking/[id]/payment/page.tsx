@@ -3,8 +3,6 @@ import { useRouter, useParams } from 'next/navigation'
 import { useBookingStore } from '@/store/useBookingStore'
 import { GuestDetailsFormData } from '@/types/schemas'
 import GuestDetailsForm from './components/GuestDetailsForm'
-import Steps from '../components/Steps'
-import SummaryCard from '../components/SummaryCard'
 
 const GuestDetailsPage = () => {
   const router = useRouter()
@@ -58,15 +56,7 @@ const GuestDetailsPage = () => {
     router.push(`/${params.locale}/booking/${params.id}/payment/checkout`)
   }
 
-  return (
-    <>
-      <Steps currentStep={2} />
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-10 pb-[30px]">
-        <GuestDetailsForm onSubmit={handleSubmit} isLoading={false} />
-        <SummaryCard />
-      </div>
-    </>
-  )
+  return <GuestDetailsForm onSubmit={handleSubmit} isLoading={false} />
 }
 
 export default GuestDetailsPage

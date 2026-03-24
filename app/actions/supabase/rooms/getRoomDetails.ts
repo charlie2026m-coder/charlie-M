@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { unstable_cache } from 'next/cache';
 
 export interface RoomDetails {
   id: string;
@@ -14,26 +15,45 @@ export interface RoomDetails {
   updated_at: string;
 }
 
-export async function getRoomDetails(): Promise<RoomDetails[]> {
-  try {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!url || !key) return [];
-    const supabase = createClient(url, key);
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  );
+}
 
-    const { data, error } = await supabase
-      .from('rooms')
-      .select('*')
-      .order('id', { ascending: true });
+const fetchAllRooms = async (): Promise<RoomDetails[]> => {
+  const { data, error } = await getSupabase()
+    .from('rooms')
+    .select('*')
+    .order('id', { ascending: true });
 
-    if (error) {
-      console.error('Error fetching rooms from Supabase:', error);
-      return [];
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error('Unexpected error in getRoomDetails:', error);
+  if (error) {
+    console.error('Error fetching rooms from Supabase:', error);
     return [];
   }
-}
+  return data || [];
+};
+
+const fetchRoomById = async (id: string): Promise<RoomDetails | null> => {
+  const { data, error } = await getSupabase()
+    .from('rooms')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) {
+    console.error(`Error fetching room ${id} from Supabase:`, error);
+    return null;
+  }
+  return data;
+};
+
+// Cached — invalidated via revalidateTag('rooms') when admin updates room data
+export const getRoomDetails = unstable_cache(fetchAllRooms, ['supabase-rooms'], { tags: ['rooms'] });
+
+export const getRoomById = unstable_cache(
+  fetchRoomById,
+  ['supabase-room'],
+  { tags: ['rooms'] },
+);

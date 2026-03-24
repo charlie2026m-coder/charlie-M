@@ -9,10 +9,29 @@ ALTER TABLE public.pending_services ADD COLUMN IF NOT EXISTS service_ids TEXT[];
 ALTER TABLE public.pending_services ADD COLUMN IF NOT EXISTS apaleo_charge_id TEXT;
 ALTER TABLE public.pending_services ADD COLUMN IF NOT EXISTS error_details JSONB;
 
+-- Rename old 'reference' column to avoid confusion (if exists)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns 
+             WHERE table_name = 'pending_services' AND column_name = 'reference') THEN
+    ALTER TABLE public.pending_services RENAME COLUMN reference TO old_reference;
+  END IF;
+END $$;
+
+-- Rename old 'services' column to avoid confusion (if exists)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns 
+             WHERE table_name = 'pending_services' AND column_name = 'services') THEN
+    ALTER TABLE public.pending_services RENAME COLUMN services TO old_services;
+  END IF;
+END $$;
+
 -- Drop old unique constraint on reference if exists
 ALTER TABLE public.pending_services DROP CONSTRAINT IF EXISTS pending_services_reference_key;
 
 -- Add unique constraint on lock_key
+ALTER TABLE public.pending_services DROP CONSTRAINT IF EXISTS pending_services_lock_key_unique;
 ALTER TABLE public.pending_services ADD CONSTRAINT pending_services_lock_key_unique UNIQUE (lock_key);
 
 -- Add new status values
@@ -25,7 +44,8 @@ CREATE INDEX IF NOT EXISTS idx_pending_services_lock_key ON public.pending_servi
 CREATE INDEX IF NOT EXISTS idx_pending_services_transaction_reference ON public.pending_services(transaction_reference);
 
 -- Create view for monitoring pending services
-CREATE OR REPLACE VIEW public.pending_services_requiring_attention AS
+DROP VIEW IF EXISTS public.pending_services_requiring_attention;
+CREATE VIEW public.pending_services_requiring_attention AS
 SELECT 
   id,
   lock_key,

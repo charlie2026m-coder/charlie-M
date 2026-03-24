@@ -1,0 +1,48 @@
+'use server';
+import { Fetch } from '@/services/Request';
+import { OfferResponse } from '@/types/offers';
+import { selectBestRoomOffers } from '@/lib/utils';
+import { calculateNights } from '@/lib/utils';
+import dayjs from 'dayjs';
+
+const propId = process.env.APALEO_PROPERTY_ID;
+
+export type RoomPrice = {
+  roomId: string;
+  minNightPrice: number;
+};
+
+export async function getPrices(
+  from?: string,
+  to?: string,
+  guests: number = 1,
+): Promise<RoomPrice[]> {
+  if (!propId) return [];
+  if (!from || !to) return [];
+
+  const arrival = from;
+  let departure = to;
+
+  if (arrival === departure) {
+    departure = dayjs(arrival).add(1, 'day').format('YYYY-MM-DD');
+  }
+
+  try {
+    const response = await Fetch<OfferResponse>(
+      `/booking/v1/offers?propertyId=${propId}&arrival=${arrival}&departure=${departure}&channelCode=Ibe&adults=${guests}`,
+    );
+
+    if (!response.offers || response.offers.length === 0) return [];
+
+    const nights = calculateNights(arrival, departure);
+    const bestOffers = selectBestRoomOffers(response.offers, nights);
+
+    return bestOffers.map(room => ({
+      roomId: room.unitGroup?.id || room.id,
+      minNightPrice: room.timeSlices?.[0]?.totalGrossAmount?.amount ?? 0,
+    }));
+  } catch (error) {
+    console.error('getPrices error:', error);
+    return [];
+  }
+}

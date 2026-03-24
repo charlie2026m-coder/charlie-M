@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import imageCompression from 'browser-image-compression'
+import { revalidateRooms } from '@/app/actions/revalidateRooms'
 
 interface UploadPhotoParams {
   roomId: string
@@ -85,6 +86,7 @@ export function useUploadPhoto() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['room', data.roomId] })
+      revalidateRooms()
     },
   })
 }
@@ -155,6 +157,7 @@ export function useUploadMultiplePhotos() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['room', data.roomId] })
+      revalidateRooms()
     },
   })
 }
@@ -195,6 +198,7 @@ export function useDeletePhoto() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['room', data.roomId] })
+      revalidateRooms()
     },
   })
 }

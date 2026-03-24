@@ -170,11 +170,11 @@ async function addServicesFromPending(reference: string, pspReference: string) {
 
   console.log(`📞 Webhook: Processing services for reference ${reference}`)
 
-  // Query by `reference` — matches pending_services schema
+  // Query by `transaction_reference` — matches updated schema
   const { data: pendingServices, error: pendingError } = await supabase
     .from('pending_services')
-    .select('reservation_id, services, status')
-    .eq('reference', reference)
+    .select('reservation_id, services_payload, status, lock_key')
+    .eq('transaction_reference', reference)
     .maybeSingle()
 
   if (pendingError || !pendingServices) {
@@ -192,7 +192,7 @@ async function addServicesFromPending(reference: string, pspReference: string) {
   try {
     const result = await bookReservationServices(
       pendingServices.reservation_id,
-      pendingServices.services || [],
+      pendingServices.services_payload || [],
       pspReference
     )
 
@@ -200,22 +200,28 @@ async function addServicesFromPending(reference: string, pspReference: string) {
     if (failedServices.length > 0 || (result.payment && !result.payment.success)) {
       console.error(`❌ Webhook: Services failed:`, failedServices)
       await supabase.from('pending_services')
-        .update({ status: 'failed' })
-        .eq('reference', reference)
+        .update({ 
+          status: 'failed',
+          error_details: JSON.stringify({ failedServices, payment: result.payment })
+        })
+        .eq('lock_key', pendingServices.lock_key)
       return { error: 'Services failed', details: failedServices }
     }
 
     await supabase.from('pending_services')
       .update({ status: 'completed' })
-      .eq('reference', reference)
+      .eq('lock_key', pendingServices.lock_key)
 
     console.log(`✅ Webhook: Services added successfully`)
     return { success: true }
   } catch (error) {
     console.error(`❌ Webhook: Services error:`, error)
     await supabase.from('pending_services')
-      .update({ status: 'failed' })
-      .eq('reference', reference)
+      .update({ 
+        status: 'failed',
+        error_details: JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' })
+      })
+      .eq('lock_key', pendingServices.lock_key)
     return { error: 'Services error', details: error }
   }
 }

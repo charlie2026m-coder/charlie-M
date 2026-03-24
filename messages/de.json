@@ -1,6 +1,7 @@
 {
   
   "book_now_btn": "Jetzt buchen",
+  "noCapacity": "Nicht genug Kapazität für diese Gästezahl",
   "check_in_btn": "Einchecken",
   "sign_in_btn": "Anmelden",
   "loading": "Wird geladen...",

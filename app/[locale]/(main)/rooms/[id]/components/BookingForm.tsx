@@ -5,194 +5,184 @@ import { Guests } from "@/app/_components/ui/guests"
 import { Button } from "@/app/_components/ui/button"
 import { Calendar } from "@/app/_components/ui/calendar"
 import { Spinner } from "@/app/_components/ui/spinner"
-import { useEffect, useState } from "react"
-import { DateRange } from "react-day-picker";
-import { useRouter } from "@/navigation";
-
-import { getDate, getPath, getPriceData } from "@/lib/utils";
+import { useState, useEffect } from "react"
+import { DateRange } from "react-day-picker"
+import { useRouter } from "@/navigation"
+import { useQuery } from "@tanstack/react-query"
+import { useTranslations } from "next-intl"
 import { BsFillPersonFill } from "react-icons/bs"
-import { useStore } from "@/store/useStore"
-import { RoomOffer } from "@/types/offers"
 import dayjs from "dayjs"
-import { UrlParams } from "@/types/apaleo"
-import { calculateNights } from "@/lib/utils"
-import { RATE_PLANS } from "@/lib/Constants"
-import { useTranslations } from 'next-intl'
 
-const BookingForm = ({ id, rooms, params, babyBedAvailability, isKidsBedAvailable = true }: { 
-  id: string, 
-  rooms: RoomOffer[], 
-  params: UrlParams,
-  babyBedAvailability?: { isAvailable: boolean; count: number },
+import { getDate, getPath, calculateNights, getType } from "@/lib/utils"
+import { useStore } from "@/store/useStore"
+import { UrlParams } from "@/types/apaleo"
+import { getRoomPrice } from "@/app/actions/apaleo/rooms/getRoomPrice"
+
+const BookingForm = ({
+  id,
+  params,
+  isKidsBedAvailable = true,
+  maxPersons,
+}: {
+  id: string
+  params: UrlParams
   isKidsBedAvailable?: boolean
+  maxPersons: number
 }) => {
   const t = useTranslations('bookingForm')
   const tCommon = useTranslations()
-  const nights = calculateNights(params.from as string, params.to as string);
-  const type = nights >= 7 ? RATE_PLANS.LONG_STAY : RATE_PLANS.STANDARD;
-  const room = rooms.find(room => room.ratePlan.code.includes(type)) || rooms[0];
-  const [openCheckIn, setOpenCheckIn] = useState(false);
-  const router = useRouter();
-  const dateRangeStore = useStore(state => state.dateRange);
-  const guestsStore = useStore(state => state.guests);
-  const setValue = useStore(state => state.setValue);
+  const router = useRouter()
+  const dateRangeStore = useStore(state => state.dateRange)
+  const guestsStore = useStore(state => state.guests)
+  const setValue = useStore(state => state.setValue)
 
-  const priceT = {
-    room: t('room'),
-    rooms: t('rooms'),
-    guest: t('guest'),
-    guests: t('guests'),
-    night: t('night'),
-    nights: t('nights'),
-    baby: t('baby'),
-    babies: t('babies'),
-  };
+  const [openCheckIn, setOpenCheckIn] = useState(false)
+  const [dateError, setDateError] = useState(false)
+  const [isNavigating, setIsNavigating] = useState(false)
 
-  const [guests, setGuests] = useState({adults: parseInt(params?.adults || guestsStore?.adults.toString() || '1'), children: parseInt(params?.children || guestsStore?.children.toString() || '0')});
-  const { priceText } = getPriceData({ params, room: room, t: priceT })
+  const [guests, setGuests] = useState({
+    adults: parseInt(params?.adults || guestsStore?.adults.toString() || '1'),
+    children: parseInt(params?.children || guestsStore?.children.toString() || '0'),
+  })
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: dateRangeStore.from || (params.from ? dayjs(params.from).toDate() : undefined),
     to: dateRangeStore.to || (params.to ? dayjs(params.to).toDate() : undefined),
-  });
-  
+  })
 
-  const calculatePrice = (adultsCount: number, childrenCount: number, nightsCount: number) => {
-    const maxPersons = room.maxPersons || 2;
-    const roomsForChildren = childrenCount;
-    
-    const minAdultsForChildren = childrenCount;
-    const adultsAssignedToChildren = Math.min(adultsCount, minAdultsForChildren);
-    
-    let remainingAdults = adultsCount - adultsAssignedToChildren;
-    
-    const maxAdultsPerChildRoom = Math.min(maxPersons, 2);
-    const additionalAdultsCapacity = childrenCount * (maxAdultsPerChildRoom - 1);
-    const additionalAdultsAssigned = Math.min(remainingAdults, additionalAdultsCapacity);
-    remainingAdults -= additionalAdultsAssigned;
-    const roomsForRemainingAdults = Math.ceil(remainingAdults / maxPersons);
-    
-    const roomsNeeded = roomsForChildren + roomsForRemainingAdults;
-    
-    const pricePerNight = adultsCount >= maxPersons 
-      ? (room.oneNightPriceForTwo || room.oneNightPrice || 0)
-      : (room.oneNightPrice || 0);
-    
-    return pricePerNight * nightsCount * roomsNeeded;
-  };
-
-  const [currentPrice, setCurrentPrice] = useState(calculatePrice(guests.adults, guests.children, nights))
-  const [currentPriceText, setCurrentPriceText] = useState(priceText)
-  const [dateError, setDateError] = useState(false)
-  const [datesChanged, setDatesChanged] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  // Debounced dates for query — avoids request on every calendar click
+  const fromStr = dateRange?.from ? getDate(dateRange.from) : undefined
+  const toStr = dateRange?.to ? getDate(dateRange.to) : undefined
+  const [debouncedFrom, setDebouncedFrom] = useState(fromStr)
+  const [debouncedTo, setDebouncedTo] = useState(toStr)
 
   useEffect(() => {
-    if (params.from && params.to) {
-      setDateRange({
-        from: dayjs(params.from).toDate(),
-        to: dayjs(params.to).toDate(),
-      });
-    }
-    setIsLoading(false);
-  }, [params]);
+    const timer = setTimeout(() => {
+      setDebouncedFrom(fromStr)
+      setDebouncedTo(toStr)
+    }, 600)
+    return () => clearTimeout(timer)
+  }, [fromStr, toStr])
 
-  useEffect(() => {
-    if (!dateRange?.from || !dateRange?.to) return;
-    
-    const fromDate = getDate(dateRange.from);
-    const toDate = getDate(dateRange.to);
-    
-    if (!fromDate || !toDate) return;
-    
-    const { priceText: newPriceText } = getPriceData({ 
-      params: {
-        from: fromDate,
-        to: toDate,
-        adults: guests.adults.toString(),
-        children: guests.children.toString(),
-      }, 
-      room,
-      t: priceT,
-    });
+  const { data, isLoading: isPriceLoading } = useQuery({
+    queryKey: ['room-price', id, debouncedFrom, debouncedTo, guests.adults],
+    queryFn: () => getRoomPrice(id, debouncedFrom, debouncedTo, maxPersons),
+    enabled: !!debouncedFrom && !!debouncedTo,
+    staleTime: 1000 * 60 * 5,
+  })
 
-    const nightsCount = calculateNights(fromDate, toDate);
-    const totalPrice = calculatePrice(guests.adults, guests.children, nightsCount);
+  // Derived values from query
+  const nights = fromStr && toStr ? calculateNights(fromStr, toStr) : 0
+  const type = nights > 0 ? getType(nights, true) : ''
+  const room = data?.rooms.find(r => r.ratePlan.code === type) ?? data?.rooms[0] ?? null
+  const babyBedAvailability = data?.babyBedAvailability
+  const isUnavailable = !isPriceLoading && !!data && data.rooms.length === 0
+  const hasEnoughCapacity = room ? guests.adults <= room.availableUnits * room.maxPersons : true
 
-    setCurrentPrice(totalPrice);
-    setCurrentPriceText(newPriceText);
-  }, [dateRange?.from, dateRange?.to, guests, room]);
+  // Price calculation
+  const mp = room?.maxPersons || maxPersons
+  const roomsForChildren = guests.children
+  const adultsAssigned = Math.min(guests.adults, guests.children)
+  let remainingAdults = guests.adults - adultsAssigned
+  remainingAdults -= Math.min(remainingAdults, guests.children * (Math.min(mp, 2) - 1))
+  const roomsNeeded = roomsForChildren + Math.ceil(remainingAdults / mp)
+  const pricePerNight = guests.adults >= mp
+    ? (room?.oneNightPriceForTwo || room?.oneNightPrice || 0)
+    : (room?.oneNightPrice || 0)
+  const currentPrice = room ? pricePerNight * nights * roomsNeeded : 0
 
+  // Price description text
+  const g = guests.adults === 1 ? t('guest') : t('guests')
+  const n = nights === 1 ? t('night') : t('nights')
+  const r = roomsNeeded === 1 ? t('room') : t('rooms')
+  let priceText = `${guests.adults} ${g}`
+  if (guests.children > 0) {
+    const c = guests.children === 1 ? t('baby') : t('babies')
+    priceText += ` + ${guests.children} ${c}`
+  }
+  priceText += `, ${nights} ${n}, ${roomsNeeded} ${r}`
 
   const handleBookNow = () => {
     if (!dateRange?.from || !dateRange?.to) {
-      setDateError(true);
-      return;
+      setDateError(true)
+      return
     }
-    setDateError(false);
-    setIsLoading(true);
-    
-    const queryString = getPath({ 
-      from: getDate(dateRange?.from), 
-      to: getDate(dateRange?.to), 
-      adults: guests.adults.toString(), 
-      children: guests.children.toString() 
-    });
-    
-    if (datesChanged) {
-      router.push(`/rooms/${id}?${queryString}`);
-      setDatesChanged(false);
-    } else {
-      router.push(`/booking/${id}?${queryString}`);
-    }
-  };
+    setDateError(false)
+    setIsNavigating(true)
+    const queryString = getPath({
+      from: getDate(dateRange.from),
+      to: getDate(dateRange.to),
+      adults: guests.adults.toString(),
+      children: guests.children.toString(),
+    })
+    router.push(`/booking/${id}?${queryString}`)
+  }
+
+  const showPlaceholder = isPriceLoading || !room
+
   return (
     <div className='sticky shadow-xl top-10 flex flex-col bg-white border md:border-none rounded-[20px] px-5 pt-[25px] w-full pb-10'>
       <h3 className='font-semibold text-2xl text-center mb-3'>{t('title')}</h3>
-      <div className='flex justify-between mb-1 gap-2'>
+
+      {/* Price row — always rendered, grey when loading/unavailable */}
+      <div className={`flex justify-between mb-1 gap-2 ${isUnavailable || !hasEnoughCapacity ? 'opacity-0' : ''}`}>
         <div className='text-brown flex items-center gap-1'>{t('total')}</div>
-        <div className='text-xl min-w-[80px] self-end text-center rounded-full bg-green/15 font-[700] text-green px-2.5 py-2'>€{currentPrice.toFixed(2)}</div>
+        <div className={`text-xl min-w-[80px] self-end text-center rounded-full font-[700] px-2.5 py-2 ${showPlaceholder ? 'bg-gray-100 text-gray-300' : 'bg-green/15 text-green'}`}>
+          {showPlaceholder ? '€ 00.00' : `€${currentPrice.toFixed(2)}`}
+        </div>
       </div>
-      <div className='text-mute flex items-center gap-1 my-4 mb-10'><BsFillPersonFill className='size-4 text-mute' />{currentPriceText}</div>
+
+      {/* Info row — fixed height to prevent layout jump */}
+      <div className='flex items-center gap-1 my-4 mb-10 h-6'>
+        {isUnavailable ? (
+          <span className='text-sm text-gray-400'>{t('unavailableForDates')}</span>
+        ) : !hasEnoughCapacity ? (
+          <span className='text-sm text-gray-400'>{tCommon('noCapacity')}</span>
+        ) : (
+          <span className={`text-mute flex items-center gap-1 text-sm ${showPlaceholder ? 'invisible' : ''}`}>
+            <BsFillPersonFill className='size-4 text-mute' />{priceText}
+          </span>
+        )}
+      </div>
 
       <div className='flex flex-col gap-5 w-full mb-5'>
         <div className='flex flex-col gap-1'>
-          <DateInput 
+          <DateInput
             value={dateRange || undefined}
             open={openCheckIn}
             onOpenChange={setOpenCheckIn}
-            className="w-full md:max-w-[350px] "
+            className="w-full md:max-w-[350px]"
             inputStyle={dateError ? "border-red" : "border-mute"}
             isError={dateError}
           >
-            <Calendar 
+            <Calendar
               required={false}
-              mode="range"  
+              mode="range"
               captionLayout="label"
               selected={dateRange}
               defaultMonth={dateRange?.from || new Date()}
               onSelect={(date) => {
-                setDatesChanged(true);
                 if (date?.from && !date?.to) {
-                  const nextDay = new Date(date.from);
-                  nextDay.setDate(nextDay.getDate() + 1);
-                  const newRange = { from: date.from, to: nextDay };
-                  setDateRange(newRange);
-                  setValue(newRange, 'dateRange');
-                  setDateError(false);
+                  const nextDay = new Date(date.from)
+                  nextDay.setDate(nextDay.getDate() + 1)
+                  const newRange = { from: date.from, to: nextDay }
+                  setDateRange(newRange)
+                  setValue(newRange, 'dateRange')
+                  setDateError(false)
                 } else if (date?.from && date?.to) {
-                  if (date.from.getTime() === date.to.getTime()) {
-                    const nextDay = new Date(date.from);
-                    nextDay.setDate(nextDay.getDate() + 1);
-                    const newRange = { from: date.from, to: nextDay };
-                    setDateRange(newRange);
-                    setValue(newRange, 'dateRange');
+                  const isSameDay = date.from.getTime() === date.to.getTime()
+                  if (isSameDay) {
+                    const nextDay = new Date(date.from)
+                    nextDay.setDate(nextDay.getDate() + 1)
+                    const newRange = { from: date.from, to: nextDay }
+                    setDateRange(newRange)
+                    setValue(newRange, 'dateRange')
                   } else {
-                    setDateRange(date as DateRange);
-                    setValue(date as DateRange, 'dateRange');
+                    setDateRange(date as DateRange)
+                    setValue(date as DateRange, 'dateRange')
                   }
-                  setDateError(false);
+                  setDateError(false)
                 } else {
-                  setDateRange(date as DateRange);
+                  setDateRange(date as DateRange)
                 }
               }}
               disabled={{ before: new Date() }}
@@ -204,29 +194,28 @@ const BookingForm = ({ id, rooms, params, babyBedAvailability, isKidsBedAvailabl
         </div>
 
         <Separator orientation="horizontal" />
-        <Guests 
-          setValue={(value) =>{
-            setGuests(value);
-            setDatesChanged(true);
-          }} 
+
+        <Guests
+          setValue={(value) => setGuests(value)}
           value={guests}
-          maxBabyBeds={babyBedAvailability?.count} 
+          maxBabyBeds={babyBedAvailability?.count}
           className="border-mute"
-          maxPersons={room.availableUnits * room.maxPersons}
+          maxPersons={room ? room.availableUnits * room.maxPersons : maxPersons}
           disableChildren={!isKidsBedAvailable}
         />
       </div>
-      <Button 
-        className='w-full' 
+
+      <Button
+        className='w-full'
         onClick={handleBookNow}
-        disabled={isLoading}
+        disabled={isNavigating || isUnavailable || !hasEnoughCapacity}
       >
-        {isLoading ? (
+        {isNavigating ? (
           <span className='flex items-center gap-2'>
             <Spinner className='size-4' />
             {tCommon('loading')}
           </span>
-        ) : datesChanged ? t('search') : tCommon('book_now_btn')}
+        ) : tCommon('book_now_btn')}
       </Button>
     </div>
   )

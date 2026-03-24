@@ -64,7 +64,10 @@ const RoomCard = ({
               {translations.booked ?? 'Not available for these dates'}
             </div>
           : <div className='flex xxs:flex-row flex-col items-center gap-2 md:gap-8 justify-between w-full'>
-              <Price price={item.oneNightPrice || 0} className='h-[50px] w-full xs:w-auto' />
+              {item.oneNightPrice > 0
+                ? <Price price={item.oneNightPrice} className='h-[50px] w-full xs:w-auto' />
+                : <div className='text-lg rounded-full w-auto bg-gray-100 font-bold text-gray-300 px-5 py-2 flex items-center justify-center h-[50px]  xs:w-auto'>€ 00.00</div>
+              }
               <Button
                 onClick={handleBookNow}
                 disabled={isLoading}
