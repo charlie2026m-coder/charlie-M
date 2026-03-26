@@ -11,7 +11,8 @@ import { RoomOffer } from "@/types/offers"
 import { RoomDetails } from "@/app/actions/supabase/rooms/getRoomDetails"
 import ChangeDate from "./ChangeDate"
 import { useBookingStore } from "@/store/useBookingStore"
-import { calculateNights, getType } from "@/lib/utils"
+import { calculateNights } from "@/lib/utils"
+import { resolveRatePlan } from "@/lib/Constants"
 import { useTranslations } from "next-intl"
 
 const BookingPage = ({
@@ -43,8 +44,7 @@ const BookingPage = ({
   const booking = useBookingStore(state => state.booking)
   const setBooking = useBookingStore(state => state.setBooking)
   const nights = calculateNights(from as string, to as string)
-  const planType = getType(nights, true)
-  const mainRoom = rooms.find(room => room.ratePlan?.code === planType) || rooms[0]
+  const mainRoom = resolveRatePlan(rooms, nights, true)
   const tCommon = useTranslations()
 
   // When Apaleo is unavailable, show Supabase content with date picker only
@@ -69,7 +69,7 @@ const BookingPage = ({
     )
   }
 
-  if (!mainRoom) return <div className="p-10 text-center">{tCommon('loading')}</div>
+  if (!mainRoom) return <div className="p-10 text-center">{tCommon('bookingForm.unavailableForDates')}</div>
   
   useEffect(() => {
     if (typeof window === 'undefined') return // Skip SSR

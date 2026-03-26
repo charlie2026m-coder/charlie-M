@@ -18,7 +18,6 @@ import CancelBookingButton from "./CancelBookingButton";
 import { ExtraRow } from "./ExtraRow";
 import { InvoiceButton } from "../../components/InvoiceButton";
 import { useTranslations } from "next-intl";
-import { CITY_TAX_RATE } from "@/lib/Constants";
 import { Reservation } from "@/types/apaleo";
 
 export const ReservationButton = ({ reservation }: { reservation: Reservation }) => {
@@ -47,9 +46,8 @@ export const ReservationButton = ({ reservation }: { reservation: Reservation })
   const servicesTotalPrice = services?.reduce((acc: number, service: ServicesPaidDetails) => acc + service.totalAmount.grossAmount, 0) || 0;
   const roomPrice = Math.round((totalGross - servicesTotalPrice) * 100) / 100;
 
-  const taxAmount = Math.round((roomPrice * CITY_TAX_RATE) * 100) / 100;
-  const roomPriceWithTax = Math.round((roomPrice + taxAmount) * 100) / 100;
-  const totalPrice = Math.round((roomPriceWithTax + servicesTotalPrice) * 100) / 100;
+  // totalGrossAmount from Apaleo reservation already includes city tax
+  const totalPrice = Math.round((roomPrice + servicesTotalPrice) * 100) / 100;
   if(guestsCount > 1) {
     if(reservation.additionalGuests && reservation.additionalGuests.length > 0) {
       const additionalGuests = reservation.additionalGuests.map((guest: any) => guest.firstName + ' ' + guest.lastName).join(', ');

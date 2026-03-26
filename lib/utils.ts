@@ -3,38 +3,65 @@ import dayjs from "dayjs"
 import utc from "dayjs/plugin/utc"
 import timezone from "dayjs/plugin/timezone"
 import { twMerge } from "tailwind-merge"
-
-dayjs.extend(utc)
-dayjs.extend(timezone)
 import { v4 as uuidv4 } from 'uuid';
 import { UrlParams } from "@/types/apaleo"
 import { Room, RoomExtra } from "@/types/types"
 import { RoomOffer } from "@/types/offers"
-import { RATE_PLANS, CITY_TAX_RATE, HOTEL_INFO, getRatePlanByNights } from "./Constants";
+import { RATE_PLANS, HOTEL_INFO, getRatePlanByNights, getNonRefundableRatePlanByNights } from "./Constants";
 import { getApaleoExtras } from '@/app/actions/apaleo/services/getExtras';
 import { ReservationFilter } from '@/store/useProfile'
 import { serviceTranslations } from '@/content/ServiceTranslations';
 
-export function cn(...inputs: ClassValue[]) {return twMerge(clsx(inputs))}
-export const getDate = (date: Date) => {return date?dayjs(date).format('YYYY-MM-DD'): undefined}
+dayjs.extend(utc)
+dayjs.extend(timezone)
+
+export function cn(...inputs: ClassValue[]) { return twMerge(clsx(inputs)) }
+export const getDate = (date: Date) => { return date ? dayjs(date).format('YYYY-MM-DD') : undefined }
+
+const CUTOFF_HOUR = 17
+
+const getBerlinHour = () =>
+  Number(new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Berlin', hour: 'numeric', hour12: false }).format(new Date()))
+
+// Returns Berlin's current date as local midnight Date (timezone-safe for non-European clients)
+const getBerlinToday = (): Date => {
+  const berlinDateStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(new Date())
+  const [year, month, day] = berlinDateStr.split('-').map(Number)
+  return new Date(year, month - 1, day)
+}
+
+// Returns Berlin today if before 17:00 Berlin, Berlin tomorrow if at/after 17:00
+export const getMinArrivalDate = (): Date => {
+  const berlinToday = getBerlinToday()
+  if (getBerlinHour() >= CUTOFF_HOUR) {
+    const minDate = new Date(berlinToday)
+    minDate.setDate(minDate.getDate() + 1)
+    return minDate
+  }
+  return berlinToday
+}
+
+// Returns default arrival date string for services (YYYY-MM-DD)
+export const getDefaultArrivalDate = (): string => {
+  const berlinHour = getBerlinHour()
+  if (berlinHour >= CUTOFF_HOUR) return dayjs().add(1, 'day').format('YYYY-MM-DD')
+  return dayjs().format('YYYY-MM-DD')
+}
 
 export const getPath = (params: {
-    roomId?: string
-    from?: string 
-    to?: string
-    adults?: string
-    children?: string
-  }) => {
+  roomId?: string
+  from?: string
+  to?: string
+  adults?: string
+  children?: string
+}) => {
   const searchParams = new URLSearchParams()
-
   if (params.from) searchParams.set('from', params.from)
   if (params.to) searchParams.set('to', params.to)
   if (params.adults) searchParams.set('adults', params.adults)
   if (params.children) searchParams.set('children', params.children)
   if (params.roomId) searchParams.set('roomId', params.roomId)
-
-  const queryString = searchParams.toString()
-  return queryString;
+  return searchParams.toString()
 }
 
 export type PriceDataTranslations = {
@@ -49,17 +76,21 @@ export type PriceDataTranslations = {
 };
 
 const defaultTranslations: PriceDataTranslations = {
-  room: 'room',
-  rooms: 'rooms',
-  guest: 'guest',
-  guests: 'guests',
-  night: 'night',
-  nights: 'nights',
-  baby: 'baby',
-  babies: 'babies',
+  room: 'room', rooms: 'rooms',
+  guest: 'guest', guests: 'guests',
+  night: 'night', nights: 'nights',
+  baby: 'baby', babies: 'babies',
 };
 
-export const getPriceData = ({ params, room, t }: { params: UrlParams; room: RoomOffer; t?: PriceDataTranslations }) => {
+export const getPriceData = ({
+  params,
+  room,
+  t,
+}: {
+  params: UrlParams;
+  room: RoomOffer;
+  t?: PriceDataTranslations;
+}) => {
   const tr = t ?? defaultTranslations;
   let nights = 1;
   const adults = Number(params.adults || 1);
@@ -67,20 +98,11 @@ export const getPriceData = ({ params, room, t }: { params: UrlParams; room: Roo
   const maxPersons = room.maxPersons || 2;
 
   const roomsForChildren = children;
-
-  const minAdultsForChildren = children;
-  const adultsAssignedToChildren = Math.min(adults, minAdultsForChildren);
-
+  const adultsAssignedToChildren = Math.min(adults, children);
   let remainingAdults = adults - adultsAssignedToChildren;
-
-  const maxAdultsPerChildRoom = Math.min(maxPersons, 2);
-  const additionalAdultsCapacity = children * (maxAdultsPerChildRoom - 1);
-  const additionalAdultsAssigned = Math.min(remainingAdults, additionalAdultsCapacity);
-  remainingAdults -= additionalAdultsAssigned;
-
-  const roomsForRemainingAdults = Math.ceil(remainingAdults / maxPersons);
-
-  const roomsNeeded = roomsForChildren + roomsForRemainingAdults;
+  const additionalAdultsCapacity = children * (Math.min(maxPersons, 2) - 1);
+  remainingAdults -= Math.min(remainingAdults, additionalAdultsCapacity);
+  const roomsNeeded = roomsForChildren + Math.ceil(remainingAdults / maxPersons);
 
   if (params.from && params.to) {
     const fromDate = new Date(params.from);
@@ -88,6 +110,7 @@ export const getPriceData = ({ params, room, t }: { params: UrlParams; room: Roo
     nights = Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24));
     if (nights === 0) nights = 1;
   }
+
   const r = roomsNeeded === 1 ? tr.room : tr.rooms;
   const g = adults === 1 ? tr.guest : tr.guests;
   const n = nights === 1 ? tr.night : tr.nights;
@@ -98,7 +121,7 @@ export const getPriceData = ({ params, room, t }: { params: UrlParams; room: Roo
     priceText += ` + ${children} ${c}`;
   }
   priceText += `, ${nights} ${n}, ${roomsNeeded} ${r}`;
-  
+
   const priceValue = roomsNeeded * nights * room.totalGrossAmount.amount;
 
   return {
@@ -110,8 +133,8 @@ export const getPriceData = ({ params, room, t }: { params: UrlParams; room: Roo
     nights,
     roomsNeeded,
     guests: adults,
-  }
-}
+  };
+};
 
 
 export function sortGuestsByRooms(
@@ -124,7 +147,7 @@ export function sortGuestsByRooms(
   const validAdults = Number.isNaN(adults) ? 1 : Math.max(1, adults)
   const validChildren = Number.isNaN(children) ? 0 : Math.max(0, children)
   const validMaxPersons = Number.isNaN(maxPersons) || maxPersons < 1 ? 2 : maxPersons
-  
+
   const rooms: Room[] = [];
   let remainingAdults = validAdults;
   let remainingChildren = validChildren;
@@ -132,40 +155,27 @@ export function sortGuestsByRooms(
   const pushRoom = (a: number, c: number) =>
     rooms.push({ id: uuidv4(), adults: a, children: c, from, to });
 
-  // Special case: Single occupancy rooms (maxPersons = 1)
   if (validMaxPersons === 1) {
-    // Each adult gets their own room
-    while (remainingAdults > 0) {
-      pushRoom(1, 0);
-      remainingAdults--;
-    }
-    // Each child gets their own room with one adult
-    while (remainingChildren > 0 && remainingAdults > 0) {
-      pushRoom(1, 1);
-      remainingAdults--;
-      remainingChildren--;
-    }
+    while (remainingAdults > 0) { pushRoom(1, 0); remainingAdults--; }
+    while (remainingChildren > 0 && remainingAdults > 0) { pushRoom(1, 1); remainingAdults--; remainingChildren--; }
     return rooms;
   }
 
-  // Step 1: Create one room per child (children cannot be alone)
-  // Each child room gets 1 adult minimum
+  // Step 1: One room per child (each needs at least 1 adult)
   for (let i = 0; i < validChildren; i++) {
-    pushRoom(1, 1); // 1 adult + 1 child
+    pushRoom(1, 1);
     remainingAdults--;
   }
 
-  // Step 2: Fill remaining capacity in child rooms with more adults
-  // maxPersons applies only to adults, children are additional
+  // Step 2: Fill child rooms with more adults up to maxPersons
   for (let i = 0; i < validChildren && remainingAdults > 0; i++) {
-    // Add more adults to this child's room up to maxPersons adults
     while (rooms[i].adults < validMaxPersons && remainingAdults > 0) {
       rooms[i].adults++;
       remainingAdults--;
     }
   }
 
-  // Step 3: Create additional rooms for remaining adults
+  // Step 3: Additional rooms for remaining adults
   while (remainingAdults > 0) {
     const roomAdults = Math.min(remainingAdults, validMaxPersons);
     pushRoom(roomAdults, 0);
@@ -176,12 +186,17 @@ export function sortGuestsByRooms(
 }
 
 export const getExtraPrice = (
-  extra:  RoomExtra, 
+  extra: RoomExtra,
   guests: number,
   nights: number,
   from: string,
   to: string
 ) => {
+  // Services with specific selected dates (e.g. cleaning) — calculate from those dates
+  if (extra.selectedDates && extra.selectedDates.length > 0) {
+    return extra.selectedDates.reduce((total, date) => total + (date.count * extra.price), 0);
+  }
+
   const pricingUnit = extra.pricingUnit;
   const price = extra.price;
   const pricingType = extra.pricingType;
@@ -192,9 +207,8 @@ export const getExtraPrice = (
     "Room": 1,
   }
 
-  // If no days specified, service is available all days
   if (daysOfWeek.length === 0) {
-    const types = {
+    const types: Record<string, number> = {
       "Daily": nights,
       "Departure": 1,
       "Arrival": 1,
@@ -202,30 +216,21 @@ export const getExtraPrice = (
     return units[pricingUnit] * types[pricingType] * price;
   }
 
-  // Calculate applicable days based on pricing type
   let applicableDays = 0;
 
   if (pricingType === "Daily") {
-    // Count nights where the day of week is in daysOfWeek
     const fromDate = new Date(from);
     for (let i = 0; i < nights; i++) {
       const currentDate = new Date(fromDate);
       currentDate.setDate(fromDate.getDate() + i);
       const dayName = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
-      
-      if (daysOfWeek.includes(dayName)) {
-        applicableDays++;
-      }
+      if (daysOfWeek.includes(dayName)) applicableDays++;
     }
   } else if (pricingType === "Arrival") {
-    // Check if arrival day is in daysOfWeek
-    const arrivalDate = new Date(from);
-    const arrivalDay = arrivalDate.toLocaleDateString('en-US', { weekday: 'long' });
+    const arrivalDay = new Date(from).toLocaleDateString('en-US', { weekday: 'long' });
     applicableDays = daysOfWeek.includes(arrivalDay) ? 1 : 0;
   } else if (pricingType === "Departure") {
-    // Check if departure day is in daysOfWeek
-    const departureDate = new Date(to);
-    const departureDay = departureDate.toLocaleDateString('en-US', { weekday: 'long' });
+    const departureDay = new Date(to).toLocaleDateString('en-US', { weekday: 'long' });
     applicableDays = daysOfWeek.includes(departureDay) ? 1 : 0;
   }
 
@@ -233,66 +238,81 @@ export const getExtraPrice = (
 }
 
 export const extraTooltip = (extra: RoomExtra) => {
-  const units = {
-    "Person": 'per person',
-    "Room": 'per room',
-  }
-
-  const types = {
-    "Daily": 'daily',
-    "Departure": 'once at departure',
-    "Arrival": 'once at arrival',
-  }
- return `${extra.name} charged ${types[extra.pricingType]} ${units[extra.pricingUnit]} `
+  const units = { "Person": 'per person', "Room": 'per room' }
+  const types = { "Daily": 'daily', "Departure": 'once at departure', "Arrival": 'once at arrival' }
+  return `${extra.name} charged ${types[extra.pricingType]} ${units[extra.pricingUnit]} `
 }
 
 
 export const calculateNights = (arrival: string, departure: string): number => {
-  const checkIn = dayjs(arrival);
-  const checkOut = dayjs(departure);
+  const checkIn = dayjs(arrival).startOf('day');
+  const checkOut = dayjs(departure).startOf('day');
   const nights = checkOut.diff(checkIn, 'day');
   return nights <= 0 ? 1 : nights;
 };
 
 
-export const getPriceType = (arrival: string , departure: string, isNonRef?: boolean) => {
+export const calculateTotalTaxes = (
+  rooms: { adults: number }[],
+  taxes: { vatTax: number; cityTax: number; cityTaxForTwo: number },
+  maxPersons: number,
+): { vatTax: number; cityTax: number } => {
+  const { vatTax, cityTax, cityTaxForTwo } = taxes
+  const totalCityTax = rooms.reduce((acc, room) => {
+    const a = room.adults
+    if (a === 1) return acc + cityTax
+    if (a % 2 === 0) return acc + Math.ceil(a / maxPersons) * cityTaxForTwo
+    return acc + Math.floor(a / 2) * cityTaxForTwo + cityTax
+  }, 0)
+  const totalPhysicalRooms = rooms.reduce((acc, room) => {
+    const a = room.adults
+    if (a <= 1) return acc + 1
+    if (a % 2 === 0) return acc + a / 2
+    return acc + Math.floor(a / 2) + 1
+  }, 0)
+  return {
+    vatTax: Math.round(vatTax * totalPhysicalRooms * 100) / 100,
+    cityTax: Math.round(totalCityTax * 100) / 100,
+  }
+}
+
+export const getPriceType = (arrival: string, departure: string, isNonRef?: boolean) => {
   const nights = calculateNights(arrival, departure);
-  
-  if(isNonRef) {
-    return 'non_ref_web';
-  }
-
-  if(nights >= 7) {
-    return 'long_stay_web';
-  }
-
+  if (isNonRef) return 'non_ref_web';
+  if (nights >= 7) return 'long_stay_web';
   return 'bar_web';
 }
 
 export const getType = (nights: number, isRefundable: boolean): string => {
-  return getRatePlanByNights(nights, isRefundable);
+  return isRefundable ? getRatePlanByNights(nights) : getNonRefundableRatePlanByNights(nights);
 }
 
-// Picks the best offer per room for the given stay length.
-// Apaleo returns one offer per rate plan per room — this selects the correct one.
-export const selectBestRoomOffers = (rooms: RoomOffer[], nights: number): RoomOffer[] => {
+export const selectBestRoomOffers = <T extends { unitGroup?: { id?: string }; id?: string; ratePlan?: { code?: string }; totalGrossAmount?: { amount?: number } }>(
+  rooms: T[],
+  nights: number,
+): T[] => {
   const targetRatePlan = getRatePlanByNights(nights);
+  const targetNRPlan = getNonRefundableRatePlanByNights(nights);
 
-  // Group all offers by unitGroup ID (each room can have multiple rate plan offers)
-  const roomsMap = new Map<string, RoomOffer[]>();
+  const roomsMap = new Map<string, T[]>();
   rooms.forEach(room => {
-    const roomId = room.unitGroup?.id || room.id;
+    const roomId = room.unitGroup?.id || room.id || '';
     if (!roomsMap.has(roomId)) roomsMap.set(roomId, []);
     roomsMap.get(roomId)!.push(room);
   });
 
-  const bestOffers: RoomOffer[] = [];
-  roomsMap.forEach(offers => {
-    // 1. Try exact match for the stay length
-    let selected = offers.find(o => o.ratePlan?.code === targetRatePlan);
-    // 2. Fallback to STANDARD (1-night) if not found
-    if (!selected) selected = offers.find(o => o.ratePlan?.code === RATE_PLANS.STANDARD);
+  const bestOffers: T[] = [];
+
+  roomsMap.forEach((offers) => {
+    // Best refundable plan
+    const selected = offers.find(o => o.ratePlan?.code === targetRatePlan)
+      ?? offers.find(o => o.ratePlan?.code === RATE_PLANS.FLEX_WEB);
     if (selected) bestOffers.push(selected);
+
+    // Best non-refundable plan — required for the refundable toggle to work
+    const selectedNR = offers.find(o => o.ratePlan?.code === targetNRPlan)
+      ?? offers.find(o => o.ratePlan?.code === RATE_PLANS.NR_WEB);
+    if (selectedNR) bestOffers.push(selectedNR);
   });
 
   return bestOffers;
@@ -300,14 +320,14 @@ export const selectBestRoomOffers = (rooms: RoomOffer[], nights: number): RoomOf
 
 
 export const formatReservations = (
-  from: string, 
-  to: string, 
-  roomDetails: RoomOffer, 
-  updatedRooms: Room[], 
+  from: string,
+  to: string,
+  roomDetails: RoomOffer,
+  updatedRooms: Room[],
 ) => {
   if (!roomDetails || !roomDetails.timeSlices || !roomDetails.ratePlan) {
     console.error('Invalid roomDetails:', roomDetails)
-    return []
+    return { reservations: [], totalAmount: 0 }
   }
 
   const timeSlices = roomDetails.timeSlices.map(_ => ({ ratePlanId: roomDetails.ratePlan.id }))
@@ -315,88 +335,54 @@ export const formatReservations = (
   const maxPersons = roomDetails.maxPersons || 2
   const price = roomDetails.price || 0
   const priceForTwo = roomDetails.priceForTwo || price
-  const cityTax = roomDetails.cityTax || Math.round(price * CITY_TAX_RATE * 100) / 100
-  const cityTaxForTwo = roomDetails.cityTaxForTwo || Math.round(priceForTwo * CITY_TAX_RATE * 100) / 100
 
+  // price/priceForTwo already include city tax — never add it again
   const calculateRoomPrice = (adultsCount: number) => {
     const roomsNeeded = Math.ceil(adultsCount / maxPersons);
-    
-    if (adultsCount === 1) {
-      return price;
-    } else if (adultsCount % 2 === 0) {
-      return roomsNeeded * priceForTwo;
-    } else {
-      const doubleRooms = Math.floor(adultsCount / 2);
-      return (doubleRooms * priceForTwo) + price;
-    }
-  };
-
-  const calculateRoomTax = (adultsCount: number) => {
-    const roomsNeeded = Math.ceil(adultsCount / maxPersons);
-    
-    if (adultsCount === 1) {
-      return cityTax;
-    } else if (adultsCount % 2 === 0) {
-      return roomsNeeded * cityTaxForTwo;
-    } else {
-      const doubleRooms = Math.floor(adultsCount / 2);
-      return (doubleRooms * cityTaxForTwo) + cityTax;
-    }
+    if (adultsCount === 1) return price;
+    if (adultsCount % 2 === 0) return roomsNeeded * priceForTwo;
+    const doubleRooms = Math.floor(adultsCount / 2);
+    return (doubleRooms * priceForTwo) + price;
   };
 
   const reservations = updatedRooms.map((item, index) => {
     const roomPrice = calculateRoomPrice(item.adults);
-    const roomTax = calculateRoomTax(item.adults);
-    
-    let extrasPrice = 0;
-    if (item.extras && item.extras.length > 0) {
-      extrasPrice = item.extras.reduce((sum, extra) => {
-        return sum + (extra.totalPrice || extra.price || 0);
-      }, 0);
-    }
-    
-    const reservationAmount = Math.round((roomPrice + roomTax + extrasPrice) * 100) / 100
-    
-    console.log(`📊 Reservation ${index + 1}: Room ${roomPrice}, Tax ${roomTax}, Extras ${extrasPrice}, Total ${reservationAmount}`);
-    
-    type ServiceWithDates = { 
-      serviceId: string; 
-      dates: { serviceDate: string }[] 
-    };
-    type SimpleService = { 
+    const extrasTotalPrice = item.extras?.reduce((sum, extra) => sum + (extra.totalPrice || 0), 0) || 0;
+    const reservationAmount = Math.round((roomPrice + extrasTotalPrice) * 100) / 100
+
+    console.log(`📊 Reservation ${index + 1}: Room ${roomPrice}, Extras ${extrasTotalPrice}, Total ${reservationAmount}`);
+
+    type ServiceWithDates = {
       serviceId: string;
+      dates: { serviceDate: string; amount?: { amount: number; currency: string } }[];
     };
+    type SimpleService = { serviceId: string };
     type FormattedService = ServiceWithDates | SimpleService;
-    
-    let allServices: FormattedService[] = [];
-    
-    // Check if early check-in or late check-out services are present
+
     const hasEarlyCheckIn = item.extras?.some(extra => extra.id === 'CMH-ECI');
     const hasLateCheckOut = item.extras?.some(extra => extra.id === 'CMH-LCO');
-    
+
+    let allServices: FormattedService[] = [];
     if (item.extras && item.extras.length > 0) {
-      allServices = item.extras.map((extra): FormattedService => {
-        if (extra.selectedDates && extra.selectedDates.length > 0) {
-          return {
-            serviceId: extra.id,
-            dates: extra.selectedDates.map(date => ({
-              serviceDate: date.serviceDate
-            }))
-          };
-        }
-        
-        return {
-          serviceId: extra.id
-        };
-      });
+      allServices = item.extras
+        .map((extra): FormattedService | null => {
+          if (extra.selectedDates && extra.selectedDates.length > 0) {
+            return {
+              serviceId: extra.id,
+              dates: extra.selectedDates.map(date => ({ serviceDate: date.serviceDate })),
+            };
+          }
+          return { serviceId: extra.id };
+        })
+        .filter((s): s is FormattedService => s !== null);
     }
-    
+
     const arrivalTime = hasEarlyCheckIn ? '13:00' : HOTEL_INFO.checkinTime;
     const arrivalDate = dayjs.tz(`${from} ${arrivalTime}`, 'Europe/Berlin').format();
-    
+
     const departureTime = hasLateCheckOut ? '13:00' : HOTEL_INFO.checkoutTime;
     const departureDate = dayjs.tz(`${to} ${departureTime}`, 'Europe/Berlin').format();
-    
+
     return {
       arrival: arrivalDate,
       departure: departureDate,
@@ -405,14 +391,13 @@ export const formatReservations = (
       guaranteeType: 'Prepayment' as const,
       timeSlices,
       services: allServices,
-      prepaymentAmount: {
-        amount: reservationAmount,
-        currency: 'EUR'
-      },
+      prepaymentAmount: { amount: reservationAmount, currency: 'EUR' },
     }
   })
 
-  return reservations;
+  const totalAmount = Math.round(reservations.reduce((sum, r) => sum + r.prepaymentAmount.amount, 0) * 100) / 100
+
+  return { reservations, totalAmount };
 }
 
 
@@ -437,24 +422,17 @@ export const getServiceAvailabilityById = async (
 ): Promise<{ isAvailable: boolean; count: number }> => {
   const extras = await getApaleoExtras(from, to, locale);
   const service = extras.find(extra => extra.id === serviceId);
-  
+
   if (!service || service.isSoldOut || !service.timeSlices || service.timeSlices.length === 0) {
     return { isAvailable: false, count: 0 };
   }
-  
-  const stayDays = service.timeSlices.slice(0, -1);
-  if (stayDays.length === 0) {
-    return { isAvailable: false, count: 0 };
-  }
-  
-  const minAvailableCount = Math.min(...stayDays.map(slice => slice.availableCount));
-  
-  return {
-    isAvailable: minAvailableCount > 0,
-    count: minAvailableCount
-  };
-}
 
+  const stayDays = service.timeSlices.slice(0, -1);
+  if (stayDays.length === 0) return { isAvailable: false, count: 0 };
+
+  const minAvailableCount = Math.min(...stayDays.map(slice => slice.availableCount));
+  return { isAvailable: minAvailableCount > 0, count: minAvailableCount };
+}
 
 
 export const filterReservationsByStatus = (reservations: any[], filter: ReservationFilter) => {
@@ -465,10 +443,9 @@ export const filterReservationsByStatus = (reservations: any[], filter: Reservat
     'Completed': 'CheckedOut',
     'Canceled': 'Canceled',
   }
-
   if (filter === 'All') return reservations
   const targetStatus = filterToStatus[filter]
-  return reservations.filter((reservation: any) => 
+  return reservations.filter((reservation: any) =>
     targetStatus && reservation.status === targetStatus
   )
 }

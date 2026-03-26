@@ -1,5 +1,5 @@
 'use client'
-import { formatReservations, calculateNights } from '@/lib/utils'
+import { formatReservations, calculateNights, getExtraPrice } from '@/lib/utils'
 import { useBookingStore } from '@/store/useBookingStore'
 import { UrlParams } from "@/types/apaleo";
 import { RoomOffer } from '@/types/offers';
@@ -11,8 +11,9 @@ import Price from "@/app/_components/ui/price";
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Spinner } from '@/app/_components/ui/spinner';
+import TaxesInfo from '@/app/_components/ui/Taxes';
 import { useState } from 'react';
-import { CITY_TAX_RATE } from '@/lib/Constants';
+import { calculateTotalTaxes } from '@/lib/utils';
 
 const BookingMenu = ({
   rooms: roomsOffers,
@@ -44,64 +45,54 @@ const BookingMenu = ({
 
   console.log('🛏️ Booking menu rooms:', rooms)
 
-  const extrasTotalPrice = rooms.reduce((acc, room) => {
-    const roomExtrasTotal = room.extras?.reduce((sum, extra) => sum + (extra.totalPrice || 0), 0) || 0;
-    return acc + roomExtrasTotal;
-  }, 0);
+  const updatedRooms = rooms.map(room => ({
+    ...room,
+    extras: room.extras?.map(extra => ({
+      ...extra,
+      totalPrice: getExtraPrice(extra, room.adults + room.children, nights, from as string, to as string),
+    })),
+  }));
+
+  const extrasTotalPrice = updatedRooms.reduce((acc, room) =>
+    acc + (room.extras?.reduce((sum, extra) => sum + (extra.totalPrice || 0), 0) || 0), 0
+  );
 
   const getText = (days: number) => days === 1 ? t('night') : t('nights')
 
   const maxPersons = roomDetails.maxPersons || 2
   const price = roomDetails.price || 0
   const priceForTwo = roomDetails.priceForTwo || price
-  const cityTax = roomDetails.cityTax || Math.round(price * CITY_TAX_RATE * 100) / 100
-  const cityTaxForTwo = roomDetails.cityTaxForTwo || Math.round(priceForTwo * CITY_TAX_RATE * 100) / 100
   const oneNightPrice = roomDetails.oneNightPrice || 0
   const oneNightPriceForTwo = roomDetails.oneNightPriceForTwo || oneNightPrice
 
+  // City tax is baked into price/priceForTwo — no separate addition
   const calculateRoomPrice = (adultsCount: number) => {
     const roomsNeeded = Math.ceil(adultsCount / maxPersons);
-    
-    if (adultsCount === 1) {
-      return price;
-    } else if (adultsCount % 2 === 0) {
-      return roomsNeeded * priceForTwo;
-    } else {
-      const doubleRooms = Math.floor(adultsCount / 2);
-      return (doubleRooms * priceForTwo) + price;
-    }
-  };
-
-  const calculateRoomTax = (adultsCount: number) => {
-    const roomsNeeded = Math.ceil(adultsCount / maxPersons);
-    
-    if (adultsCount === 1) {
-      return cityTax;
-    } else if (adultsCount % 2 === 0) {
-      return roomsNeeded * cityTaxForTwo;
-    } else {
-      const doubleRooms = Math.floor(adultsCount / 2);
-      return (doubleRooms * cityTaxForTwo) + cityTax;
-    }
+    if (adultsCount === 1) return price;
+    if (adultsCount % 2 === 0) return roomsNeeded * priceForTwo;
+    return Math.floor(adultsCount / 2) * priceForTwo + price;
   };
 
   const roomsTotalPrice = rooms.reduce((acc, room) => acc + calculateRoomPrice(room.adults), 0);
-  const cityTaxAmount = rooms.reduce((acc, room) => acc + calculateRoomTax(room.adults), 0);
-  const totalPrice = Math.round((roomsTotalPrice + cityTaxAmount + extrasTotalPrice) * 100) / 100
+  const totalPrice = Math.round((roomsTotalPrice + extrasTotalPrice) * 100) / 100
+
+  const totalTaxes = roomDetails.taxes
+    ? calculateTotalTaxes(rooms, roomDetails.taxes, maxPersons)
+    : null;
  
 
   const goNext = () => {
     setIsLoading(true)
-    const reservations = formatReservations(
-      from as string, 
-      to as string, 
-      roomDetails, 
-      rooms as Room[]
+    const { reservations, totalAmount } = formatReservations(
+      from as string,
+      to as string,
+      roomDetails,
+      updatedRooms as Room[]
     )
-    setBooking({ 
+    setBooking({
       ...(booking?.booker && { booker: booking.booker }),
       reservations,
-      totalAmount: totalPrice
+      totalAmount,
     })
 
     router.push(`/${urlParams.locale}/booking/${urlParams.id}/payment`)
@@ -129,20 +120,16 @@ const BookingMenu = ({
               </div>
             )
           })}
-        <div  className='flex items-center gap-2 inter text-sm text-dark mt-2'>
-          <span>{t('cityTax')}</span>
-          <span className='text-bale font-semibold ml-auto'>€ {cityTaxAmount.toFixed(2)}</span>
         </div>
-        </div>
-        {rooms.some(room => room.extras && room.extras.length > 0) && <>
+        {updatedRooms.some(room => room.extras && room.extras.length > 0) && <>
           <span className='font-semibold mb-1.5 '>{t('addExtras')}</span>
           <div className='flex flex-col gap-1 mb-5'>
-            {rooms.map((room, index) => {
+            {updatedRooms.map((room, index) => {
               if (!room.extras || room.extras.length === 0) return null;
               
               return (
                 <div key={index} className='flex flex-col gap-1'>
-                  {rooms.length > 1 && (
+                  {updatedRooms.length > 1 && (
                     <span className=' mt-2'>{t('room')} {index + 1}</span>
                   )}
                   {room.extras.map(extra => {
@@ -181,6 +168,8 @@ const BookingMenu = ({
           <span className='font-semibold text-lg'>{t('totalPrice')}</span>
           <Price price={totalPrice} />
       </div>
+      <TaxesInfo taxes={totalTaxes} className='mb-3' />
+
 
       <Button 
         className='w-full h-[55px]'

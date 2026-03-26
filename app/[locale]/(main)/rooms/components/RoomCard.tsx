@@ -2,7 +2,7 @@
 import { Button } from '@/app/_components/ui/button'
 import PhotoSlider from '@/app/[locale]/_home/components/PhotoSlider'
 import { Link, useRouter } from '@/navigation'
-import { getPath, getDate } from '@/lib/utils'
+import { getPath, getDate, calculateNights } from '@/lib/utils'
 import { UrlParams } from '@/types/apaleo'
 import { RoomOffer } from '@/types/offers'
 import { useState } from 'react'
@@ -58,10 +58,14 @@ const RoomCard = ({
   
   const roomsNeeded = roomsForChildren + roomsForRemainingAdults;
   
-  const pricePerNight = adultsCount >= maxPersons 
+  const nights = queryParams.from && queryParams.to
+    ? calculateNights(queryParams.from, queryParams.to)
+    : 1;
+
+  const pricePerNight = adultsCount >= maxPersons
     ? (room.oneNightPriceForTwo || room.oneNightPrice || 0)
     : (room.oneNightPrice || 0);
-  const price = roomsNeeded * pricePerNight;
+  const price = roomsNeeded * pricePerNight * nights;
   
   const roomDetailId = room.unitGroup.id;
 

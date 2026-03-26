@@ -2,5 +2,5 @@
 import { revalidateTag } from 'next/cache';
 
 export async function revalidateRooms() {
-  revalidateTag('rooms');
+  revalidateTag('rooms', 'max');
 }

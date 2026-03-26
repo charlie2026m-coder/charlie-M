@@ -13,7 +13,9 @@ import { useTranslations } from "next-intl"
 import { BsFillPersonFill } from "react-icons/bs"
 import dayjs from "dayjs"
 
-import { getDate, getPath, calculateNights, getType } from "@/lib/utils"
+import { getDate, getPath, calculateNights, calculateTotalTaxes } from "@/lib/utils"
+import { resolveRatePlan } from "@/lib/Constants"
+import TaxesInfo from "@/app/_components/ui/Taxes"
 import { useStore } from "@/store/useStore"
 import { UrlParams } from "@/types/apaleo"
 import { getRoomPrice } from "@/app/actions/apaleo/rooms/getRoomPrice"
@@ -72,23 +74,34 @@ const BookingForm = ({
 
   // Derived values from query
   const nights = fromStr && toStr ? calculateNights(fromStr, toStr) : 0
-  const type = nights > 0 ? getType(nights, true) : ''
-  const room = data?.rooms.find(r => r.ratePlan.code === type) ?? data?.rooms[0] ?? null
+  const room = data && nights > 0 ? resolveRatePlan(data.rooms, nights, true) : null
   const babyBedAvailability = data?.babyBedAvailability
   const isUnavailable = !isPriceLoading && !!data && data.rooms.length === 0
   const hasEnoughCapacity = room ? guests.adults <= room.availableUnits * room.maxPersons : true
 
-  // Price calculation
+  // Price calculation — mirrors calculateRoomPrice from BookingMenu
   const mp = room?.maxPersons || maxPersons
-  const roomsForChildren = guests.children
-  const adultsAssigned = Math.min(guests.adults, guests.children)
-  let remainingAdults = guests.adults - adultsAssigned
-  remainingAdults -= Math.min(remainingAdults, guests.children * (Math.min(mp, 2) - 1))
-  const roomsNeeded = roomsForChildren + Math.ceil(remainingAdults / mp)
-  const pricePerNight = guests.adults >= mp
-    ? (room?.oneNightPriceForTwo || room?.oneNightPrice || 0)
-    : (room?.oneNightPrice || 0)
-  const currentPrice = room ? pricePerNight * nights * roomsNeeded : 0
+  const a = guests.adults
+  const oneNight = room?.oneNightPrice || 0
+  const oneNightTwo = room?.oneNightPriceForTwo || oneNight
+
+  let roomsNeeded: number
+  let totalNightlyRate: number
+
+  if (a === 1) {
+    roomsNeeded = 1
+    totalNightlyRate = oneNight
+  } else if (a % 2 === 0) {
+    roomsNeeded = Math.ceil(a / mp)
+    totalNightlyRate = roomsNeeded * oneNightTwo
+  } else {
+    // odd: floor(a/2) double rooms + 1 single room
+    const doubles = Math.floor(a / mp)
+    roomsNeeded = doubles + 1
+    totalNightlyRate = doubles * oneNightTwo + oneNight
+  }
+
+  const currentPrice = room ? totalNightlyRate * nights : 0
 
   // Price description text
   const g = guests.adults === 1 ? t('guest') : t('guests')
@@ -205,6 +218,12 @@ const BookingForm = ({
         />
       </div>
 
+      {!showPlaceholder && !isUnavailable && hasEnoughCapacity && room?.taxes && (
+        <TaxesInfo
+          taxes={calculateTotalTaxes([{ adults: guests.adults }], room.taxes, room.maxPersons || 2)}
+          className='mb-4'
+        />
+      )}
       <Button
         className='w-full'
         onClick={handleBookNow}

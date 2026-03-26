@@ -47,7 +47,7 @@ export default function PaymentForm({ amount }: { amount: number }) {
 
         const configuration = {
           clientKey: process.env.NEXT_PUBLIC_ADYEN_CLIENT_KEY!,
-          environment: (process.env.NEXT_PUBLIC_ADYEN_ENVIRONMENT === 'live' ? 'live' : 'test') as const,
+          environment: (process.env.NEXT_PUBLIC_ADYEN_ENVIRONMENT === 'live' ? 'live' : 'test') as 'live' | 'test',
           paymentMethodsResponse,
           locale: 'en-US',
           countryCode: 'DE',
@@ -156,7 +156,7 @@ export default function PaymentForm({ amount }: { amount: number }) {
 
               toast.dismiss("create-booking");
 
-              const successUrl = `/${urlParams.locale}/booking/${urlParams.id}/success?bookingId=${bookingData.id}${bookingData.partialSuccess ? '&servicesWarning=true' : ''}`;
+              const successUrl = `/${urlParams.locale}/booking/${urlParams.id}/payment/success?bookingId=${bookingData.id}${bookingData.partialSuccess ? '&servicesWarning=true' : ''}`;
               router.push(successUrl);
             } catch (error) {
               console.error('Booking creation failed:', error);

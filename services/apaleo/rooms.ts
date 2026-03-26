@@ -1,9 +1,8 @@
-import { Fetch } from './client';
+import { Fetch } from '@/services/Request';
 import dayjs from 'dayjs';
 import { cache } from 'react';
 import { OfferResponse, RoomOffer } from '@/types/offers';
-import { getRoomsDetails } from '@/services/supabase/roomDetails';
-import { CITY_TAX_RATE } from '@/lib/Constants';
+import { getRoomDetails } from '@/app/actions/supabase/rooms/getRoomDetails';
 import { roomTranslations } from '@/content/RoomTranslations';
 const propId = process.env.APALEO_PROPERTY_ID;
 
@@ -37,7 +36,7 @@ const getAvailableRoomsInternal = async (from?: string, to?: string, guests: num
           console.warn('Failed to fetch double room data:', error.message)
           return undefined
         }),
-      getRoomsDetails()
+      getRoomDetails()
     ]);
 
     if (!singleRoomResponse || singleRoomResponse.length === 0) {
@@ -52,9 +51,12 @@ const getAvailableRoomsInternal = async (from?: string, to?: string, guests: num
         dr => dr.unitGroup?.id === room.unitGroup?.id && dr.ratePlan?.id === room.ratePlan?.id
       );
       
-      const roomPrice = room.totalGrossAmount?.amount || 0;
-      const roomPriceForTwo = doubleRoom?.totalGrossAmount?.amount || 0;
-      
+      const cityTax = room.cityTaxes?.[0]?.totalGrossAmount?.amount ?? 0;
+      const cityTaxForTwo = doubleRoom?.cityTaxes?.[0]?.totalGrossAmount?.amount ?? cityTax;
+
+      const roomPrice = Math.round(((room.totalGrossAmount?.amount ?? 0) + cityTax) * 100) / 100;
+      const roomPriceForTwo = Math.round(((doubleRoom?.totalGrossAmount?.amount ?? room.totalGrossAmount?.amount ?? 0) + cityTaxForTwo) * 100) / 100;
+
       // Title & description: Supabase (roomDetails) → RoomTranslations → Apaleo
       const roomId = room.unitGroup?.id;
       const lang = locale === 'de' ? 'de' : 'en' as 'en' | 'de';
@@ -64,6 +66,9 @@ const getAvailableRoomsInternal = async (from?: string, to?: string, guests: num
       const translatedName = titleFromDb || translation?.title[lang] || room.unitGroup?.name || 'Unknown Room';
       const translatedDescription = descFromDb ?? translation?.description[lang] ?? room.unitGroup?.description ?? '';
       
+      const nights = room.timeSlices?.length || 1;
+      const doubleNights = doubleRoom?.timeSlices?.length || nights;
+
       return {
         ...room,
         images: roomDetails?.photos || [],
@@ -72,14 +77,19 @@ const getAvailableRoomsInternal = async (from?: string, to?: string, guests: num
         description: translatedDescription || room.unitGroup?.description || '',
         price: roomPrice,
         priceForTwo: roomPriceForTwo,
-        oneNightPrice: room.timeSlices?.[0]?.totalGrossAmount?.amount || 0,
-        oneNightPriceForTwo: doubleRoom?.timeSlices?.[0]?.totalGrossAmount?.amount || 0,
-        cityTax: room.cityTaxes?.[0]?.totalGrossAmount?.amount || Math.round(roomPrice * CITY_TAX_RATE * 100) / 100,
-        cityTaxForTwo: doubleRoom?.cityTaxes?.[0]?.totalGrossAmount?.amount || Math.round(roomPriceForTwo * CITY_TAX_RATE * 100) / 100,
+        oneNightPrice: Math.round((roomPrice / nights) * 100) / 100,
+        oneNightPriceForTwo: Math.round((roomPriceForTwo / doubleNights) * 100) / 100,
+        averagePrice: Math.round((roomPrice / nights) * 100) / 100,
+        averagePriceForTwo: Math.round((roomPriceForTwo / doubleNights) * 100) / 100,
         currency: room.totalGrossAmount?.currency || 'EUR',
         attributes: roomDetails?.attributes || [],
         size: roomDetails?.size || 0,
         maxPersons: roomDetails?.max_persons || 1,
+        taxes: {
+          vatTax: room.taxDetails?.[0]?.tax?.amount ?? 0,
+          cityTax,
+          cityTaxForTwo,
+        },
       };
       });
 

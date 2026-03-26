@@ -97,9 +97,10 @@ interface BaseAmount {
 }
 
 interface TaxDetail {
-  amount: Amount;
-  name: string;
-  // добавьте другие поля если есть
+  vatType: string;
+  vatPercent: number;
+  net: { amount: number; currency: string };
+  tax: { amount: number; currency: string };
 }
 
 export interface RoomOffer extends Offer {
@@ -110,14 +111,13 @@ export interface RoomOffer extends Offer {
   attributes: string[];
   size: number;
   maxPersons: number;
-  price?: number;             // total for 1 guest (all nights, without tax)
-  priceForTwo?: number;       // total for 2 guests (all nights, without tax)
-  oneNightPrice: number;      // price for first night, 1 guest
+  price?: number;              // total for 1 guest (all nights, city tax included)
+  priceForTwo?: number;        // total for 2 guests (all nights, city tax included)
+  oneNightPrice: number;       // price for first night, 1 guest (city tax included)
   oneNightPriceForTwo?: number;
-  cityTax?: number;           // city tax for 1 guest
-  cityTaxForTwo?: number;     // city tax for 2 guests
-  averagePrice?: number;      // avg per night, 1 guest (sum of timeSlices / count)
-  averagePriceForTwo?: number; // avg per night, 2 guests
+  averagePrice?: number;       // avg per night, 1 guest (city tax included)
+  averagePriceForTwo?: number; // avg per night, 2 guests (city tax included)
+  taxes?: { vatTax: number; cityTax: number; cityTaxForTwo: number };
 }
 
 // Used on the home page — always shows all rooms from Supabase.

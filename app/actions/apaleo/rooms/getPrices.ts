@@ -37,10 +37,19 @@ export async function getPrices(
     const nights = calculateNights(arrival, departure);
     const bestOffers = selectBestRoomOffers(response.offers, nights);
 
-    return bestOffers.map(room => ({
-      roomId: room.unitGroup?.id || room.id,
-      minNightPrice: room.timeSlices?.[0]?.totalGrossAmount?.amount ?? 0,
-    }));
+    return bestOffers.map(room => {
+      const cityTaxDates = room.cityTaxes?.[0]?.dates ?? [];
+      const perNightPrices = (room.timeSlices ?? [])
+        .map((s, i) => (s.totalGrossAmount?.amount ?? 0) + (cityTaxDates[i]?.amount?.grossAmount ?? 0))
+        .filter(p => p > 0);
+
+      const minNightPrice = perNightPrices.length > 0 ? Math.min(...perNightPrices) : 0;
+
+      return {
+        roomId: room.unitGroup?.id || '',
+        minNightPrice,
+      };
+    });
   } catch (error) {
     console.error('getPrices error:', error);
     return [];

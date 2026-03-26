@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { RoomDetails } from '@/services/getRoomsDetails'
+import { RoomDetails } from '@/app/actions/supabase/rooms/getRoomDetails'
 import { revalidateRooms } from '@/app/actions/revalidateRooms'
 
 interface UpdateRoomData {

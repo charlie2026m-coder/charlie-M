@@ -7,7 +7,7 @@ import {
 } from "@/app/_components/ui/radio-group"
 import { Separator } from "@/app/_components/ui/separator"
 import { RoomOffer } from '@/types/offers'
-import { getType } from '@/lib/utils'
+import { resolveRatePlan } from '@/lib/Constants'
 import { useTranslations } from 'next-intl'
 
 const RefundCard = ({ rooms, nights }: { rooms: RoomOffer[], nights: number }) => {
@@ -15,9 +15,8 @@ const RefundCard = ({ rooms, nights }: { rooms: RoomOffer[], nights: number }) =
   const { isRefundable, setIsRefundable, setRoomDetails } = useBookingStore()
   const handleRefundChange = (value: string) => {
     const isRefunable = value === 'true'
-    const planType = getType(nights, isRefunable)
-    
-    const mainRoom = rooms.find(room => room.ratePlan.code === planType) || rooms[0]
+    const mainRoom = resolveRatePlan(rooms, nights, isRefunable)
+    if (!mainRoom) return
     setIsRefundable(isRefunable)
     setRoomDetails(mainRoom)
   }

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { RoomDetails } from '@/services/getRoomsDetails'
+import { RoomDetails } from '@/app/actions/supabase/rooms/getRoomDetails'
 import { ServiceDetails } from '@/app/actions/supabase/services/getServicesDetails'
 import { Button } from '@/app/_components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/_components/ui/table'

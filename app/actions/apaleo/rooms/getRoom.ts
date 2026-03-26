@@ -3,7 +3,6 @@ import dayjs from 'dayjs';
 import { cache } from 'react';
 import { OfferResponse, RoomOffer } from '@/types/offers';
 import { getRoomDetails } from '@/app/actions/supabase/rooms/getRoomDetails';
-import { CITY_TAX_RATE } from '@/lib/Constants';
 import { roomTranslations } from '@/content/RoomTranslations';
 
 const propId = process.env.APALEO_PROPERTY_ID;
@@ -64,20 +63,19 @@ async function getRoomInternal(
         dr => dr.unitGroup?.id === room.unitGroup?.id && dr.ratePlan?.id === room.ratePlan?.id
       );
 
-      const roomPrice = room.totalGrossAmount?.amount || 0;
-      const roomPriceForTwo = doubleRoom?.totalGrossAmount?.amount || 0;
+      const cityTax = room.cityTaxes?.[0]?.totalGrossAmount?.amount ?? 0;
+      const cityTaxForTwo = doubleRoom?.cityTaxes?.[0]?.totalGrossAmount?.amount ?? cityTax;
+
+      const roomPrice = Math.round(((room.totalGrossAmount?.amount ?? 0) + cityTax) * 100) / 100;
+      const roomPriceForTwo = Math.round(((doubleRoom?.totalGrossAmount?.amount ?? room.totalGrossAmount?.amount ?? 0) + cityTaxForTwo) * 100) / 100;
 
       const lang = locale === 'de' ? 'de' : 'en' as 'en' | 'de';
       const translation = room.unitGroup?.id ? roomTranslations[room.unitGroup.id as keyof typeof roomTranslations] : null;
       const titleFromDb = lang === 'de' ? roomDetails?.title_de : roomDetails?.title_en;
       const descFromDb = lang === 'de' ? roomDetails?.description_de : roomDetails?.description_en;
 
-      const avgPrice = room.timeSlices && room.timeSlices.length > 0
-        ? room.timeSlices.reduce((sum, s) => sum + (s.totalGrossAmount?.amount || 0), 0) / room.timeSlices.length
-        : 0;
-      const avgPriceForTwo = doubleRoom?.timeSlices && doubleRoom.timeSlices.length > 0
-        ? doubleRoom.timeSlices.reduce((sum, s) => sum + (s.totalGrossAmount?.amount || 0), 0) / doubleRoom.timeSlices.length
-        : 0;
+      const nights = room.timeSlices?.length || 1;
+      const doubleNights = doubleRoom?.timeSlices?.length || nights;
 
       return {
         ...room,
@@ -90,12 +88,15 @@ async function getRoomInternal(
         images: roomDetails?.photos || [],
         price: roomPrice,
         priceForTwo: roomPriceForTwo,
-        oneNightPrice: room.timeSlices?.[0]?.totalGrossAmount?.amount || 0,
-        oneNightPriceForTwo: doubleRoom?.timeSlices?.[0]?.totalGrossAmount?.amount || 0,
-        cityTax: room.cityTaxes?.[0]?.totalGrossAmount?.amount || Math.round(roomPrice * CITY_TAX_RATE * 100) / 100,
-        cityTaxForTwo: doubleRoom?.cityTaxes?.[0]?.totalGrossAmount?.amount || Math.round(roomPriceForTwo * CITY_TAX_RATE * 100) / 100,
-        averagePrice: avgPrice,
-        averagePriceForTwo: avgPriceForTwo,
+        oneNightPrice: Math.round((roomPrice / nights) * 100) / 100,
+        oneNightPriceForTwo: Math.round((roomPriceForTwo / doubleNights) * 100) / 100,
+        averagePrice: Math.round((roomPrice / nights) * 100) / 100,
+        averagePriceForTwo: Math.round((roomPriceForTwo / doubleNights) * 100) / 100,
+        taxes: {
+          vatTax: room.taxDetails?.[0]?.tax?.amount ?? 0,
+          cityTax,
+          cityTaxForTwo,
+        },
       };
     });
 
