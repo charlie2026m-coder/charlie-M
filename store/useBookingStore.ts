@@ -23,6 +23,7 @@ export interface BookingService {
 interface BookingState {
   booking: Booking | undefined;
   transactionReference: string | null;
+  paymentReference: string | null;
   reservationId: string | null;
   apaleoBookingId: string | null;
   reservationIds: string[];
@@ -40,6 +41,7 @@ interface BookingState {
   
   setBooking: (booking: Booking) => void;
   setTransactionReference: (transactionReference: string) => void;
+  setPaymentReference: (paymentReference: string) => void;
   setReservationId: (reservationId: string) => void;
   setApaleoBookingId: (id: string) => void;
   setReservationIds: (ids: string[]) => void;
@@ -74,6 +76,9 @@ export const useBookingStore = create<BookingState>()(
 
       transactionReference: null,
       setTransactionReference: (transactionReference: string) => set((state) => ({ ...state, transactionReference })),
+
+      paymentReference: null,
+      setPaymentReference: (paymentReference: string) => set((state) => ({ ...state, paymentReference })),
 
       reservationId: null,
       setReservationId: (reservationId: string) => set((state) => ({ ...state, reservationId })),
@@ -136,6 +141,7 @@ export const useBookingStore = create<BookingState>()(
           isRefundable: true,
           isExtend: false,
           transactionReference: null,
+          paymentReference: null,
           reservationId: null,
           apaleoBookingId: null,
           reservationIds: [],
@@ -146,13 +152,15 @@ export const useBookingStore = create<BookingState>()(
     }),
     {
       name: 'charlie-booking-storage',
-      partialize: (state) => ({ 
-        booking: state.booking, 
+      partialize: (state) => ({
+        booking: state.booking,
         rooms: state.rooms,
         roomDetails: state.roomDetails,
         bookingId: state.bookingId,
         isRefundable: state.isRefundable,
         isExtend: state.isExtend,
+        transactionReference: state.transactionReference,
+        paymentReference: state.paymentReference,
         reservationId: state.reservationId,
         apaleoBookingId: state.apaleoBookingId,
         reservationIds: state.reservationIds,

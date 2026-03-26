@@ -2,8 +2,7 @@ import { Fetch } from './Request';
 import dayjs from 'dayjs';
 import { cache } from 'react';
 import { OfferResponse, RoomOffer } from '@/types/offers';
-import { getRoomsDetails } from './getRoomsDetails';
-import { CITY_TAX_RATE } from '@/lib/Constants';
+import { getRoomDetails } from '@/app/actions/supabase/rooms/getRoomDetails';
 import { roomTranslations } from '@/content/RoomTranslations';
 const propId = process.env.APALEO_PROPERTY_ID;
 
@@ -27,13 +26,13 @@ const getSingleRoomInternal = async (roomId: string, from?: string, to?: string,
   try {
     // Execute all requests in parallel using Promise.allSettled
     const [roomsDataResult, singleRoomResult, doubleRoomResult] = await Promise.allSettled([
-      getRoomsDetails(),
+      getRoomDetails(),
       Fetch<OfferResponse>(`/booking/v1/offers?propertyId=${propId}&arrival=${arrival}&departure=${departure}&unitGroupIds=${roomId}&channelCode=Ibe&adults=1`),
       Fetch<OfferResponse>(`/booking/v1/offers?propertyId=${propId}&arrival=${arrival}&departure=${departure}&unitGroupIds=${roomId}&channelCode=Ibe&adults=2`)
     ]);
 
     // Handle roomsData
-    let roomsData: Awaited<ReturnType<typeof getRoomsDetails>> = [];
+    let roomsData: Awaited<ReturnType<typeof getRoomDetails>> = [];
     if (roomsDataResult.status === 'fulfilled') {
       roomsData = roomsDataResult.value;
     } else {
@@ -69,8 +68,11 @@ const getSingleRoomInternal = async (roomId: string, from?: string, to?: string,
         dr => dr.unitGroup?.id === room.unitGroup?.id && dr.ratePlan?.id === room.ratePlan?.id
       );
 
-      const roomPrice = room.totalGrossAmount?.amount || 0;
-      const roomPriceForTwo = doubleRoom?.totalGrossAmount?.amount || 0;
+      const cityTax = room.cityTaxes?.[0]?.totalGrossAmount?.amount ?? 0;
+      const cityTaxForTwo = doubleRoom?.cityTaxes?.[0]?.totalGrossAmount?.amount ?? cityTax;
+
+      const roomPrice = Math.round(((room.totalGrossAmount?.amount ?? 0) + cityTax) * 100) / 100;
+      const roomPriceForTwo = Math.round(((doubleRoom?.totalGrossAmount?.amount ?? room.totalGrossAmount?.amount ?? 0) + cityTaxForTwo) * 100) / 100;
 
       // Title & description: Supabase (roomDetails) → RoomTranslations → Apaleo
       const roomIdForTranslation = room.unitGroup?.id;
@@ -80,6 +82,9 @@ const getSingleRoomInternal = async (roomId: string, from?: string, to?: string,
       const descFromDb = lang === 'de' ? roomDetails?.description_de : roomDetails?.description_en;
       const translatedName = titleFromDb || translation?.title[lang] || room.unitGroup?.name || 'Unknown Room';
       const translatedDescription = descFromDb ?? translation?.description[lang] ?? room.unitGroup?.description ?? '';
+
+      const nights = room.timeSlices?.length || 1;
+      const doubleNights = doubleRoom?.timeSlices?.length || nights;
 
       return {
         ...room,
@@ -92,11 +97,15 @@ const getSingleRoomInternal = async (roomId: string, from?: string, to?: string,
         images: roomDetails?.photos || [],
         price: roomPrice,
         priceForTwo: roomPriceForTwo,
-        oneNightPrice: room.timeSlices?.[0]?.totalGrossAmount?.amount || 0,
-        oneNightPriceForTwo: doubleRoom?.timeSlices?.[0]?.totalGrossAmount?.amount || 0,
-        cityTax: room.cityTaxes?.[0]?.totalGrossAmount?.amount || Math.round(roomPrice * CITY_TAX_RATE * 100) / 100,
-        cityTaxForTwo: doubleRoom?.cityTaxes?.[0]?.totalGrossAmount?.amount || Math.round(roomPriceForTwo * CITY_TAX_RATE * 100) / 100,
-        averagePrice: room.timeSlices?.[0]?.totalGrossAmount?.amount || 0,
+        oneNightPrice: Math.round((roomPrice / nights) * 100) / 100,
+        oneNightPriceForTwo: Math.round((roomPriceForTwo / doubleNights) * 100) / 100,
+        averagePrice: Math.round((roomPrice / nights) * 100) / 100,
+        averagePriceForTwo: Math.round((roomPriceForTwo / doubleNights) * 100) / 100,
+        taxes: {
+          vatTax: room.taxDetails?.[0]?.tax?.amount ?? 0,
+          cityTax,
+          cityTaxForTwo,
+        },
       };
     });
       return formattedRooms as RoomOffer[];

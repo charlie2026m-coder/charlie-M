@@ -5,11 +5,45 @@ export const EMAIL = "info@charlie-m.de"
 
 
 export const RATE_PLANS = {
-  STANDARD: 'FLEX_WEB', // standard prices for room refundable price that we get to show initial room price
-  NON_REFUNDABLE: 'NR_WEB', // non refundable prices for room, when we choose non refundable in room info page we use this price
-  LONG_STAY : 'FLEX_WEB7', // we will use this price in booking more then 7 nights 
-  NON_REFUNDABLE_LONG_STAY: 'NR_WEB7', // we will use this price in booking more then 7 nights and non refundable
+  FLEX_WEB: 'FLEX_WEB',    // 1 night, refundable
+  FLEX_WEB2: 'FLEX_WEB2',  // 2 nights, refundable
+  FLEX_WEB3: 'FLEX_WEB3',  // 3+ nights, refundable
+  NR_WEB: 'NR_WEB',        // 1 night, non-refundable
+  NR_WEB2: 'NR_WEB2',      // 2 nights, non-refundable
+  NR_WEB3: 'NR_WEB3',      // 3+ nights, non-refundable
 }
+
+// Returns the correct refundable rate plan code based on stay length
+export const getRatePlanByNights = (nights: number): string => {
+  if (nights >= 3) return RATE_PLANS.FLEX_WEB3;
+  if (nights >= 2) return RATE_PLANS.FLEX_WEB2;
+  return RATE_PLANS.FLEX_WEB;
+}
+
+// Returns the correct non-refundable rate plan code based on stay length
+export const getNonRefundableRatePlanByNights = (nights: number): string => {
+  if (nights >= 3) return RATE_PLANS.NR_WEB3;
+  if (nights >= 2) return RATE_PLANS.NR_WEB2;
+  return RATE_PLANS.NR_WEB;
+}
+
+// Picks the correct rate plan from a list of offers.
+// Returns null if no matching plan found — never picks a random room.
+export const resolveRatePlan = <T extends { ratePlan: { code: string } }>(
+  rooms: T[],
+  nights: number,
+  isRefundable: boolean,
+): T | null => {
+  const preferred = isRefundable
+    ? getRatePlanByNights(nights)
+    : getNonRefundableRatePlanByNights(nights);
+  const base = isRefundable ? RATE_PLANS.FLEX_WEB : RATE_PLANS.NR_WEB;
+
+  return (
+    rooms.find(r => r.ratePlan.code === preferred) ??
+    (preferred !== base ? rooms.find(r => r.ratePlan.code === base) ?? null : null)
+  );
+};
 export const DEFAULT_CHECKIN_TIME = "15:00 - 00:00"
 export const DEFAULT_CHECKOUT_TIME = "11:00"
 // Hotel Information

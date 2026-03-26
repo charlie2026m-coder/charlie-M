@@ -3,12 +3,12 @@ import {getRequestConfig} from 'next-intl/server';
 export const locales = ['en', 'de'] as const;
 export type Locale = (typeof locales)[number];
 
-export default getRequestConfig(async ({locale}) => {
-  // If no locale in URL (e.g., /), default to English
-  const effectiveLocale = locale || 'en';
-  
+export default getRequestConfig(async ({requestLocale}) => {
+  const requested = await requestLocale;
+  const locale = locales.includes(requested as Locale) ? requested as Locale : 'en';
+
   return {
-    locale: effectiveLocale,
-    messages: (await import(`./language/${effectiveLocale}.json`)).default
+    locale,
+    messages: (await import(`./messages/${locale}.json`)).default
   };
 });

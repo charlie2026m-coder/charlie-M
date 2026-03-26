@@ -1,0 +1,1327 @@
+{
+  
+  "book_now_btn": "Jetzt buchen",
+  "noCapacity": "Nicht genug Kapazität für diese Gästezahl",
+  "check_in_btn": "Einchecken",
+  "sign_in_btn": "Anmelden",
+  "loading": "Wird geladen...",
+  "discount": {
+    "text": "Buchen Sie direkt bei uns zum besten Preis"
+  },
+  "developmentBanner": {
+    "message": "⚠️ Website befindet sich in der Entwicklung. Alle Buchungen sind untersagt."
+  },
+
+  "home":{
+    "rooms_title": "Wählen Sie Ihr Zimmer",
+    "rooms_subtitle": "Ihr perfektes Zimmer – nur einen Klick entfernt.",
+    "location_title": "Standort",
+    "location_subtitle": "Unser Hotel ist die perfekte Wahl für alle, die im Herzen Berlins wohnen möchten.",
+    "weAreHere": "Wir sind hier",
+
+    "concept_title": "Konzept",
+    "concept_mobile_title": "Charlie M Konzept",
+    "concept_h_1": "Reisen sollte sich einfach anfühlen",
+    "concept_p_1": "— vom digitalen Check-in über den Zugang per Smart-Code bis hin zu einem rezeptionsfreien Konzept.",
+    "concept_h_2": "Mit durchdacht gestalteten Zimmern",
+    "concept_h_2_1": "und einem digitalen 24/7-Support",
+    "concept_p_2": "wird Ihr Aufenthalt reibungslos, modern und angenehm unkompliziert.",
+
+    "concept_it_1": "Online Check-in",
+    "concept_ip_1": "keine Rezeption, keine Wartezeiten.",
+    "concept_it_2": "Zugang zum Zimmer per Smart-Code",
+    "concept_ip_2": "einfach, sicher und und jederzeit verfügbar",
+    "concept_it_3": "Privatsphäre & Unabhängigkeit",
+    "concept_ip_3": "ein entspannter Aufenthalt ohne unnötige Unterbrechungen.",
+    "concept_it_4": "Sofortige Unterstützung",
+    "concept_ip_4": "schnelle Hilfe per Chat, wann immer Sie sie brauchen.",
+
+    "concept_ip_1_text": "Dank unseres Online-Check-ins können Sie den Empfang komplett überspringen.",
+    "concept_ip_2_text": "Ein persönlicher Code ermöglicht einen nahtlosen und sicheren Zugang.",
+    "concept_ip_3_text": "Wir wissen, wie wertvoll Ihre Zeit ist – genießen Sie einen kontaktfreien und entspannten Aufenthalt.",
+    "concept_ip_4_text": "Unser Team unterstützt Sie rund um die Uhr bei allen Fragen.",
+
+    "experience_title": "Charlie M Erfahrungen",
+    "items": [
+      {
+        "title": "Co-Working Space",
+        "text": "Ein ruhiger Ort zum konzentrierten Arbeiten – inklusive Kaffeestation.",
+        "content": "Ein ruhiger Bereich für konzentriertes Arbeiten, vollständig ausgestattet und mit Kaffeestation."
+      },
+      
+      {
+        "title": "Kofferlagerungen",
+        "text": "Sichere Aufbewahrung vor dem Check-in oder nach dem Check-out.",
+        "content": "Ideal zur Aufbewahrung Ihres Gepäcks vor dem Check-in oder nach dem Check-out."
+      },
+      
+      {
+        "title": "Self-Service Closet",
+        "text": "Frische Handtücher, Pflegeprodukte und wichtige Zimmerutensilien jederzeit verfügbar.",
+        "content": "Ein Self-Service-Schrank mit frischen Handtüchern, Pflegeprodukten und wichtigen Zimmerutensilien, jederzeit verfügbar."
+      },
+      
+      {
+        "title": "Wäscheraum",
+        "text": "Waschen und Trocknen, wann immer Sie es benötigen.",
+        "content":"Ein voll ausgestatteter Waschraum, in dem Sie Ihre Kleidung jederzeit waschen und trocknen können."
+      },
+
+      {
+        "title": "Kaffeemaschine im Zimmer",
+        "text": "Kaffeekapseln während Ihres Aufenthalts inklusive.",
+        "content":"Eine stilvolle Kaffeemaschine im Zimmer mit kostenlosen Kaffeekapseln für Ihren gesamten Aufenthalt."
+      },
+      
+      {
+        "title": "Schnelles WiFi",
+        "text": "Zuverlässige Highspeed-Verbindung im gesamten Gebäude.",
+        "content":"Bleiben Sie mit schnellem, zuverlässigem WLAN überall im Gebäude verbunden."
+      }
+    ],
+    "personalize_title": "Gestalten Sie Ihren Aufenthalt individuell",
+    "personalize_description": "Optionale Extras sind gegen eine zusätzliche Gebühr verfügbar",
+    "personalize_items": [
+      {
+        "title": "Parkplatz",
+        "text": "Privater Parkplatz direkt vor Ort"
+      },
+      {
+        "title": "Frühstück",
+        "text": "Frische Frühstücksoptionen von unserem Partner"
+      },
+      {
+        "title": "Zusätzliche Reinigung",
+        "text": "Zusätzliche Zimmerreinigung während Ihres Aufenthalts"
+      },
+      {
+        "title": "Früher Check-in",
+        "text": "Früher anreisen und entspannt ankommen"
+      },
+      {
+        "title": "Später Check-out",
+        "text": "Ihre Abreise verlängern und länger entspannen"
+      },
+      {
+        "title": "Haustiere",
+        "text": "Bringen Sie Ihren vierbeinigen Begleiter mit – wir heißen ihn ebenfalls herzlich willkommen!"
+      }
+    ],
+
+
+    "design_title": "Design, das Ihren Aufenthalt begleitet",
+    "design_description": "Jeder Bereich bei Charlie M ist auf Ihren Aufenthalt abgestimmt. Vom Grundriss bis zu den Details ist alles darauf ausgelegt, Ihren Aufenthalt komfortabel, unkompliziert und stimmig zu gestalten. Ruhige, einladende Details prägen das Erlebnis. Materialien, Licht und Raumfluss fügen sich harmonisch zusammen und schaffen Orte, an denen Sie zur Ruhe kommen, ankommen und sich während Ihres Aufenthalts einfach wohlfühlen können.",
+    "design_items": [
+      {
+        "image_1": "Lobby",
+        "image_2": "Zimmer"
+      },
+      {
+        "image_1": "Lobby",
+        "image_2": "Zimmer"
+      },
+      {
+        "image_1": "Lobby",
+        "image_2": "Zimmer"
+      },
+      {
+        "image_1": "Lobby",
+        "image_2": "Zimmer"
+      },
+      {
+        "image_1": "Lobby",
+        "image_2": "Zimmer"
+      }
+    ],
+
+    "reviews_title": "Was unsere Gäste sagen",
+    "faq_title": "Häufig gestellte Fragen",
+    "faq_categories": [
+      {
+        "title": "Check-in & Zugang",
+        "items": [
+          {
+            "title": "Wie funktioniert der Online-Check-in?",
+            "p": [
+              "Bei Charlie M ist der Online-Check-in ein kurzer digitaler Schritt, der Ihre Ankunft vollständig reibungslos und kontaktlos gestaltet.Nach Ihrer Buchung senden wir Ihnen einen Link, über den Sie Ihre Daten sicher bestätigen und die verpflichtende Registrierung abschließen können. So können wir Ihre Identität überprüfen, Ihren Aufenthalt vorbereiten und Ihren persönlichen Zugangscode (PIN) aktivieren.",
+              "Nach Ihrer Buchung senden wir Ihnen einen Link, über den Sie Ihre Daten sicher bestätigen und die verpflichtende Registrierung abschließen können. Dies ermöglicht es uns, Ihre Identität zu überprüfen, Ihren Aufenthalt vorzubereiten und Ihren persönlichen Zugangscode (PIN) zu aktivieren.",
+              "**Sobald Ihr Online-Check-in abgeschlossen ist, erhalten Sie Ihren PIN am Tag Ihrer Anreise. Sie bekommen ihn per E-Mail und WhatsApp, und er ermöglicht Ihnen den Zugang sowohl zum Gebäude als auch zu Ihrem Zimmer.**",
+              "Da wir keine Rezeption vor Ort haben, muss der Online-Check-in vor Ihrer Anreise abgeschlossen werden – andernfalls können wir keinen Zugangscode für Sie generieren."
+            ]
+          },
+          {
+            "title": "Wann erhalte ich meinen Zugangscode (PIN)?",
+            "p": [
+              "Ihr persönlicher Zugangscode (PIN) wird erst nach Abschluss des Online-Check-ins erstellt. Sie erhalten ihn am Tag Ihrer Anreise per E-Mail und WhatsApp, in der Regel bis zum frühen Nachmittag. Dieser PIN wird benötigt, um sowohl das Gebäude als auch Ihr Zimmer zu betreten."
+            ]
+          },
+          {
+            "title": "Welche Türen kann ich mit meinem PIN öffnen?",
+            "p": [
+              "Ihr persönlicher PIN ermöglicht Ihnen den Zugang zu allem, was Sie während Ihres Aufenthalts benötigen. Mit diesem Code können Sie den Haupteingang, die Tür zu Ihrem Zimmer, den Waschraum sowie den Gepäckschließfachraum öffnen. Es sind keine Schlüssel oder Karten erforderlich – ein PIN für alle Bereiche."
+            ]
+          },
+          {
+            "title": "Kann ich mein Gepäck im Hotel aufbewahren?",
+            "p": [
+              "Wir bieten sichere, kostenlose Gepäckschließfächer im Gebäude, in denen Sie Ihre Taschen vor dem Check-in oder nach dem Check-out aufbewahren können. Wenn momentan keine Schließfächer verfügbar sind, finden Sie eine nahegelegene Alternative bei Stasher Luggage Storage, Friedrichstraße 56, 10117 Berlin."
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Während Ihres Aufenthalts",
+        "items": [
+          {
+            "title": "Wie kontaktiere ich den Support, wenn ich Hilfe benötige?",
+            "p": [
+              "Wenn Sie jederzeit Hilfe benötigen, ist unser Team 24/7 erreichbar. Sie können uns eine Nachricht auf WhatsApp senden oder uns direkt telefonisch anrufen. Wir sind immer für Sie da, um Sie während Ihres Aufenthalts zu unterstützen."
+            ]
+          },
+          {
+            "title": "Wie oft wird mein Apartment gereinigt?",
+            "p": [
+              "Ihr Apartment wird vor Ihrer Ankunft gründlich gereinigt und vorbereitet. Bei Aufenthalten von mehr als 7 Nächten bieten wir eine kostenlose wöchentliche Reinigung an. Wenn Sie zwischendurch eine zusätzliche Reinigung wünschen, können Sie diese gegen Aufpreis buchen."
+            ]
+          },
+          {
+            "title": "Wo erhalte ich frische Handtücher und zusätzliche Pflegeprodukte?",
+            "p": [
+              "Sie können sich jederzeit frische Handtücher und zusätzliche Pflegeprodukte aus unserem Essentials Closet nehmen. Dieser steht Ihnen jederzeit kostenlos zur Verfügung."
+            ]
+          },
+          {
+            "title": "Ist Rauchen erlaubt?",
+            "p": [
+              "Rauchen im Zimmer ist strengstens verboten. Es ist nur auf privaten Balkonen oder auf der gemeinsamen Terrasse erlaubt. Wenn Ihr Zimmer keine dieser Außenbereiche umfasst, rauchen Sie bitte außerhalb des Gebäudes."
+            ]
+          },
+          {
+            "title": "Kann ich im Hotel Wäsche waschen?",
+            "p": [
+              "Absolut. Ein Gäste-Waschraum ist vor Ort verfügbar, sodass Sie Ihre Wäsche jederzeit waschen können, wenn Sie es benötigen."
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Zusatzleistungen",
+        "items": [
+          {
+            "title": "Welche Zusatzleistungen sind im Hotel verfügbar?",
+            "p": [
+              "Wir bieten verschiedene Zusatzleistungen an, um Ihren Aufenthalt noch komfortabler zu gestalten, darunter Frühstück, Parkmöglichkeiten, früher Check-in, später Check-out. Sie können diese Extras direkt über unsere Website buchen oder ganz einfach zu Ihrer bestehenden Reservierung hinzufügen."
+            ]
+          },
+          {
+            "title": "Sind Haustiere erlaubt?",
+            "p": [
+              "Ja, Haustiere sind herzlich willkommen! Wir berechnen eine einmalige Gebühr für den gesamten Aufenthalt, sodass Ihr vierbeiniger Begleiter gemeinsam mit Ihnen die Reise genießen kann."
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Buchungsänderungen",
+        "items": [
+          {
+            "title": "Wie kann ich meine Reservierung ändern oder stornieren?",
+            "p": [
+              "Wenn Sie direkt über die Charlie-M-Website gebucht haben, können Sie Ihre Reservierung ganz einfach in Ihrem Gästeaccount ändern oder stornieren.",
+              "Bei flexiblen Tarifen wird jede erstattungsfähige Rückerstattung automatisch auf Ihre ursprüngliche Zahlungsmethode zurückgebucht.",
+              "Wenn Ihre Buchung über eine Partnerplattform (z. B. Booking.com, Airbnb oder Expedia) erfolgt ist, nehmen Sie bitte alle Änderungen oder Stornierungen direkt über diese Plattform vor. Rückerstattungen werden ebenfalls über den jeweiligen Anbieter abgewickelt."
+            ]
+          },
+          {
+            "title": "Wann kann ich meine Rechnung erhalten?",
+            "p": [
+              "Sie können Ihre Rechnung nach Ihrem Aufenthalt erhalten. Sobald Sie ausgecheckt sind, steht Ihre Rechnung zum Download in Ihrem Gästekonto bereit oder kann Ihnen auf Anfrage zugesendet werden."
+            ]
+          }
+        ]
+      }
+    ],
+
+    "video": {
+      "title": "Charlie M - Ihre Berlin-Geschichte beginnt hier",
+      "subtitle": "Vollautomatisierter Aufenthalt im Zentrum von Berlin",
+      "exploreRooms": "Zimmer erkunden"
+    }
+
+  },
+  "header": {
+    "rooms_link": "Zimmer",
+    "location_link": "Standort",
+    "about_us_link": "Konzept"
+  },
+  "guests": {
+    "label": "Gäste",
+    "guest": "Gast",
+    "guests": "Gäste",
+    "adults": "Erwachsene",
+    "children": "Kinder",
+    "baby": "Baby",
+    "babies": "Babys",
+    "children_age_note": "bis 3 Jahren",
+    "children_not_available": "Kinder für dieses Zimmer nicht verfügbar",
+    "crib_fee_note": "Babybett gegen Aufpreis"
+  },
+  "dateInput": {
+    "checkIn": "Check-in",
+    "checkOut": "Check-out",
+    "chooseDate": "Datum auswählen"
+  },
+  "imprint": {
+    "title": "Impressum gemäß § 5 TMG",
+    "company": "MBoutique GmbH & Co. KG",
+    "address_line1": "Nazarethkirchstraße 51",
+    "address_line2": "13347 Berlin",
+    "address_line3": "Deutschland",
+    "represented_by": "Vertreten durch:",
+    "general_partner": "Der persönlich haftende Gesellschafter:",
+    "general_partner_name": "MBoutique Verwaltungs GmbH",
+    "managing_directors": "Geschäftsführer des persönlich haftenden Gesellschafters:",
+    "director1": "David Prajs",
+    "director2": "Simon Schmargon",
+    "contact": "Kontakt:",
+    "email_label": "E-Mail:",
+    "commercial_register": "Handelsregister:",
+    "registered_with": "Eingetragen im Handelsregister",
+    "register_court": "Registergericht: Amtsgericht Berlin-Charlottenburg",
+    "register_number": "Handelsregisternummer:",
+    "register_number_value": "HRA 61578 B",
+    "vat_id": "Umsatzsteuer-ID:",
+    "vat_id_description": "Umsatzsteuer-Identifikationsnummer gemäß § 27a Umsatzsteuergesetz:",
+    "vat_id_value": "DE361014687",
+    "responsible_content": "Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV:",
+    "dispute_resolution": "Streitbeilegung:",
+    "dispute_resolution_text": "Die MBoutique GmbH & Co. KG ist bereit, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen, soweit dies gesetzlich vorgeschrieben ist oder im Einzelfall als sinnvoll erachtet wird."
+  },
+  "reservations": {
+    "extendYourStay": {
+      "title": "Verlängern Sie Ihren Aufenthalt",
+      "nightsPrefix": "Verlängern Sie Ihren Aufenthalt um",
+      "nightsSuffix": "Nächte",
+      "availableRoomsPrefix": "Wir haben",
+      "availableRoomsSuffix": "für die ausgewählten Daten verfügbar",
+      "room": "Zimmer",
+      "rooms": "Zimmer",
+      "cancel": "Abbrechen",
+      "check": "Prüfen",
+      "book": "Buchen",
+      "loading": "Lädt..."
+    },
+    "removeService": "Service entfernen",
+    "removing": "Wird entfernt …",
+    "remove": "Entfernen",
+    "serviceRemovedSuccessfully": "Service erfolgreich entfernt",
+    "failedToRemoveService": "Fehler beim Entfernen des Services",
+    "cancelBooking": "Buchung stornieren",
+    "cancelling": "Wird storniert …",
+    "accept": "Akzeptieren",
+    "decline": "Ablehnen",
+    "bookingCancelledSuccessfully": "Buchung erfolgreich storniert",
+    "failedToCancelBooking": "Fehler beim Stornieren der Buchung"
+  },
+  "roomCard": {
+    "perNightFrom": "pro Nacht ab",
+    "bookNow": "Jetzt buchen",
+    "loading": "Wird geladen …",
+    "booked": "Für diese Daten nicht verfügbar"
+  },
+  "noAvailability": {
+    "title": "Keine Zimmer verfügbar",
+    "roomIs": "Dieses Zimmer ist",
+    "roomNameIs": "{roomName} ist",
+    "notAvailable": "nicht verfügbar",
+    "forSelectedDates": "für die ausgewählten Daten",
+    "forTodayTomorrow": "für heute und morgen",
+    "tryDifferentDates": "Bitte wählen Sie andere Daten oder sehen Sie sich weitere Zimmeroptionen an.",
+    "lookAnother": "Andere Zimmer ansehen"
+  },
+  "noRooms": {
+    "title": "Keine Übereinstimmungen für Ihre Anfrage, bitte kontaktieren Sie uns direkt",
+    "contactUs": "Kontaktieren Sie uns"
+  },
+  "locationCard": {
+    "drive": "Auto",
+    "publicTransport": "Öffentliche Verkehrsmittel",
+    "walk": "Zu Fuß",
+    "seeOnGoogleMaps": "Auf Google Maps anzeigen",
+    "centralStation": "Hauptbahnhof (Hbf):",
+    "taxi": "Taxi",
+    "airport": "Flughafen Berlin Brandenburg (BER):"
+  },
+  "footer": {
+    "whatsappSupport": "WhatsApp Chat Support 24/7",
+    "call": "Telefon: {phone}",
+    "address": "Friedrichstraße 33, 10969 Berlin",
+    "tagline": "Modern stays – Berlin days",
+    "subtitle": "Vollautomatisierter Aufenthalt",
+    "contacts": "Kontakt:",
+    "getSocial": "Folgen Sie uns:",
+    "tagUs": "Markieren Sie uns auf Ihren Fotos",
+    "payWith": "Zahlungsmethoden",
+    "privacyPolicy": "Datenschutzerklärung",
+    "termsAndConditions": "Allgemeine Geschäftsbedingungen",
+    "imprint": "Impressum",
+    "copyright": "© Charlie M. Alle Rechte vorbehalten."
+  },
+  "filters": {
+    "roomType": "Zimmertyp",
+    "bedSize": "Bettgröße",
+    "balcony": "Balkon",
+    "price": "Preis",
+    "babyBed": "Kinderbett",
+    "all": "Alle",
+    "any": "Beliebig",
+    "single": "Einzel",
+    "standard": "Standard",
+    "business": "Business",
+    "superior": "Superior",
+    "queen": "Queen",
+    "king": "King",
+    "terrace": "Terrasse",
+    "sharedTerrace": "Gemeinschaftsterrasse",
+    "lowToHigh": "Niedrig nach hoch",
+    "highToLow": "Hoch nach niedrig"
+  },
+  "roomParams": {
+    "max": "Max.",
+    "kingSize": "King Size",
+    "queenSize": "Queen Size",
+    "single": "Einzelbett",
+    "balcony": "Balkon",
+    "terrace": "Terrasse"
+  },
+  "roomContent": {
+    "weHave": "Wir haben",
+    "left": "verfügbar",
+    "babyBedsAvailable": "Kinderbetten verfügbar",
+    "pleaseNote": "Bitte beachten Sie:",
+    "roomVariationNote": "Jedes Zimmer in unserem historischen Gebäude verfügt über einen individuellen Grundriss. Obwohl alle Zimmer dieser Kategorie denselben Komfortstandard und dieselben Ausstattungsmerkmale bieten, können sich Größe und Form leicht unterscheiden. Daher kann das Ihnen zugewiesene Zimmer geringfügig von den gezeigten Fotos abweichen, entspricht jedoch stets der gebuchten Qualität und Zimmerkategorie."
+  },
+  "availability": {
+    "title": "Verfügbarkeit",
+    "cancel": "Abbrechen",
+    "apply": "Anwenden"
+  },
+  "changeDate": {
+    "cancel": "Abbrechen",
+    "apply": "Übernehmen"
+  },
+  "addRooms": {
+    "room": "Zimmer",
+    "addRoom": "Zimmer hinzufügen",
+    "left": "noch verfügbar"
+  },
+  "bookingForm": {
+    "title": "BUCHEN",
+    "pleaseSelectDates": "Bitte wählen Sie Daten aus",
+    "search": "Suchen",
+    "yourSelection": "Ihre Auswahl",
+    "yourInfo": "Ihre Daten",
+    "finish": "Fertigstellen",
+    "addExtras": "Extras:",
+    "learnMore": "Mehr erfahren",
+    "price": "Preis:",
+    "soldOut": "Ausverkauft",
+    "nonRefundable": "Nicht stornierbar (5% sparen)",
+    "noRefundDescription": "Keine Rückerstattung im Falle einer Stornierung",
+    "refundable": "Kostenlos stornierbar",
+    "refundableDescription": "Kostenfrei stornierbar bis 48 Stunden vor Anreise",
+    "night": "Nacht",
+    "nights": "Nächte",
+    "room": "Zimmer",
+    "rooms": "Zimmer",
+    "guest": "Gast",
+    "guests": "Gäste",
+    "baby": "Baby",
+    "babies": "Babys",
+    "cityTax": "City Tax:",
+    "taxesIncluded": "Steuern und Gebühren inkl.",
+    "totalPrice": "Gesamtpreis:",
+    "bookNow": "Jetzt buchen",
+    "total": "Gesamt",
+    "add": "Hinzufügen",
+    "available": "verfügbar",
+    "confirm": "Bestätigen",
+    "addExtra": "{name} - €{price}",
+    "clearAll": "Alle löschen",
+    "selectAllAvailable": "Alle auswählen",
+    "selectDates": "Daten",
+    "chooseQuantityPerDay": "Menge pro Tag wählen",
+    "unavailableForDates": "Dieses Zimmer ist für die ausgewählten Daten nicht verfügbar. Bitte wählen Sie andere Daten."
+  },
+  "payment": {
+    "guestDetails": "Angaben zum Gast",
+    "name": "Vorname",
+    "lastName": "Nachname",
+    "email": "E-Mail",
+    "phone": "Telefon",
+    "addressDetails": "Adressdaten",
+    "companyName": "Firmenname (optional)",
+    "streetAddress": "Straße",
+    "houseNumber": "Hausnummer",
+    "postalCode": "Postleitzahl",
+    "city": "Ort",
+    "country": "Land",
+    "agreeToThe": "Ich stimme der",
+    "privacyPolicy": "Datenschutzerklärung",
+    "back": "Zurück",
+    "continue": "Weiter",
+    "creatingBooking": "Buchung wird erstellt...",
+    "pleaseWait": "Bitte warten Sie, während wir Ihre Reservierung bearbeiten",
+    "backToBookingDetails": "Zurück zu den Buchungsdetails",
+    "completePayment": "Zahlung abschließen",
+    "securePayment": "Sichere Zahlung mit Adyen",
+    "loadingPaymentMethods": "Zahlungsmethoden werden geladen …",
+    "servicesUnavailable": "Einige Leistungen sind nicht mehr verfügbar. Bitte versuchen Sie es erneut oder kontaktieren Sie den Support.",
+    "bookingCreated": "Buchung erstellt!",
+    "bookingCreatedWithIssues": "Buchung erstellt, aber einige Leistungen konnten nicht hinzugefügt werden. Bitte prüfen Sie die Details.",
+    "bookingFailed": "Buchung fehlgeschlagen. Bitte kontaktieren Sie den Support.",
+    "serverError": "Hoppla! Etwas ist schiefgelaufen",
+    "serverErrorMessage": "Es tut uns leid, es sind technische Probleme aufgetreten und Ihre Buchung wurde nicht erstellt.",
+    "refundMessage": "Keine Sorge - Ihre Zahlung wird innerhalb von 48 Stunden automatisch auf Ihr Konto zurückerstattet.",
+    "contactSupport": "Hier können Sie den Support für eine schnelle Lösung kontaktieren:",
+    "paymentFailed": "Zahlung fehlgeschlagen",
+    "paymentError": "Zahlungsfehler",
+    "paymentDeclinedTitle": "Zahlung abgelehnt",
+    "paymentDeclinedMessage": "Ihre Zahlung wurde abgelehnt. Bitte überprüfen Sie Ihre Kartendaten und versuchen Sie es erneut.",
+    "tryAgain": "Erneut versuchen",
+    "browseRooms": "Zimmer ansehen",
+    "paymentInitFailed": "Zahlung konnte nicht initialisiert werden. Bitte versuchen Sie es erneut.",
+    "noServicesSelected": "Keine Leistungen ausgewählt",
+    "pleaseGoBackAndSelect": "Bitte gehen Sie zurück und wählen Sie Leistungen aus, die Sie bezahlen möchten.",
+    "processing": "Wird verarbeitet...",
+    "pleaseWaitAddingServices": "Bitte warten Sie, während wir die Leistungen zu Ihrer Reservierung hinzufügen.",
+    "backToReservationDetails": "Zurück zu den Reservierungsdetails",
+    "paymentCompletedMissing": "Zahlung abgeschlossen, jedoch fehlen Transaktionsreferenz oder Leistungen",
+    "addingServicesToReservation": "Leistungen werden zur Reservierung hinzugefügt …",
+    "servicesAddedSuccessfully": "Leistungen erfolgreich hinzugefügt!",
+    "failedToAddServices": "Leistungen konnten nicht hinzugefügt werden. Bitte kontaktieren Sie den Support.",
+    "summary": "Zusammenfassung",
+    "services": "Leistungen:",
+    "total": "Gesamt:"
+  },
+  "summary": {
+    "title": "Zusammenfassung",
+    "noBookingData": "Keine Buchungsdaten verfügbar",
+    "guests": "Gäste:",
+    "bookingId": "Buchungs-ID:",
+    "reservationIdsInfo": "Ihre Reservierungs-IDs - verwenden Sie diese, um auf Ihr Konto zuzugreifen und Details anzuzeigen:",
+    "reservation": "Reservierung"
+  },
+  "success": {
+    "bookingConfirmed": "Ihre Buchung ist bestätigt!",
+    "confirmationSent": "Wir haben Ihnen die Bestätigung per E-Mail gesendet:",
+    "backToMainPage": "Zurück zur Hauptseite",
+    "servicesWarningTitle": "Fast geschafft!",
+    "servicesWarningMessage": "Ihre Buchung ist bestätigt! Einige Leistungen sind jedoch nicht mehr verfügbar. Bitte kontaktieren Sie unser Support-Team zur Klärung der Details.",
+    "contactSupport": "Support kontaktieren:"
+  },
+  "profile": {
+    "profile": "Profil",
+    "myReservations": "Meine Reservierungen",
+    "all": "Alle",
+    "added": "Hinzugefügt",
+    "ongoing": "Laufend",
+    "upcoming": "Bevorstehend",
+    "completed": "Abgeschlossen",
+    "canceled": "Storniert",
+    "guest": "Gast",
+    "guests": "Gäste",
+    "room": "Zimmer",
+    "addViaReservationId": "+ Über Reservierungsnummer hinzufügen",
+    "addViaReservationIdTitle": "Über Reservierungsnummer hinzufügen",
+    "notFound": "Nicht gefunden",
+    "success": "Erfolgreich",
+    "enterReservationId": "Geben Sie Ihre Reservierungsnummer ein",
+    "reservationIdPlaceholder": "Reservierungsnummer",
+    "cancel": "Abbrechen",
+    "add": "Hinzufügen",
+    "nothingFound": "Für diese Reservierungsnummer wurde nichts gefunden. Bitte überprüfen Sie die Eingabe und versuchen Sie es erneut.",
+    "ok": "Ok",
+    "reservationAddedSuccess": "Ihre Reservierung wurde erfolgreich hinzugefügt",
+    "adding": "Wird hinzugefügt...",
+    "reservationAlreadyAdded": "Diese Reservierung wurde bereits hinzugefügt",
+    "reservationEmailMismatch": "Die E-Mail-Adresse der Reservierung stimmt nicht mit der E-Mail-Adresse Ihres Kontos überein",
+    "errorAddingReservation": "Fehler beim Hinzufügen der Reservierung",
+    "showLess": "Weniger anzeigen",
+    "showMore": "Mehr anzeigen",
+    "reservationNotFoundCheckId": "Reservierung nicht gefunden. Bitte überprüfen Sie die Nummer.",
+    "reservationIdExample": "Beispiel: XXXXX-1 (muss mit -1 enden)",
+    "checkBookingId": "Bitte überprüfen Sie die Buchungsnummer",
+    "noMatchesFound": "Leider wurden keine Übereinstimmungen gefunden",
+    "serverErrorTryAgain": "Serverfehler. Bitte versuchen Sie es erneut.",
+    "logout": "Abmelden",
+    "logoutConfirm": "Möchten Sie sich wirklich abmelden?",
+    "loggingOut": "Wird abgemeldet...",
+    "yes": "Ja",
+    "allReservations": "Alle Reservierungen",
+    "addedReservations": "Hinzugefügte Reservierungen",
+    "ongoingReservations": "Laufende Reservierungen",
+    "upcomingReservations": "Bevorstehende Reservierungen",
+    "completedReservations": "Abgeschlossene Reservierungen",
+    "canceledReservations": "Stornierte Reservierungen",
+    "yourBooking": "Ihre Buchung",
+    "addExtras": "Extras hinzufügen",
+    "info": "Info",
+    "viewDetails": "Details anzeigen",
+    "reservationDetails": "Reservierungsdetails",
+    "reservation": "Reservierung :",
+    "dates": "Zeitraum:",
+    "downloadInvoice": "Rechnung herunterladen",
+    "roomInfo": "Zimmerinfo",
+    "bookAgain": "Erneut buchen",
+    "viewInvoice": "Rechnung anzeigen",
+    "invoiceDownloaded": "Rechnung erfolgreich heruntergeladen",
+    "invoiceDownloadFailed": "Fehler beim Herunterladen der Rechnung",
+    "downloading": "Wird heruntergeladen...",
+    "completeCheckIn": "Check-In abschließen",
+    "checkedIn": "Eingecheckt",
+    "redirectingToCheckIn": "Weiterleitung zum Check-In...",
+    "checkInUrlNotFound": "Check-In-URL nicht gefunden",
+    "checkInError": "Check-In-Prozess konnte nicht gestartet werden",
+    "errorLoadingReservations": "Fehler beim Laden der Reservierungen",
+    "reservationNotFoundInApaleo": "Reservierung in Apaleo nicht gefunden",
+    "loading": "Wird geladen …",
+    "noRoomsBooked": "Sie haben noch keine Zimmer gebucht",
+    "bookNow": "Jetzt buchen",
+    "roomNumber": "Zimmer №",
+    "accessPin": "Zugangscode (PIN)",
+    "code": "Code",
+    "clickToCopy": "Zum Kopieren anklicken",
+    "copiedToClipboard": "{label} in die Zwischenablage kopiert!",
+    "failedToCopy": "Fehler beim Kopieren in die Zwischenablage",
+    "backToMyReservations": "Zurück zu meinen Reservierungen",
+    "checkIn": "Check-in",
+    "checkOut": "Check-out",
+    "location": "Standort",
+    "extraServices": "Zusatzleistungen",
+    "extras": "Extras",
+    "total": "Gesamt",
+    "guestsWithCount": "Gäste ({guestsCount})",
+    "address": "Adresse",
+    "payNow": "Jetzt bezahlen",
+    "nights": "Nächte",
+    "upgradeYourStay": "Werten Sie Ihren Aufenthalt auf",
+    "extendYourStay": "Verlängern Sie Ihren Aufenthalt",
+    "soldOut": "Ausverkauft",
+    "learnMore": "Mehr erfahren",
+    "price": "Preis:",
+    "perDay": "pro Tag",
+    "oneTime": "einmalig",
+    "allNights": "Alle Nächte",
+    "available": "verfügbar",
+    "addExtra": "{name}",
+    "confirm": "Bestätigen",
+    "selectDates": "Daten",
+    "selectAllAvailable": "Alle auswählen",
+    "information": "Informationen",
+    "needAnything": "Brauchen Sie etwas? Wir sind für Sie da.",
+    "contactsDescription": "Unser Team ist rund um die Uhr für Sie da, um Ihren Aufenthalt reibungslos, unkompliziert und stressfrei zu gestalten. Kontaktieren Sie uns jederzeit — wir sind nur einen Klick entfernt.",
+    "whatsappUs": "Per WhatsApp kontaktieren",
+    "emailUs": "Per E-Mail kontaktieren",
+    "informationItems": {
+      "1": "Co-Working-Bereich",
+      "2": "Gepäckschließfächer",
+      "3": "Self-Service-Closet",
+      "4": "Waschraum",
+      "5": "Kaffeemaschine im Zimmer",
+      "6": "Schnelles WLAN",
+      "7": "Fundbüro",
+      "8": "Zimmerreinigung",
+      "9": "Müllentsorgung"
+    },
+    "infoContent": {
+      "1": {
+        "description": [
+          "Ein ruhiger, gut beleuchteter Arbeitsplatz, der für Konzentration und Komfort konzipiert ist.",
+          "Genießen Sie eine ruhige Umgebung, schnelles WiFi und eine kleine Kaffeestation, die Sie den ganzen Tag über mit Energie versorgt."
+        ],
+        "card1": [
+          "Bequeme Stühle & ein ordentlicher Arbeitstisch",
+          "Schnelles WiFi",
+          "Kaffee jederzeit verfügbar"
+        ],
+        "card2": [
+          "Am Aufzug im Erdgeschoss gelegen",
+          "Den ganzen Tag über leicht zugänglich (24/7 geöffnet)"
+        ]
+      },
+      "2": {
+        "description": [
+          "Sichere, einfach zu bedienende Schließfächer für frühe Ankünfte und späte Abreisen — geben Sie Ihnen die vollständige Freiheit, zu erkunden, ohne Ihre Taschen zu tragen."
+        ],
+        "card1": [
+          "Vor dem Check-in und nach dem Check-out verfügbar",
+          "Vollständig sicher und einfach zu bedienen"
+        ],
+        "card2": [
+          "Auf der –1. Etage gelegen",
+          "Zugänglich über Aufzug oder Treppe",
+          "Öffnet mit dem gleichen PIN-Code wie Ihr Zimmer"
+        ]
+      },
+      "3": {
+        "description": [
+          "Unser Selbstbedienungsschrank bietet frische Handtücher, Toilettenartikel und wichtige Gegenstände, wann immer Sie sie benötigen — 24/7 verfügbar und nur wenige Schritte von Ihrem Zimmer entfernt."
+        ],
+        "card1": [
+          "Frische Handtücher",
+          "Toilettenartikel",
+          "Zimmeressentials"
+        ],
+        "card2": [
+          "Auf der –1. Etage gelegen",
+          "Zugänglich über Aufzug oder Treppe",
+          "Öffnet mit dem gleichen PIN-Code wie Ihr Zimmer"
+        ]
+      },
+      "4": {
+        "description": [
+          "Unser Waschraum ist verfügbar, wann immer Sie Ihre Kleidung waschen oder auffrischen möchten, ausgestattet mit allem, was Sie für ein reibungsloses Erlebnis benötigen."
+        ],
+        "card1": [
+          "Moderne Waschmaschinen & Trockner (gegen Aufpreis)",
+          "Bügeleisen & Bügelbrett",
+          "Trockengestell"
+        ],
+        "card2": [
+          "Auf der –1. Etage gelegen",
+          "Zugänglich über Aufzug oder Treppe",
+          "Öffnet mit dem gleichen PIN-Code wie Ihr Zimmer"
+        ]
+      },
+      "5": {
+        "description": [
+          "Jedes Zimmer verfügt über eine Kaffeemaschine mit kostenlosen Kapseln, sodass Sie einen ruhigen Moment am Morgen oder einen schnellen Energieschub vor dem Ausgehen genießen können."
+        ],
+        "card1": [
+          "Kaffeemaschine (die Marke der Kaffeemaschine (noch nicht bekannt)",
+          "Kostenlose Kapseln (hier dasselbe)"
+        ]
+      },
+      "6": {
+        "description": [
+          "Hochgeschwindigkeits-WiFi ist im gesamten Hotel verfügbar und bietet eine starke und zuverlässige Verbindung für Streaming, Videoanrufe oder Remote-Arbeit."
+        ]
+      },
+      "7": {
+        "description": [
+          "Wenn Sie während Ihres Aufenthalts etwas verlieren, kontaktieren Sie uns bitte, und wir werden unser Bestes tun, um Ihnen zu helfen, es zu finden."
+        ],
+        "lostCardTitle": "Haben Sie während Ihres Aufenthalts etwas verloren?",
+        "lostCardDescription": "Keine Sorge – wir helfen Ihnen gerne weiter. Wenn Sie einen Gegenstand in Ihrem Zimmer oder irgendwo im Gebäude verlegt haben, kontaktieren Sie uns bitte, und wir prüfen, ob er gefunden wurde.",
+        "howToReachTitle": "So erreichen Sie uns:",
+        "whatsapp": "WhatsApp:",
+        "email": "E-Mail:"
+      },
+      "8": {
+        "description": [
+          "Ihr Zimmer wird gründlich gereinigt, bevor Sie ankommen, sodass Sie sich ab der ersten Minute wohlfühlen können.",
+          "Während Ihres Aufenthalts bieten wir keine tägliche Zimmerreinigung oder täglichen Bettwäschewechsel an. Bei längeren Aufenthalten (7 Nächte oder mehr) arrangieren wir eine wöchentliche Auffrischung, die eine Grundreinigung und frische Bettwäsche/Handtücher umfasst.",
+          "Wir möchten unnötigen Wasser- und Chemikalienverbrauch reduzieren und gleichzeitig alles frisch für Sie halten.",
+          "Wenn Sie während Ihres Aufenthalts eine zusätzliche Reinigung wünschen, können Sie diese einfach in Ihrem Benutzerkabinett unter Reservierungen buchen. Zusätzliche Dienstleistungen sind gegen eine geringe Gebühr verfügbar."
+        ]
+      },
+      "9": {
+        "garbageTitle": "Sie können Ihren Müll im –1. Stock entsorgen. Dort finden Sie deutlich gekennzeichnete Behälter für Restmüll und Recycling. Frische Müllbeutel sowie kleine Abfalleimer sind bei Bedarf auch im Self-Service-Schrank verfügbar.",
+        "garbageDescription": "",
+        "garbageLocation": "Befindet sich im –1. Stock"
+      }
+    },
+    "name": "Vorname",
+    "lastName": "Nachname",
+    "email": "E-Mail",
+    "phone": "Telefon",
+    "discard": "Verwerfen",
+    "saving": "Wird gespeichert …",
+    "saveChanges": "Änderungen speichern",
+    "emailConfirmed": "E-Mail erfolgreich bestätigt! Ihre E-Mail-Adresse wurde aktualisiert.",
+    "changePassword": "Passwort ändern",
+    "createPassword": "Passwort erstellen",
+    "newPassword": "Neues Passwort",
+    "confirmPassword": "Passwort bestätigen",
+    "passwordRequirements": "Das Passwort muss mindestens 8 Zeichen lang sein und mindestens 1 Großbuchstaben, 1 Zahl und 1 Sonderzeichen enthalten",
+    "dangerZone": "Gefahrenbereich",
+    "deleteAccount": "Konto löschen",
+    "permanentlyDelete": "Löschen Sie Ihr Konto dauerhaft und alle damit verbundenen Daten. Diese Aktion kann nicht rückgängig gemacht werden.",
+    "typeDeleteToConfirm": "Geben Sie LÖSCHEN ein, um zu bestätigen",
+    "deleteWord": "LÖSCHEN",
+    "understandPermanent": "Ich verstehe, dass diese Aktion dauerhaft und unwiderruflich ist. Mein Konto und alle damit verbundenen Daten werden gelöscht.",
+    "deleting": "Wird gelöscht...",
+    "createAnAccount": "Konto erstellen",
+    "signUpDescription": "Registrieren Sie sich, um auf Ihr Profil zuzugreifen, Ihre Buchungen zu verwalten und alle Funktionen zu nutzen.",
+    "validEmailRequired": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+    "createAccountButton": "Konto erstellen",
+    "codeModalInstruction1": "Geben Sie am Haupteingang Ihren persönlichen PIN-Code auf dem Tastenfeld links neben der Tür ein.",
+    "codeModalInstruction2": "Bestätigen Sie die Eingabe mit der Häkchen-Taste.",
+    "codeModalInstruction3": "Die Tür entriegelt sich automatisch — bitte drücken Sie die Tür auf, um einzutreten.",
+    "codeModalInstruction4": "Folgen Sie nach dem Eintreten der Hotelbeschilderung, um Ihre Etage und Ihr Zimmer zu finden.",
+    "codeModalInstruction5": "Ihr PIN-Code funktioniert an allen relevanten Türen, einschließlich Ihrer Zimmertür.",
+    "whereToFindIt": "Wo Sie es finden:",
+    "locatedOnFloor": "Befindet sich im {floor}. Stock",
+    "editAddress": "Adresse bearbeiten",
+    "streetAddress": "Straße",
+    "houseNumber": "Hausnummer",
+    "postalCode": "Postleitzahl",
+    "city": "Ort",
+    "country": "Land",
+    "save": "Speichern"
+  },
+  "checkIn": {
+    "title": "Online-Check-In",
+    "subtitle": "Schließen Sie Ihren Online-Check-In ab. Ihr Zimmer-PIN-Code wird am Morgen Ihrer Ankunft verfügbar sein",
+    "enterReservationId": "Geben Sie Ihre Reservierungs-ID ein",
+    "reservationIdPlaceholder": "z.B. ABC123",
+    "reservationId": "Reservierungs-ID",
+    "cancel": "Abbrechen",
+    "search": "Suchen",
+    "searching": "Suchen...",
+    "loading": "Wird geladen...",
+    "error": "Reservierung nicht gefunden. Bitte überprüfen Sie Ihre ID und versuchen Sie es erneut.",
+    "found": "Reservierung gefunden!",
+    "bookingFound": "Buchung gefunden!",
+    "proceedToCheckIn": "Online-Check-In starten",
+    "bookingCancelled": "Diese Buchung wurde storniert.",
+    "cannotProceedCheckIn": "Online-Check-In ist für stornierte Buchungen nicht verfügbar."
+  },
+  "termsAndConditions": {
+    "title": "Allgemeine Geschäftsbedingungen",
+    "content": [
+      {
+        "title": "Anbieter / Vertragspartner / Geltungsbereich",
+        "paragraphs": [
+          "0.1 Vertragspartner für alle Buchungen und Leistungen ist ausschließlich:",
+          "<strong>MBoutique GmbH & Co. KG</strong>\n            Nazarethkirchstraße 51, 13347 Berlin, Deutschland\n            E-Mail: info@charlie-m.de",
+          "0.2 Diese Allgemeinen Geschäftsbedingungen gelten für alle Vereinbarungen über die entgeltliche Bereitstellung von Hotelzimmern zur Beherbergung (\"Einheiten\") und alle damit verbundenen Leistungen (\"Beherbergungsvertrag\") zwischen der MBoutique GmbH & Co. KG (\"Charlie M\") und dem Kunden/Gast (\"Gast\").",
+          "0.3 Abweichende oder ergänzende Geschäftsbedingungen des Gastes gelten nicht, es sei denn, Charlie M hat deren Gültigkeit ausdrücklich in Textform zugestimmt.",
+          "0.4 Das Objekt wird als klassisches Hotel/Beherbergungsbetrieb geführt. Eine Nutzung zu Wohn- oder Dauerwohnzwecken ist weder geschuldet noch beabsichtigt."
+        ]
+      },
+      {
+        "title": "Vertragsschluss / Mindestalter / Buchungen durch Dritte",
+        "paragraphs": [
+          "1.1 Mit Abschluss einer Buchung gibt der Gast ein verbindliches Angebot auf Abschluss eines Beherbergungsvertrags ab. Der Vertrag kommt zustande, sobald Charlie M die Buchung in Textform (z.B. per E-Mail) bestätigt oder die Buchung technisch bestätigt wird.",
+          "1.2 <strong>Mindestalter:</strong> Buchungen sind nur für Personen <strong>ab 18 Jahren</strong> zulässig.",
+          "1.3 <strong>Buchungen durch Dritte:</strong> Bucht ein Dritter im Namen eines Gastes (z.B. Firmenbuchung für Mitarbeiter), haftet der Dritte zusammen mit dem Gast gesamtschuldnerisch für alle Verpflichtungen aus dem Beherbergungsvertrag, soweit der Dritte als Buchungspartei auftritt und/oder die Buchung im eigenen Namen vornimmt."
+        ]
+      },
+      {
+        "title": "Buchungskanäle / Vorrang von OTA-Regeln",
+        "paragraphs": [
+          "2.1 Buchungen können über die Charlie M Website sowie über Drittanbieter (z.B. OTAs wie Buchungsplattformen) erfolgen.",
+          "2.2 <strong>Buchungen über Drittanbieter:</strong> Wird eine Buchung über einen Drittanbieter vorgenommen, gelten zusätzlich die während des jeweiligen Buchungsvorgangs angezeigten und akzeptierten Buchungs- und Stornierungsbedingungen. Bei Konflikten zwischen Drittanbieterbedingungen und diesen AGB haben die Drittanbieterbedingungen im Verhältnis zwischen Gast und Drittanbieter Vorrang; im Verhältnis zwischen Gast und Charlie M gelten diese AGB, soweit nicht zwingende Drittanbieterregeln Vorrang haben."
+        ]
+      },
+      {
+        "title": "Preise / Steuern / City Tax (Berlin)",
+        "paragraphs": [
+          "3.1 Es gelten die zum Zeitpunkt des Vertragsschlusses angezeigten Preise.",
+          "3.2 <strong>City Tax / Beherbergungssteuer:</strong>",
+          "• Bei Buchungen über Drittanbieter (OTAs) ist die City Tax <strong>im Preis enthalten</strong>.",
+          "• Bei Buchungen über die Charlie M Website wird die City Tax <strong>gesondert ausgewiesen und zusätzlich berechnet</strong>, soweit sie nach den jeweiligen gesetzlichen Bestimmungen anfällt.",
+          "3.3 Gesetzliche Steuern oder Abgaben können sich ändern. Charlie M ist berechtigt, Preise anzupassen, wenn Steuern, Gebühren oder Abgaben nach Vertragsschluss geändert oder neu eingeführt werden und der Zeitraum zwischen Vertragsschluss und Leistungserbringung nicht nur kurzfristig ist. Eine Preisanpassung beschränkt sich ausschließlich auf die objektiv gestiegenen Kosten."
+        ]
+      },
+      {
+        "title": "Zahlungsbedingungen (Vorkasse / Zahlungsmethoden)",
+        "paragraphs": [
+          "4.1 <strong>Vorkasse:</strong> Der gesamte Buchungsbetrag ist stets <strong>im Voraus</strong> zu zahlen.",
+          "4.2 <strong>Belastungszeitpunkt:</strong> Die Zahlung wird <strong>sofort bei Buchung</strong> belastet.",
+          "4.3 <strong>Zahlungsmethoden:</strong> Es werden nur Kartenzahlungen und Wallets über den Zahlungsdienstleister (z.B. Kredit-/Debitkarte, digitale Geldbörsen) akzeptiert. Überweisungen und Barzahlungen sind ausgeschlossen.",
+          "4.4 Charlie M ist berechtigt, bei Verstößen gegen diese AGB oder nachträglichen Kosten (z.B. Schäden, Vertragsstrafen, Sonderreinigung, Notfall- oder Servicekosten) die hinterlegte Zahlungsmethode des Gastes mit den ausstehenden Beträgen zu belasten, soweit gesetzlich zulässig."
+        ]
+      },
+      {
+        "title": "Kein Anspruch auf bestimmtes Zimmer / Upgrade / Verlegung",
+        "paragraphs": [
+          "5.1 Es besteht kein Anspruch auf eine bestimmte Einheit oder Zimmernummer; geschuldet ist die gebuchte <strong>Zimmerkategorie</strong>.",
+          "5.2 Charlie M ist berechtigt, dem Gast ein <strong>gleichwertiges oder höherwertiges Zimmer</strong> (Upgrade) zuzuweisen.",
+          "5.3 Bei technischen Problemen oder betrieblichen Gründen ist Charlie M berechtigt, den Gast innerhalb des Objekts zu verlegen. Eine Unterbringung außerhalb des Objekts ist nicht geschuldet."
+        ]
+      },
+      {
+        "title": "Stornierung / No-Show / Vorzeitige Abreise / Gruppenbuchungen / Messe- & Veranstaltungszeiten",
+        "paragraphs": [
+          "6.1 <strong>Tarifstruktur:</strong> Charlie M bietet erstattbare und nicht erstattbare Tarife. Die maßgeblichen Stornierungsfristen ergeben sich aus der während des Buchungsvorgangs angezeigten Tarifrichtlinie.",
+          "6.2 <strong>No-Show (Nichterscheinen):</strong>",
+          "• <strong>Erstattbarer/Flexibler Tarif:</strong> Die erste Nacht wird berechnet; verbleibende Nächte können freigegeben werden.",
+          "• <strong>Nicht erstattbarer/Vorauszahlungstarif: 100% des Buchungsbetrags</strong> werden berechnet.",
+          "6.3 <strong>Vorzeitige Abreise:</strong> Bei vorzeitiger Abreise bleibt der Anspruch auf den vollen Buchungsbetrag bestehen (100% der gebuchten Leistung), es sei denn, zwingende gesetzliche Bestimmungen sehen anderes vor.",
+          "6.4 <strong>Gruppenbuchungen:</strong> Eine Gruppenbuchung liegt ab fünf (5) Einheiten vor. Es können gesonderte Zahlungs- und Stornierungsbedingungen gelten, die in dem jeweiligen Angebot oder der Vereinbarung in Textform festgelegt werden.",
+          "6.5 <strong>Messe-/Veranstaltungszeiten:</strong> Es gelten die jeweiligen Tarifrichtlinien. Abweichende Stornierungsfristen werden"
+        ]
+      },
+      {
+        "title": "Check-in / Identitätsprüfung / Zugang (100% digital)",
+        "paragraphs": [
+          "7.1 Das Objekt wird <strong>100% digital</strong> betrieben. Ein physischer Check-in vor Ort ist nicht geschuldet.",
+          "7.2 <strong>Online-Check-in ist verpflichtend</strong> für den Zugang zur Einheit.",
+          "7.3 <strong>Identitätsprüfung:</strong>",
+          "• Der <strong>Hauptgast</strong> muss seine Identität während des <strong>Online-Check-ins</strong> mit einem gültigen Ausweisdokument verifizieren.",
+          "• Zusätzliche Gäste müssen namentlich registriert werden; eine Ausweisprüfung für alle Begleitpersonen ist nicht verpflichtend, es sei denn, dies ist gesetzlich vorgeschrieben.",
+          "7.4 <strong>Fehlgeschlagene Verifizierung:</strong> Kann die Identität des Hauptgastes nicht zuverlässig verifiziert werden (z.B. fehlende/ungültige Dokumente oder Verdacht auf Manipulation), ist Charlie M berechtigt, die Buchung zu stornieren und den Zugang zu verweigern.",
+          "7.5 <strong>Minderjährige:</strong> Minderjährige dürfen nur in Begleitung oder unter Verantwortung eines erwachsenen Gastes übernachten."
+        ]
+      },
+      {
+        "title": "Digitale Schlüssel / Zugangsdaten / Protokolle / Missbrauch",
+        "paragraphs": [
+          "8.1 Der Zugang erfolgt über digitale Schlüssel/Zugangsdaten, die zeitlich auf die Check-in- und Check-out-Periode beschränkt sind.",
+          "8.2 <strong>Weitergabeverbot:</strong> Die Weitergabe von Zugangsdaten/Schlüsseln an Dritte ist verboten. Bereits die Weitergabe stellt einen Verstoß dar, auch ohne daraus resultierenden Schaden.",
+          "8.3 <strong>Missbrauch/Manipulation:</strong> Bei Missbrauch, Manipulation, unbefugter Weitergabe oder Sicherheitsbedenken ist Charlie M berechtigt, den Zugang zu sperren und den Aufenthalt zu beenden.",
+          "8.4 Bei Verstoß gegen das Weitergabeverbot von Zugangsdaten ist Charlie M berechtigt, eine <strong>Vertragsstrafe von EUR 300,00</strong> zu erheben. Unabhängig davon haftet der Gast für <strong>alle zusätzlich entstandenen Kosten</strong>, insbesondere für Maßnahmen zur Wiederherstellung der Sicherheit (z.B. Sperrung oder Neuausstellung digitaler Schlüssel, Schlossverwaltung, Service- oder technische Interventionen).",
+          "8.5 <strong>Zugangsprotokolle:</strong> Zugangsereignisse können zu Sicherheitszwecken protokolliert werden."
+        ]
+      },
+      {
+        "title": "Hausordnung: Rauchverbot / Partys / Ruhezeiten / Brandmeldeanlage",
+        "paragraphs": [
+          "9.1 <strong>Rauchverbot:</strong> Das Rauchen ist in den Einheiten und allen Innenbereichen (einschließlich E-Zigaretten) strengstens verboten. Verstöße werden mit einer <strong>Vertragsstrafe von EUR 300,00</strong> geahndet. Weitere Schadensersatzansprüche (z.B. Geruchsbeseitigung, Textilreinigung, Nutzungsausfall) bleiben vorbehalten.",
+          "9.2 <strong>Brandmeldeanlage:</strong> Wird ein Feueralarm aufgrund eines schuldhaften Verhaltens des Gastes (insbesondere Rauchen) ausgelöst, schuldet der Gast zusätzlich eine <strong>Pauschale von EUR 1.500,00</strong>, unbeschadet des Nachweises höherer tatsächlicher Kosten (z.B. Feuerwehreinsatz).",
+          "9.3 <strong>Partys/Veranstaltungen:</strong> Partys und Veranstaltungen sind verboten. Bei Verstoß: <strong>Vertragsstrafe von EUR 300,00 zuzüglich Schadensersatz</strong> (z.B. zusätzliche Reinigung, Inventarschäden, Umsatzausfall).",
+          "9.4 <strong>Ruhezeiten:</strong> Nachtruhezeiten gelten von <strong>22:00 Uhr bis 8:00 Uhr</strong>. Lärmstörungen müssen vermieden werden."
+        ]
+      },
+      {
+        "title": "Besucher / Zusätzliche Personen / Gewerbliche Nutzung",
+        "paragraphs": [
+          "10.1 <strong>Besucher:</strong> Besucher sind nicht gestattet. Der Zugang wird ausschließlich den in der Buchung aufgeführten Gästen gewährt.",
+          "10.2 <strong>Verbot der gewerblichen Nutzung:</strong> Jede gewerbliche Nutzung der Einheit ist verboten, insbesondere kostenpflichtige Dienstleistungen, Behandlungen oder Angebote innerhalb des Zimmers (z.B. Massagen, Escort-/Sexdienstleistungen, Coaching oder Beratung mit Kunden, Foto- oder Videoaufnahmen zu gewerblichen Zwecken, Veranstaltungen jeglicher Art).",
+          "10.3 <strong>Vertragsstrafe:</strong> Bei Verstoß gegen Abschnitt 10.2 gilt eine <strong>Vertragsstrafe von EUR 500,00</strong>. Zusätzlich ist Charlie M berechtigt, den Aufenthalt sofort zu beenden und weitere Schäden geltend zu machen."
+        ]
+      },
+      {
+        "title": "Schäden / Sonderreinigung / Gästeüberwachungsgeräte",
+        "paragraphs": [
+          "11.1 Der Gast hat die Einheit mit der gebotenen Sorgfalt zu behandeln.",
+          "11.2 <strong>Sonderreinigung:</strong> Bei übermäßiger Verschmutzung oder außergewöhnlichem Reinigungsaufwand kann Charlie M eine Mindestgebühr (z.B. ab EUR 50,00) sowie zusätzliche Kosten nach tatsächlichem Aufwand berechnen.",
+          "11.3 <strong>Schäden/Diebstahl:</strong> Der Gast haftet für Schäden und Verluste, die durch den Gast oder durch Dritte verursacht werden, denen der Gast Zugang gewährt hat. Die Entschädigung kann auch Nutzungsausfall umfassen, soweit gesetzlich zulässig.",
+          "11.4 <strong>Verbot gästegeführter Kameras:</strong> Der Betrieb von Kameras oder Überwachungsgeräten durch Gäste innerhalb der Einheit ist verboten. Bei Verstoß kann Charlie M den Aufenthalt beenden und Kosten und Schäden geltend machen."
+        ]
+      },
+      {
+        "title": "Haustiere",
+        "paragraphs": [
+          "12.1 Hunde können <strong>gegen eine einmalige Gebühr pro Aufenthalt</strong> gestattet werden, sofern diese Option während des Buchungsvorgangs oder im Benutzerkabinett angeboten wird. Das Mitbringen von Haustieren ohne vorherige Buchung oder Genehmigung ist nicht gestattet. Es wird keine Gebührenbefreiung gewährt, auch nicht für Assistenz- oder Servicehunde, da unabhängig von der Tierart erhöhte Reinigungs- und Hygienemaßnahmen anfallen."
+        ]
+      },
+      {
+        "title": "Reinigung / Hauswirtschaft / Zugang für Wartung",
+        "paragraphs": [
+          "13.1 Die Reinigung erfolgt bei Abreise.",
+          "13.2 Bei Aufenthalten von <strong>mehr als sieben (7) Nächten</strong> wird eine zusätzliche <strong>wöchentliche Reinigung</strong> durchgeführt. Zusätzliche Reinigungen können gegen Gebühr gebucht werden, sofern angeboten.",
+          "13.3 <strong>Verpflichtende Reinigung:</strong> Bei Aufenthalten von 7+ Nächten ist die Reinigung verpflichtend. Verweigert der Gast die Reinigung, gilt eine <strong>Vertragsstrafe von EUR 200,00</strong>.",
+          "13.4 <strong>Wartung/technischer Zugang:</strong> Der Gast muss einen Zugang für Wartungs- oder technische Arbeiten nach <strong>mindestens 12-stündiger Vorankündigung</strong> dulden. In dringenden Fällen (unmittelbare Gefahr, Sicherheit oder Schadensverhütung) ist ein Zugang ohne Vorankündigung zulässig."
+        ]
+      },
+      {
+        "title": "Gepäckschließfächer / Waschräume / Parkplätze / Fahrräder",
+        "paragraphs": [
+          "14.1 Gepäckschließfächer und Waschräume werden nach Verfügbarkeit zur Nutzung bereitgestellt. Die Nutzung erfolgt auf eigene Gefahr. Charlie M übernimmt keine Haftung für Verlust, Diebstahl oder Schäden, soweit gesetzlich zulässig.",
+          "14.2 <strong>Parkplätze/Fahrradstellplätze:</strong> Die Nutzung erfolgt auf eigene Gefahr. Charlie M übernimmt keine Haftung für Einbrüche, Diebstahl oder Schäden, soweit gesetzlich zulässig."
+        ]
+      },
+      {
+        "title": "Fundsachen",
+        "paragraphs": [
+          "15.1 Fundsachen werden für <strong>sechs (6) Monate</strong> aufbewahrt.",
+          "15.2 Versand erfolgt nur auf Anfrage. Es gilt eine <strong>Bearbeitungsgebühr von EUR 30,00</strong>. Versand innerhalb Deutschlands wird pauschal mit <strong>EUR 15,00</strong> berechnet (bis 20 kg). Europäischer und weltweiter Versand wird nach DHL-Tarifen berechnet."
+        ]
+      },
+      {
+        "title": "Internet / WLAN",
+        "paragraphs": [
+          "16.1 Charlie M stellt Internetzugang im Rahmen der technischen Verfügbarkeit bereit; Störungen können auftreten.",
+          "16.2 Missbrauch ist verboten, insbesondere illegales File-Sharing, illegales Streaming und das Abrufen oder Verbreiten rechtswidriger Inhalte. Der Gast ist verpflichtet, die Rechte Dritter zu respektieren.",
+          "16.3 Der Gast stellt Charlie M von Ansprüchen Dritter frei, die aus rechtswidriger Nutzung entstehen, soweit gesetzlich zulässig.",
+          "16.4 Charlie M ist berechtigt, den Internetzugang bei Missbrauch zu sperren."
+        ]
+      },
+      {
+        "title": "Höhere Gewalt / Nichtverfügbarkeit",
+        "paragraphs": [
+          "17.1 Bei höherer Gewalt oder Ereignissen, die nicht Charlie M zuzurechnen sind (z.B. Brand, Wasserschaden, Stromausfall, behördliche Anordnungen, Pandemien oder andere betriebliche Störungen), kann Charlie M Leistungen ganz oder teilweise aussetzen.",
+          "17.2 In solchen Fällen werden bereits gezahlte Beträge für nicht erbrachte Leistungen gegebenenfalls erstattet; weitere Schadensersatzansprüche sind ausgeschlossen, soweit gesetzlich zulässig."
+        ]
+      },
+      {
+        "title": "Kündigung / Durchsetzung der Hausordnung / Räumung",
+        "paragraphs": [
+          "18.1 Charlie M ist berechtigt, den Beherbergungsvertrag aus wichtigem Grund ohne Einhaltung einer Kündigungsfrist zu kündigen, insbesondere bei Gewalt, Drogenhandel, Prostitution oder kostenpflichtigen Sexdienstleistungen, schwerwiegenden Regelverstößen, Missbrauch von Zugangsdaten, Partys, erheblichen Lärmstörungen oder Sicherheitsrisiken.",
+          "18.2 In solchen Fällen kann Charlie M die sofortige Räumung der Einheit verlangen und den Zugang sperren.",
+          "18.3 <strong>Räumung ohne Erstattung + Schadensersatz:</strong> Bei schuldhaftem Verhalten des Gastes kann Charlie M (a) jede Erstattung verweigern und (b) zusätzlich Schadensersatz geltend machen, soweit gesetzlich zulässig."
+        ]
+      },
+      {
+        "title": "Weiterverkauf / Untervermietung / Abtretung",
+        "paragraphs": [
+          "19.1 Der Weiterverkauf von Buchungen, Untervermietung, Weitergabe oder Abtretung von Ansprüchen ist verboten.",
+          "19.2 Bei Verstoß ist Charlie M berechtigt, die Buchung zu stornieren; ein Anspruch auf Erstattung ist ausgeschlossen, soweit gesetzlich zulässig."
+        ]
+      },
+      {
+        "title": "Melderecht / Wohnsitzanmeldung",
+        "paragraphs": [
+          "20.1 Die Anmeldung der Einheit als Wohnsitz ist grundsätzlich nicht gestattet.",
+          "20.2 Ausnahmen erfordern die <strong>vorherige schriftliche Genehmigung</strong> von Charlie M.",
+          "20.3 Bei Verstoß kann Charlie M den Aufenthalt beenden und Kosten und Schäden geltend machen."
+        ]
+      },
+      {
+        "title": "Kommunikation / Textform / Sprache",
+        "paragraphs": [
+          "21.1 Per E-Mail versandte Buchungsbestätigungen sind verbindlich.",
+          "21.2 WhatsApp-Kommunikation kann zu Supportzwecken verwendet werden; Vertragsänderungen erfordern Textform (z.B. E-Mail), es sei denn, Charlie M bestätigt ausdrücklich anderes.",
+          "21.3 Betriebliche Kommunikation kann auch auf Englisch erfolgen. Die <strong>deutsche Version</strong> dieser AGB ist rechtlich verbindlich."
+        ]
+      },
+      {
+        "title": "Streitbeilegung",
+        "paragraphs": [
+          "Charlie M ist grundsätzlich bereit, an einem Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen, soweit dies gesetzlich vorgesehen oder im Einzelfall sachgerecht ist."
+        ]
+      },
+      {
+        "title": "Schlussbestimmungen / Gerichtsstand / Salvatorische Klausel",
+        "paragraphs": [
+          "23.1 Es gilt deutsches Recht unter Ausschluss des UN-Kaufrechts (CISG).",
+          "23.2 Bei Handelsgeschäften ist Gerichtsstand Berlin. Für Verbraucher gelten die gesetzlichen Gerichtsstände.",
+          "23.3 Änderungen und Ergänzungen erfordern Textform (E-Mail genügt), es sei denn, eine strengere Form ist gesetzlich vorgeschrieben.",
+          "23.4 Sollte eine Bestimmung dieser AGB unwirksam sein oder werden, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt. An die Stelle der unwirksamen Bestimmung tritt die gesetzliche Regelung."
+        ]
+      }
+    ]
+  },
+  "privacyPolicy": {
+    "title": "Datenschutzerklärung",
+    "content": [
+      {
+        "title": "Verantwortlicher",
+        "paragraphs": [
+          "Verantwortlicher im Sinne von Art. 4 Nr. 7 DSGVO ist:",
+          "<strong>MBoutique GmbH & Co. KG</strong>\n            Nazarethkirchstraße 51\n            13347 Berlin\n            Deutschland",
+          "E-Mail: info@charlie-m.de",
+          "Es wurde ein <strong>interner Datenschutzbeauftragter</strong> bestellt.\n            Der Datenschutzbeauftragte kann über die oben genannte Adresse kontaktiert werden."
+        ]
+      },
+      {
+        "title": "Geltungsbereich dieser Datenschutzerklärung",
+        "paragraphs": [
+          "Diese Datenschutzerklärung informiert Sie über die Verarbeitung personenbezogener Daten im Zusammenhang mit:",
+          "• dem Betrieb unserer Website,",
+          "• der Buchung und Bereitstellung von Hotelunterkünften,",
+          "• dem vollautomatisierten Check-in-Prozess,",
+          "• der Nutzung digitaler Zugangssysteme,",
+          "• der Kommunikation mit Gästen (E-Mail, Telefon, WhatsApp),",
+          "• der Zahlungsabwicklung,",
+          "• der Analyse und Optimierung des Hotelbetriebs.",
+          "Personenbezogene Daten sind alle Informationen, die sich auf eine identifizierte oder identifizierbare natürliche Person beziehen."
+        ]
+      },
+      {
+        "title": "Rechtsgrundlagen für die Verarbeitung",
+        "paragraphs": [
+          "Wir verarbeiten personenbezogene Daten ausschließlich in Übereinstimmung mit der DSGVO, insbesondere auf Grundlage von:",
+          "• <strong>Art. 6 Abs. 1 lit. a DSGVO</strong> - Einwilligung",
+          "• <strong>Art. 6 Abs. 1 lit. b DSGVO</strong> - Erfüllung eines Vertrags / vorvertragliche Maßnahmen",
+          "• <strong>Art. 6 Abs. 1 lit. c DSGVO</strong> - rechtliche Verpflichtung",
+          "• <strong>Art. 6 Abs. 1 lit. f DSGVO</strong> - berechtigtes Interesse"
+        ]
+      },
+      {
+        "title": "Minderjährige",
+        "paragraphs": [
+          "Unsere Dienstleistungen richten sich an Erwachsene.",
+          "Minderjährige dürfen nur in Begleitung ihrer gesetzlichen Vertreter in unserem Hotel übernachten.",
+          "Es findet keine eigenständige Verarbeitung personenbezogener Daten von Minderjährigen statt."
+        ]
+      },
+      {
+        "title": "Buchung und Aufenthalt",
+        "paragraphs": [
+          "Im Rahmen von Buchung und Unterbringung verarbeiten wir insbesondere folgende Daten:",
+          "• Vor- und Nachname",
+          "• E-Mail-Adresse",
+          "• Telefonnummer",
+          "• Rechnungs- und gegebenenfalls Firmenadresse",
+          "• Aufenthaltsdetails (An- und Abreisedaten, Zimmerzuweisung)",
+          "• Buchungs- und Zahlungsreferenzen",
+          "<strong>Zweck:</strong>\n            Abschluss, Erfüllung und Abwicklung des Beherbergungsvertrags.",
+          "<strong>Rechtsgrundlage:</strong>\n            Art. 6 Abs. 1 lit. b DSGVO."
+        ]
+      },
+      {
+        "title": "Gesetzliche Meldepflichten (Bundesmeldegesetz)",
+        "paragraphs": [
+          "Für Gäste, die keine deutschen Staatsangehörigen sind, werden Meldedaten gemäß §§ 29 ff. des Bundesmeldegesetzes (BMG) verarbeitet.",
+          "<strong>Rechtsgrundlage:</strong>\n            Art. 6 Abs. 1 lit. c DSGVO i.V.m. §§ 29 und 30 BMG.",
+          "<strong>Aufbewahrungsdauer:</strong>\n            Ein Jahr ab dem Abreisedatum; Löschung innerhalb von drei Monaten danach."
+        ]
+      },
+      {
+        "title": "Property Management System (Apaleo)",
+        "paragraphs": [
+          "Für die Verwaltung von Buchungen, Aufenthalten, Gästedaten und internen Hotelbetriebsabläufen nutzen wir das Property Management System <strong>apaleo GmbH</strong>.",
+          "<strong>Anbieter:</strong>\n            apaleo GmbH\n            Dachauer Straße 15A\n            80335 München\n            Deutschland",
+          "Über Apaleo werden insbesondere folgende personenbezogene Daten verarbeitet:",
+          "• Name",
+          "• Kontaktdaten",
+          "• Buchungs- und Aufenthaltsinformationen",
+          "• Zimmer- und Aufenthaltszuweisung",
+          "• Rechnungs- und gegebenenfalls Firmeninformationen",
+          "<strong>Zweck:</strong>\n            Ordnungsgemäße Verwaltung des Hotelbetriebs und Erfüllung von Beherbergungsverträgen.",
+          "<strong>Rechtsgrundlage:</strong>\n            Art. 6 Abs. 1 lit. b DSGVO und Art. 6 Abs. 1 lit. f DSGVO.",
+          "Apaleo handelt als <strong>Auftragsverarbeiter</strong> im Sinne von Art. 28 DSGVO.",
+          "Es wurde eine entsprechende Vereinbarung zur Auftragsverarbeitung geschlossen.",
+          "Die Verarbeitung erfolgt <strong>ausschließlich auf Servern innerhalb der Europäischen Union</strong>."
+        ]
+      },
+      {
+        "title": "Digitaler Check-in (Guestway)",
+        "paragraphs": [
+          "Wir nutzen <strong>Guestway</strong> für einen vollautomatisierten Check-in-Prozess.",
+          "Folgende Daten können verarbeitet werden:",
+          "• Name",
+          "• Kontaktdaten",
+          "• Buchungs- und Aufenthaltsinformationen",
+          "• Identifikationsdaten (hochgeladen oder manuell eingegeben), soweit erforderlich",
+          "<strong>Zweck:</strong>\n            Durchführung des Check-in-Prozesses und Erfüllung rechtlicher Verpflichtungen.",
+          "<strong>Rechtsgrundlagen:</strong>\n            Art. 6 Abs. 1 lit. b DSGVO\n            Art. 6 Abs. 1 lit. c DSGVO",
+          "Identifikationsdaten werden nur so lange gespeichert, wie gesetzlich erforderlich, und anschließend gelöscht.",
+          "Der Check-in-Prozess ist vollautomatisiert.",
+          "<strong>Es findet keine automatisierte Entscheidungsfindung im Sinne von Art. 22 DSGVO statt.</strong> "
+        ]
+      },
+      {
+        "title": "Digitale Zugangssysteme (SALTO KS)",
+        "paragraphs": [
+          "Wir nutzen <strong>SALTO KS</strong> für die digitale Zugangskontrolle.",
+          "Folgende Daten werden verarbeitet:",
+          "• Gästename",
+          "• Aufenthaltsdauer",
+          "• Zimmerzuweisung",
+          "• Zugangsprotokolle (Zeitpunkt und Datum des Türzugangs)",
+          "<strong>Zweck:</strong>\n            Sicherheit, Nachvollziehbarkeit und ordnungsgemäßer Hotelbetrieb.",
+          "<strong>Rechtsgrundlage:</strong>\n            Art. 6 Abs. 1 lit. f DSGVO.",
+          "Zugangsprotokolle werden nur für einen begrenzten Zeitraum gespeichert und gelöscht, es sei denn, sicherheitsrelevante Vorfälle erfordern eine längere Aufbewahrung.",
+          "Der Zugang ist nur für die Geschäftsleitung beschränkt."
+        ]
+      },
+      {
+        "title": "Zahlungsabwicklung (Adyen)",
+        "paragraphs": [
+          "Die Zahlungsabwicklung erfolgt über <strong>Adyen</strong>.",
+          "Adyen handelt als unabhängiger Verantwortlicher im Sinne der DSGVO.",
+          "<strong>Rechtsgrundlage:</strong>\n            Art. 6 Abs. 1 lit. b DSGVO.",
+          "Wir erhalten keine vollständigen Zahlungsdetails (z.B. vollständige Kreditkartennummern)."
+        ]
+      },
+      {
+        "title": "Kommunikation mit Gästen",
+        "paragraphs": [
+          "Wir kommunizieren mit Gästen über:",
+          "• E-Mail",
+          "• Telefon",
+          "• WhatsApp Business (über WhatsApp Ireland Ltd. und Twilio)",
+          "Die Kommunikation dient:",
+          "• der Erfüllung des Beherbergungsvertrags,",
+          "• der Bearbeitung von Anfragen,",
+          "• der Gästebetreuung während des Aufenthalts,",
+          "• der Kommunikation nach dem Aufenthalt (z.B. Feedback).",
+          "<strong>Rechtsgrundlagen:</strong>\n            Art. 6 Abs. 1 lit. b DSGVO\n            Art. 6 Abs. 1 lit. f DSGVO\n            Art. 6 Abs. 1 lit. a DSGVO (WhatsApp)",
+          "Die Einwilligung zur WhatsApp-Kommunikation kann jederzeit widerrufen werden."
+        ]
+      },
+      {
+        "title": "Automatisierte Nachrichten und Serviceanalyse",
+        "paragraphs": [
+          "Vor dem Aufenthalt, während des Aufenthalts und nach dem Aufenthalt können automatisch Nachrichten versendet werden.",
+          "Support-Anfragen werden gespeichert und analysiert, um die Servicequalität und interne Prozesse zu verbessern.",
+          "<strong>Rechtsgrundlage:</strong>\n            Art. 6 Abs. 1 lit. f DSGVO."
+        ]
+      },
+      {
+        "title": "Website-Nutzung und Logdateien",
+        "paragraphs": [
+          "Beim Besuch unserer Website werden folgende Daten verarbeitet:",
+          "• IP-Adresse",
+          "• Datum und Uhrzeit des Zugriffs",
+          "• aufgerufene Seiten",
+          "• Browser- und Betriebssystemdaten",
+          "<strong>Zweck:</strong>\n            Gewährleistung der Stabilität und Sicherheit der Website.",
+          "<strong>Rechtsgrundlage:</strong>\n            Art. 6 Abs. 1 lit. f DSGVO.",
+          "<strong>Aufbewahrungsdauer:</strong>\n            Maximal 14 Tage."
+        ]
+      },
+      {
+        "title": "Google Analytics",
+        "paragraphs": [
+          "Wir nutzen Google Analytics ausschließlich mit aktivierter IP-Anonymisierung.",
+          "• kein Profiling",
+          "• kein Remarketing",
+          "• keine Zusammenführung mit anderen Daten",
+          "<strong>Rechtsgrundlage:</strong>\n            Art. 6 Abs. 1 lit. a DSGVO (Einwilligung)."
+        ]
+      },
+      {
+        "title": "Cookies",
+        "paragraphs": [
+          "Wir nutzen:",
+          "• technisch notwendige Cookies (Art. 6 Abs. 1 lit. f DSGVO),",
+          "• Analyse-Cookies nur mit Einwilligung (Art. 6 Abs. 1 lit. a DSGVO)."
+        ]
+      },
+      {
+        "title": "Hosting und Backups",
+        "paragraphs": [
+          "Die Datenverarbeitung erfolgt ausschließlich auf Servern, die sich innerhalb der Europäischen Union befinden.",
+          "Regelmäßige Backups werden erstellt und nach definierten Aufbewahrungsfristen gelöscht."
+        ]
+      },
+      {
+        "title": "Aufbewahrungsfristen",
+        "paragraphs": [
+          "Personenbezogene Daten werden gelöscht, sobald der jeweilige Zweck nicht mehr besteht und keine gesetzlichen Aufbewahrungspflichten bestehen."
+        ]
+      },
+      {
+        "title": "Rechte der Betroffenen",
+        "paragraphs": [
+          "Betroffene haben das Recht auf:",
+          "• Auskunft (Art. 15 DSGVO)",
+          "• Berichtigung (Art. 16 DSGVO)",
+          "• Löschung (Art. 17 DSGVO)",
+          "• Einschränkung der Verarbeitung (Art. 18 DSGVO)",
+          "• Datenübertragbarkeit (Art. 20 DSGVO)",
+          "• Widerspruch (Art. 21 DSGVO)",
+          "• Widerruf der Einwilligung jederzeit (Art. 7 Abs. 3 DSGVO)"
+        ]
+      },
+      {
+        "title": "Aufsichtsbehörde",
+        "paragraphs": [
+          "Berliner Beauftragte für Datenschutz und Informationsfreiheit",
+          "https://www.datenschutz-berlin.de"
+        ]
+      },
+      {
+        "title": "Änderungen dieser Datenschutzerklärung",
+        "paragraphs": [
+          "Wir behalten uns vor, diese Datenschutzerklärung bei rechtlichen oder technischen Änderungen mit Wirkung für die Zukunft zu ändern."
+        ]
+      }
+    ]
+  },
+  "forgotPassword": {
+    "title": "Passwort vergessen?",
+    "subtitle": "Geben Sie Ihre E-Mail-Adresse ein, um das Passwort zurückzusetzen",
+    "email": "E-Mail",
+    "loading": "Wird geladen …",
+    "resetPassword": "Passwort zurücksetzen",
+    "rememberPassword": "Passwort wieder eingefallen?",
+    "login": "Anmelden",
+    "checkEmail": "Überprüfen Sie Ihre E-Mail-Adresse",
+    "confirmationSent": "Wir haben einen Link an Ihre E-Mail-Adresse gesendet, um das Passwort zurückzusetzen",
+    "ok": "Ok",
+    "failedToSend": "Fehler beim Senden des Reset-Links"
+  },
+  "login": {
+    "welcome": "Willkommen bei Charlie M",
+    "title": "Anmelden",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "forgotPassword": "Passwort vergessen?",
+    "loading": "Wird geladen…",
+    "loginButton": "Anmelden",
+    "noAccount": "Noch kein Konto?",
+    "signUp": "Registrieren",
+    "backToLogin": "← Zurück zur Anmeldung",
+    "continueWithReservationId": "Mit Reservierungsnummer fortfahren",
+    "enterBookingNumber": "Buchungs-ID oder Reservierungs-ID eingeben",
+    "enterReservationId": "Geben Sie Ihre Reservierungs-ID ein",
+    "lastName": "Nachname",
+    "searching": "Wird gesucht …",
+    "continue": "Weiter",
+    "notFound": "Nicht gefunden",
+    "nothingFound": "Für diese Reservierungsnummer wurde nichts gefunden. Bitte überprüfen Sie die Eingabe und versuchen Sie es erneut.",
+    "ok": "Ok",
+    "checkBookingId": "Bitte überprüfen Sie die Buchungsnummer",
+    "noMatchesFound": "Leider wurden keine Übereinstimmungen gefunden",
+    "serverErrorTryAgain": "Serverfehler. Bitte versuchen Sie es erneut.",
+    "continueWithApple": "Mit Apple fortfahren",
+    "continueWithGoogle": "Mit Google fortfahren",
+    "loginFailed": "Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten und versuchen Sie es erneut."
+  },
+  "resetPassword": {
+    "newPassword": "Neues Passwort",
+    "enterNewPassword": "Geben Sie Ihr neues Passwort ein",
+    "password": "Passwort",
+    "confirmPassword": "Passwort bestätigen",
+    "updating": "Wird aktualisiert …",
+    "loading": "Wird geladen …",
+    "save": "Speichern",
+    "successfully": "Erfolgreich",
+    "passwordChangedSuccessfully": "Ihr Passwort wurde erfolgreich geändert",
+    "ok": "Ok",
+    "invalidOrExpiredResetLink": "Ungültiger oder abgelaufener Zurücksetzungslink. Bitte fordern Sie einen neuen an.",
+    "somethingWentWrong": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+    "failedToSavePassword": "Passwort konnte nicht gespeichert werden",
+    "passwordRequirements": "Das Passwort muss mindestens 8 Zeichen lang sein und mindestens 1 Großbuchstaben und 1 Sonderzeichen enthalten"
+  },
+  "signUp": {
+    "welcome": "Willkommen bei Charlie M",
+    "title": "Registrieren",
+    "fullName": "Vollständiger Name",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "rePassword": "Passwort wiederholen",
+    "confirmPassword": "Passwort bestätigen",
+    "agreeTo": "Ich stimme der",
+    "privacyPolicy": "Datenschutzerklärung",
+    "loading": "Wird geladen …",
+    "signUpButton": "Registrieren",
+    "alreadyHaveAccount": "Bereits ein Konto?",
+    "login": "Anmelden",
+    "backToSignUp": "← Zurück zur Registrierung",
+    "checkEmailToConfirm": "Bitte überprüfen Sie Ihre E-Mail, um Ihr Konto zu bestätigen",
+    "registrationFailed": "Registrierung fehlgeschlagen",
+    "emailConfirmationSent": "Wir haben einen Link an Ihre E-Mail-Adresse gesendet, um Ihre E-Mail-Adresse zu bestätigen. Bitte überprüfen Sie Ihre E-Mail!",
+    "passwordRequirements": "Das Passwort muss mindestens 8 Zeichen lang sein und mindestens 1 Großbuchstaben und 1 Sonderzeichen enthalten"
+  },
+  "errors": {
+    "roomLoadError": "Wir konnten das Zimmer nicht laden",
+    "roomsLoadError": "Wir konnten die Zimmer nicht laden",
+    "pleaseTryAgain": "Etwas ist schiefgelaufen. Bitte laden Sie die Seite neu oder versuchen Sie es später erneut.",
+    "reloadPage": "Seite neu laden",
+    "backToRooms": "Zurück zu allen Zimmern",
+    "noRoomsFound": "Keine Zimmer gefunden",
+    "tryDifferentDates": "Bitte versuchen Sie andere Daten oder ändern Sie Ihre Suchkriterien.",
+    "viewAllRooms": "Alle Zimmer anzeigen",
+    "noRoomsAvailableNearDates": "Keine Zimmer für die nächsten Termine verfügbar",
+    "pleaseSelectDifferentDates": "Bitte versuchen Sie andere Daten auszuwählen"
+  },
+  "amenities": {
+    "title": "Inklusive Ausstattung",
+    "kettle": "Wasserkocher",
+    "coffeeMachine": "Kaffeemaschine",
+    "freshTowels": "Frische Handtücher & Bettwäsche",
+    "miniFridge": "Minikühlschrank",
+    "hairdryer": "Haartrockner",
+    "smartTV": "Smart-TV",
+    "highSpeedWiFi": "Schnelles Wifi",
+    "airConditioning": "Klimaanlage",
+    "blackoutCurtains": "Verdunklungsvorhänge",
+    "selfServiceCloset": "Self-Service Closet",
+    "elevator": "Aufzug",
+    "weeklyCleaning": "Wöchentliche Reinigung (ab 7 Nächten)",
+    "luggageStorage": "Kofferlagerungen",
+    "bicycleParking": "Fahrradstellplätze",
+    "coWorkingSpace": "Co-Working-Space",
+    "virtualConcierge": "Concierge \"Charlie\" 24/7"
+  }
+}
+

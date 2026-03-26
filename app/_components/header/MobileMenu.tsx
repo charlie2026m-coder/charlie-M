@@ -10,6 +10,7 @@ import { useState } from "react";
 import { Drawer, DrawerContent, DrawerTitle, VisuallyHidden } from "../ui/drawer"
 import { useProfile } from "@/app/hooks/useProfile";
 import { useTranslations, useLocale } from "next-intl";
+import ProfileInfo from "./ProfileInfo";
 import { cn } from "@/lib/utils";
 import { Suspense } from "react";
 import MobileCheckInForm from "./MobileCheckInForm";
@@ -112,14 +113,12 @@ const MobileMenu = ({ isWhite = false }: { isWhite?: boolean }) => {
             </>)}
             <MobileCheckInForm />
 
-            {!loading && user &&
-              <Link href="/profile/reservations" className="flex gap-2 items-center justify-center font-bold " onClick={() => setOpen(false)}>
-                <div className="size-12 bg-blue rounded-full flex items-center justify-center">
-                  {profile?.name?.charAt(0)}
-                </div>
-                {profile?.name + ' ' + profile?.last_name || 'Dear guest'}
-              </Link>
-            }
+            {!loading && user && (
+              <div className="flex gap-3 items-center justify-center font-bold">
+                <ProfileInfo size="lg" onClick={() => setOpen(false)} />
+                <span>{[profile?.name, profile?.last_name].filter(Boolean).join(' ') || 'Guest'}</span>
+              </div>
+            )}
           </div>
  
 

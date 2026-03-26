@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Client, CheckoutAPI, EnvironmentEnum } from "@adyen/api-library";
 
+const isLive = process.env.NEXT_PUBLIC_ADYEN_ENVIRONMENT === 'live';
 const client = new Client({
   apiKey: process.env.ADYEN_API_KEY!,
-  environment: EnvironmentEnum.TEST,
+  environment: isLive ? EnvironmentEnum.LIVE : EnvironmentEnum.TEST,
+  ...(isLive && process.env.ADYEN_LIVE_URL_PREFIX && {
+    liveEndpointUrlPrefix: process.env.ADYEN_LIVE_URL_PREFIX,
+  }),
 });
 const checkout = new CheckoutAPI(client);
 

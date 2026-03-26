@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { RoomDetails } from '@/services/getRoomsDetails'
+import { RoomDetails } from '@/app/actions/supabase/rooms/getRoomDetails'
+import { revalidateRooms } from '@/app/actions/revalidateRooms'
 
 interface UpdateRoomData {
   id: string
@@ -35,10 +36,9 @@ export function useUpdateRoom() {
       return updatedRoom
     },
     onSuccess: (data) => {
-      // Обновить кэш списка комнат
       queryClient.invalidateQueries({ queryKey: ['rooms'] })
-      // Обновить кэш конкретной комнаты
       queryClient.invalidateQueries({ queryKey: ['room', data.id] })
+      revalidateRooms()
     },
     onError: (error) => {
       console.error('Failed to update room:', error)

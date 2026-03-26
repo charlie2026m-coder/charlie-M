@@ -97,9 +97,10 @@ interface BaseAmount {
 }
 
 interface TaxDetail {
-  amount: Amount;
-  name: string;
-  // добавьте другие поля если есть
+  vatType: string;
+  vatPercent: number;
+  net: { amount: number; currency: string };
+  tax: { amount: number; currency: string };
 }
 
 export interface RoomOffer extends Offer {
@@ -110,13 +111,27 @@ export interface RoomOffer extends Offer {
   attributes: string[];
   size: number;
   maxPersons: number;
-  price?: number; // Total price for 1 guest (without tax)
-  priceForTwo?: number; // Total price for 2 guests (without tax)
-  oneNightPrice: number; // Price per night for 1 guest (without tax)
-  oneNightPriceForTwo?: number; // Price per night for 2 guests (without tax)
-  cityTax?: number; // City tax for 1 guest
-  cityTaxForTwo?: number; // City tax for 2 guests
-  averagePrice?: number; // Average price per night
+  price?: number;              // total for 1 guest (all nights, city tax included)
+  priceForTwo?: number;        // total for 2 guests (all nights, city tax included)
+  oneNightPrice: number;       // price for first night, 1 guest (city tax included)
+  oneNightPriceForTwo?: number;
+  averagePrice?: number;       // avg per night, 1 guest (city tax included)
+  averagePriceForTwo?: number; // avg per night, 2 guests (city tax included)
+  taxes?: { vatTax: number; cityTax: number; cityTaxForTwo: number };
+}
+
+// Used on the home page — always shows all rooms from Supabase.
+// Apaleo pricing is optional: if unavailable, oneNightPrice=0 and isBooked=true.
+export interface HomeRoomCard {
+  id: string;
+  name: string;
+  images: string[];
+  attributes: string[];
+  size: number;
+  maxPersons: number;
+  unitGroup: { id: string };
+  oneNightPrice: number;
+  isBooked: boolean;
 }
 
 // Simple room type for displaying room cards (without full Apaleo offer data)

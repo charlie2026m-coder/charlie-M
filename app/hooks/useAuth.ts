@@ -3,16 +3,14 @@
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from '@/navigation'; // Use localized router
 import { toast } from 'sonner';
-import { 
-  login, 
-  register, 
-  logout, 
-  resetPassword, 
-  updatePassword,
-  signInWithOAuth,
-  changePassword,
-  setPassword
-} from '@/services/authService';
+import { login } from '@/app/actions/supabase/auth/login';
+import { register } from '@/app/actions/supabase/auth/register';
+import { logout } from '@/app/actions/supabase/auth/logout';
+import { resetPassword } from '@/app/actions/supabase/auth/resetPassword';
+import { updatePassword } from '@/app/actions/supabase/auth/updatePassword';
+import { signInWithOAuth } from '@/app/actions/supabase/auth/signInWithOAuth';
+import { changePassword } from '@/app/actions/supabase/auth/changePassword';
+import { setPassword } from '@/app/actions/supabase/auth/setPassword';
 import { LoginCredentials, RegisterCredentials } from '@/types/auth';
 
 // Login mutation

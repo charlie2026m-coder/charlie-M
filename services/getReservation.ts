@@ -1,5 +1,5 @@
 import { Fetch } from './Request';
-import { getRoomsDetails } from './getRoomsDetails';
+import { getRoomDetails } from '@/app/actions/supabase/rooms/getRoomDetails';
 import { ApaleoReservationResponse, Reservation } from '@/types/apaleo';
 import { getReservationAccessesServer } from './getReservationAccessesServer';
 
@@ -8,7 +8,7 @@ export async function getReservationById(reservationId: string): Promise<Reserva
   try {
     const [reservationResult, roomDetailsResult, accessDataResult] = await Promise.allSettled([
       Fetch<ApaleoReservationResponse>(`/booking/v1/reservations/${reservationId}?propertyIds=${process.env.APALEO_PROPERTY_ID}&expand=services&expand=booker`),
-      getRoomsDetails(),
+      getRoomDetails(),
       getReservationAccessesServer(reservationId)
     ]);
 
@@ -24,7 +24,7 @@ export async function getReservationById(reservationId: string): Promise<Reserva
     }
 
     // Handle room details result (optional - fallback to empty array)
-    let roomDetails: Awaited<ReturnType<typeof getRoomsDetails>> = [];
+    let roomDetails: Awaited<ReturnType<typeof getRoomDetails>> = [];
     if (roomDetailsResult.status === 'fulfilled') {
       roomDetails = roomDetailsResult.value || [];
     } else {
