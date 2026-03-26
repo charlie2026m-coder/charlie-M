@@ -41,7 +41,7 @@ export const ExtraRow = ({ service, nights, price, isActive, reservationId }: { 
         <span>{serviceName}</span>
         <span>€{service.defaultGrossPrice.amount} {textUnit} </span>
       </div>
-      <div className='flex flex-col font-semibold items-end'>
+      {/* <div className='flex flex-col font-semibold items-end'>
         {isActive && (
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
@@ -73,7 +73,7 @@ export const ExtraRow = ({ service, nights, price, isActive, reservationId }: { 
           </Dialog>
         )}
         <span>€{price}</span>
-      </div>
+      </div> */}
     </div>
   )
 }
