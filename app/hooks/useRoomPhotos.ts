@@ -24,7 +24,7 @@ async function compressImage(file: File): Promise<File> {
     maxSizeMB: 1, // Max file size in MB
     maxWidthOrHeight: 1920, // Max width or height
     useWebWorker: true,
-    fileType: 'image/jpeg' as const,
+    fileType: 'image/webp' as const,
   }
 
   try {
@@ -47,14 +47,13 @@ export function useUploadPhoto() {
       const compressedFile = await compressImage(file)
 
       // Generate unique filename
-      const fileExt = 'jpg' // Always use jpg after compression
-      const fileName = `${roomId}/${Date.now()}.${fileExt}`
+      const fileName = `${roomId}/${Date.now()}.webp`
 
       // Upload to storage
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('room-photos')
         .upload(fileName, compressedFile, {
-          contentType: 'image/jpeg',
+          contentType: 'image/webp',
           cacheControl: '3600',
           upsert: false
         })
@@ -106,14 +105,13 @@ export function useUploadMultiplePhotos() {
           const compressedFile = await compressImage(file)
 
           // Generate unique filename
-          const fileExt = 'jpg'
-          const fileName = `${roomId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
+          const fileName = `${roomId}/${Date.now()}-${Math.random().toString(36).substring(7)}.webp`
 
           // Upload to storage
           const { error: uploadError } = await supabase.storage
             .from('room-photos')
             .upload(fileName, compressedFile, {
-              contentType: 'image/jpeg',
+              contentType: 'image/webp',
               cacheControl: '3600',
               upsert: false
             })
