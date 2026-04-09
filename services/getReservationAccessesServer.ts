@@ -92,13 +92,10 @@ export async function getReservationAccessesServer(
     
     // Transform Guestway API response to our format
     const accesses: ReservationAccessData[] = data.data.map((reservation: GuestwayReservation) => {
-      // Find access where doorName contains "room door" and name is a number
+      // Find access where doorName contains "room"
       const roomDoorAccess = reservation.accesses.find((access) => {
         const doorName = access.lock?.doorName?.toLowerCase() || '';
-        const name = access.lock?.name || '';
-        const hasRoomDoor = doorName.includes('room door');
-        const isNameNumber = /^\d+$/.test(name);
-        return hasRoomDoor && isNameNumber;
+        return doorName.includes('room');
       });
       
       // Use room door access if found, otherwise fallback to first access
