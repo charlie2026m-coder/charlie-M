@@ -74,7 +74,7 @@ const BookingForm = ({
 
   // Derived values from query
   const nights = fromStr && toStr ? calculateNights(fromStr, toStr) : 0
-  const room = data && nights > 0 ? resolveRatePlan(data.rooms, nights, true) : null
+  const room = data && nights > 0 ? resolveRatePlan(data.rooms, nights, false) : null
   const babyBedAvailability = data?.babyBedAvailability
   const isUnavailable = !isPriceLoading && !!data && data.rooms.length === 0
   const hasEnoughCapacity = room ? guests.adults <= room.availableUnits * room.maxPersons : true

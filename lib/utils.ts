@@ -304,15 +304,15 @@ export const selectBestRoomOffers = <T extends { unitGroup?: { id?: string }; id
   const bestOffers: T[] = [];
 
   roomsMap.forEach((offers) => {
-    // Best refundable plan
-    const selected = offers.find(o => o.ratePlan?.code === targetRatePlan)
-      ?? offers.find(o => o.ratePlan?.code === RATE_PLANS.FLEX_WEB);
-    if (selected) bestOffers.push(selected);
-
-    // Best non-refundable plan — required for the refundable toggle to work
+    // Best non-refundable plan — default/primary price
     const selectedNR = offers.find(o => o.ratePlan?.code === targetNRPlan)
       ?? offers.find(o => o.ratePlan?.code === RATE_PLANS.NR_WEB);
     if (selectedNR) bestOffers.push(selectedNR);
+
+    // Best refundable plan — required for the refundable toggle to work
+    const selected = offers.find(o => o.ratePlan?.code === targetRatePlan)
+      ?? offers.find(o => o.ratePlan?.code === RATE_PLANS.FLEX_WEB);
+    if (selected) bestOffers.push(selected);
   });
 
   return bestOffers;

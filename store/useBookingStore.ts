@@ -95,7 +95,7 @@ export const useBookingStore = create<BookingState>()(
       extras: [],
       setExtras: (extras: Service[]) => set((state) => ({ ...state, extras })),
 
-      isRefundable: true,
+      isRefundable: false,
       setIsRefundable: (isRefundable: boolean) => set((state) => ({ ...state, isRefundable })),
       
       isExtend: false,
@@ -138,7 +138,7 @@ export const useBookingStore = create<BookingState>()(
           rooms: [],
           roomDetails: undefined,
           bookingId: undefined,
-          isRefundable: true,
+          isRefundable: false,
           isExtend: false,
           transactionReference: null,
           paymentReference: null,
@@ -152,6 +152,11 @@ export const useBookingStore = create<BookingState>()(
     }),
     {
       name: 'charlie-booking-storage',
+      version: 1,
+      migrate: (persistedState: unknown) => {
+        const state = persistedState as Record<string, unknown>;
+        return { ...state, isRefundable: false };
+      },
       partialize: (state) => ({
         booking: state.booking,
         rooms: state.rooms,

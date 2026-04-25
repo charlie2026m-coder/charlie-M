@@ -41,33 +41,32 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Fetch reservation from Apaleo
-    let reservation: ApaleoReservationResponse;
-    try {
-      reservation = await Fetch<ApaleoReservationResponse>(
+    // Fetch Apaleo reservation and room photos in parallel
+    const [reservationResult, roomsResult] = await Promise.allSettled([
+      Fetch<ApaleoReservationResponse>(
         `/booking/v1/reservations/${reservationId}?propertyIds=${process.env.APALEO_PROPERTY_ID}&expand=booker,services`
-      );
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : '';
+      ),
+      supabase.from('rooms').select('*').order('id', { ascending: true }),
+    ]);
+
+    if (reservationResult.status === 'rejected') {
+      const message = reservationResult.reason instanceof Error ? reservationResult.reason.message : '';
       if (message.includes('404') || message.includes('not found')) {
         return NextResponse.json(
           { error: 'Please check the booking ID' },
           { status: 404 }
         );
       }
-      throw error;
+      throw reservationResult.reason;
     }
+
+    const reservation = reservationResult.value;
+    const roomsData = roomsResult.status === 'fulfilled' ? roomsResult.value.data : [];
 
     // Check if reservation email matches current user's email
     const reservationEmail = reservation.primaryGuest?.email?.toLowerCase() || '';
     const userEmail = user.email?.toLowerCase() || '';
     const emailBelongsToUser = reservationEmail === userEmail && reservationEmail !== '';
-
-    // Get room data for photos
-    const { data: roomsData } = await supabase
-      .from('rooms')
-      .select('*')
-      .order('id', { ascending: true });
 
     const room = roomsData?.find((r: { id: string }) => r.id === reservation.unitGroup?.id);
 
