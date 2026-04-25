@@ -1,6 +1,7 @@
 'use client'
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { FaWhatsapp } from 'react-icons/fa';
 
 interface Contact {
   type: string;
@@ -74,8 +75,9 @@ const ContactList = ({ contacts }: ContactListProps) => {
               <a
                 href={href}
                 onClick={(e) => handleClick(contact.type, href, contact.value, e)}
-                className="cursor-pointer"
+                className="cursor-pointer flex items-center gap-1"
               >
+                {contact.type === 'whatsapp' && <FaWhatsapp size={20} />}
                 {contact.label}
               </a>
             </li>
@@ -94,8 +96,9 @@ const ContactList = ({ contacts }: ContactListProps) => {
               <a
                 href={href}
                 onClick={(e) => handleClick(contact.type, href, contact.value, e)}
-                className="cursor-pointer"
+                className="cursor-pointer flex items-center gap-1"
               >
+                {contact.type === 'whatsapp' && <FaWhatsapp size={20} />}
                 {contact.label}
               </a>
             </li>
