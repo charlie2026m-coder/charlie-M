@@ -430,6 +430,8 @@
     "noRefundDescription": "No refund in the event of cancellation",
     "refundable": "Refundable",
     "refundableDescription": "Cancel free until 48 hours prior",
+    "freeCancellationUntil": "Free cancellation until {date}",
+    "freeCancellationExpired": "Free cancellation period has expired",
     "night": "night",
     "nights": "nights",
     "room": "room",
