@@ -23,7 +23,7 @@ const ReservationIdDialog = () => {
       setIsSuccess(false)
       setError(null)
     }
-    
+
     const handleSubmit = () => {
         if (reservationId.trim() === '') {
             setError(t('reservationNotFoundCheckId'))
@@ -39,19 +39,20 @@ const ReservationIdDialog = () => {
             },
             onError: (error) => {
                 if (error.message === 'BOOKING_ID_INVALID') {
-                    setError(t('checkBookingId'))
-                } else if (error.message === 'NO_MATCHES_FOUND') {
-                    setError(t('noMatchesFound'))
+                    setIsNotFound(true)
+                    setError(null)
+                } else if (error.message === 'ALREADY_ADDED') {
+                    setError(t('reservationAlreadyAdded'))
+                    toast.error(t('reservationAlreadyAdded'))
+                } else if (error.message === 'EMAIL_BELONGS_TO_USER') {
+                    setError(t('reservationBelongsToEmail'))
+                    toast.error(t('reservationBelongsToEmail'))
                 } else if (error.message === 'SERVER_ERROR') {
                     setError(t('serverErrorTryAgain'))
-                } else if (error.message.includes('already added')) {
-                    toast.error(t('reservationAlreadyAdded') || 'Reservation already added')
-                    setError(null)
-                } else if (error.message.includes('email does not match')) {
-                    toast.error(t('reservationEmailMismatch') || 'Reservation email does not match your account email')
-                    setError(null)
+                    toast.error(t('serverErrorTryAgain'))
                 } else {
                     setError(t('serverErrorTryAgain'))
+                    toast.error(t('serverErrorTryAgain'))
                 }
             }
         })
@@ -67,20 +68,20 @@ const ReservationIdDialog = () => {
         </div>
       }
       content={
-        isNotFound 
-          ? <NotFound close={close} /> 
-          : isSuccess 
-            ? <Success close={close} /> 
-            : <Form 
-                reservationId={reservationId} 
+        isNotFound
+          ? <NotFound close={close} />
+          : isSuccess
+            ? <Success close={close} />
+            : <Form
+                reservationId={reservationId}
                 setReservationId={(value) => {
                   setReservationId(value)
                   if (error) setError(null)
                 }}
-                handleSubmit={handleSubmit} 
-                close={close} 
-                isPending={addReservation.isPending} 
-                error={error} 
+                handleSubmit={handleSubmit}
+                close={close}
+                isPending={addReservation.isPending}
+                error={error}
               />
       }
       title={isNotFound ? t('notFound') : isSuccess ? t('success') : t('addViaReservationIdTitle')}
@@ -92,10 +93,10 @@ const ReservationIdDialog = () => {
 export default ReservationIdDialog
 
 
-const Form = ({ 
+const Form = ({
   reservationId,
   setReservationId,
-  handleSubmit, 
+  handleSubmit,
   close,
   isPending,
   error
@@ -135,16 +136,16 @@ const Form = ({
 
 const NotFound = ({ close }: { close: () => void }) => {
   const t = useTranslations('profile')
-  
+
   return (
     <div className='w-full flex flex-col '>
       <div className='text-[15px] text-dark inter mb-6  text-center'>{t('nothingFound')}</div>
       <Image
-        src='/images/not-found-guy.svg' 
-        alt='not-found' 
-        width={120} 
-        height={240} 
-        className='w-[120px] object-cover mx-auto mb-5' 
+        src='/images/not-found-guy.svg'
+        alt='not-found'
+        width={120}
+        height={240}
+        className='w-[120px] object-cover mx-auto mb-5'
       />
       <Button className='w-full  h-[45px]' onClick={close}>{t('ok')}</Button>
     </div>
@@ -153,11 +154,11 @@ const NotFound = ({ close }: { close: () => void }) => {
 
 const Success = ({ close }: { close: () => void }) => {
   const t = useTranslations('profile')
-  
+
   return (
     <div className='w-full flex flex-col '>
       <div className='text-[15px] text-dark inter mb-6  text-center'>{t('reservationAddedSuccess')}</div>
-     
+
       <Button className='w-full  h-[45px]' onClick={close}>{t('ok')}</Button>
     </div>
   )

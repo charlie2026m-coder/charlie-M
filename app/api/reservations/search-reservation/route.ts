@@ -15,25 +15,33 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Get current user
     const supabase = await createSupabaseServerClient();
     const { data: { user }, error: userError } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'User not authenticated' },
+        { status: 401 }
+      );
     }
 
-    // Check if this reservation is already added for this user
-    const { data: existing } = await supabase
+    // Check if this user already added this reservation
+    const { data: existingReservation } = await supabase
       .from('reservations')
       .select('id')
       .eq('user_id', user.id)
       .eq('reservation_id', reservationId)
       .maybeSingle();
 
-    if (existing) {
-      return NextResponse.json({ error: 'already_added' }, { status: 409 });
+    if (existingReservation) {
+      return NextResponse.json(
+        { error: 'already_added' },
+        { status: 409 }
+      );
     }
 
+    // Fetch reservation from Apaleo
     let reservation: ApaleoReservationResponse;
     try {
       reservation = await Fetch<ApaleoReservationResponse>(
@@ -43,31 +51,44 @@ export async function GET(request: NextRequest) {
       const message = error instanceof Error ? error.message : '';
       if (message.includes('404') || message.includes('not found')) {
         return NextResponse.json(
-          { error: 'Please check the reservation ID' },
+          { error: 'Please check the booking ID' },
           { status: 404 }
         );
       }
       throw error;
     }
 
-    if (!reservation || !reservation.id) {
-      return NextResponse.json(
-        { error: 'Please check the reservation ID' },
-        { status: 404 }
-      );
-    }
+    // Check if reservation email matches current user's email
+    const reservationEmail = reservation.primaryGuest?.email?.toLowerCase() || '';
+    const userEmail = user.email?.toLowerCase() || '';
+    const emailBelongsToUser = reservationEmail === userEmail && reservationEmail !== '';
 
-    const reservationEmail = reservation.primaryGuest?.email?.toLowerCase() ?? '';
-    const userEmail = user.email?.toLowerCase() ?? '';
-    const emailBelongsToUser = reservationEmail !== '' && reservationEmail === userEmail;
+    // Get room data for photos
+    const { data: roomsData } = await supabase
+      .from('rooms')
+      .select('*')
+      .order('id', { ascending: true });
 
-    return NextResponse.json({ ...reservation, emailBelongsToUser });
+    const room = roomsData?.find((r: { id: string }) => r.id === reservation.unitGroup?.id);
+
+    const formattedReservation = {
+      ...reservation,
+      name: reservation.unitGroup?.name || '',
+      images: room?.photos || [],
+      guests: reservation.adults,
+      emailBelongsToUser,
+    };
+
+    return NextResponse.json(formattedReservation);
   } catch (error: unknown) {
     console.error('Error searching reservation:', error);
 
     const message = error instanceof Error ? error.message : '';
     if (message.includes('404') || message.includes('not found')) {
-      return NextResponse.json({ error: 'Reservation not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Please check the booking ID' },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json(

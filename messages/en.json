@@ -546,6 +546,7 @@
     "adding": "Adding...",
     "reservationAlreadyAdded": "This reservation has already been added",
     "reservationEmailMismatch": "Reservation email does not match your account email",
+    "reservationBelongsToEmail": "This reservation is already linked to your email address",
     "errorAddingReservation": "Failed to add reservation",
     "showLess": "Show less",
     "showMore": "Show more",

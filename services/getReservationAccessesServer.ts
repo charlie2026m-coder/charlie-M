@@ -19,6 +19,7 @@ interface GuestwayLock {
   id: string;
   name: string;
   doorName: string;
+  isRoomDoor: boolean;
 }
 
 interface GuestwayAccess {
@@ -92,11 +93,10 @@ export async function getReservationAccessesServer(
     
     // Transform Guestway API response to our format
     const accesses: ReservationAccessData[] = data.data.map((reservation: GuestwayReservation) => {
-      // Find access where doorName contains "room"
-      const roomDoorAccess = reservation.accesses.find((access) => {
-        const doorName = access.lock?.doorName?.toLowerCase() || '';
-        return doorName.includes('room');
-      });
+      // Find access where lock is a room door
+      const roomDoorAccess = reservation.accesses.find(
+        (access) => access.lock?.isRoomDoor
+      );
       
       // Use room door access if found, otherwise fallback to first access
       const selectedAccess = roomDoorAccess || reservation.accesses[0];

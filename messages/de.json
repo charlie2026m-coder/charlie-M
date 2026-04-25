@@ -546,6 +546,7 @@
     "adding": "Wird hinzugefügt...",
     "reservationAlreadyAdded": "Diese Reservierung wurde bereits hinzugefügt",
     "reservationEmailMismatch": "Die E-Mail-Adresse der Reservierung stimmt nicht mit der E-Mail-Adresse Ihres Kontos überein",
+    "reservationBelongsToEmail": "Diese Reservierung ist bereits mit Ihrer E-Mail-Adresse verknüpft",
     "errorAddingReservation": "Fehler beim Hinzufügen der Reservierung",
     "showLess": "Weniger anzeigen",
     "showMore": "Mehr anzeigen",
