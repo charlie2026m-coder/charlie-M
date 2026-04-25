@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { useBookingStore } from '@/store/useBookingStore'
 import { Button } from '@/app/_components/ui/button'
@@ -7,13 +8,41 @@ import { useRouter } from '@/navigation'
 import { useSearchParams } from 'next/navigation'
 import { MdCheckCircle } from 'react-icons/md'
 import { useTranslations } from 'next-intl'
+import { trackPurchase } from '@/lib/analytics'
+import { calculateNights } from '@/lib/utils'
 
 const SuccessPage = () => {
   const t = useTranslations('success')
   const booking = useBookingStore(state => state.booking)
+  const roomDetails = useBookingStore(state => state.roomDetails)
+  const transactionReference = useBookingStore(state => state.transactionReference)
+  const reservationId = useBookingStore(state => state.reservationId)
   const router = useRouter()
   const searchParams = useSearchParams()
   const servicesWarning = searchParams.get('servicesWarning') === 'true'
+  const tracked = useRef(false)
+
+  useEffect(() => {
+    if (tracked.current || !booking) return;
+    tracked.current = true;
+
+    const arrival = booking.reservations?.[0]?.arrival ?? '';
+    const departure = booking.reservations?.[0]?.departure ?? '';
+    const checkinDate = arrival.split('T')[0];
+    const checkoutDate = departure.split('T')[0];
+    const numberOfNights = checkinDate && checkoutDate ? calculateNights(checkinDate, checkoutDate) : 0;
+
+    trackPurchase({
+      transactionId: transactionReference ?? reservationId ?? 'unknown',
+      value: booking.totalAmount ?? 0,
+      roomName: roomDetails?.name ?? '',
+      checkinDate,
+      checkoutDate,
+      numberOfNights,
+      numberOfRooms: booking.reservations?.length ?? 1,
+      propertyId: process.env.NEXT_PUBLIC_APALEO_PROPERTY_ID,
+    });
+  }, [booking, roomDetails, transactionReference, reservationId]);
 
   return (
     <div className='col-span-1 xl:col-span-2 flex flex-col py-10'>

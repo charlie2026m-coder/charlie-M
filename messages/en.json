@@ -1338,6 +1338,18 @@
     "bicycleParking": "Bicycle parking",
     "coWorkingSpace": "Co-working space",
     "virtualConcierge": "Concierge \"Charlie\" 24/7"
+  },
+  "cookies": {
+    "title": "Cookie Settings",
+    "description": "We use cookies to improve your experience and analyse website traffic. You can choose which cookies you allow.",
+    "analyticsTitle": "Analytics",
+    "analyticsDescription": "Google Analytics — helps us understand how visitors use our site",
+    "adsTitle": "Advertising",
+    "adsDescription": "Google Ads — used to show relevant ads and measure conversions",
+    "acceptAll": "Accept All",
+    "rejectAll": "Reject All",
+    "savePreferences": "Save",
+    "cookieSettings": "Cookie Settings"
   }
 }
 

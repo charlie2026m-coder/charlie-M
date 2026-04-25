@@ -6,7 +6,7 @@ import { locales } from '@/i18n';
 import { ReactQueryProvider } from '@/app/providers';
 import ConditionalStickyHeader from '@/app/_components/header/ConditionalStickyHeader';
 import Footer from '@/app/_components/footer/Footer';
-import CookieBanner from '@/app/_components/CookieBanner';
+import { CookieConsentBanner } from '@/app/_components/CookieConsent/CookieConsentBanner';
 import { Toaster } from 'sonner';
 import type { Metadata } from 'next';
 import Discount from '@/app/_components/ui/Discount';
@@ -64,7 +64,7 @@ export default async function LocaleLayout({
         <ConditionalStickyHeader locale={locale} />
         <main className="flex-1">{children}</main>
         <Footer locale={locale} />
-        <CookieBanner />
+        <CookieConsentBanner />
         <Toaster position="top-left" richColors/>
       </ReactQueryProvider>
     </NextIntlClientProvider>

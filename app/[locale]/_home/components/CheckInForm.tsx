@@ -1,5 +1,6 @@
 'use client';
 import { cn, getDate, getPath } from '@/lib/utils';
+import { trackSearch } from '@/lib/analytics';
 import { useEffect, useState } from 'react';
 import { Separator } from '@/app/_components/ui/separator';
 import { RiSearchLine } from "react-icons/ri";
@@ -75,7 +76,13 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
       adults: guests.adults.toString(),
       children: guests.children.toString(),
     });
-    router.push(`/rooms?${queryString}`); 
+    const arrival = getDate(dateRange.from!);
+    const departure = getDate(dateRange.to!);
+    if (arrival && departure) {
+      trackSearch({ arrival, departure, guests: guests.adults + guests.children });
+    }
+
+    router.push(`/rooms?${queryString}`);
   };
 
   const handlePrimaryMonthChange = (month: Date) => {

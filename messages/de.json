@@ -1339,6 +1339,18 @@
     "bicycleParking": "Fahrradstellplätze",
     "coWorkingSpace": "Co-Working-Space",
     "virtualConcierge": "Concierge \"Charlie\" 24/7"
+  },
+  "cookies": {
+    "title": "Cookie-Einstellungen",
+    "description": "Wir verwenden Cookies, um Ihre Erfahrung zu verbessern und den Website-Traffic zu analysieren. Sie können wählen, welche Cookies Sie zulassen.",
+    "analyticsTitle": "Analyse",
+    "analyticsDescription": "Google Analytics — hilft uns zu verstehen, wie Besucher unsere Website nutzen",
+    "adsTitle": "Werbung",
+    "adsDescription": "Google Ads — wird verwendet, um relevante Anzeigen zu schalten und Conversions zu messen",
+    "acceptAll": "Alle akzeptieren",
+    "rejectAll": "Alle ablehnen",
+    "savePreferences": "Speichern",
+    "cookieSettings": "Cookie-Einstellungen"
   }
 }
 
