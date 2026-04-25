@@ -152,7 +152,7 @@ const BookingPage = ({
           />}
         </div>
         <div className='col-span-1 gap-5 flex flex-col'>
-          <RefundCard rooms={rooms} nights={nights} />
+          <RefundCard rooms={rooms} nights={nights} checkInDate={from} />
           <BookingMenu 
             rooms={rooms} 
             params={{ from, to, adults, children }} 

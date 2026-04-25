@@ -430,6 +430,8 @@
     "noRefundDescription": "Keine Rückerstattung im Falle einer Stornierung",
     "refundable": "Kostenlos stornierbar",
     "refundableDescription": "Kostenfrei stornierbar bis 48 Stunden vor Anreise",
+    "freeCancellationUntil": "Kostenlose Stornierung bis {date}",
+    "freeCancellationExpired": "Die kostenlose Stornierungsfrist ist abgelaufen",
     "night": "Nacht",
     "nights": "Nächte",
     "room": "Zimmer",
