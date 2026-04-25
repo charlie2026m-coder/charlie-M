@@ -44,7 +44,7 @@ const BookingPage = ({
   const booking = useBookingStore(state => state.booking)
   const setBooking = useBookingStore(state => state.setBooking)
   const nights = calculateNights(from as string, to as string)
-  const mainRoom = resolveRatePlan(rooms, nights, true)
+  const mainRoom = resolveRatePlan(rooms, nights, false)
   const tCommon = useTranslations()
 
   // When Apaleo is unavailable, show Supabase content with date picker only
@@ -152,7 +152,7 @@ const BookingPage = ({
           />}
         </div>
         <div className='col-span-1 gap-5 flex flex-col'>
-          <RefundCard rooms={rooms} nights={nights} />
+          <RefundCard rooms={rooms} nights={nights} checkInDate={from} />
           <BookingMenu 
             rooms={rooms} 
             params={{ from, to, adults, children }} 

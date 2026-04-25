@@ -14,7 +14,14 @@ import {
 import { GoArrowLeft, GoArrowRight } from "react-icons/go"
 import { useTranslations } from 'next-intl'
 
-const ReviewsSection = () => {
+import type { GoogleReview } from '@/services/getGoogleReviews'
+
+interface Props {
+  reviews?: GoogleReview[];
+}
+
+const ReviewsSection = ({ reviews }: Props) => {
+  const displayItems = reviews && reviews.length > 0 ? reviews : items;
   const t = useTranslations('home')
   const [api, setApi] = useState<CarouselApi>()
   const [current, setCurrent] = useState(0)
@@ -52,7 +59,7 @@ const ReviewsSection = () => {
               }}
             >
               <CarouselContent className="-ml-4 pb-8 px-2">
-                {items.map((item, index) => (
+                {displayItems.map((item, index) => (
                   <CarouselItem key={`${item.name}-${index}`} className="pl-4 basis-[75%] shrink-0">
                     <div className="flex flex-col gap-4 rounded-[40px] bg-[#F4F4F4] px-5 py-8 h-full">
                       <Image src='/images/icons/comas-icon.svg' alt={item.name} width={74} height={74} className="object-cover size-15 md:size-[74px]" />
@@ -100,7 +107,7 @@ const ReviewsSection = () => {
           loop={true}
           className="reviews-swiper"
         >
-          {items.map((item, index) => (
+          {displayItems.map((item, index) => (
             <SwiperSlide key={`${item.name}-${index}`} style={{ height: 'auto' }}>
               <div className="flex flex-col gap-4 rounded-[40px] bg-[#F4F4F4] px-5 py-8 h-full">
                 <Image src='/images/icons/comas-icon.svg' alt={item.name} width={74} height={74} className="object-cover size-[74px]" />
@@ -125,7 +132,7 @@ const ReviewsSection = () => {
           loop={true}
           className="reviews-swiper"
         >
-          {items.map((item, index) => (
+          {displayItems.map((item, index) => (
             <SwiperSlide key={`${item.name}-${index}`} style={{ height: 'auto' }}>
               <div className="flex flex-col gap-4 rounded-[40px] bg-[#F4F4F4] px-5 py-8 h-full">
                 <Image src='/images/icons/comas-icon.svg' alt={item.name} width={74} height={74} className="object-cover size-[74px]" />

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Fetch } from '@/services/Request';
 import { ApaleoReservationResponse } from '@/types/apaleo';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { getReservationAccessesServer } from '@/services/getReservationAccessesServer';
 
 export async function GET(
   request: NextRequest,
@@ -17,7 +18,15 @@ export async function GET(
       );
     }
 
-    const reservation = await Fetch<ApaleoReservationResponse>(`/booking/v1/reservations/${id}?propertyIds=${process.env.APALEO_PROPERTY_ID}&expand=services`);
+    const supabase = await createSupabaseServerClient();
+
+    const [reservation, roomsResult, accesses] = await Promise.all([
+      Fetch<ApaleoReservationResponse>(
+        `/booking/v1/reservations/${id}?propertyIds=${process.env.APALEO_PROPERTY_ID}&expand=booker,services`
+      ),
+      supabase.from('rooms').select('*').order('id', { ascending: true }),
+      getReservationAccessesServer(id),
+    ]);
 
     if (!reservation) {
       return NextResponse.json(
@@ -26,27 +35,23 @@ export async function GET(
       );
     }
 
-    const supabase = await createSupabaseServerClient();
-    const { data: roomsData } = await supabase
-      .from('rooms')
-      .select('*')
-      .order('id', { ascending: true });
-
-    const room = roomsData?.find((r: any) => r.id === reservation.unitGroup?.id);
+    const room = roomsResult.data?.find((r: { id: string }) => r.id === reservation.unitGroup?.id);
+    const accessInfo = accesses.find(item => item.reservationId === id);
 
     const formattedReservation = {
       ...reservation,
       name: reservation.unitGroup?.name || '',
       images: room?.photos || [],
       guests: reservation.adults,
+      accesses: accessInfo || undefined,
     };
 
     return NextResponse.json(formattedReservation);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching reservation:', error);
-    
-    // Check if it's a 404 from Apaleo
-    if (error.message?.includes('404') || error.message?.includes('not found')) {
+
+    const message = error instanceof Error ? error.message : '';
+    if (message.includes('404') || message.includes('not found')) {
       return NextResponse.json(
         { error: 'Reservation not found' },
         { status: 404 }

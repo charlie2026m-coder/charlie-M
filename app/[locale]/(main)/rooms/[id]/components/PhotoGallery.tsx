@@ -3,6 +3,7 @@ import { IoMdImage } from "react-icons/io";
 import { useState } from "react";
 import Image from 'next/image'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/app/_components/ui/dialog";
+
 import { IoChevronBack, IoChevronForward } from "react-icons/io5";
 
 const PhotoGallery = ({ images, roomName }: { images: string[]; roomName?: string }) => {
@@ -102,38 +103,37 @@ const PhotoGallery = ({ images, roomName }: { images: string[]; roomName?: strin
         )}
       </div>
       <Dialog open={showImages !== null} onOpenChange={() =>setShowImages(null)}>
-        <DialogContent className='px-5 md:px-12 rounded-4xl w-full max-w-[95%] lg:max-w-[80%] max-h-[80vh] flex flex-col '>
+        <DialogContent className='px-2 md:px-5 md:px-12 rounded-4xl w-fit max-w-[95vw] md:max-w-[90vw] flex flex-col'>
           <DialogHeader>
             <DialogTitle className='text-2xl font-bold'>Photo Gallery</DialogTitle>
           </DialogHeader>
           <div className='flex items-center gap-2 w-full relative select-none'>
-            <Image 
-              src={images[showImages || 0]} 
-              alt={roomName ? `${roomName} - detailed view ${(showImages || 0) + 1}` : `Hotel room detailed view ${(showImages || 0) + 1}`} 
-              width={720} 
-              height={440} 
-              className='max-h-[calc(80vh-140px)] w-full object-cover rounded-4xl cursor-pointer' 
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={images[showImages || 0]}
+              alt={roomName ? `${roomName} - detailed view ${(showImages || 0) + 1}` : `Hotel room detailed view ${(showImages || 0) + 1}`}
+              className='w-auto h-auto max-w-[calc(95vw-40px)] md:max-w-[calc(90vw-96px)] max-h-[calc(80vh-140px)] block rounded-lg md:rounded-4xl cursor-pointer'
               onClick={() => {
                 if (showImages === null) {
                   setShowImages(0)
                 } else if (showImages === images.length - 1) {
-                  setShowImages(0) // Loop to first image
+                  setShowImages(0)
                 } else {
                   setShowImages(showImages + 1)
                 }
               }}
             />
-            <div onClick={prevPhoto} className='absolute left-0 bg-gradient-to-l from-transparent via-black/50 to-black/80 hover:to-black/90 top-0 bottom-0 w-10 md:w-20 flex items-center justify-center  rounded-l-4xl'>
+            <div onClick={prevPhoto} className='absolute left-0 bg-gradient-to-l from-transparent via-black/50 to-black/80 hover:to-black/90 top-0 bottom-0 w-10 md:w-20 flex items-center justify-center rounded-l-lg md:rounded-l-4xl'>
               <IoChevronBack className='size-10 md:size-20 cursor-pointer text-white'  />
             </div>
-            <div onClick={nextPhoto} className='absolute right-0 bg-gradient-to-r from-transparent via-black/50 to-black/80 hover:to-black/90 top-0 bottom-0 w-10 md:w-20 flex items-center justify-center  rounded-r-4xl'>
+            <div onClick={nextPhoto} className='absolute right-0 bg-gradient-to-r from-transparent via-black/50 to-black/80 hover:to-black/90 top-0 bottom-0 w-10 md:w-20 flex items-center justify-center rounded-r-lg md:rounded-r-4xl'>
               <IoChevronForward className='size-10 md:size-20 cursor-pointer text-white'  />
             </div>
           </div>
 
           <div className='flex items-center justify-between w-full'>
             
-            <div className='text-xl px-5 pb-5 mx-auto'>
+            <div className='text-xl px-5 md:pb-5 mx-auto'>
               {(showImages || 0) + 1} / {images.length}
             </div>
            

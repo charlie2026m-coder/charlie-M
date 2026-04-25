@@ -13,6 +13,7 @@ import PersonalizeSection from './_home/PersonalizeSection';
 import DesignSection from './_home/DesignSection';
 import FAQSection from './_home/FAQSection';
 import ReviewsSection from './_home/ReviewsSection';
+import { getGoogleReviews } from '@/services/getGoogleReviews';
 export const revalidate = 300;
 export const dynamic = 'force-dynamic';
 
@@ -97,6 +98,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function Home({ params }: Props) {
   const { locale } = await Promise.resolve(params);
+  const googleReviews = await getGoogleReviews();
 
   return (
       <section className="flex flex-col">
@@ -113,7 +115,7 @@ export default async function Home({ params }: Props) {
         <PersonalizeSection locale={locale} />
         <DesignSection locale={locale} />
         <FAQSection />
-        <ReviewsSection />
+        <ReviewsSection reviews={googleReviews} />
         {/* <InstagramSection /> */}
       </section>
   );
