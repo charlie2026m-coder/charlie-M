@@ -5,6 +5,15 @@ import { useAddExtrasStore } from '@/store/useAddExtras'
 import { useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { shouldShowCleaningService } from '@/utils/cleaningAvailability'
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import timezone from 'dayjs/plugin/timezone'
+
+dayjs.extend(utc)
+dayjs.extend(timezone)
+
+const EARLY_CHECKIN_DEADLINE_HOUR = 13
+const LATE_CHECKOUT_DEADLINE_HOUR = 13
 
 const AddExtras = ({ 
   extras,
@@ -38,9 +47,17 @@ const AddExtras = ({
 
   const availableExtras = extras.filter(extra => {
     if (extra.id === 'CMH-ECI') {
-      return false;
+      if (!arrival) return false
+      const deadline = dayjs.tz(`${arrival} ${EARLY_CHECKIN_DEADLINE_HOUR}:00`, 'Europe/Berlin')
+      if (!dayjs().tz('Europe/Berlin').isBefore(deadline)) return false
     }
     
+    if (extra.id === 'CMH-LCO') {
+      if (!departure) return false
+      const deadline = dayjs.tz(`${departure} ${LATE_CHECKOUT_DEADLINE_HOUR}:00`, 'Europe/Berlin')
+      if (!dayjs().tz('Europe/Berlin').isBefore(deadline)) return false
+    }
+
     if (extra.id === 'CMH-BAB' ) return isBabyBedAvailable;
     
     // For cleaning: check if all available dates are already booked

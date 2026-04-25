@@ -3,11 +3,19 @@ import ExtraCard from './ExtraCard'
 import { Service } from '@/types/apaleo'
 import { useBookingStore } from '@/store/useBookingStore'
 import { useTranslations } from 'next-intl'
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import timezone from 'dayjs/plugin/timezone'
 
-const ExtrasSection = ({ extras, nights }: { extras: Service[] | undefined, nights: number }) => {
+dayjs.extend(utc)
+dayjs.extend(timezone)
+
+const EARLY_CHECKIN_DEADLINE_HOUR = 13
+
+const ExtrasSection = ({ extras, nights, arrival }: { extras: Service[] | undefined, nights: number, arrival: string }) => {
   const t = useTranslations('bookingForm')
   const rooms = useBookingStore(state => state.rooms);
-  
+
   if(!extras || extras.length === 0) return null;
   const visibleExtras = extras.filter(extra => {
     if (extra.id === 'CMH-BAB') return false;
@@ -15,6 +23,10 @@ const ExtrasSection = ({ extras, nights }: { extras: Service[] | undefined, nigh
     if (isCleaning && nights < 2) return false;
     const isTest = extra.name?.toLowerCase().includes('тест') || extra.name?.toLowerCase().includes('test') || extra.id?.toLowerCase().includes('test');
     if (isTest) return false;
+    if (extra.id === 'CMH-ECI') {
+      const deadline = dayjs.tz(`${arrival} ${EARLY_CHECKIN_DEADLINE_HOUR}:00`, 'Europe/Berlin')
+      return dayjs().tz('Europe/Berlin').isBefore(deadline)
+    }
     return true;
   })
   
