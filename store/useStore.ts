@@ -11,8 +11,8 @@ export type RoomTypeFilter = 'single' | 'standart' | 'business' | 'superior' | u
 
 interface StoreState {
   dateRange: {
-    from: undefined;
-    to: undefined;
+    from: Date | undefined;
+    to: Date | undefined;
   };
   guests: Guests;
 
