@@ -16,6 +16,8 @@ const Availability = ({ from, to, children, adults, id }: { from?: string, to?: 
 
   const router = useRouter();
   const dateRange = useStore(state => state.dateRange);
+  const guests = useStore(state => state.guests);
+  const setValue = useStore(state => state.setValue);
   
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -47,11 +49,12 @@ const Availability = ({ from, to, children, adults, id }: { from?: string, to?: 
 
   const apply = () =>{
     if (!selectedRange?.from || !selectedRange?.to) return;
-    const queryString = getPath({ 
-      from: getDate(selectedRange?.from), 
-      to: getDate(selectedRange?.to), 
-      adults: adults?.toString() || '1', 
-      children: children?.toString() || '0'  
+    setValue(selectedRange as { from: Date; to: Date }, 'dateRange');
+    const queryString = getPath({
+      from: getDate(selectedRange.from),
+      to: getDate(selectedRange.to),
+      adults: guests.adults.toString(),
+      children: guests.children.toString(),
     });
     router.push(`/rooms/${id}?${queryString}`);
   }

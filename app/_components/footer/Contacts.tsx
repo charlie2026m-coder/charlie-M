@@ -6,6 +6,7 @@ import { FaGooglePay,FaApplePay, FaStripe } from "react-icons/fa";
 import { SiVisa } from "react-icons/si";
 import { RiMastercardFill } from "react-icons/ri";
 import { getTranslations } from 'next-intl/server';
+import { CookieSettingsButton } from '@/app/_components/CookieConsent/CookieSettingsButton';
 
 const Contacts = async ({ locale }: { locale: string }) => {
   const t = await getTranslations({ locale, namespace: 'footer' })
@@ -64,7 +65,8 @@ const Contacts = async ({ locale }: { locale: string }) => {
         <div>
           <Link href="/privacy-policy" locale={locale as 'en' | 'de'} className="text-white text-sm pr-4 border-r border-white hover:text-blue transition-colors">{t('privacyPolicy')}</Link>
           <Link href="/terms-and-conditions" locale={locale as 'en' | 'de'} className="text-white text-sm px-4 border-r border-white hover:text-blue transition-colors">{t('termsAndConditions')}</Link>
-          <Link href="/imprint" locale={locale as 'en' | 'de'} className="text-white text-sm pl-4 hover:text-blue transition-colors">{t('imprint')}</Link>
+          <Link href="/imprint" locale={locale as 'en' | 'de'} className="text-white text-sm px-4 border-r border-white hover:text-blue transition-colors">{t('imprint')}</Link>
+          <CookieSettingsButton />
         </div>
         <span className="text-white text-sm md:ml-auto">{t('copyright')}</span>
       </div>

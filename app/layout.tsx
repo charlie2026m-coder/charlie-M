@@ -3,8 +3,12 @@ import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
 import { HOTEL_INFO } from "@/lib/Constants";
+import { NavigationEvents } from "@/app/_components/NavigationEvents";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://charlie-m.de";
+const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+const ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
+const primaryTagId = GA_ID ?? ADS_ID;
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -20,8 +24,7 @@ export const metadata: Metadata = {
     template: "%s | Charlie M Hotel"
   },
   description: "Modern hotel in Berlin Mitte on Friedrichstraße, steps from Checkpoint Charlie. Comfortable rooms, essential amenities, and automated online check-in.",
-  
-  // Open Graph (Facebook, LinkedIn, WhatsApp)
+
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -38,16 +41,14 @@ export const metadata: Metadata = {
       }
     ]
   },
-  
-  // Twitter Card
+
   twitter: {
     card: "summary_large_image",
     title: "Charlie M Hotel | Hotel in Berlin Mitte near Checkpoint Charlie",
     description: "Modern hotel in Berlin Mitte on Friedrichstraße, steps from Checkpoint Charlie.",
     images: ["/images/og-image.jpg"]
   },
-  
-  // Robots - Allow indexing by default (can be overridden on specific pages)
+
   robots: {
     index: true,
     follow: true,
@@ -58,8 +59,7 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     }
   },
-  
-  // Icons
+
   icons: {
     icon: "/favicon.ico",
     apple: "/apple-touch-icon.png"
@@ -68,8 +68,8 @@ export const metadata: Metadata = {
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
 
-const plusJakartaSans = Plus_Jakarta_Sans({ 
-  variable: "--font-plus-jakarta-sans", 
+const plusJakartaSans = Plus_Jakarta_Sans({
+  variable: "--font-plus-jakarta-sans",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800"]
 });
@@ -80,11 +80,9 @@ type Props = {
 };
 
 export default async function RootLayout({ children, params }: Props) {
-  // Get locale from params if available, default to 'en'
   const resolvedParams = await params;
   const locale = resolvedParams?.locale || 'en';
-  
-  // JSON-LD structured data for Hotel
+
   const hotelSchema = {
     "@context": "https://schema.org",
     "@type": "Hotel",
@@ -106,7 +104,7 @@ export default async function RootLayout({ children, params }: Props) {
       "ratingValue": HOTEL_INFO.starRating.toString()
     }
   };
-  
+
   return (
     <html lang={locale}>
       <head>
@@ -116,7 +114,41 @@ export default async function RootLayout({ children, params }: Props) {
       <body className={`${inter.variable} ${plusJakartaSans.variable} antialiased flex flex-col min-h-screen relative`}>
         {/* JSON-LD for Google */}
         <Script id="hotel-schema" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(hotelSchema) }} />
+
+        {/* Consent Mode v2 — set defaults before gtag.js loads */}
+        {primaryTagId && (
+          <Script id="consent-init" strategy="beforeInteractive">{`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('consent', 'default', {
+              analytics_storage: 'denied',
+              ad_storage: 'denied',
+              ad_user_data: 'denied',
+              ad_personalization: 'denied',
+              wait_for_update: 500
+            });
+          `}</Script>
+        )}
+
+        {/* Google tag (gtag.js) */}
+        {primaryTagId && (
+          <Script
+            src={`https://www.googletagmanager.com/gtag/js?id=${primaryTagId}`}
+            strategy="afterInteractive"
+          />
+        )}
+        {primaryTagId && (
+          <Script id="gtag-init" strategy="afterInteractive">{`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            ${GA_ID ? `gtag('config', '${GA_ID}', { send_page_view: false });` : ''}
+            ${ADS_ID ? `gtag('config', '${ADS_ID}');` : ''}
+          `}</Script>
+        )}
+
         {children}
+        <NavigationEvents />
       </body>
     </html>
   );

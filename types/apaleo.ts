@@ -415,6 +415,45 @@ export interface Reservation extends Omit<ApaleoReservationResponse, 'services'>
   size?: number;
 }
 
+//_____________________________FOLIO & INVOICE
+
+export interface FolioDebitor {
+  type?: 'Booker' | 'PrimaryGuest' | 'Company' | 'AdditionalGuest';
+  title?: 'Mr' | 'Ms' | 'Dr' | 'Prof' | 'Mrs' | 'Other';
+  firstName?: string;
+  name?: string; // lastName in Apaleo naming
+  email?: string;
+  phone?: string;
+  company?: {
+    name: string;
+    taxId?: string;
+  };
+  address?: {
+    addressLine1?: string;
+    addressLine2?: string;
+    postalCode?: string;
+    city?: string;
+    countryCode?: string;
+  };
+}
+
+export interface FolioResponse {
+  id: string;
+  status: 'Open' | 'Closed';
+  debitor: FolioDebitor;
+  balance: Money;
+}
+
+export interface ApaleoInvoiceItem {
+  id: string;
+  languageCode: string;
+}
+
+export interface ApaleoInvoiceListResponse {
+  invoices: ApaleoInvoiceItem[];
+  count: number;
+}
+
 //_____________________________OFFERS
 
 export interface OffersResponse {

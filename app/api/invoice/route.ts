@@ -1,98 +1,71 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getOrRefreshToken } from '@/services/Request';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 const APALEO_API_URL = 'https://api.apaleo.com';
+const PDF_RETRY_ATTEMPTS = 3;
+const PDF_RETRY_DELAY_MS = 1500;
+
+async function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 export async function GET(request: NextRequest) {
+  const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const invoiceId = request.nextUrl.searchParams.get('invoiceId');
+  if (!invoiceId) {
+    return NextResponse.json({ error: 'invoiceId is required' }, { status: 400 });
+  }
+
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const folioId = searchParams.get('folioId');
-    const languageCode = searchParams.get('languageCode') || 'en';
-    const lineItemGrouping = searchParams.get('lineItemGrouping') || 'NoGrouping';
-
-    if (!folioId) {
-      return NextResponse.json(
-        { error: 'folioId is required' },
-        { status: 400 }
-      );
-    }
-
-    console.log('🔍 Fetching invoice PDF:', {
-      folioId,
-      languageCode,
-      lineItemGrouping
-    });
-
-    const queryParams = new URLSearchParams({
-      folioId,
-      languageCode,
-      lineItemGrouping,
-    });
-
-    const url = `${APALEO_API_URL}/finance/v0-nsfw/invoices/preview-pdf?${queryParams.toString()}`;
-    console.log('📡 Request URL:', url);
-
     const token = await getOrRefreshToken();
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/pdf',
-      },
-    });
 
-    console.log('📊 Response status:', response.status);
-    console.log('📊 Response headers:', Object.fromEntries(response.headers.entries()));
-
-    if (!response.ok) {
-      let errorDetails;
-      const contentType = response.headers.get('content-type');
-      
-      try {
-        if (contentType?.includes('application/json')) {
-          errorDetails = await response.json();
-        } else {
-          errorDetails = await response.text();
+    for (let attempt = 1; attempt <= PDF_RETRY_ATTEMPTS; attempt++) {
+      const response = await fetch(
+        `${APALEO_API_URL}/finance/v1/invoices/${invoiceId}/pdf`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/pdf',
+          },
         }
-      } catch (e) {
-        errorDetails = 'Unable to parse error response';
+      );
+
+      if (response.status === 204) {
+        if (attempt < PDF_RETRY_ATTEMPTS) {
+          await sleep(PDF_RETRY_DELAY_MS);
+          continue;
+        }
+        return NextResponse.json({ error: 'invoiceNotReady' }, { status: 202 });
       }
 
-      console.error('❌ Apaleo invoice API error:', {
-        status: response.status,
-        statusText: response.statusText,
-        contentType,
-        errorDetails,
-        url
-      });
+      if (!response.ok) {
+        const details = await response.text().catch(() => '');
+        return NextResponse.json(
+          { error: `Failed to fetch invoice PDF: ${response.status}`, details },
+          { status: response.status }
+        );
+      }
 
-      return NextResponse.json(
-        { error: `Failed to fetch invoice: ${response.status}`, details: errorDetails },
-        { status: response.status }
-      );
+      const pdfBlob = await response.blob();
+
+      return new NextResponse(pdfBlob, {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `attachment; filename="invoice-${invoiceId}.pdf"`,
+        },
+      });
     }
 
-    const pdfBlob = await response.blob();
-    console.log('✅ Invoice PDF fetched successfully:', {
-      size: pdfBlob.size,
-      type: pdfBlob.type
-    });
-
-    return new NextResponse(pdfBlob, {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="invoice-${folioId}.pdf"`,
-      },
-    });
-  } catch (error: any) {
-    console.error('❌ Error in invoice download API:', {
-      error,
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-    });
+    return NextResponse.json({ error: 'invoiceNotReady' }, { status: 202 });
+  } catch (error) {
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     );
   }

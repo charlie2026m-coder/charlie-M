@@ -146,9 +146,10 @@ const BookingPage = ({
         <div className='col-span-1 lg:col-span-2 flex flex-col lg:pr-10'>
           <RoomContent room={mainRoom} />
           {extras.length > 0 && 
-          <ExtrasSection 
+          <ExtrasSection
             nights={nights}
             extras={extras}
+            arrival={from}
           />}
         </div>
         <div className='col-span-1 gap-5 flex flex-col'>

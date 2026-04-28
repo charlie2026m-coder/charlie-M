@@ -579,8 +579,22 @@
     "bookAgain": "Erneut buchen",
     "viewInvoice": "Rechnung anzeigen",
     "invoiceDownloaded": "Rechnung erfolgreich heruntergeladen",
-    "invoiceDownloadFailed": "Fehler beim Herunterladen der Rechnung",
+    "invoiceDownloadFailed": "Die Rechnung konnte nicht heruntergeladen werden. Bitte versuchen Sie es erneut oder kontaktieren Sie den Support.",
     "downloading": "Wird heruntergeladen...",
+    "firstName": "Vorname",
+    "billingData": "Rechnungsdaten",
+    "billingDataDescription": "Bitte überprüfen Sie Ihre Rechnungsdaten vor der Erstellung",
+    "generateInvoice": "Rechnung erstellen",
+    "generatingInvoice": "Wird erstellt...",
+    "invoiceGenerated": "Rechnung erfolgreich erstellt",
+    "invoiceGenerationFailed": "Beim Erstellen der Rechnung ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut oder kontaktieren Sie den Support.",
+    "saveBillingDataFailed": "Rechnungsdaten konnten nicht gespeichert werden. Bitte versuchen Sie es erneut.",
+    "companyName": "Firmenname",
+    "taxId": "Steuernummer",
+    "invoiceLanguage": "Rechnungssprache",
+    "folioBalanceError": "Die Rechnung kann nicht erstellt werden, da noch ein offener Saldo besteht. Bitte stellen Sie sicher, dass alle Gebühren vollständig bezahlt sind.",
+    "emptyFolioError": "Für diese Reservierung liegen noch keine Gebühren vor. Die Rechnung kann erst nach dem Check-out erstellt werden, wenn alle Gebühren verbucht sind.",
+    "invoiceNotReady": "Ihre Rechnung wird gerade erstellt — dies kann einige Sekunden dauern. Bitte schließen Sie dieses Fenster und versuchen Sie es gleich erneut.",
     "completeCheckIn": "Check-In abschließen",
     "checkedIn": "Eingecheckt",
     "redirectingToCheckIn": "Weiterleitung zum Check-In...",
@@ -1325,6 +1339,18 @@
     "bicycleParking": "Fahrradstellplätze",
     "coWorkingSpace": "Co-Working-Space",
     "virtualConcierge": "Concierge \"Charlie\" 24/7"
+  },
+  "cookies": {
+    "title": "Cookie-Einstellungen",
+    "description": "Wir verwenden Cookies, um Ihre Erfahrung zu verbessern und den Website-Traffic zu analysieren. Sie können wählen, welche Cookies Sie zulassen.",
+    "analyticsTitle": "Analyse",
+    "analyticsDescription": "Google Analytics — hilft uns zu verstehen, wie Besucher unsere Website nutzen",
+    "adsTitle": "Werbung",
+    "adsDescription": "Google Ads — wird verwendet, um relevante Anzeigen zu schalten und Conversions zu messen",
+    "acceptAll": "Alle akzeptieren",
+    "rejectAll": "Alle ablehnen",
+    "savePreferences": "Speichern",
+    "cookieSettings": "Cookie-Einstellungen"
   }
 }
 

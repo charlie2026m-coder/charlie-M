@@ -51,6 +51,29 @@ const BookingForm = ({
     to: dateRangeStore.to || (params.to ? dayjs(params.to).toDate() : undefined),
   })
 
+  // Sync dateRange from store (when Availability applies dates)
+  useEffect(() => {
+    if (dateRangeStore.from && dateRangeStore.to) {
+      setDateRange(prev => {
+        if (prev?.from?.getTime() === dateRangeStore.from?.getTime() &&
+            prev?.to?.getTime() === dateRangeStore.to?.getTime()) {
+          return prev
+        }
+        return { from: dateRangeStore.from, to: dateRangeStore.to }
+      })
+    }
+  }, [dateRangeStore.from, dateRangeStore.to])
+
+  // Sync guests from store (when changed externally)
+  useEffect(() => {
+    setGuests(prev => {
+      if (prev.adults === guestsStore.adults && prev.children === guestsStore.children) {
+        return prev
+      }
+      return { adults: guestsStore.adults, children: guestsStore.children }
+    })
+  }, [guestsStore.adults, guestsStore.children])
+
   // Debounced dates for query — avoids request on every calendar click
   const fromStr = dateRange?.from ? getDate(dateRange.from) : undefined
   const toStr = dateRange?.to ? getDate(dateRange.to) : undefined
@@ -209,7 +232,7 @@ const BookingForm = ({
         <Separator orientation="horizontal" />
 
         <Guests
-          setValue={(value) => setGuests(value)}
+          setValue={(value) => { setGuests(value); setValue(value, 'guests') }}
           value={guests}
           maxBabyBeds={babyBedAvailability?.count}
           className="border-mute"
