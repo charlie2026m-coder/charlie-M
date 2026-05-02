@@ -213,13 +213,15 @@ export const getType = (nights: number, isRefundable: boolean): string => {
   return isRefundable ? getRatePlanByNights(nights) : getNonRefundableRatePlanByNights(nights);
 }
 
+// Picks one non-refundable offer per unit group for the listing page so each
+// room appears exactly once. The booking flow does NOT call this — it lets
+// resolveRatePlan choose between NR and FLEX based on the user toggle on
+// /booking/[id], so keeping all offers in that path is fine.
 export const selectBestRoomOffers = <T extends { unitGroup?: { id?: string }; id?: string; ratePlan?: { code?: string }; totalGrossAmount?: { amount?: number } }>(
   rooms: T[],
   nights: number,
 ): T[] => {
-  const targetRatePlan = getRatePlanByNights(nights);
   const targetNRPlan = getNonRefundableRatePlanByNights(nights);
-
   const roomsMap = new Map<string, T[]>();
   rooms.forEach(room => {
     const roomId = room.unitGroup?.id || room.id || '';
@@ -228,17 +230,11 @@ export const selectBestRoomOffers = <T extends { unitGroup?: { id?: string }; id
   });
 
   const bestOffers: T[] = [];
-
-  roomsMap.forEach((offers) => {
-    // Best non-refundable plan — default/primary price
-    const selectedNR = offers.find(o => o.ratePlan?.code === targetNRPlan)
+  roomsMap.forEach(offers => {
+    const selectedNR =
+      offers.find(o => o.ratePlan?.code === targetNRPlan)
       ?? offers.find(o => o.ratePlan?.code === RATE_PLANS.NR_WEB);
     if (selectedNR) bestOffers.push(selectedNR);
-
-    // Best refundable plan — required for the refundable toggle to work
-    const selected = offers.find(o => o.ratePlan?.code === targetRatePlan)
-      ?? offers.find(o => o.ratePlan?.code === RATE_PLANS.FLEX_WEB);
-    if (selected) bestOffers.push(selected);
   });
 
   return bestOffers;

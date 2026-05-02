@@ -1,7 +1,7 @@
 'use server'
 import { Fetch } from '@/services/Request'
 import { OfferResponse } from '@/types/offers'
-import { getServiceAvailabilityById, selectBestRoomOffers, calculateNights } from '@/lib/utils'
+import { getServiceAvailabilityById } from '@/lib/utils'
 import { DOUBLE_OCCUPANCY_SURCHARGE_PER_NIGHT } from '@/lib/Constants'
 import dayjs from 'dayjs'
 
@@ -56,9 +56,6 @@ export async function getRoomPrice(
 
   if (singleOffers.length === 0) return { rooms: [], babyBedAvailability }
 
-  const nights = calculateNights(arrival, departure)
-  const bestOffers = selectBestRoomOffers(singleOffers, nights)
-
   // Apaleo returns cityTaxes as an array — there can be multiple entries when
   // tax rules or rates change mid-stay, or for multiple tax categories. Sum
   // them all instead of trusting only the first slot. If the array is missing
@@ -78,7 +75,9 @@ export async function getRoomPrice(
   // price.
   const queryNights = Math.max(1, dayjs(departure).diff(dayjs(arrival), 'day'))
 
-  const rooms: RoomPriceOffer[] = bestOffers.map(offer => {
+  // Pass every offer through to consumers (BookingForm + RefundCard) so
+  // resolveRatePlan can pick between NR and FLEX based on user toggle.
+  const rooms: RoomPriceOffer[] = singleOffers.map(offer => {
     const doubleOffer = doubleOffers.find(
       d => d.unitGroup?.id === offer.unitGroup?.id && d.ratePlan?.id === offer.ratePlan?.id
     )
