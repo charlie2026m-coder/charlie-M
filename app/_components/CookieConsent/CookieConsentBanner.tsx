@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { applyConsent, getStoredConsent, type ConsentState } from '@/lib/analytics'
 
+export const COOKIE_SETTINGS_EVENT = 'cookie-settings-open'
+
 export function CookieConsentBanner() {
   const t = useTranslations('cookies')
   const [visible, setVisible] = useState(false)
@@ -38,20 +40,21 @@ export function CookieConsentBanner() {
   }
 
   return (
-    <div className='fixed bottom-0 left-0 right-0 z-50 p-4 md:p-6'>
-      <div className='max-w-xl mx-auto bg-white rounded-2xl shadow-2xl border border-gray-100 p-5 flex flex-col gap-4'>
+    <div className='fixed bottom-0 left-0 right-0 z-50 p-4 md:bottom-4 md:left-4 md:right-auto md:max-w-[400px]'>
+      <div className='bg-white rounded-2xl shadow-2xl border border-blue/20 p-5 flex flex-col gap-4'>
         <div>
-          <h3 className='font-semibold text-base mb-1'>{t('title')}</h3>
-          <p className='text-sm text-gray-500'>{t('description')}</p>
+          <h3 className='font-semibold text-base text-mute mb-1'>{t('title')}</h3>
+          <p className='text-sm text-dark/60'>{t('description')}</p>
         </div>
 
-        <div className='flex flex-col gap-3'>
+        <div className='flex flex-col gap-3 p-3 bg-light-bg rounded-xl'>
           <Toggle
             label={t('analyticsTitle')}
             description={t('analyticsDescription')}
             checked={analytics}
             onChange={setAnalytics}
           />
+          <div className='h-px bg-blue/20' />
           <Toggle
             label={t('adsTitle')}
             description={t('adsDescription')}
@@ -63,19 +66,19 @@ export function CookieConsentBanner() {
         <div className='flex flex-col sm:flex-row gap-2'>
           <button
             onClick={() => save({ analytics: false, ads: false })}
-            className='flex-1 py-2 px-4 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors'
+            className='flex-1 py-2 px-4 text-sm border border-gray-300 text-dark rounded-lg hover:bg-gray-50 transition-colors'
           >
             {t('rejectAll')}
           </button>
           <button
             onClick={() => save({ analytics, ads })}
-            className='flex-1 py-2 px-4 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors'
+            className='flex-1 py-2 px-4 text-sm border border-blue/40 text-dark rounded-lg hover:bg-blue/10 transition-colors'
           >
             {t('savePreferences')}
           </button>
           <button
             onClick={() => save({ analytics: true, ads: true })}
-            className='flex-1 py-2 px-4 text-sm bg-green text-white rounded-lg hover:bg-green/90 transition-colors'
+            className='flex-1 py-2 px-4 text-sm bg-mute text-white rounded-lg hover:bg-mute/80 transition-colors'
           >
             {t('acceptAll')}
           </button>
@@ -99,8 +102,8 @@ function Toggle({
   return (
     <div className='flex items-center justify-between gap-3'>
       <div>
-        <p className='text-sm font-medium'>{label}</p>
-        <p className='text-xs text-gray-400'>{description}</p>
+        <p className='text-sm font-medium text-mute'>{label}</p>
+        <p className='text-xs text-dark/50'>{description}</p>
       </div>
       <button
         type='button'
@@ -108,7 +111,7 @@ function Toggle({
         aria-checked={checked}
         onClick={() => onChange(!checked)}
         className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-          checked ? 'bg-green' : 'bg-gray-200'
+          checked ? 'bg-mute' : 'bg-gray-200'
         }`}
       >
         <span
