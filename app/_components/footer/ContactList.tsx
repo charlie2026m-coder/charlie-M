@@ -77,7 +77,7 @@ const ContactList = ({ contacts }: ContactListProps) => {
                 onClick={(e) => handleClick(contact.type, href, contact.value, e)}
                 className="cursor-pointer flex items-center gap-1"
               >
-                {contact.type === 'whatsapp' && <FaWhatsapp size={20} />}
+                {contact.type === 'whatsapp' && <FaWhatsapp size={20} className="text-[#25D366]" />}
                 {contact.label}
               </a>
             </li>
@@ -98,7 +98,7 @@ const ContactList = ({ contacts }: ContactListProps) => {
                 onClick={(e) => handleClick(contact.type, href, contact.value, e)}
                 className="cursor-pointer flex items-center gap-1"
               >
-                {contact.type === 'whatsapp' && <FaWhatsapp size={20} />}
+                {contact.type === 'whatsapp' && <FaWhatsapp size={20} className="text-[#25D366]" />}
                 {contact.label}
               </a>
             </li>
