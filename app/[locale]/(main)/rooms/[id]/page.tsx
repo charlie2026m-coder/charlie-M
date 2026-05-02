@@ -2,7 +2,6 @@ import PhotoGallery from './components/PhotoGallery'
 import BookingForm from './components/BookingForm'
 import RoomContent from './components/RoomContent'
 import { getRoomDetails, getRoomById } from '@/app/actions/supabase/rooms/getRoomDetails'
-import Availability from './components/Availability'
 import RoomErrorCard from './components/RoomErrorCard'
 import { RoomViewTracker } from './components/RoomViewTracker'
 import type { Metadata } from 'next'
@@ -125,7 +124,6 @@ const RoomPage = async ({ params, searchParams }: IParams) => {
         <div className='grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-y-10 md:gap-10 mb-[30px]'>
           <div className='col-span-2 xl:col-span-3 flex flex-col'>
             <RoomContent room={displayRoom as any} isRoomInfo={true} />
-            <Availability id={id} from={from} to={to} children={children} adults={adults} />
           </div>
           <div className='col-span-1'>
             <BookingForm
