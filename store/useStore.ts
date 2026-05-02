@@ -7,7 +7,7 @@ interface Guests {
 }
 export type MainFilter = 'balcony' | 'terrace' | 'shared' | undefined;
 export type BedSizeFilter = 'king' | 'queen' | 'single' | undefined;
-export type RoomTypeFilter = 'single' | 'standart' | 'business' | 'superior' | undefined;
+export type RoomTypeFilter = 'single' | 'standard' | 'business' | 'superior' | undefined;
 
 interface StoreState {
   dateRange: {
@@ -23,10 +23,22 @@ interface StoreState {
   childBedFilter: boolean;
 
   setValue: (
-    value:string |number | DateRange | Guests | MainFilter | BedSizeFilter | RoomTypeFilter | boolean , 
+    value:string |number | DateRange | Guests | MainFilter | BedSizeFilter | RoomTypeFilter | boolean ,
     key: string
   ) => void;
+  resetRoomsFilters: () => void;
 }
+
+const initialRoomsFilters = {
+  filter: undefined,
+  bedSizeFilter: undefined,
+  priceFilter: false,
+  roomTypeFilter: undefined,
+  childBedFilter: false,
+} satisfies Pick<
+  StoreState,
+  'filter' | 'bedSizeFilter' | 'priceFilter' | 'roomTypeFilter' | 'childBedFilter'
+>;
 
 export const useStore = create<StoreState>((set) => ({
   //room params
@@ -34,12 +46,9 @@ export const useStore = create<StoreState>((set) => ({
   guests: { adults: 1, children: 0 },
 
   //rooms filters
-  filter: undefined,
-  bedSizeFilter: undefined,
-  priceFilter: false,
-  roomTypeFilter: undefined,
-  childBedFilter: false,
+  ...initialRoomsFilters,
 
   setValue: (value, key) => set((state) => ({ ...state, [key]: value })),
+  resetRoomsFilters: () => set(initialRoomsFilters),
 }))
 
