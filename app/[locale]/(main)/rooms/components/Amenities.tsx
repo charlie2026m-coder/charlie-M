@@ -6,7 +6,6 @@ import { IoIosArrowDown } from 'react-icons/io'
 import { cn } from '@/lib/utils'
 import { Button } from '@/app/_components/ui/button'
 import { useTranslations } from 'next-intl'
-// import DetailsDialog from './DetailsDialog'
 import { amenities } from '@/content/content'
 const icon = 'text-mute size-6'
 

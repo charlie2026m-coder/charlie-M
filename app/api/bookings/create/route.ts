@@ -2,9 +2,19 @@ import { NextResponse } from "next/server"
 import { headers } from "next/headers"
 import { getOrRefreshToken } from "@/services/Request"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
+import { createClient } from "@supabase/supabase-js"
 import { Booking } from "@/types/booking"
 import { bookReservationServices } from "@/services/bookReservationServices"
 import { reversePayment } from "@/app/actions/adyen/reversePayment"
+
+// DB writes go through service_role to bypass RLS on bookings/pending_bookings
+function createAdminClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+}
 
 const APALEO_API_URL = 'https://api.apaleo.com'
 
@@ -123,11 +133,12 @@ export async function POST(request: Request) {
     const token = await getOrRefreshToken()
     const supabase = await createSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
+    const supabaseAdmin = createAdminClient()
 
     // Idempotency lock — prevents duplicate bookings on double-submit or retry
     // If same transactionReference already exists → 23505 unique violation → booking already created
     if (booking.transactionReference) {
-      const { error: lockError } = await supabase.from('bookings').insert({
+      const { error: lockError } = await supabaseAdmin.from('bookings').insert({
         transaction_reference: booking.transactionReference,
         user_id: user?.id || null,
         status: 'processing',
@@ -154,7 +165,7 @@ export async function POST(request: Request) {
 
       // Mark lock as failed
       if (booking.transactionReference) {
-        await supabase.from('bookings')
+        await supabaseAdmin.from('bookings')
           .update({ status: 'failed' })
           .eq('transaction_reference', booking.transactionReference)
           .eq('status', 'processing')
@@ -241,7 +252,7 @@ export async function POST(request: Request) {
         console.error('🚨 MANUAL ACTION REQUIRED: Complete folio payment in Apaleo')
       }
       
-      await supabase.from('bookings')
+      await supabaseAdmin.from('bookings')
         .update(updateData)
         .eq('transaction_reference', booking.transactionReference)
     }

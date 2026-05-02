@@ -1,5 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { createClient } from '@supabase/supabase-js';
+
+function createAdminClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,8 +20,9 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createSupabaseServerClient();
     const { data: { user } } = await supabase.auth.getUser();
+    const supabaseAdmin = createAdminClient();
 
-    const { error } = await supabase.from('pending_bookings').upsert(
+    const { error } = await supabaseAdmin.from('pending_bookings').upsert(
       {
         reference,
         booking_payload: booking,
