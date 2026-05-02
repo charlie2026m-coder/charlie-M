@@ -69,7 +69,6 @@ export default async function Footer({ locale }: { locale: string }) {
           </div>
           <Contacts locale={locale} />
         </div>
-      <Line />
     </footer>
   );
 }
