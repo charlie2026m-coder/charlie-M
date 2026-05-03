@@ -267,9 +267,12 @@
     "crib_fee_note": "Babybett gegen Aufpreis"
   },
   "dateInput": {
-    "checkIn": "Check-in",
-    "checkOut": "Check-out",
-    "chooseDate": "Datum auswählen"
+    "checkIn": "Anreise",
+    "checkOut": "Abreise",
+    "chooseDate": "Datum auswählen",
+    "cancel": "Abbrechen",
+    "apply": "Übernehmen",
+    "nights": "{count, plural, =1 {# Nacht} other {# Nächte}}"
   },
   "imprint": {
     "title": "Impressum gemäß § 5 TMG",

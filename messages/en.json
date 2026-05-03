@@ -269,7 +269,10 @@
   "dateInput": {
     "checkIn": "Check In",
     "checkOut": "Check out",
-    "chooseDate": "Choose date"
+    "chooseDate": "Choose date",
+    "cancel": "Cancel",
+    "apply": "Apply",
+    "nights": "{count, plural, =1 {# night} other {# nights}}"
   },
   "imprint": {
     "title": "Information pursuant to Section 5 of the German Telemedia Act (TMG)",
