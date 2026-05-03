@@ -21,6 +21,7 @@ const Header = ({ locale, isWhite = false }: { locale: string, isWhite?: boolean
   }, [pathname]);
 
   const handleMobileBookNow = () => {
+    if (pathname.startsWith('/rooms')) return;
     setIsNavigating(true);
     router.push('/rooms');
   };
