@@ -47,6 +47,16 @@ export const getDefaultArrivalDate = (): string => {
   return dayjs().format('YYYY-MM-DD')
 }
 
+const PIN_AVAILABLE_HOUR = 10
+
+// PIN may be issued early (pre-check-in), but we hide it until 10:00 Berlin
+// on arrival day so guests don't show up before housekeeping is done.
+export const isPinCodeAvailable = (arrivalISO: string | null | undefined): boolean => {
+  if (!arrivalISO) return false
+  const earliest = dayjs(arrivalISO).tz('Europe/Berlin').startOf('day').add(PIN_AVAILABLE_HOUR, 'hour')
+  return dayjs().valueOf() >= earliest.valueOf()
+}
+
 export const getPath = (params: {
   roomId?: string
   from?: string
