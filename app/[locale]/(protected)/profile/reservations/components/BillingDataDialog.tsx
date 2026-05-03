@@ -124,7 +124,11 @@ export function BillingDataDialog({
   const handleGenerate = async () => {
     setErrorMessage(null)
     try {
-      const { invoiceId } = await createInvoice.mutateAsync({ folioId, languageCode: language })
+      const { invoiceId } = await createInvoice.mutateAsync({
+        folioId,
+        languageCode: language,
+        debitor: toDebitor(savedForm),
+      })
       await downloadPdf.mutateAsync({ invoiceId, filename: `invoice-${folioId}.pdf` })
       toast.success(t('invoiceGenerated'))
       onOpenChange(false)
@@ -213,6 +217,10 @@ export function BillingDataDialog({
                 {errorMessage}
               </div>
             )}
+
+            <div className='rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800'>
+              {t('invoiceFinalActionWarning')}
+            </div>
 
             <Button
               onClick={handleGenerate}

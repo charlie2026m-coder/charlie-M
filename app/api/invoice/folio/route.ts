@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Fetch, getOrRefreshToken } from '@/services/Request';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { ensureReservationLink } from '@/services/ensureReservationLink';
 import type { FolioResponse, ApaleoInvoiceListResponse, FolioDebitor } from '@/types/apaleo';
 
 const APALEO_API_URL = 'https://api.apaleo.com';
+
+const folioToReservationId = (folioId: string) => folioId.replace(/-\d+$/, '');
 
 export async function GET(request: NextRequest) {
   const supabase = await createSupabaseServerClient();
@@ -16,15 +19,34 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const [folio, invoiceList] = await Promise.all([
+    const reservationId = folioToReservationId(folioId);
+
+    const link = await ensureReservationLink(supabase, user, reservationId);
+    if (!link.ok) {
+      return NextResponse.json({ error: link.error }, { status: link.status });
+    }
+
+    const [folio, invoiceList, stateResult] = await Promise.all([
       Fetch<FolioResponse>(`/finance/v1/folios/${folioId}`),
       Fetch<ApaleoInvoiceListResponse>(`/finance/v1/invoices?folioIds=${folioId}`),
+      supabase
+        .from('invoice_states')
+        .select('invoice_id, language_code, locked_at')
+        .eq('reservation_id', reservationId)
+        .maybeSingle(),
     ]);
 
     return NextResponse.json({
       folio,
       invoices: invoiceList.invoices ?? [],
       hasInvoice: (invoiceList.count ?? 0) > 0,
+      state: stateResult.data
+        ? {
+            invoiceId: stateResult.data.invoice_id,
+            languageCode: stateResult.data.language_code,
+            lockedAt: stateResult.data.locked_at,
+          }
+        : null,
     });
   } catch (error) {
     return NextResponse.json(
@@ -47,6 +69,23 @@ export async function PATCH(request: NextRequest) {
 
     if (!folioId || !debitor) {
       return NextResponse.json({ error: 'folioId and debitor are required' }, { status: 400 });
+    }
+
+    const reservationId = folioToReservationId(folioId);
+
+    const link = await ensureReservationLink(supabase, user, reservationId);
+    if (!link.ok) {
+      return NextResponse.json({ error: link.error }, { status: link.status });
+    }
+
+    const { data: existingLock } = await supabase
+      .from('invoice_states')
+      .select('reservation_id')
+      .eq('reservation_id', reservationId)
+      .maybeSingle();
+
+    if (existingLock) {
+      return NextResponse.json({ error: 'invoiceLocked' }, { status: 409 });
     }
 
     const token = await getOrRefreshToken();
