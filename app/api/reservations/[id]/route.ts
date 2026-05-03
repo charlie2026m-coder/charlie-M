@@ -28,7 +28,7 @@ export async function GET(
       getReservationAccessesServer(id),
     ]);
 
-    if (!reservation) {
+    if (!reservation || reservation.property?.id !== process.env.APALEO_PROPERTY_ID) {
       return NextResponse.json(
         { error: 'Reservation not found' },
         { status: 404 }

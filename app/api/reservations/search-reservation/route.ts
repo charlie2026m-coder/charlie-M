@@ -61,6 +61,17 @@ export async function GET(request: NextRequest) {
     }
 
     const reservation = reservationResult.value;
+
+    // Apaleo's single-resource endpoint ignores propertyIds — enforce it
+    // ourselves so a reservation from the other hotel (sharing the same
+    // Apaleo account) can't be added on this site.
+    if (reservation.property?.id !== process.env.APALEO_PROPERTY_ID) {
+      return NextResponse.json(
+        { error: 'Please check the booking ID' },
+        { status: 404 }
+      );
+    }
+
     const roomsData = roomsResult.status === 'fulfilled' ? roomsResult.value.data : [];
 
     // Check if reservation email matches current user's email

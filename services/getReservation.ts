@@ -23,6 +23,13 @@ export async function getReservationById(reservationId: string): Promise<Reserva
       return null;
     }
 
+    // Apaleo's single-resource endpoint ignores propertyIds — enforce here
+    // so reservations from the other hotel (shared Apaleo account) are
+    // never surfaced on this site.
+    if (reservation.property?.id !== process.env.APALEO_PROPERTY_ID) {
+      return null;
+    }
+
     // Handle room details result (optional - fallback to empty array)
     let roomDetails: Awaited<ReturnType<typeof getRoomDetails>> = [];
     if (roomDetailsResult.status === 'fulfilled') {
