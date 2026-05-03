@@ -40,6 +40,13 @@ export async function ensureReservationLink(
     return { ok: false, status: 404, error: 'Reservation not found' };
   }
 
+  // Apaleo's single-resource endpoint ignores propertyIds — verify here that
+  // this reservation actually belongs to the current site's property (the
+  // OAuth account is shared with the sister hotel).
+  if (reservation.property?.id !== process.env.APALEO_PROPERTY_ID) {
+    return { ok: false, status: 404, error: 'Reservation not found' };
+  }
+
   const apaleoEmail = reservation.primaryGuest?.email ?? reservation.booker?.email ?? '';
 
   if (!apaleoEmail || apaleoEmail.toLowerCase() !== user.email.toLowerCase()) {
