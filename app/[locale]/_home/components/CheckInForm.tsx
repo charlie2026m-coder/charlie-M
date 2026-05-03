@@ -9,12 +9,14 @@ import { Guests } from '@/app/_components/ui/guests';
 import { Calendar } from '@/app/_components/ui/calendar';
 import { DateRange } from 'react-day-picker';
 import { Button } from '@/app/_components/ui/button'
-import { useRouter } from 'next/navigation';  
+import { useRouter } from 'next/navigation';
 import { useStore } from '@/store/useStore';
 import { UrlParams } from '@/types/apaleo';
+import { useTranslations } from 'next-intl';
 
 
 const CheckInForm = ({ className = '', params }: { className?: string, params?: UrlParams }) => {
+  const t = useTranslations('dateInput');
   const { dateRange, guests, setValue } = useStore();
   const router = useRouter();
   const [openCalendar, setOpenCalendar] = useState(false);
@@ -106,7 +108,7 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
     const nights = Math.round(diffTime / (1000 * 60 * 60 * 24));
     
     if(nights === 0) return null;
-    return nights === 1 ? '1 night' : `${nights} nights`;
+    return t('nights', { count: nights });
   }
   const resetForm = () => {
     setValue({
@@ -207,8 +209,8 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
                {getNights()}
             </div>}
             <div className='grid grid-cols-2 gap-2 md:hidden'>
-              <Button onClick={resetForm} className='w-full text-sm md:text-base h-10' variant='outline'>Cancel</Button>
-              <Button onClick={()=> setOpenCalendar(false)} className='w-full text-sm md:text-base h-10'>Apply</Button>
+              <Button onClick={resetForm} className='w-full text-sm md:text-base h-10' variant='outline'>{t('cancel')}</Button>
+              <Button onClick={()=> setOpenCalendar(false)} className='w-full text-sm md:text-base h-10'>{t('apply')}</Button>
             </div>
           </DateInput>
        </label>
