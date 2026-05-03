@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import Image from 'next/image'
 import { BsFillPersonFill } from 'react-icons/bs'
 import StatusBadge from '@/app/_components/ui/StatusBadge';
-import { cn } from '@/lib/utils';
+import { cn, isPinCodeAvailable } from '@/lib/utils';
 import { toast } from 'sonner';
 import { IoCopy } from "react-icons/io5";
 import { InfoButton, DetailsButton, BookAgainButton } from './Buttons';
@@ -23,7 +23,7 @@ const ReservationCard = ({ reservation }: { reservation: ReservationType }  ) =>
   const isCancelled = status === bookingStatuses.Canceled || status === bookingStatuses.NoShow;
   const isCheckedOut = status === bookingStatuses.CheckedOut;
   
-  const isPincode = reservation.accesses?.pinCode;
+  const isPincode = reservation.accesses?.pinCode && isPinCodeAvailable(reservation.arrival);
   const isClosed = isCheckedOut || isCancelled;
   const showCheckInButton = !reservation.isPreCheckedIn && !isCancelled;
   const isCheckedIn = reservation.isPreCheckedIn && !isCancelled;

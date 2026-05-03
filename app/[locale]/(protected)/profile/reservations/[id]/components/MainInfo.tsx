@@ -10,7 +10,7 @@ import { ReservationButton } from './ReservationDetails';
 import { RoomDetailsButton } from './RoomDetails';
 import StatusBadge from '@/app/_components/ui/StatusBadge';
 import { bookingStatuses } from '@/types/types';
-import { cn } from '@/lib/utils';
+import { cn, isPinCodeAvailable } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
 import { InvoiceButton } from '../../components/InvoiceButton';
 import { PinCodeComponent } from './PinCodeComponent';
@@ -47,7 +47,7 @@ const MainInfo = ({ reservation }: { reservation: any } ) => {
   const isCancelled = reservation.status === bookingStatuses.Canceled || reservation.status === bookingStatuses.NoShow;
   const isCheckedOut = reservation.status === bookingStatuses.CheckedOut;
   
-  const isPincode = reservation.accesses?.pinCode;
+  const isPincode = reservation.accesses?.pinCode && isPinCodeAvailable(reservation.arrival);
   const isClosed = isCheckedOut || isCancelled;
   const isActive = reservation.status === bookingStatuses.Confirmed || reservation.status === bookingStatuses.InHouse;
   const showCheckInButton = !reservation.isPreCheckedIn && !isCancelled;
