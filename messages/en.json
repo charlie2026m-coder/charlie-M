@@ -568,6 +568,8 @@
     "viewInvoice": "View Invoice",
     "invoiceDownloaded": "Invoice downloaded successfully",
     "invoiceDownloadFailed": "Failed to download the invoice. Please try again or contact support if the issue persists.",
+    "invoiceLockedHint": "Billing data is locked — invoice already issued",
+    "invoiceFinalActionWarning": "After generating, billing data cannot be changed. Please review carefully.",
     "downloading": "Downloading...",
     "firstName": "First Name",
     "billingData": "Billing Data",

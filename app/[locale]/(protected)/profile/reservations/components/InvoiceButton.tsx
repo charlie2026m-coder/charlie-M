@@ -15,6 +15,12 @@ interface InvoiceButtonProps {
   className?: string
 }
 
+interface InvoiceState {
+  invoiceId: string
+  languageCode: string
+  lockedAt: string
+}
+
 export const InvoiceButton = ({ reservationId, className }: InvoiceButtonProps) => {
   const t = useTranslations('profile')
   const folioId = `${reservationId}-1`
@@ -23,24 +29,27 @@ export const InvoiceButton = ({ reservationId, className }: InvoiceButtonProps) 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [debitor, setDebitor] = useState<FolioDebitor | null>(null)
-  const [invoiceId, setInvoiceId] = useState<string | null>(null)
+  const [lockedState, setLockedState] = useState<InvoiceState | null>(null)
 
   const downloadPdf = useDownloadInvoicePdf()
 
   const fetchFolioData = async () => {
     const response = await fetch(`/api/invoice/folio?folioId=${encodeURIComponent(folioId)}`)
     if (!response.ok) throw new Error('Failed to fetch folio data')
-    return response.json()
+    return response.json() as Promise<{
+      folio: { debitor?: FolioDebitor }
+      invoices: Array<{ id: string }>
+      state: InvoiceState | null
+    }>
   }
 
   const handleButtonClick = async () => {
     setIsLoading(true)
     try {
       const data = await fetchFolioData()
-      const invoices = data.invoices ?? []
 
-      if (invoices.length > 0) {
-        setInvoiceId(invoices[0].id)
+      if (data.state?.lockedAt) {
+        setLockedState(data.state)
         setPopoverOpen(true)
       } else {
         setDebitor(data.folio.debitor ?? null)
@@ -53,17 +62,17 @@ export const InvoiceButton = ({ reservationId, className }: InvoiceButtonProps) 
     }
   }
 
-  const handleDownloadExisting = async () => {
+  const handleDownloadLocked = async () => {
     setPopoverOpen(false)
 
-    if (!invoiceId) {
+    if (!lockedState) {
       toast.error(t('invoiceDownloadFailed'))
       return
     }
 
     try {
       await downloadPdf.mutateAsync({
-        invoiceId,
+        invoiceId: lockedState.invoiceId,
         filename: `invoice-${folioId}.pdf`,
       })
       toast.success(t('invoiceDownloaded'))
@@ -92,21 +101,15 @@ export const InvoiceButton = ({ reservationId, className }: InvoiceButtonProps) 
         </PopoverTrigger>
         <PopoverContent className='w-auto p-2'>
           <div className='flex flex-col gap-2'>
+            <div className='text-xs text-gray-500 px-2 pb-1'>{t('invoiceLockedHint')}</div>
             <Button
               variant='ghost'
               className='justify-start h-9 rounded px-4'
-              onClick={handleDownloadExisting}
+              onClick={handleDownloadLocked}
               disabled={downloadPdf.isPending}
             >
-              EN English
-            </Button>
-            <Button
-              variant='ghost'
-              className='justify-start h-9 rounded px-4'
-              onClick={handleDownloadExisting}
-              disabled={downloadPdf.isPending}
-            >
-              DE Deutsch
+              <MdDownload className='size-4 mr-2' />
+              {t('downloadInvoice')} ({lockedState?.languageCode === 'de' ? 'DE' : 'EN'})
             </Button>
           </div>
         </PopoverContent>

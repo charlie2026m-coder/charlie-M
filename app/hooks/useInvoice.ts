@@ -23,14 +23,16 @@ export function useCreateInvoice() {
     mutationFn: async ({
       folioId,
       languageCode,
+      debitor,
     }: {
       folioId: string;
       languageCode: string;
-    }): Promise<{ invoiceId: string }> => {
+      debitor?: FolioDebitor;
+    }): Promise<{ invoiceId: string; languageCode: string; alreadyLocked?: boolean }> => {
       const response = await fetch('/api/invoice/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ folioId, languageCode }),
+        body: JSON.stringify({ folioId, languageCode, debitor }),
       });
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));

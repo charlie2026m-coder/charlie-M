@@ -568,6 +568,8 @@
     "viewInvoice": "Rechnung anzeigen",
     "invoiceDownloaded": "Rechnung erfolgreich heruntergeladen",
     "invoiceDownloadFailed": "Die Rechnung konnte nicht heruntergeladen werden. Bitte versuchen Sie es erneut oder kontaktieren Sie den Support.",
+    "invoiceLockedHint": "Rechnungsdaten sind gesperrt — Rechnung bereits ausgestellt",
+    "invoiceFinalActionWarning": "Nach der Generierung können die Rechnungsdaten nicht mehr geändert werden. Bitte sorgfältig prüfen.",
     "downloading": "Wird heruntergeladen...",
     "firstName": "Vorname",
     "billingData": "Rechnungsdaten",
