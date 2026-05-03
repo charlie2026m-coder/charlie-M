@@ -267,9 +267,12 @@
     "crib_fee_note": "Babybett gegen Aufpreis"
   },
   "dateInput": {
-    "checkIn": "Check-in",
-    "checkOut": "Check-out",
-    "chooseDate": "Datum auswählen"
+    "checkIn": "Anreise",
+    "checkOut": "Abreise",
+    "chooseDate": "Datum auswählen",
+    "cancel": "Abbrechen",
+    "apply": "Übernehmen",
+    "nights": "{count, plural, =1 {# Nacht} other {# Nächte}}"
   },
   "imprint": {
     "title": "Impressum gemäß § 5 TMG",
@@ -328,16 +331,6 @@
     "bookNow": "Jetzt buchen",
     "loading": "Wird geladen …",
     "booked": "Für diese Daten nicht verfügbar"
-  },
-  "noAvailability": {
-    "title": "Keine Zimmer verfügbar",
-    "roomIs": "Dieses Zimmer ist",
-    "roomNameIs": "{roomName} ist",
-    "notAvailable": "nicht verfügbar",
-    "forSelectedDates": "für die ausgewählten Daten",
-    "forTodayTomorrow": "für heute und morgen",
-    "tryDifferentDates": "Bitte wählen Sie andere Daten oder sehen Sie sich weitere Zimmeroptionen an.",
-    "lookAnother": "Andere Zimmer ansehen"
   },
   "noRooms": {
     "title": "Keine Übereinstimmungen für Ihre Anfrage, bitte kontaktieren Sie uns direkt",
@@ -400,11 +393,6 @@
     "babyBedsAvailable": "Kinderbetten verfügbar",
     "pleaseNote": "Bitte beachten Sie:",
     "roomVariationNote": "Jedes Zimmer in unserem historischen Gebäude verfügt über einen individuellen Grundriss. Obwohl alle Zimmer dieser Kategorie denselben Komfortstandard und dieselben Ausstattungsmerkmale bieten, können sich Größe und Form leicht unterscheiden. Daher kann das Ihnen zugewiesene Zimmer geringfügig von den gezeigten Fotos abweichen, entspricht jedoch stets der gebuchten Qualität und Zimmerkategorie."
-  },
-  "availability": {
-    "title": "Verfügbarkeit",
-    "cancel": "Abbrechen",
-    "apply": "Anwenden"
   },
   "changeDate": {
     "cancel": "Abbrechen",

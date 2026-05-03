@@ -269,7 +269,10 @@
   "dateInput": {
     "checkIn": "Check In",
     "checkOut": "Check out",
-    "chooseDate": "Choose date"
+    "chooseDate": "Choose date",
+    "cancel": "Cancel",
+    "apply": "Apply",
+    "nights": "{count, plural, =1 {# night} other {# nights}}"
   },
   "imprint": {
     "title": "Information pursuant to Section 5 of the German Telemedia Act (TMG)",
@@ -328,16 +331,6 @@
     "bookNow": "Book Now",
     "loading": "Loading...",
     "booked": "Not available for these dates"
-  },
-  "noAvailability": {
-    "title": "No Rooms Available",
-    "roomIs": "This room is",
-    "roomNameIs": "{roomName} is",
-    "notAvailable": "not available",
-    "forSelectedDates": "for the selected dates",
-    "forTodayTomorrow": "for today and tomorrow",
-    "tryDifferentDates": "Please try different dates or explore other room options.",
-    "lookAnother": "Look another"
   },
   "noRooms": {
     "title": "No matches for your request, please contact us directly",
@@ -400,11 +393,6 @@
     "babyBedsAvailable": "baby beds available",
     "pleaseNote": "Please note:",
     "roomVariationNote": "Each room in our historic property has its own individual layout. While every room in this category offers the same comfort level and features, small variations in size or shape are to be expected. Because of this, the room you receive may differ slightly from the photos shown, but it will always match the quality and category you booked."
-  },
-  "availability": {
-    "title": "Availability",
-    "cancel": "Cancel",
-    "apply": "Apply"
   },
   "changeDate": {
     "cancel": "Cancel",
