@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
       throw error;
     }
 
-    if (!reservation || !reservation.id) {
+    if (!reservation || !reservation.id || reservation.property?.id !== process.env.APALEO_PROPERTY_ID) {
       return NextResponse.json(
         { error: 'Please check the reservation ID' },
         { status: 404 }

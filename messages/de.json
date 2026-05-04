@@ -267,9 +267,12 @@
     "crib_fee_note": "Babybett gegen Aufpreis"
   },
   "dateInput": {
-    "checkIn": "Check-in",
-    "checkOut": "Check-out",
-    "chooseDate": "Datum auswählen"
+    "checkIn": "Anreise",
+    "checkOut": "Abreise",
+    "chooseDate": "Datum auswählen",
+    "cancel": "Abbrechen",
+    "apply": "Übernehmen",
+    "nights": "{count, plural, =1 {# Nacht} other {# Nächte}}"
   },
   "imprint": {
     "title": "Impressum gemäß § 5 TMG",
@@ -328,16 +331,6 @@
     "bookNow": "Jetzt buchen",
     "loading": "Wird geladen …",
     "booked": "Für diese Daten nicht verfügbar"
-  },
-  "noAvailability": {
-    "title": "Keine Zimmer verfügbar",
-    "roomIs": "Dieses Zimmer ist",
-    "roomNameIs": "{roomName} ist",
-    "notAvailable": "nicht verfügbar",
-    "forSelectedDates": "für die ausgewählten Daten",
-    "forTodayTomorrow": "für heute und morgen",
-    "tryDifferentDates": "Bitte wählen Sie andere Daten oder sehen Sie sich weitere Zimmeroptionen an.",
-    "lookAnother": "Andere Zimmer ansehen"
   },
   "noRooms": {
     "title": "Keine Übereinstimmungen für Ihre Anfrage, bitte kontaktieren Sie uns direkt",
@@ -400,11 +393,6 @@
     "babyBedsAvailable": "Kinderbetten verfügbar",
     "pleaseNote": "Bitte beachten Sie:",
     "roomVariationNote": "Jedes Zimmer in unserem historischen Gebäude verfügt über einen individuellen Grundriss. Obwohl alle Zimmer dieser Kategorie denselben Komfortstandard und dieselben Ausstattungsmerkmale bieten, können sich Größe und Form leicht unterscheiden. Daher kann das Ihnen zugewiesene Zimmer geringfügig von den gezeigten Fotos abweichen, entspricht jedoch stets der gebuchten Qualität und Zimmerkategorie."
-  },
-  "availability": {
-    "title": "Verfügbarkeit",
-    "cancel": "Abbrechen",
-    "apply": "Anwenden"
   },
   "changeDate": {
     "cancel": "Abbrechen",
@@ -580,6 +568,8 @@
     "viewInvoice": "Rechnung anzeigen",
     "invoiceDownloaded": "Rechnung erfolgreich heruntergeladen",
     "invoiceDownloadFailed": "Die Rechnung konnte nicht heruntergeladen werden. Bitte versuchen Sie es erneut oder kontaktieren Sie den Support.",
+    "invoiceLockedHint": "Rechnungsdaten sind gesperrt — Rechnung bereits ausgestellt",
+    "invoiceFinalActionWarning": "Nach der Generierung können die Rechnungsdaten nicht mehr geändert werden. Bitte sorgfältig prüfen.",
     "downloading": "Wird heruntergeladen...",
     "firstName": "Vorname",
     "billingData": "Rechnungsdaten",
@@ -1342,11 +1332,15 @@
   },
   "cookies": {
     "title": "Cookie-Einstellungen",
-    "description": "Wir verwenden Cookies, um Ihre Erfahrung zu verbessern und den Website-Traffic zu analysieren. Sie können wählen, welche Cookies Sie zulassen.",
+    "description": "Wir verwenden Cookies, um Ihre Erfahrung zu verbessern und den Website-Traffic zu analysieren. Sie können wählen, welche Kategorien Sie zulassen. Unbedingt erforderliche Cookies sind immer aktiv.",
+    "privacyPolicyLink": "Datenschutzerklärung lesen",
+    "necessaryTitle": "Unbedingt erforderlich",
+    "necessaryDescription": "Erforderlich für die Funktionalität der Website (Authentifizierung, Sitzung, Sprache). Kann nicht deaktiviert werden.",
     "analyticsTitle": "Analyse",
     "analyticsDescription": "Google Analytics — hilft uns zu verstehen, wie Besucher unsere Website nutzen",
     "adsTitle": "Werbung",
     "adsDescription": "Google Ads — wird verwendet, um relevante Anzeigen zu schalten und Conversions zu messen",
+    "alwaysActive": "Immer aktiv",
     "acceptAll": "Alle akzeptieren",
     "rejectAll": "Alle ablehnen",
     "savePreferences": "Speichern",

@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createSupabaseServerClient } from "@/lib/supabase-server"
+import { createClient } from "@supabase/supabase-js"
 import { getOrRefreshToken } from "@/services/Request"
 import { bookReservationServices } from "@/services/bookReservationServices"
 import { reversePayment } from "@/app/actions/adyen/reversePayment"
 import crypto from "crypto"
+
+// Webhook has no user session — must use service_role to bypass RLS
+function createAdminClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+}
 
 const APALEO_API_URL = 'https://api.apaleo.com'
 const ADYEN_HMAC_KEY = process.env.ADYEN_HMAC_KEY || ''
@@ -43,7 +52,7 @@ function verifyHmacSignature(notificationItem: any, hmacKey: string): boolean {
 }
 
 async function createBookingFromPending(reference: string, pspReference: string) {
-  const supabase = await createSupabaseServerClient()
+  const supabase = createAdminClient()
 
   console.log(`📞 Webhook: Processing booking for reference ${reference}, pspReference ${pspReference}`)
 
@@ -166,7 +175,7 @@ async function createBookingFromPending(reference: string, pspReference: string)
 }
 
 async function addServicesFromPending(reference: string, pspReference: string) {
-  const supabase = await createSupabaseServerClient()
+  const supabase = createAdminClient()
 
   console.log(`📞 Webhook: Processing services for reference ${reference}`)
 

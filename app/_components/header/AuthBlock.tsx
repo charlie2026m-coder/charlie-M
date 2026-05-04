@@ -19,6 +19,7 @@ const AuthBlock = ({ isWhite = false }: { isWhite?: boolean }) => {
   }, [pathname]);
   
   const handleBookNow = () => {
+    if (pathname.startsWith('/rooms')) return;
     setIsNavigating(true);
     router.push('/rooms');
   };

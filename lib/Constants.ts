@@ -1,5 +1,8 @@
-// Tax
-export const CITY_TAX_RATE = 0.075; // 7.5% city tax on room prices
+// Hotel pricing rule: double-occupancy = single-occupancy + this amount per night
+// (gross, includes any taxes). Used as a fallback when Apaleo's adults=2 offer
+// query is unavailable for a rate plan.
+export const DOUBLE_OCCUPANCY_SURCHARGE_PER_NIGHT = 9;
+
 export const PHONE_NUMBER = "+5 077 6764 8570"
 export const EMAIL = "info@charlie-m.de"
 

@@ -5,7 +5,7 @@ import { Guests } from "@/app/_components/ui/guests"
 import { Button } from "@/app/_components/ui/button"
 import { Calendar } from "@/app/_components/ui/calendar"
 import { Spinner } from "@/app/_components/ui/spinner"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useTransition } from "react"
 import { DateRange } from "react-day-picker"
 import { useRouter } from "@/navigation"
 import { useQuery } from "@tanstack/react-query"
@@ -40,7 +40,7 @@ const BookingForm = ({
 
   const [openCheckIn, setOpenCheckIn] = useState(false)
   const [dateError, setDateError] = useState(false)
-  const [isNavigating, setIsNavigating] = useState(false)
+  const [isNavigating, startNavigation] = useTransition()
 
   const [guests, setGuests] = useState({
     adults: parseInt(params?.adults || guestsStore?.adults.toString() || '1'),
@@ -143,14 +143,15 @@ const BookingForm = ({
       return
     }
     setDateError(false)
-    setIsNavigating(true)
     const queryString = getPath({
       from: getDate(dateRange.from),
       to: getDate(dateRange.to),
       adults: guests.adults.toString(),
       children: guests.children.toString(),
     })
-    router.push(`/booking/${id}?${queryString}`)
+    startNavigation(() => {
+      router.push(`/booking/${id}?${queryString}`)
+    })
   }
 
   const showPlaceholder = isPriceLoading || !room

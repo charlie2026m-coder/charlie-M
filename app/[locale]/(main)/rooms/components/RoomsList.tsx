@@ -17,8 +17,16 @@ const RoomsList = ({
   isBabyBedAvailable: { isAvailable: boolean, count: number }
 }) => {
   const { filter, priceFilter, bedSizeFilter, roomTypeFilter, childBedFilter, guests } = useStore()
+  const resetRoomsFilters = useStore(state => state.resetRoomsFilters)
   const [currentPage, setCurrentPage] = useState(0)
   const [roomsPerPage, setRoomsPerPage] = useState(6)
+
+  // Zustand stores survive across SPA navigations, so filters chosen on the
+  // previous visit would persist. Reset them once on mount so each entry to
+  // the rooms page starts clean.
+  useEffect(() => {
+    resetRoomsFilters()
+  }, [resetRoomsFilters])
   // Adjust rooms per page based on screen size
   useEffect(() => {
     const handleResize = () => {
@@ -38,8 +46,10 @@ const RoomsList = ({
   
   // Apply filters first
   const filteredRooms = useMemo(() => {
-    let filtered = rooms;
-    
+    // Copy before sort — .sort() mutates in place and we don't want to
+    // reorder the parent's array (which can come from a cached query).
+    let filtered = [...rooms];
+
     if(priceFilter) {
       filtered = filtered.sort((a, b) => a.oneNightPrice - b.oneNightPrice)
     } else {

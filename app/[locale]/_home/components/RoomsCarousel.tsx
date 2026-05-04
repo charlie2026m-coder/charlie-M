@@ -62,7 +62,11 @@ export function RoomsCarousel({
     enabled: !!debouncedFrom && !!debouncedTo,
   })
 
-  // Merge static room data with live prices; sort available rooms first
+  // Merge static room data with live prices. Once prices have loaded, hide
+  // rooms that Apaleo didn't return — they're booked/unavailable for the
+  // chosen dates and there's nothing to show on the home carousel. While
+  // prices are still undefined (no dates selected yet, or query disabled),
+  // show all rooms with their static info.
   const roomsWithPrices: HomeRoomCard[] = React.useMemo(() => {
     const merged = items.map(item => {
       const priceData = prices?.find(p => p.roomId === item.id)
@@ -72,10 +76,7 @@ export function RoomsCarousel({
         isBooked: prices ? !priceData : item.isBooked,
       }
     })
-    return [...merged].sort((a, b) => {
-      if (a.isBooked === b.isBooked) return 0
-      return a.isBooked ? 1 : -1
-    })
+    return merged.filter(item => !item.isBooked)
   }, [items, prices])
 
   const buttonClassName = "size-18 rounded-full border text-mute border-mute flex items-center justify-center transition-opacity hover:opacity-50"

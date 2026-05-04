@@ -4,7 +4,6 @@ import utc from "dayjs/plugin/utc"
 import timezone from "dayjs/plugin/timezone"
 import { twMerge } from "tailwind-merge"
 import { v4 as uuidv4 } from 'uuid';
-import { UrlParams } from "@/types/apaleo"
 import { Room, RoomExtra } from "@/types/types"
 import { RoomOffer } from "@/types/offers"
 import { RATE_PLANS, HOTEL_INFO, getRatePlanByNights, getNonRefundableRatePlanByNights } from "./Constants";
@@ -48,6 +47,16 @@ export const getDefaultArrivalDate = (): string => {
   return dayjs().format('YYYY-MM-DD')
 }
 
+const PIN_AVAILABLE_HOUR = 10
+
+// PIN may be issued early (pre-check-in), but we hide it until 10:00 Berlin
+// on arrival day so guests don't show up before housekeeping is done.
+export const isPinCodeAvailable = (arrivalISO: string | null | undefined): boolean => {
+  if (!arrivalISO) return false
+  const earliest = dayjs(arrivalISO).tz('Europe/Berlin').startOf('day').add(PIN_AVAILABLE_HOUR, 'hour')
+  return dayjs().valueOf() >= earliest.valueOf()
+}
+
 export const getPath = (params: {
   roomId?: string
   from?: string
@@ -63,79 +72,6 @@ export const getPath = (params: {
   if (params.roomId) searchParams.set('roomId', params.roomId)
   return searchParams.toString()
 }
-
-export type PriceDataTranslations = {
-  room: string;
-  rooms: string;
-  guest: string;
-  guests: string;
-  night: string;
-  nights: string;
-  baby: string;
-  babies: string;
-};
-
-const defaultTranslations: PriceDataTranslations = {
-  room: 'room', rooms: 'rooms',
-  guest: 'guest', guests: 'guests',
-  night: 'night', nights: 'nights',
-  baby: 'baby', babies: 'babies',
-};
-
-export const getPriceData = ({
-  params,
-  room,
-  t,
-}: {
-  params: UrlParams;
-  room: RoomOffer;
-  t?: PriceDataTranslations;
-}) => {
-  const tr = t ?? defaultTranslations;
-  let nights = 1;
-  const adults = Number(params.adults || 1);
-  const children = Number(params.children || 0);
-  const maxPersons = room.maxPersons || 2;
-
-  const roomsForChildren = children;
-  const adultsAssignedToChildren = Math.min(adults, children);
-  let remainingAdults = adults - adultsAssignedToChildren;
-  const additionalAdultsCapacity = children * (Math.min(maxPersons, 2) - 1);
-  remainingAdults -= Math.min(remainingAdults, additionalAdultsCapacity);
-  const roomsNeeded = roomsForChildren + Math.ceil(remainingAdults / maxPersons);
-
-  if (params.from && params.to) {
-    const fromDate = new Date(params.from);
-    const toDate = new Date(params.to);
-    nights = Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24));
-    if (nights === 0) nights = 1;
-  }
-
-  const r = roomsNeeded === 1 ? tr.room : tr.rooms;
-  const g = adults === 1 ? tr.guest : tr.guests;
-  const n = nights === 1 ? tr.night : tr.nights;
-
-  let priceText = `${adults} ${g}`;
-  if (children > 0) {
-    const c = children === 1 ? tr.baby : tr.babies;
-    priceText += ` + ${children} ${c}`;
-  }
-  priceText += `, ${nights} ${n}, ${roomsNeeded} ${r}`;
-
-  const priceValue = roomsNeeded * nights * room.totalGrossAmount.amount;
-
-  return {
-    nightsText: `${nights} ${n}`,
-    guestsText: `${adults} ${g}`,
-    roomsNeededText: `${roomsNeeded} ${r}`,
-    price: priceValue.toFixed(2),
-    priceText,
-    nights,
-    roomsNeeded,
-    guests: adults,
-  };
-};
-
 
 export function sortGuestsByRooms(
   adults: number,
@@ -287,13 +223,15 @@ export const getType = (nights: number, isRefundable: boolean): string => {
   return isRefundable ? getRatePlanByNights(nights) : getNonRefundableRatePlanByNights(nights);
 }
 
+// Picks one non-refundable offer per unit group for the listing page so each
+// room appears exactly once. The booking flow does NOT call this — it lets
+// resolveRatePlan choose between NR and FLEX based on the user toggle on
+// /booking/[id], so keeping all offers in that path is fine.
 export const selectBestRoomOffers = <T extends { unitGroup?: { id?: string }; id?: string; ratePlan?: { code?: string }; totalGrossAmount?: { amount?: number } }>(
   rooms: T[],
   nights: number,
 ): T[] => {
-  const targetRatePlan = getRatePlanByNights(nights);
   const targetNRPlan = getNonRefundableRatePlanByNights(nights);
-
   const roomsMap = new Map<string, T[]>();
   rooms.forEach(room => {
     const roomId = room.unitGroup?.id || room.id || '';
@@ -302,17 +240,11 @@ export const selectBestRoomOffers = <T extends { unitGroup?: { id?: string }; id
   });
 
   const bestOffers: T[] = [];
-
-  roomsMap.forEach((offers) => {
-    // Best non-refundable plan — default/primary price
-    const selectedNR = offers.find(o => o.ratePlan?.code === targetNRPlan)
+  roomsMap.forEach(offers => {
+    const selectedNR =
+      offers.find(o => o.ratePlan?.code === targetNRPlan)
       ?? offers.find(o => o.ratePlan?.code === RATE_PLANS.NR_WEB);
     if (selectedNR) bestOffers.push(selectedNR);
-
-    // Best refundable plan — required for the refundable toggle to work
-    const selected = offers.find(o => o.ratePlan?.code === targetRatePlan)
-      ?? offers.find(o => o.ratePlan?.code === RATE_PLANS.FLEX_WEB);
-    if (selected) bestOffers.push(selected);
   });
 
   return bestOffers;

@@ -50,6 +50,18 @@ export async function POST(request: NextRequest) {
       }
     );
 
+    // GDPR Art. 17 — clear personal data from pending_bookings before user deletion
+    await supabaseAdmin
+      .from('pending_bookings')
+      .update({ booking_payload: { cleared: true }, updated_at: new Date().toISOString() })
+      .eq('user_id', user.id);
+
+    // GDPR Art. 17 — anonymize reservations (keep record for financial audit trail per AO §147)
+    await supabaseAdmin
+      .from('reservations')
+      .update({ last_name: 'DELETED', email: 'deleted@deleted.invalid' })
+      .eq('user_id', user.id);
+
     // Delete user account (this will cascade delete profiles and consents)
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(user.id);
 

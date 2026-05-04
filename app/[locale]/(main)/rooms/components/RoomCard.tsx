@@ -5,7 +5,6 @@ import { Link, useRouter } from '@/navigation'
 import { getPath, getDate, calculateNights } from '@/lib/utils'
 import { UrlParams } from '@/types/apaleo'
 import { RoomOffer } from '@/types/offers'
-import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useStore } from '@/store/useStore'
 
@@ -20,7 +19,6 @@ const RoomCard = ({
   room: RoomOffer
 }) => {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
   const t = useTranslations('roomCard');
   const tParams = useTranslations('roomParams');
   const { dateRange, guests } = useStore();
@@ -70,7 +68,6 @@ const RoomCard = ({
   const roomDetailId = room.unitGroup.id;
 
   const handleBookNow = () => {
-    setIsLoading(true);
     router.push(`/rooms/${roomDetailId}?${queryString}`);
   };
 
@@ -100,11 +97,10 @@ const RoomCard = ({
           <Price price={price} className='h-[50px] w-full xs:w-auto' />
           <Button 
             onClick={handleBookNow}
-            disabled={isLoading}
-            variant='outline' 
+            variant='outline'
             className='h-[50px] active:bg-black active:text-white'
           >
-            {isLoading ? t('loading') : t('bookNow')}
+            {t('bookNow')}
           </Button>
         </div>
       </div>

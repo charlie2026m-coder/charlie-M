@@ -269,7 +269,10 @@
   "dateInput": {
     "checkIn": "Check In",
     "checkOut": "Check out",
-    "chooseDate": "Choose date"
+    "chooseDate": "Choose date",
+    "cancel": "Cancel",
+    "apply": "Apply",
+    "nights": "{count, plural, =1 {# night} other {# nights}}"
   },
   "imprint": {
     "title": "Information pursuant to Section 5 of the German Telemedia Act (TMG)",
@@ -328,16 +331,6 @@
     "bookNow": "Book Now",
     "loading": "Loading...",
     "booked": "Not available for these dates"
-  },
-  "noAvailability": {
-    "title": "No Rooms Available",
-    "roomIs": "This room is",
-    "roomNameIs": "{roomName} is",
-    "notAvailable": "not available",
-    "forSelectedDates": "for the selected dates",
-    "forTodayTomorrow": "for today and tomorrow",
-    "tryDifferentDates": "Please try different dates or explore other room options.",
-    "lookAnother": "Look another"
   },
   "noRooms": {
     "title": "No matches for your request, please contact us directly",
@@ -400,11 +393,6 @@
     "babyBedsAvailable": "baby beds available",
     "pleaseNote": "Please note:",
     "roomVariationNote": "Each room in our historic property has its own individual layout. While every room in this category offers the same comfort level and features, small variations in size or shape are to be expected. Because of this, the room you receive may differ slightly from the photos shown, but it will always match the quality and category you booked."
-  },
-  "availability": {
-    "title": "Availability",
-    "cancel": "Cancel",
-    "apply": "Apply"
   },
   "changeDate": {
     "cancel": "Cancel",
@@ -580,6 +568,8 @@
     "viewInvoice": "View Invoice",
     "invoiceDownloaded": "Invoice downloaded successfully",
     "invoiceDownloadFailed": "Failed to download the invoice. Please try again or contact support if the issue persists.",
+    "invoiceLockedHint": "Billing data is locked — invoice already issued",
+    "invoiceFinalActionWarning": "After generating, billing data cannot be changed. Please review carefully.",
     "downloading": "Downloading...",
     "firstName": "First Name",
     "billingData": "Billing Data",
@@ -1341,11 +1331,15 @@
   },
   "cookies": {
     "title": "Cookie Settings",
-    "description": "We use cookies to improve your experience and analyse website traffic. You can choose which cookies you allow.",
+    "description": "We use cookies to improve your experience and analyse website traffic. You can choose which categories you allow. Strictly necessary cookies are always active.",
+    "privacyPolicyLink": "Read our Privacy Policy",
+    "necessaryTitle": "Strictly necessary",
+    "necessaryDescription": "Required for site functionality (authentication, session, language). Cannot be disabled.",
     "analyticsTitle": "Analytics",
     "analyticsDescription": "Google Analytics — helps us understand how visitors use our site",
     "adsTitle": "Advertising",
     "adsDescription": "Google Ads — used to show relevant ads and measure conversions",
+    "alwaysActive": "Always active",
     "acceptAll": "Accept All",
     "rejectAll": "Reject All",
     "savePreferences": "Save",

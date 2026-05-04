@@ -3,26 +3,42 @@ const ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
 const ADS_LABEL = process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL;
 
 const CONSENT_KEY = 'charlie_cookie_consent';
+// Bump when consent categories or vendors change to invalidate stored consent.
+const CONSENT_VERSION = 1;
 
 export interface ConsentState {
   analytics: boolean;
   ads: boolean;
+  version: number;
+  timestamp: number;
 }
+
+export type ConsentChoice = Pick<ConsentState, 'analytics' | 'ads'>;
 
 export function getStoredConsent(): ConsentState | null {
   if (typeof window === 'undefined') return null;
   try {
     const stored = localStorage.getItem(CONSENT_KEY);
-    return stored ? (JSON.parse(stored) as ConsentState) : null;
+    if (!stored) return null;
+    const parsed = JSON.parse(stored) as Partial<ConsentState>;
+    if (parsed.version !== CONSENT_VERSION) return null;
+    return parsed as ConsentState;
   } catch {
     return null;
   }
 }
 
-export function applyConsent(consent: ConsentState) {
+export function applyConsent(consent: ConsentChoice) {
   if (typeof window === 'undefined') return;
 
-  localStorage.setItem(CONSENT_KEY, JSON.stringify(consent));
+  const payload: ConsentState = {
+    analytics: consent.analytics,
+    ads: consent.ads,
+    version: CONSENT_VERSION,
+    timestamp: Date.now(),
+  };
+
+  localStorage.setItem(CONSENT_KEY, JSON.stringify(payload));
 
   window.gtag?.('consent', 'update', {
     analytics_storage: consent.analytics ? 'granted' : 'denied',
