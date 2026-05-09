@@ -19,6 +19,10 @@ const ADYEN_HMAC_KEY = process.env.ADYEN_HMAC_KEY || ''
 
 function verifyHmacSignature(notificationItem: any, hmacKey: string): boolean {
   if (!hmacKey) {
+    if (process.env.NODE_ENV === 'production') {
+      console.error('🚨 ADYEN_HMAC_KEY not set in production — rejecting webhook')
+      return false
+    }
     console.warn('⚠️ ADYEN_HMAC_KEY not set — skipping HMAC verification (dev mode)')
     return true
   }
