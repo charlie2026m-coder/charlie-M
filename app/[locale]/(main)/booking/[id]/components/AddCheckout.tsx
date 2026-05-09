@@ -106,19 +106,25 @@ const AddCheckoutExtra = ({ extra, rooms }: { extra: Service, rooms: Room[]}) =>
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <div className='absolute flex top-2.5 right-2.5 items-center justify-center rounded transition-all duration-300 cursor-pointer size-10 shadow-lg bg-blue border-blue text-white'>
-          <FaPlus className='size-6' />
+      <DialogTrigger asChild className='ml-auto md:ml-0'>
+        <div className='self-start md:self-auto'>
+          <div className='flex md:hidden items-center justify-center rounded transition-all duration-300 cursor-pointer size-10 shadow-lg bg-blue border-blue text-white'>
+            <FaPlus className='size-6' />
+          </div>
+          <Button variant="outline" className='hidden md:block h-[35px] p-0 w-full'>{t('add')}</Button>
         </div>
       </DialogTrigger>
       <DialogContent className="rounded-xl max-w-[600px] max-h-[80vh] w-full overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className='font-semibold text-xl'>
+          <DialogTitle className='font-semibold text-xl w-4/5 md:w-full'>
             {t('add')} {extra.name} (€{extra.price})
           </DialogTitle>
         </DialogHeader>
 
 
+        {extra.description && (
+          <p className='text-dark text-sm mb-4'>{extra.description}</p>
+        )}
         <div className='flex flex-col gap-5 pb-5 border-t pt-10'>
           {isLimitReached() && (
             <div className='text-red-600 text-sm font-semibold text-center -mt-5'>
