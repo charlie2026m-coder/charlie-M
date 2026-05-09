@@ -1,5 +1,6 @@
 import VideoPlayer from './components/VideoPlayer'
 import CheckInForm from './components/CheckInForm'
+import OriginalCheckInFormWrapper from './components/OriginalCheckInFormWrapper'
 
 import Header from '@/app/_components/header/Header';
 import { Button } from '@/app/_components/ui/button';
@@ -31,7 +32,9 @@ const VideoSection = async ({ locale }: { locale: string }) => {
             <GoArrowRight className='size-5' />
           </Button>
         </Link>
-        <CheckInForm />
+        <OriginalCheckInFormWrapper>
+          <CheckInForm />
+        </OriginalCheckInFormWrapper>
       </div>
     </div>
   )

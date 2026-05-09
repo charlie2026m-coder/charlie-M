@@ -3,13 +3,14 @@
 import { useState, useEffect } from 'react';
 import { RiCloseLargeLine } from "react-icons/ri";
 import { useTranslations } from 'next-intl';
+import { useScrollStore } from '@/store/useScrollStore';
 
 const Discount = () => {
   const t = useTranslations();
   const [isVisible, setIsVisible] = useState(false);
+  const setDiscountClosed = useScrollStore(s => s.setDiscountClosed);
 
   useEffect(() => {
-    // Check if discount banner was closed in this session
     const isClosed = sessionStorage.getItem('discountBannerClosed');
     if (!isClosed) {
       setIsVisible(true);
@@ -17,8 +18,8 @@ const Discount = () => {
   }, []);
 
   const handleClose = () => {
-    // Save to sessionStorage and hide banner
     sessionStorage.setItem('discountBannerClosed', 'true');
+    setDiscountClosed(true);
     setIsVisible(false);
   };
 
