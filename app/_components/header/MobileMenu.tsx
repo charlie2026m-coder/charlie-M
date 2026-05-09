@@ -61,12 +61,12 @@ const MobileMenu = ({ isWhite = false }: { isWhite?: boolean }) => {
     <TbMenu2 className={cn('size-8 md:hidden mr-3', isWhite ? 'text-white' : 'text-black')} onClick={()=> setOpen(true)} />
     
     <Drawer open={open} onOpenChange={setOpen} direction="left">
-      <DrawerContent className='p-0 border-none bg-white min-w-full h-full rounded-r-[30px]'>
+      <DrawerContent className='p-0 border-none bg-white min-w-full min-h-full rounded-r-[30px] overflow-y-auto'>
         <VisuallyHidden>
           <DrawerTitle>Mobile Menu</DrawerTitle>
         </VisuallyHidden>
        
-        <div className='flex flex-col items-center py-5 px-3 h-full'>
+        <div className='flex flex-col items-center py-5 px-3 min-h-full'>
           <label className="flex items-center absolute top-8 left-5">
             <Suspense fallback={<div className="size-10" />}>
               {locale === 'en' ? 'ENG' : 'GER'}
