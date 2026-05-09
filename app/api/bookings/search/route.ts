@@ -1,8 +1,16 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { Fetch } from '@/services/Request';
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
+    if (!checkRateLimit('bookings-search', getClientIp(request))) {
+      return NextResponse.json(
+        { error: 'Too many requests, please try again later' },
+        { status: 429 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const bookingId = searchParams.get('externalCode');
     const lastName = searchParams.get('lastName');
@@ -20,7 +28,6 @@ export async function GET(request: Request) {
         const response = await Fetch<any>(
           `/booking/v1/bookings?externalCode=${bookingId}&textSearch=${lastName}&expand=reservations`
         );
-        
         if (response.bookings && response.bookings.length > 0) {
           return response.bookings[0];
         }
@@ -29,12 +36,9 @@ export async function GET(request: Request) {
 
       // Method 2: Search by Apaleo booking ID directly
       (async () => {
-        console.log(bookingId, 'bookingId');
         const booking = await Fetch<any>(
           `/booking/v1/bookings/${bookingId}?expand=reservations`
         );
-        
-        console.log(booking, 'booking');
         if (booking.booker?.lastName?.toLowerCase() === lastName.toLowerCase()) {
           return booking;
         }
@@ -43,12 +47,11 @@ export async function GET(request: Request) {
     ];
 
     const foundBooking = await Promise.any(searchMethods);
-    
-    return NextResponse.json({ 
-      booking: foundBooking,
-      count: 1 
-    });
 
+    return NextResponse.json({
+      booking: foundBooking,
+      count: 1,
+    });
   } catch (error) {
     return NextResponse.json(
       { error: 'No booking found with provided details' },

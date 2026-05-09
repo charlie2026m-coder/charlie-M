@@ -19,6 +19,10 @@ const ADYEN_HMAC_KEY = process.env.ADYEN_HMAC_KEY || ''
 
 function verifyHmacSignature(notificationItem: any, hmacKey: string): boolean {
   if (!hmacKey) {
+    if (process.env.NODE_ENV === 'production') {
+      console.error('🚨 ADYEN_HMAC_KEY not set in production — rejecting webhook')
+      return false
+    }
     console.warn('⚠️ ADYEN_HMAC_KEY not set — skipping HMAC verification (dev mode)')
     return true
   }
@@ -30,6 +34,9 @@ function verifyHmacSignature(notificationItem: any, hmacKey: string): boolean {
       return false
     }
 
+    const escapeHmac = (v: string | number | undefined | null) =>
+      String(v ?? '').replace(/\\/g, '\\\\').replace(/:/g, '\\:');
+
     const payload = [
       notificationItem.pspReference,
       notificationItem.originalReference || '',
@@ -39,7 +46,7 @@ function verifyHmacSignature(notificationItem: any, hmacKey: string): boolean {
       notificationItem.amount?.currency,
       notificationItem.eventCode,
       notificationItem.success,
-    ].join(':')
+    ].map(escapeHmac).join(':')
 
     const key = Buffer.from(hmacKey, 'hex')
     const expectedSignature = crypto.createHmac('sha256', key).update(payload).digest('base64')

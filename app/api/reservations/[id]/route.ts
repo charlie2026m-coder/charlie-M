@@ -3,6 +3,7 @@ import { Fetch } from '@/services/Request';
 import { ApaleoReservationResponse } from '@/types/apaleo';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { getReservationAccessesServer } from '@/services/getReservationAccessesServer';
+import { verifyReservationOwnership } from '@/lib/verifyReservationOwnership';
 
 export async function GET(
   request: NextRequest,
@@ -19,13 +20,16 @@ export async function GET(
     }
 
     const supabase = await createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    const [reservation, roomsResult, accesses] = await Promise.all([
+    const [reservation, roomsResult] = await Promise.all([
       Fetch<ApaleoReservationResponse>(
         `/booking/v1/reservations/${id}?propertyIds=${process.env.APALEO_PROPERTY_ID}&expand=booker,services`
       ),
       supabase.from('rooms').select('*').order('id', { ascending: true }),
-      getReservationAccessesServer(id),
     ]);
 
     if (!reservation || reservation.property?.id !== process.env.APALEO_PROPERTY_ID) {
@@ -34,6 +38,16 @@ export async function GET(
         { status: 404 }
       );
     }
+
+    const access = await verifyReservationOwnership(supabase, user, id, {
+      cachedBookerEmail: reservation.booker?.email,
+    });
+    if (!access.ok) {
+      return NextResponse.json({ error: access.error }, { status: access.status });
+    }
+
+    // Guestway only after ownership confirmed
+    const accesses = await getReservationAccessesServer(id);
 
     const room = roomsResult.data?.find((r: { id: string }) => r.id === reservation.unitGroup?.id);
     const accessInfo = accesses.find(item => item.reservationId === id);
