@@ -28,7 +28,7 @@ const MobileMenu = ({ isWhite = false }: { isWhite?: boolean }) => {
   const links = [
     {
       label: t('header.rooms_link'),
-      href: '/#rooms',
+      href: '/rooms',
     },
     {
       label: t('header.about_us_link'),

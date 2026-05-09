@@ -11,7 +11,7 @@ const Navigation = ({isWhite = false}: {isWhite?: boolean}) => {
   const navigation = [
     {
       label: t('header.rooms_link'),
-      href: '/#rooms' 
+      href: '/rooms'
     },
     {
       label: t('header.location_link'),
