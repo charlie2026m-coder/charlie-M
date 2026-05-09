@@ -11,6 +11,7 @@ import { Toaster } from 'sonner';
 import type { Metadata } from 'next';
 import Discount from '@/app/_components/ui/Discount';
 import DevelopmentBanner from '@/app/_components/ui/DevelopmentBanner';
+import ScrollSync from '@/app/_components/ScrollSync';
 
 const getCachedMessages = cache(async (locale: string) => {
   return await getMessages({ locale });
@@ -58,6 +59,7 @@ export default async function LocaleLayout({
   return (
     <NextIntlClientProvider key={locale} messages={messages} locale={locale}>
       <ReactQueryProvider>
+        <ScrollSync />
         <DevelopmentBanner />
         <Discount />
 
