@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Fetch } from '@/services/Request';
-import { ApaleoReservationResponse } from '@/types/apaleo';
 import { getReservationById } from '@/services/getReservation';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { verifyReservationOwnership } from '@/lib/verifyReservationOwnership';
 
 export async function GET(
   request: NextRequest,
@@ -24,30 +23,11 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: ownership } = await supabase
-      .from('reservations')
-      .select('id')
-      .eq('reservation_id', id)
-      .eq('user_id', user.id)
-      .single();
-
-    if (!ownership) {
-      // Fallback: lightweight Apaleo fetch for email check only — Guestway not called yet
-      try {
-        const apaleoRes = await Fetch<ApaleoReservationResponse>(
-          `/booking/v1/reservations/${id}?expand=booker`
-        );
-        const bookerEmail = apaleoRes?.booker?.email?.toLowerCase();
-        const userEmail = user.email?.toLowerCase();
-        if (!bookerEmail || !userEmail || bookerEmail !== userEmail) {
-          return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-        }
-      } catch {
-        return NextResponse.json({ error: 'Reservation not found' }, { status: 404 });
-      }
+    const access = await verifyReservationOwnership(supabase, user, id);
+    if (!access.ok) {
+      return NextResponse.json({ error: access.error }, { status: access.status });
     }
 
-    // Ownership confirmed — fetch full data including Guestway accesses
     const reservation = await getReservationById(id);
     if (!reservation) {
       return NextResponse.json(
