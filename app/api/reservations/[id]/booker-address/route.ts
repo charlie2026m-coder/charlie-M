@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getOrRefreshToken } from '@/services/Request';
+import { Fetch, getOrRefreshToken } from '@/services/Request';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 const APALEO_API_URL = 'https://api.apaleo.com';
@@ -22,8 +22,19 @@ export async function PATCH(
       .select('id')
       .eq('reservation_id', reservationId)
       .single();
+
     if (!ownership) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      // Fallback: fetch reservation from Apaleo to check booker email
+      try {
+        const reservation = await Fetch<{ booker?: { email?: string } }>(
+          `/booking/v1/reservations/${reservationId}?expand=booker`
+        );
+        if (reservation?.booker?.email?.toLowerCase() !== user.email?.toLowerCase()) {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+      } catch {
+        return NextResponse.json({ error: 'Reservation not found' }, { status: 404 });
+      }
     }
 
     const { updatedGuestData } = await request.json();
