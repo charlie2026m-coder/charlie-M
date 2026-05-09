@@ -252,7 +252,8 @@
   "header": {
     "rooms_link": "Zimmer",
     "location_link": "Standort",
-    "about_us_link": "Konzept"
+    "about_us_link": "Konzept",
+    "contactUs": "Kontakt"
   },
   "guests": {
     "label": "Gäste",

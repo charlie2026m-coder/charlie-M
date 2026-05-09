@@ -12,6 +12,7 @@ import { useProfile } from "@/app/hooks/useProfile";
 import { useTranslations, useLocale } from "next-intl";
 import ProfileInfo from "./ProfileInfo";
 import { cn } from "@/lib/utils";
+import { EMAIL } from "@/lib/Constants";
 import { Suspense } from "react";
 import MobileCheckInForm from "./MobileCheckInForm";
 
@@ -41,6 +42,11 @@ const MobileMenu = ({ isWhite = false }: { isWhite?: boolean }) => {
     {
       label: "FAQ",
       href: '/#faq',
+    },
+    {
+      label: t('header.contactUs'),
+      href: `mailto:${EMAIL}`,
+      external: true,
     },
   ]
 
@@ -89,13 +95,24 @@ const MobileMenu = ({ isWhite = false }: { isWhite?: boolean }) => {
           </Link>
 
           <div className='flex flex-col gap-5 items-center gap-6 '>
-            {links.map(item =>(
-              <Link
-                key={item.href}
-                href={item.href}
-                className='text-[18px]'
-                onClick={() => handleLinkClick(item.href)}
-              >{item.label}</Link>
+            {links.map(item => (
+              item.external ? (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className='text-[18px]'
+                  onClick={() => setOpen(false)}
+                >{item.label}</a>
+              ) : (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className='text-[18px]'
+                  onClick={() => handleLinkClick(item.href)}
+                >{item.label}</Link>
+              )
             ))}
           </div>
 
