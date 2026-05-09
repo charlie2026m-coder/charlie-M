@@ -23,7 +23,6 @@ const PhotoSlider = ({
   const [current, setCurrent] = useState(0)
   const [count, setCount] = useState(0)
   const pointerStart = useRef<{ x: number; y: number } | null>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
 
   const displayImages = images && images.length > 0 ? images : ['/images/image-placeholder.webp']
   const hasImages = images && images.length > 0
@@ -34,15 +33,6 @@ const PhotoSlider = ({
     setCurrent(api.selectedScrollSnap())
     api.on("select", () => setCurrent(api.selectedScrollSnap()))
   }, [api])
-
-  // Native listener — stops outer RoomsCarousel from receiving drag events
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    const stop = (e: PointerEvent) => e.stopPropagation()
-    el.addEventListener('pointerdown', stop)
-    return () => el.removeEventListener('pointerdown', stop)
-  }, [])
 
   const handlePointerDown = (e: React.PointerEvent) => {
     pointerStart.current = { x: e.clientX, y: e.clientY }
@@ -57,7 +47,7 @@ const PhotoSlider = ({
   }
 
   return (
-    <div ref={containerRef} className="relative">
+    <div className="relative">
       <Carousel
         className="w-full relative"
         setApi={setApi}
