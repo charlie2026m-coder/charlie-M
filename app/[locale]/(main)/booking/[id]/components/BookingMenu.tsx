@@ -14,6 +14,7 @@ import { Spinner } from '@/app/_components/ui/spinner';
 import TaxesInfo from '@/app/_components/ui/Taxes';
 import { useState } from 'react';
 import { calculateTotalTaxes } from '@/lib/utils';
+import { Trash2 } from 'lucide-react';
 
 const BookingMenu = ({
   rooms: roomsOffers,
@@ -37,11 +38,18 @@ const BookingMenu = ({
   const nights = calculateNights(from as string, to as string)
   const setBooking = useBookingStore(state => state.setBooking)
   const booking = useBookingStore(state => state.booking)
+  const editRoom = useBookingStore(state => state.editRoom)
   const rooms = useBookingStore(state => state.rooms) || roomsOffers
   const roomDetails = useBookingStore(state => state.roomDetails) || roomsOffers[0]
   const [isLoading, setIsLoading] = useState(false)
 
   if (!roomDetails || !rooms || rooms.length === 0) return <div className="p-5 text-center">{tCommon('loading')}</div>
+
+  const removeRoomExtra = (roomId: string, extraId: string) => {
+    const room = rooms.find(r => r.id === roomId)
+    if (!room) return
+    editRoom(roomId, { ...room, extras: room.extras?.filter(e => e.id !== extraId) || [] })
+  }
 
   console.log('🛏️ Booking menu rooms:', rooms)
 
@@ -148,7 +156,14 @@ const BookingMenu = ({
                         <div className='truncate overflow-hidden whitespace-nowrap'>
                           {displayText}
                         </div>
-                        <span className='text-bale font-semibold ml-auto'>€ {(extra.totalPrice || 0).toFixed(2)}</span>
+                        <span className='text-bale font-semibold ml-auto whitespace-nowrap'>€ {(extra.totalPrice || 0).toFixed(2)}</span>
+                        <button
+                          onClick={() => removeRoomExtra(room.id, extra.id)}
+                          className='text-red-400 hover:text-red-600 transition-colors flex-shrink-0 cursor-pointer'
+                          type='button'
+                        >
+                          <Trash2 className='size-3.5' />
+                        </button>
                       </div>
                     )
                   })}

@@ -1,6 +1,6 @@
 import Line from "./Line";
 import Image from "next/image";
-import MapWindow from "./MapWindow";
+import MapLink from "./MapLink";
 import Contacts from "./Contacts";
 import ContactList from "./ContactList";
 import { MobileNavigation, DesktopNavigation } from "./FooterContent";
@@ -60,9 +60,7 @@ export default async function Footer({ locale }: { locale: string }) {
               <span className="text-white  font-semibold text-2xl mb-5">{t('contacts')}</span>
               <div className="flex flex-row md:items-center justify-between md:justify-center gap-6 w-full">
                 <ContactList contacts={contacts} />
-                <div className="map-isolated w-[94px] h-[94px] md:w-[226px] md:h-[186px]" style={{ isolation: 'isolate', zIndex: 1 }}>
-                  <MapWindow width="100%" height="100%" isFullscreen={false} />
-                </div>
+                <MapLink url="https://maps.app.goo.gl/v21VbyU2o6WZWJFo7" />
               </div>
             </div>
             <DesktopNavigation />

@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import HashScroller from '@/app/_components/HashScroller';
 import VideoSection from '@/app/[locale]/_home/VideoSection';
 import RoomsSection from '@/app/[locale]/_home/RoomsSection';
 import StickyCheckInForm from '@/app/[locale]/_home/components/StickyCheckInForm';
@@ -102,6 +103,7 @@ export default async function Home({ params }: Props) {
 
   return (
       <section className="flex flex-col">
+        <HashScroller />
         <VideoSection locale={locale} />
         <StickyCheckInForm />
         <RoomsErrorBoundary locale={locale}>
