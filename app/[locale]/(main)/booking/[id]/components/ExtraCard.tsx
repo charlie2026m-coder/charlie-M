@@ -41,7 +41,7 @@ const ExtraCard = ({ item, rooms, nights }: { item: Service, rooms: Room[], nigh
       </div>
 
       {!isSoldOut && (
-        <div>
+        <div className='ml-auto sm:ml-0'>
           {isCheckout
             ? <AddCheckoutExtra extra={item} rooms={rooms} />
             : isCleaning
