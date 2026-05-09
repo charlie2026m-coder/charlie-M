@@ -1,8 +1,8 @@
 'use client'
 import { IoMdImage } from "react-icons/io";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from 'next/image'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/app/_components/ui/dialog";
+import { Dialog, DialogContent } from "@/app/_components/ui/dialog";
 
 import { IoChevronBack, IoChevronForward } from "react-icons/io5";
 
@@ -11,6 +11,16 @@ const PhotoGallery = ({ images, roomName }: { images: string[]; roomName?: strin
 
   // Check if there are no images
   const hasImages = images && images.length > 0
+
+  useEffect(() => {
+    if (showImages === null) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') prevPhoto()
+      else if (e.key === 'ArrowRight') nextPhoto()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [showImages])
 
   const nextPhoto = () => {
     if (showImages === null) return
@@ -102,41 +112,27 @@ const PhotoGallery = ({ images, roomName }: { images: string[]; roomName?: strin
           </div>
         )}
       </div>
-      <Dialog open={showImages !== null} onOpenChange={() =>setShowImages(null)}>
-        <DialogContent className='px-2 md:px-5 md:px-12 rounded-4xl w-fit max-w-[95vw] md:max-w-[90vw] flex flex-col'>
-          <DialogHeader>
-            <DialogTitle className='text-2xl font-bold'>Photo Gallery</DialogTitle>
-          </DialogHeader>
-          <div className='flex items-center gap-2 w-full relative select-none'>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={images[showImages || 0]}
-              alt={roomName ? `${roomName} - detailed view ${(showImages || 0) + 1}` : `Hotel room detailed view ${(showImages || 0) + 1}`}
-              className='w-auto h-auto max-w-[calc(95vw-40px)] md:max-w-[calc(90vw-96px)] max-h-[calc(80vh-140px)] block rounded-lg md:rounded-4xl cursor-pointer'
-              onClick={() => {
-                if (showImages === null) {
-                  setShowImages(0)
-                } else if (showImages === images.length - 1) {
-                  setShowImages(0)
-                } else {
-                  setShowImages(showImages + 1)
-                }
-              }}
-            />
-            <div onClick={prevPhoto} className='absolute left-0 bg-gradient-to-l from-transparent via-black/50 to-black/80 hover:to-black/90 top-0 bottom-0 w-10 md:w-20 flex items-center justify-center rounded-l-lg md:rounded-l-4xl'>
-              <IoChevronBack className='size-10 md:size-20 cursor-pointer text-white'  />
+      <Dialog open={showImages !== null} onOpenChange={() => setShowImages(null)}>
+        <DialogContent className='p-0 !rounded-none w-fit max-w-[95vw] md:max-w-[90vw] overflow-hidden [&>button]:text-white [&>button]:z-10 [&>button]:top-2 [&>button]:right-2'>
+          <div className='flex items-center justify-center select-none'>
+            <div className='relative'>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={images[showImages || 0]}
+                alt={roomName ? `${roomName} - view ${(showImages || 0) + 1}` : `Hotel room view ${(showImages || 0) + 1}`}
+                className='w-auto h-auto max-w-[95vw] md:max-w-[90vw] max-h-[80vh] block cursor-pointer'
+                onClick={nextPhoto}
+              />
+              <div onClick={prevPhoto} className='absolute left-0 top-0 bottom-0 w-10 md:w-16 flex items-center justify-center cursor-pointer bg-gradient-to-l from-transparent to-black/40'>
+                <IoChevronBack className='size-10 md:size-16 text-white drop-shadow-lg' />
+              </div>
+              <div onClick={nextPhoto} className='absolute right-0 top-0 bottom-0 w-10 md:w-16 flex items-center justify-center cursor-pointer bg-gradient-to-r from-transparent to-black/40'>
+                <IoChevronForward className='size-10 md:size-16 text-white drop-shadow-lg' />
+              </div>
+              <div className='absolute bottom-3 left-1/2 -translate-x-1/2 text-white text-sm font-medium bg-black/40 px-3 py-1 rounded-full whitespace-nowrap'>
+                {(showImages || 0) + 1} / {images.length}
+              </div>
             </div>
-            <div onClick={nextPhoto} className='absolute right-0 bg-gradient-to-r from-transparent via-black/50 to-black/80 hover:to-black/90 top-0 bottom-0 w-10 md:w-20 flex items-center justify-center rounded-r-lg md:rounded-r-4xl'>
-              <IoChevronForward className='size-10 md:size-20 cursor-pointer text-white'  />
-            </div>
-          </div>
-
-          <div className='flex items-center justify-between w-full'>
-            
-            <div className='text-xl px-5 md:pb-5 mx-auto'>
-              {(showImages || 0) + 1} / {images.length}
-            </div>
-           
           </div>
         </DialogContent>
       </Dialog>

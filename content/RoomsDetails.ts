@@ -85,5 +85,47 @@ export const roomsDetails = [
     maxPersons: 2,
     size:15,
   },
+  {
+    id:'CMH-CDR',
+    group: 'Classic Double Room',
+    attributes: ['king'],
+    maxPersons: 2,
+    size: 14,
+  },
+  {
+    id:'CMH-COR',
+    group: 'Comfort Room',
+    attributes: ['king'],
+    maxPersons: 2,
+    size: 16,
+  },
+  {
+    id:'CMH-CDRB',
+    group: 'Classic Double Room with Balcony',
+    attributes: ['balcony', 'king'],
+    maxPersons: 2,
+    size: 15,
+  },
+  {
+    id:'CMH-SGR',
+    group: 'Single Room',
+    attributes: ['single'],
+    maxPersons: 1,
+    size: 10,
+  },
+  {
+    id:'CMH-CORB',
+    group: 'Comfort Room with Balcony',
+    attributes: ['balcony', 'king'],
+    maxPersons: 2,
+    size: 18,
+  },
+  {
+    id:'CMH-SRA',
+    group: 'Superior Room Accessible',
+    attributes: ['king'],
+    maxPersons: 2,
+    size: 22,
+  },
 
 ]
