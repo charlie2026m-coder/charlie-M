@@ -1,8 +1,40 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { Fetch } from '@/services/Request';
 
-export async function GET(request: Request) {
+// In-memory rate limiter: 10 requests per IP per 10 minutes
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_MAX = 10;
+const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+
+  if (entry.count >= RATE_LIMIT_MAX) return false;
+
+  entry.count++;
+  return true;
+}
+
+export async function GET(request: NextRequest) {
   try {
+    const ip =
+      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+      request.headers.get('x-real-ip') ??
+      'unknown';
+
+    if (!checkRateLimit(ip)) {
+      return NextResponse.json(
+        { error: 'Too many requests, please try again later' },
+        { status: 429 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const bookingId = searchParams.get('externalCode');
     const lastName = searchParams.get('lastName');
@@ -20,7 +52,6 @@ export async function GET(request: Request) {
         const response = await Fetch<any>(
           `/booking/v1/bookings?externalCode=${bookingId}&textSearch=${lastName}&expand=reservations`
         );
-        
         if (response.bookings && response.bookings.length > 0) {
           return response.bookings[0];
         }
@@ -29,12 +60,9 @@ export async function GET(request: Request) {
 
       // Method 2: Search by Apaleo booking ID directly
       (async () => {
-        console.log(bookingId, 'bookingId');
         const booking = await Fetch<any>(
           `/booking/v1/bookings/${bookingId}?expand=reservations`
         );
-        
-        console.log(booking, 'booking');
         if (booking.booker?.lastName?.toLowerCase() === lastName.toLowerCase()) {
           return booking;
         }
@@ -43,12 +71,11 @@ export async function GET(request: Request) {
     ];
 
     const foundBooking = await Promise.any(searchMethods);
-    
-    return NextResponse.json({ 
-      booking: foundBooking,
-      count: 1 
-    });
 
+    return NextResponse.json({
+      booking: foundBooking,
+      count: 1,
+    });
   } catch (error) {
     return NextResponse.json(
       { error: 'No booking found with provided details' },
