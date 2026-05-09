@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getReservationById } from '@/services/getReservation';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 export async function GET(
   request: NextRequest,
@@ -13,6 +14,21 @@ export async function GET(
         { error: 'Reservation ID is required' },
         { status: 400 }
       );
+    }
+
+    const supabase = await createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { data: ownership } = await supabase
+      .from('reservations')
+      .select('id')
+      .eq('reservation_id', id)
+      .single();
+    if (!ownership) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const reservation = await getReservationById(id);
