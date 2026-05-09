@@ -2,6 +2,8 @@
 import { Button } from "@/app/_components/ui/button"
 import { ClientCustomDialog } from "@/app/_components/ui/ClientCustomDialog"
 import { Input } from "@/app/_components/ui/input"
+import { Popover, PopoverContent, PopoverTrigger } from "@/app/_components/ui/popover"
+import { CircleHelp } from "lucide-react"
 import { useState } from "react"
 import { useTranslations } from 'next-intl'
 import { usePreCheckIn } from "@/app/hooks/usePreCheckIn"
@@ -135,6 +137,26 @@ const CheckInDialog = ({ trigger, onOpenChange }: CheckInDialogProps) => {
       </div>
       }
       title={t('title')}
+      titleAction={
+        <Popover>
+          <PopoverTrigger asChild>
+            <button type='button' className='text-gray-400 hover:text-blue transition-colors' aria-label='Help'>
+              <CircleHelp className='size-5' />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent side='bottom' align='center' className='w-80 text-sm p-4'>
+            <p className='font-semibold text-dark mb-3'>{t('helpTitle')}</p>
+            <ol className='flex flex-col gap-2 text-gray-500'>
+              {(['helpStep1', 'helpStep2', 'helpStep3', 'helpStep4'] as const).map((key, i) => (
+                <li key={key} className='flex gap-2'>
+                  <span className='shrink-0 size-5 rounded-full bg-blue text-white text-xs flex items-center justify-center font-bold'>{i + 1}</span>
+                  <span className='leading-relaxed'>{t(key)}</span>
+                </li>
+              ))}
+            </ol>
+          </PopoverContent>
+        </Popover>
+      }
       className='w-[95%] max-w-lg !px-3 md:!px-10'
     />
   )

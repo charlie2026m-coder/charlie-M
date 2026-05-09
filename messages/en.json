@@ -793,7 +793,12 @@
     "bookingFound": "Booking found!",
     "proceedToCheckIn": "Start Online Check-In",
     "bookingCancelled": "This booking has been cancelled.",
-    "cannotProceedCheckIn": "Online check-in is not available for cancelled bookings."
+    "cannotProceedCheckIn": "Online check-in is not available for cancelled bookings.",
+    "helpTitle": "How does Online Check-In work?",
+    "helpStep1": "Enter your Reservation ID from the booking confirmation email (format: XXXXX-0, e.g. RKAA-1234-0).",
+    "helpStep2": "We verify your booking and retrieve your reservation details.",
+    "helpStep3": "You will be redirected to a secure page to complete your check-in.",
+    "helpStep4": "Your personal PIN code will be ready on the morning of your arrival day."
   },
   "termsAndConditions": {
     "title": "Terms and Conditions",

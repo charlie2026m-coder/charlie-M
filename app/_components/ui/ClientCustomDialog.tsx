@@ -1,19 +1,21 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { CustomDialog as OriginalCustomDialog } from './CustomDialog'
-export function ClientCustomDialog({ 
-  trigger, 
-  content, 
-  title, 
-  open, 
+export function ClientCustomDialog({
+  trigger,
+  content,
+  title,
+  titleAction,
+  open,
   setOpen,
   className
-}: { 
-  trigger: React.ReactNode, 
-  content: React.ReactNode, 
-  title: string, 
-  open: boolean, 
-  setOpen: (open: boolean) => void 
+}: {
+  trigger: React.ReactNode,
+  content: React.ReactNode,
+  title: string,
+  titleAction?: React.ReactNode,
+  open: boolean,
+  setOpen: (open: boolean) => void
   className?: string
 }) {
   const [mounted, setMounted] = useState(false)
@@ -31,6 +33,7 @@ export function ClientCustomDialog({
       trigger={trigger}
       content={content}
       title={title}
+      titleAction={titleAction}
       open={open}
       setOpen={setOpen}
       className={className}
