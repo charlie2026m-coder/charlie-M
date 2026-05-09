@@ -91,7 +91,7 @@ export function RoomsCarousel({
         </div>
 
         <div className="flex-1 relative min-w-0">
-          <Carousel className="w-full" setApi={setApi} >
+          <Carousel className="w-full" setApi={setApi} opts={{ loop: true, watchDrag: false }}>
             <CarouselContent className="-ml-4 pb-8 xl:pb-[90px] px-2">
               {roomsWithPrices.map((item) => (
                 <CarouselItem key={item.id} className="pl-4 basis-[85%] md:basis-1/2 xl:basis-1/3 shrink-0">

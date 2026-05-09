@@ -51,7 +51,12 @@ const RoomCard = ({
 
   return (
     <div className='w-full flex flex-col rounded-[40px] bg-white overflow-hidden shadow-lg h-full'>
-      <PhotoSlider height={260} images={item.images} roomName={item.name} />
+      <PhotoSlider
+        height={260}
+        images={item.images}
+        roomName={item.name}
+        onNavigate={() => router.push(`/${locale}/rooms/${item.unitGroup.id}?${queryString}`)}
+      />
       <div className='flex flex-col p-4 pb-6 h-full'>
         <Link href={`/${locale}/rooms/${item.unitGroup.id}?${queryString}`}>
           <h2 className='text-xl font-medium jakarta mb-3 hover:text-blue transition-colors cursor-pointer'>{item.name}</h2>

@@ -7,12 +7,11 @@ const Navigation = ({isWhite = false}: {isWhite?: boolean}) => {
   const t = useTranslations();
   const pathname = usePathname();
   const isHomePage = pathname === '/' || pathname === '/de';
-  if(!isHomePage) return null;
 
   const navigation = [
     {
       label: t('header.rooms_link'),
-      href: '/#rooms' 
+      href: '/rooms'
     },
     {
       label: t('header.location_link'),
@@ -29,7 +28,7 @@ const Navigation = ({isWhite = false}: {isWhite?: boolean}) => {
   ];
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-    if (href.startsWith('/#')) {
+    if (href.startsWith('/#') && isHomePage) {
       e.preventDefault();
       const id = href.substring(2);
       const element = document.getElementById(id);

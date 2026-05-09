@@ -252,7 +252,8 @@
   "header": {
     "rooms_link": "Zimmer",
     "location_link": "Standort",
-    "about_us_link": "Konzept"
+    "about_us_link": "Konzept",
+    "contactUs": "Kontakt"
   },
   "guests": {
     "label": "Gäste",
@@ -793,7 +794,12 @@
     "bookingFound": "Buchung gefunden!",
     "proceedToCheckIn": "Online-Check-In starten",
     "bookingCancelled": "Diese Buchung wurde storniert.",
-    "cannotProceedCheckIn": "Online-Check-In ist für stornierte Buchungen nicht verfügbar."
+    "cannotProceedCheckIn": "Online-Check-In ist für stornierte Buchungen nicht verfügbar.",
+    "helpTitle": "Wie funktioniert der Online-Check-In?",
+    "helpStep1": "Geben Sie Ihre Reservierungs-ID aus der Buchungsbestätigungs-E-Mail ein (Format: XXXXX-0, z.B. RKAA-1234-0).",
+    "helpStep2": "Wir überprüfen Ihre Buchung und rufen Ihre Reservierungsdaten ab.",
+    "helpStep3": "Sie werden auf eine sichere Seite weitergeleitet, um Ihren Check-In abzuschließen.",
+    "helpStep4": "Ihr persönlicher PIN-Code ist am Morgen Ihres Anreisetages verfügbar."
   },
   "termsAndConditions": {
     "title": "Allgemeine Geschäftsbedingungen",

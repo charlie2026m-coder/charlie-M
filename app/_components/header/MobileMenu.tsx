@@ -12,6 +12,7 @@ import { useProfile } from "@/app/hooks/useProfile";
 import { useTranslations, useLocale } from "next-intl";
 import ProfileInfo from "./ProfileInfo";
 import { cn } from "@/lib/utils";
+import { EMAIL } from "@/lib/Constants";
 import { Suspense } from "react";
 import MobileCheckInForm from "./MobileCheckInForm";
 
@@ -28,7 +29,7 @@ const MobileMenu = ({ isWhite = false }: { isWhite?: boolean }) => {
   const links = [
     {
       label: t('header.rooms_link'),
-      href: '/#rooms',
+      href: '/rooms',
     },
     {
       label: t('header.about_us_link'),
@@ -41,6 +42,11 @@ const MobileMenu = ({ isWhite = false }: { isWhite?: boolean }) => {
     {
       label: "FAQ",
       href: '/#faq',
+    },
+    {
+      label: t('header.contactUs'),
+      href: `mailto:${EMAIL}`,
+      external: true,
     },
   ]
 
@@ -61,12 +67,12 @@ const MobileMenu = ({ isWhite = false }: { isWhite?: boolean }) => {
     <TbMenu2 className={cn('size-8 md:hidden mr-3', isWhite ? 'text-white' : 'text-black')} onClick={()=> setOpen(true)} />
     
     <Drawer open={open} onOpenChange={setOpen} direction="left">
-      <DrawerContent className='p-0 border-none bg-white min-w-full h-full rounded-r-[30px]'>
+      <DrawerContent className='p-0 border-none bg-white min-w-full min-h-full rounded-r-[30px] overflow-y-auto'>
         <VisuallyHidden>
           <DrawerTitle>Mobile Menu</DrawerTitle>
         </VisuallyHidden>
        
-        <div className='flex flex-col items-center py-5 px-3 h-full'>
+        <div className='flex flex-col items-center py-5 px-3 min-h-full'>
           <label className="flex items-center absolute top-8 left-5">
             <Suspense fallback={<div className="size-10" />}>
               {locale === 'en' ? 'ENG' : 'GER'}
@@ -88,18 +94,27 @@ const MobileMenu = ({ isWhite = false }: { isWhite?: boolean }) => {
             />
           </Link>
 
-          {isHomePage && (
-            <div className='flex flex-col gap-5 items-center gap-6 '>
-              {links.map(item =>(
-                <Link 
-                  key={item.href} 
-                  href={item.href} 
+          <div className='flex flex-col gap-5 items-center gap-6 '>
+            {links.map(item => (
+              item.external ? (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className='text-[18px]'
+                  onClick={() => setOpen(false)}
+                >{item.label}</a>
+              ) : (
+                <Link
+                  key={item.href}
+                  href={item.href}
                   className='text-[18px]'
                   onClick={() => handleLinkClick(item.href)}
                 >{item.label}</Link>
-              ))}
-            </div>
-          )}
+              )
+            ))}
+          </div>
 
 
           <div className='flex flex-col gap-6 w-4/5 pb-6 pt-10'> 

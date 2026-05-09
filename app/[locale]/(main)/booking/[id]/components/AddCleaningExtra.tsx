@@ -151,17 +151,17 @@ const AddCleaningExtra = ({ extra, rooms }: { extra: Service, rooms: Room[] }) =
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <button 
-          type="button"
-          className='absolute flex top-2.5 right-2.5 items-center justify-center rounded transition-all duration-300 cursor-pointer size-10 shadow-lg bg-blue border-blue text-white'
-        >
-          <FaPlus className='size-6' />
-        </button>
+      <DialogTrigger asChild className='ml-auto md:ml-0'>
+        <div className='self-start md:self-auto'>
+          <div className='flex md:hidden items-center justify-center rounded transition-all duration-300 cursor-pointer size-10 shadow-lg bg-blue border-blue text-white'>
+            <FaPlus className='size-6' />
+          </div>
+          <Button variant="outline" className='hidden md:block h-[35px] p-0 w-full'>{t('add')}</Button>
+        </div>
       </DialogTrigger>
       <DialogContent className="rounded-xl max-w-[600px] max-h-[80vh] w-full overflow-hidden flex flex-col bg-white">
         <DialogHeader>
-          <DialogTitle className='font-[900] text-xl'>
+          <DialogTitle className='font-[900] text-xl w-4/5 md:w-full'>
             {t('addExtra', { name: extra.name, price: extra.price })}
           </DialogTitle>
         </DialogHeader>
@@ -175,6 +175,9 @@ const AddCleaningExtra = ({ extra, rooms }: { extra: Service, rooms: Room[] }) =
           </Button>
         </div>
 
+        {extra.description && (
+          <p className='text-dark text-sm mb-4'>{extra.description}</p>
+        )}
         <div className='flex flex-col gap-4 pt-4 pb-5 max-h-[400px] overflow-y-auto overflow-x-hidden min-w-0 pr-2'>
           {rooms.map((room, index) => {
             const roomCounts = roomDailyCounts[room.id] || {};
