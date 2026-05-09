@@ -21,6 +21,7 @@ export async function PATCH(
       .from('reservations')
       .select('id')
       .eq('reservation_id', reservationId)
+      .eq('user_id', user.id)
       .single();
 
     if (!ownership) {
@@ -29,7 +30,9 @@ export async function PATCH(
         const reservation = await Fetch<{ booker?: { email?: string } }>(
           `/booking/v1/reservations/${reservationId}?expand=booker`
         );
-        if (reservation?.booker?.email?.toLowerCase() !== user.email?.toLowerCase()) {
+        const bookerEmail = reservation?.booker?.email?.toLowerCase();
+        const userEmail = user.email?.toLowerCase();
+        if (!bookerEmail || !userEmail || bookerEmail !== userEmail) {
           return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
       } catch {

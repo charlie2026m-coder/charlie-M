@@ -19,6 +19,7 @@ export async function POST(
       .from('reservations')
       .select('id')
       .eq('reservation_id', id)
+      .eq('user_id', user.id)
       .single();
 
     if (!ownership) {
@@ -27,7 +28,9 @@ export async function POST(
         const reservation = await Fetch<{ booker?: { email?: string } }>(
           `/booking/v1/reservations/${id}?expand=booker`
         );
-        if (reservation?.booker?.email?.toLowerCase() !== user.email?.toLowerCase()) {
+        const bookerEmail = reservation?.booker?.email?.toLowerCase();
+        const userEmail = user.email?.toLowerCase();
+        if (!bookerEmail || !userEmail || bookerEmail !== userEmail) {
           return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
       } catch {
@@ -35,8 +38,7 @@ export async function POST(
       }
     }
 
-    const response = await Fetch(`/booking/v1/reservation-actions/${id}/cancel`, { method: 'PUT' });
-    console.log(response, 'cancel response');
+    await Fetch(`/booking/v1/reservation-actions/${id}/cancel`, { method: 'PUT' });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Cancel reservation error:', error);
