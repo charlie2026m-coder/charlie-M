@@ -88,18 +88,16 @@ const MobileMenu = ({ isWhite = false }: { isWhite?: boolean }) => {
             />
           </Link>
 
-          {isHomePage && (
-            <div className='flex flex-col gap-5 items-center gap-6 '>
-              {links.map(item =>(
-                <Link 
-                  key={item.href} 
-                  href={item.href} 
-                  className='text-[18px]'
-                  onClick={() => handleLinkClick(item.href)}
-                >{item.label}</Link>
-              ))}
-            </div>
-          )}
+          <div className='flex flex-col gap-5 items-center gap-6 '>
+            {links.map(item =>(
+              <Link
+                key={item.href}
+                href={item.href}
+                className='text-[18px]'
+                onClick={() => handleLinkClick(item.href)}
+              >{item.label}</Link>
+            ))}
+          </div>
 
 
           <div className='flex flex-col gap-6 w-4/5 pb-6 pt-10'> 
