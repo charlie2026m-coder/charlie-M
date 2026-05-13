@@ -20,20 +20,6 @@ export async function GET(
 
     const supabase = await createSupabaseServerClient();
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { data: ownership } = await supabase
-      .from('reservations')
-      .select('id')
-      .eq('reservation_id', id)
-      .single();
-    if (!ownership) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
     const [reservation, roomsResult, accesses] = await Promise.all([
       Fetch<ApaleoReservationResponse>(
         `/booking/v1/reservations/${id}?propertyIds=${process.env.APALEO_PROPERTY_ID}&expand=booker,services`
