@@ -11,9 +11,6 @@ function checkRateLimit(ip: string): boolean {
   const entry = rateLimitMap.get(ip);
 
   if (!entry || now > entry.resetAt) {
-    for (const [key, val] of rateLimitMap) {
-      if (now > val.resetAt) rateLimitMap.delete(key);
-    }
     rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
     return true;
   }

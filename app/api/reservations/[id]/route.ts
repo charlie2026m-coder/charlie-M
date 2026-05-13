@@ -28,7 +28,6 @@ export async function GET(
       .from('reservations')
       .select('id')
       .eq('reservation_id', id)
-      .eq('user_id', user.id)
       .single();
 
     const [reservation, roomsResult] = await Promise.all([
@@ -46,12 +45,8 @@ export async function GET(
     }
 
     // Fallback ownership check via booker email (OTA / offline / direct bookings)
-    if (!ownership) {
-      const bookerEmail = reservation.booker?.email?.toLowerCase();
-      const userEmail = user.email?.toLowerCase();
-      if (!bookerEmail || !userEmail || bookerEmail !== userEmail) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      }
+    if (!ownership && reservation.booker?.email?.toLowerCase() !== user.email?.toLowerCase()) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     // Guestway called only after ownership is confirmed

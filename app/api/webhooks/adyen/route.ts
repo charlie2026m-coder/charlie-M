@@ -34,9 +34,6 @@ function verifyHmacSignature(notificationItem: any, hmacKey: string): boolean {
       return false
     }
 
-    const escapeHmac = (v: string | number | undefined | null) =>
-      String(v ?? '').replace(/\\/g, '\\\\').replace(/:/g, '\\:');
-
     const payload = [
       notificationItem.pspReference,
       notificationItem.originalReference || '',
@@ -46,7 +43,7 @@ function verifyHmacSignature(notificationItem: any, hmacKey: string): boolean {
       notificationItem.amount?.currency,
       notificationItem.eventCode,
       notificationItem.success,
-    ].map(escapeHmac).join(':')
+    ].join(':')
 
     const key = Buffer.from(hmacKey, 'hex')
     const expectedSignature = crypto.createHmac('sha256', key).update(payload).digest('base64')
