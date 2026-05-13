@@ -20,22 +20,11 @@ export async function POST(
       .select('id')
       .eq('reservation_id', id)
       .single();
-
     if (!ownership) {
-      // Fallback: fetch reservation from Apaleo to check booker email
-      try {
-        const reservation = await Fetch<{ booker?: { email?: string } }>(
-          `/booking/v1/reservations/${id}?expand=booker`
-        );
-        if (reservation?.booker?.email?.toLowerCase() !== user.email?.toLowerCase()) {
-          return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-        }
-      } catch {
-        return NextResponse.json({ error: 'Reservation not found' }, { status: 404 });
-      }
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const response = await Fetch(`/booking/v1/reservation-actions/${id}/cancel`, { method: 'PUT' });
+    const response = await Fetch(`/booking/v1/reservation-actions/${id}/cancel`, {method: 'PUT' }) ;
     console.log(response, 'cancel response');
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -46,3 +35,4 @@ export async function POST(
     );
   }
 }
+

@@ -27,8 +27,12 @@ export async function GET(
       .select('id')
       .eq('reservation_id', id)
       .single();
+    if (!ownership) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     const reservation = await getReservationById(id);
+    console.log(reservation, 'reservation');
     if (!reservation) {
       return NextResponse.json(
         { error: 'Reservation not found' },
@@ -36,15 +40,11 @@ export async function GET(
       );
     }
 
-    // Fallback ownership check via booker email (OTA / offline / direct bookings)
-    if (!ownership && reservation.booker?.email?.toLowerCase() !== user.email?.toLowerCase()) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
     return NextResponse.json(reservation);
   } catch (error: any) {
     console.error('Error fetching reservation:', error);
-
+    
+    // Check if it's a 404 from Apaleo
     if (error.message?.includes('404') || error.message?.includes('not found')) {
       return NextResponse.json(
         { error: 'Reservation not found' },
