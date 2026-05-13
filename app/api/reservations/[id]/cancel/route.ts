@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { Fetch } from '@/services/Request';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { verifyReservationOwnership } from '@/lib/verifyReservationOwnership';
 
 export async function POST(
   request: Request,
@@ -16,9 +15,27 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const access = await verifyReservationOwnership(supabase, user, id);
-    if (!access.ok) {
-      return NextResponse.json({ error: access.error }, { status: access.status });
+    const { data: ownership } = await supabase
+      .from('reservations')
+      .select('id')
+      .eq('reservation_id', id)
+      .eq('user_id', user.id)
+      .single();
+
+    if (!ownership) {
+      // Fallback: fetch reservation from Apaleo to check booker email
+      try {
+        const reservation = await Fetch<{ booker?: { email?: string } }>(
+          `/booking/v1/reservations/${id}?expand=booker`
+        );
+        const bookerEmail = reservation?.booker?.email?.toLowerCase();
+        const userEmail = user.email?.toLowerCase();
+        if (!bookerEmail || !userEmail || bookerEmail !== userEmail) {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+      } catch {
+        return NextResponse.json({ error: 'Reservation not found' }, { status: 404 });
+      }
     }
 
     await Fetch(`/booking/v1/reservation-actions/${id}/cancel`, { method: 'PUT' });

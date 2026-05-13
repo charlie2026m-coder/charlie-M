@@ -3,7 +3,6 @@ import { Fetch } from '@/services/Request';
 import { ApaleoReservationResponse } from '@/types/apaleo';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { getReservationAccessesServer } from '@/services/getReservationAccessesServer';
-import { verifyReservationOwnership } from '@/lib/verifyReservationOwnership';
 
 export async function GET(
   request: NextRequest,
@@ -25,6 +24,13 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { data: ownership } = await supabase
+      .from('reservations')
+      .select('id')
+      .eq('reservation_id', id)
+      .eq('user_id', user.id)
+      .single();
+
     const [reservation, roomsResult] = await Promise.all([
       Fetch<ApaleoReservationResponse>(
         `/booking/v1/reservations/${id}?propertyIds=${process.env.APALEO_PROPERTY_ID}&expand=booker,services`
@@ -39,14 +45,16 @@ export async function GET(
       );
     }
 
-    const access = await verifyReservationOwnership(supabase, user, id, {
-      cachedBookerEmail: reservation.booker?.email,
-    });
-    if (!access.ok) {
-      return NextResponse.json({ error: access.error }, { status: access.status });
+    // Fallback ownership check via booker email (OTA / offline / direct bookings)
+    if (!ownership) {
+      const bookerEmail = reservation.booker?.email?.toLowerCase();
+      const userEmail = user.email?.toLowerCase();
+      if (!bookerEmail || !userEmail || bookerEmail !== userEmail) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
     }
 
-    // Guestway only after ownership confirmed
+    // Guestway called only after ownership is confirmed
     const accesses = await getReservationAccessesServer(id);
 
     const room = roomsResult.data?.find((r: { id: string }) => r.id === reservation.unitGroup?.id);

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 
 const API_URL = process.env.GUESTWAY_API_URL;
 const PARTNERSHIP_API_KEY = process.env.GUESTWAY_API_KEY;
@@ -8,9 +7,38 @@ const ACCESS_TOKEN = process.env.GUESTWAY_ACCESS_TOKEN;
 // Apaleo reservation ID format: R{PROPERTY}-{alphanumeric}  e.g. RCMH-4X8KZ9AB
 const RESERVATION_ID_REGEX = /^R[A-Z]{2,4}-[A-Z0-9]{4,12}$/;
 
+// In-memory rate limiter: 10 requests per IP per 10 minutes
+// Resets on server restart; not shared across Vercel instances (acceptable for this use case)
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_MAX = 10;
+const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+
+  if (!entry || now > entry.resetAt) {
+    for (const [key, val] of rateLimitMap) {
+      if (now > val.resetAt) rateLimitMap.delete(key);
+    }
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+
+  if (entry.count >= RATE_LIMIT_MAX) return false;
+
+  entry.count++;
+  return true;
+}
+
 export async function POST(request: NextRequest) {
   try {
-    if (!checkRateLimit('check-in', getClientIp(request))) {
+    const ip =
+      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+      request.headers.get('x-real-ip') ??
+      'unknown';
+
+    if (!checkRateLimit(ip)) {
       return NextResponse.json(
         { error: 'Too many requests, please try again later' },
         { status: 429 }
