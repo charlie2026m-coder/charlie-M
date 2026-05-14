@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
 import { getOrRefreshToken } from '@/services/Request';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { verifyReservationOwnership } from '@/lib/verifyReservationOwnership';
 
 const APALEO_API_URL = 'https://api.apaleo.com';
 
@@ -11,18 +9,6 @@ export async function PATCH(
 ) {
   try {
     const { id: reservationId } = await params;
-
-    const supabase = await createSupabaseServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const access = await verifyReservationOwnership(supabase, user, reservationId);
-    if (!access.ok) {
-      return NextResponse.json({ error: access.error }, { status: access.status });
-    }
-
     const { updatedGuestData } = await request.json();
 
     const token = await getOrRefreshToken();
