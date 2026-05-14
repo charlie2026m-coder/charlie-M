@@ -14,7 +14,7 @@ import ProfileInfo from "./ProfileInfo";
 import { cn } from "@/lib/utils";
 import { EMAIL } from "@/lib/Constants";
 import { Suspense } from "react";
-import MobileCheckInForm from "./MobileCheckInForm";
+import CheckInDialog from "./CheckInDialog";
 
 const MobileMenu = ({ isWhite = false }: { isWhite?: boolean }) => {
   const { profile } = useProfile(); 
@@ -67,12 +67,12 @@ const MobileMenu = ({ isWhite = false }: { isWhite?: boolean }) => {
     <TbMenu2 className={cn('size-8 md:hidden mr-3', isWhite ? 'text-white' : 'text-black')} onClick={()=> setOpen(true)} />
     
     <Drawer open={open} onOpenChange={setOpen} direction="left">
-      <DrawerContent className='p-0 border-none bg-white min-w-full min-h-full rounded-r-[30px] overflow-y-auto'>
+      <DrawerContent className='p-0 border-none bg-white min-w-full h-[100dvh] rounded-r-[30px]'>
         <VisuallyHidden>
           <DrawerTitle>Mobile Menu</DrawerTitle>
         </VisuallyHidden>
-       
-        <div className='flex flex-col items-center py-5 px-3 min-h-full'>
+
+        <div className='flex flex-col items-center py-5 px-3 h-full overflow-y-auto'>
           <label className="flex items-center absolute top-8 left-5">
             <Suspense fallback={<div className="size-10" />}>
               {locale === 'en' ? 'ENG' : 'GER'}
@@ -126,7 +126,13 @@ const MobileMenu = ({ isWhite = false }: { isWhite?: boolean }) => {
                 <Button variant='outline' className='w-full h-[55px] '> {t('sign_in_btn')} </Button>
               </Link>
             </>)}
-            <MobileCheckInForm />
+            <CheckInDialog
+              trigger={
+                <Button variant='outline' className='w-full h-[55px] border-none'>
+                  {t('check_in_btn')}
+                </Button>
+              }
+            />
 
             {!loading && user && (
               <div className="flex gap-3 items-center justify-center font-bold">
