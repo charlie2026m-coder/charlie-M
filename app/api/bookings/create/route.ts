@@ -4,8 +4,16 @@ import { getOrRefreshToken } from "@/services/Request"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { createClient } from "@supabase/supabase-js"
 import { Booking } from "@/types/booking"
-import { bookReservationServices } from "@/services/bookReservationServices"
+import { bookingLog, apaleoLog } from "@/lib/logger"
 import { reversePayment } from "@/app/actions/adyen/reversePayment"
+import { createPaymentAccount } from "@/services/apaleo/createPaymentAccount"
+import { cancelPaymentAccount } from "@/services/apaleo/cancelPaymentAccount"
+import { cancelReservation } from "@/services/apaleo/cancelReservation"
+import { payFolioByPaymentAccount } from "@/services/bookReservationServices"
+import { HOTEL_INFO } from "@/lib/Constants"
+import dayjs from "dayjs"
+import utc from "dayjs/plugin/utc"
+import timezone from "dayjs/plugin/timezone"
 
 // DB writes go through service_role to bypass RLS on bookings/pending_bookings
 function createAdminClient() {
@@ -16,6 +24,9 @@ function createAdminClient() {
   )
 }
 
+dayjs.extend(utc)
+dayjs.extend(timezone)
+
 const APALEO_API_URL = 'https://api.apaleo.com'
 
 interface ApaleoBookingResponse {
@@ -23,16 +34,9 @@ interface ApaleoBookingResponse {
   reservationIds: { id: string }[]
 }
 
-// Helper function to check if error is retriable
-const isRetriableError = (status: number): boolean => {
-  // Retry only for server errors (500, 502, 503, 504)
-  return status >= 500 && status <= 504
-}
-
-// Helper function to delay execution
+const isRetriableError = (status: number): boolean => status >= 500 && status <= 504
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
-// Main function to create booking in Apaleo with retry logic
 async function createApaleoBookingWithRetry(
   bookingPayload: any,
   token: string,
@@ -44,12 +48,11 @@ async function createApaleoBookingWithRetry(
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       if (attempt > 1) {
-        // Exponential backoff: 1s, 2s
         const delayMs = Math.pow(2, attempt - 1) * 1000
-        console.log(`⏳ Retry attempt ${attempt}/${maxAttempts} after ${delayMs}ms delay...`)
+        apaleoLog.warn('POST /bookings retry', { attempt: `${attempt}/${maxAttempts}`, delayMs })
         await delay(delayMs)
       } else {
-        console.log(`🔄 Attempt ${attempt}/${maxAttempts}: Creating booking in Apaleo...`)
+        apaleoLog.info('POST /bookings', { attempt: `${attempt}/${maxAttempts}` })
       }
 
       const response = await fetch(`${APALEO_API_URL}/booking/v1/bookings`, {
@@ -67,43 +70,44 @@ async function createApaleoBookingWithRetry(
         lastStatus = response.status
         lastError = errorData
 
-        console.error(`❌ Attempt ${attempt}/${maxAttempts} failed: Apaleo API error ${response.status}`)
-        console.error('Error details:', JSON.stringify(errorData, null, 2))
+        apaleoLog.error('POST /bookings failed', {
+          attempt: `${attempt}/${maxAttempts}`,
+          status: response.status,
+          error: errorData,
+        })
 
-        // Check if error is retriable
         if (isRetriableError(response.status) && attempt < maxAttempts) {
-          // Continue to next retry
           continue
         }
 
-        // Non-retriable error or last attempt - return error
         return {
           success: false,
           error: errorData,
-          status: response.status
+          status: response.status,
         }
       }
 
-      // Success!
       const apaleoData: ApaleoBookingResponse = await response.json()
-      console.log(`✅ Attempt ${attempt}/${maxAttempts} succeeded: Booking created with ID ${apaleoData.id}`)
-      console.log('📊 Full Apaleo response data:', JSON.stringify(apaleoData, null, 2))
-      
+      apaleoLog.success('booking created', {
+        id: apaleoData.id,
+        reservationIds: apaleoData.reservationIds?.map(r => r.id),
+      })
+
       return {
         success: true,
         data: apaleoData
       }
-
     } catch (error) {
       lastError = error
-      console.error(`❌ Attempt ${attempt}/${maxAttempts} failed with exception:`, error)
+      apaleoLog.error('POST /bookings threw', {
+        attempt: `${attempt}/${maxAttempts}`,
+        error: error instanceof Error ? error.message : String(error),
+      })
 
-      // Network errors are retriable
       if (attempt < maxAttempts) {
         continue
       }
 
-      // Last attempt failed
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -112,7 +116,6 @@ async function createApaleoBookingWithRetry(
     }
   }
 
-  // All attempts failed
   return {
     success: false,
     error: lastError,
@@ -123,150 +126,343 @@ async function createApaleoBookingWithRetry(
 export async function POST(request: Request) {
   try {
     const booking: Booking = await request.json()
+    bookingLog.info('STEP 5 — /bookings/create entered', {
+      pspReference: booking.transactionReference,
+      totalAmount: booking.totalAmount,
+      reservationsCount: booking.reservations?.length,
+      reservations: booking.reservations?.map((r: any) => ({
+        adults: r.adults,
+        prepayment: r.prepaymentAmount?.amount,
+        timeSlicesCount: r.timeSlices?.length,
+        ratePlanId: r.timeSlices?.[0]?.ratePlanId,
+        servicesCount: r.services?.length,
+      })),
+    })
 
-    console.log('💰 Payment amount:', booking.totalAmount, 'EUR')
-
-    if (booking.transactionReference) {
-      console.log('💳 Transaction reference:', booking.transactionReference)
+    // Hoisted PSP guard: every downstream step assumes pspReference exists
+    // (DB lock by transaction_reference, Adyen refund on failure, idempotency
+    // reads). Without it we'd risk creating an Apaleo booking we couldn't
+    // refund or roll back.
+    if (!booking.transactionReference) {
+      bookingLog.error('missing transactionReference — refusing to create booking')
+      return NextResponse.json(
+        { error: 'Missing transaction reference' },
+        { status: 400 }
+      )
     }
+    const pspReference = booking.transactionReference
 
-    const token = await getOrRefreshToken()
     const supabase = await createSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
     const supabaseAdmin = createAdminClient()
 
-    // Idempotency lock — prevents duplicate bookings on double-submit or retry
-    // If same transactionReference already exists → 23505 unique violation → booking already created
-    if (booking.transactionReference) {
+    // Step 1: Acquire lock by inserting into bookings table. If another
+    // process (webhook or duplicate request) already inserted, the unique
+    // constraint fires and we know the booking is being handled.
+    {
+      const { data: existingBooking } = await supabase
+        .from('bookings')
+        .select('apaleo_booking_id, reservation_ids, status')
+        .eq('transaction_reference', pspReference)
+        .single()
+
+      if (existingBooking) {
+        if (existingBooking.status === 'completed') {
+          bookingLog.info('booking already completed — short-circuit', {
+            apaleoBookingId: existingBooking.apaleo_booking_id,
+          })
+          return NextResponse.json(
+            {
+              id: existingBooking.apaleo_booking_id,
+              reservationIds: existingBooking.reservation_ids || [],
+              alreadyExists: true,
+              message: 'Booking already created for this payment'
+            },
+            { status: 200 }
+          )
+        }
+
+        if (existingBooking.status === 'processing') {
+          bookingLog.info('booking already processing — duplicate request', { pspReference })
+          return NextResponse.json(
+            {
+              message: 'Booking is being processed. Please wait.',
+              alreadyProcessing: true
+            },
+            { status: 202 }
+          )
+        }
+      }
+
       const { error: lockError } = await supabaseAdmin.from('bookings').insert({
-        transaction_reference: booking.transactionReference,
-        user_id: user?.id || null,
+        transaction_reference: pspReference,
         status: 'processing',
+        user_id: user?.id || null,
+        created_at: new Date().toISOString(),
       })
 
       if (lockError) {
         if (lockError.code === '23505') {
-          console.log('⚠️ [CREATE BOOKING] duplicate transactionReference — booking already exists, skipping')
-          return NextResponse.json({ error: 'Booking already exists for this payment' }, { status: 409 })
+          bookingLog.info('lock taken by concurrent process — checking status', { pspReference })
+          const { data: raceBooking } = await supabase
+            .from('bookings')
+            .select('apaleo_booking_id, reservation_ids, status')
+            .eq('transaction_reference', pspReference)
+            .single()
+
+          if (raceBooking?.status === 'completed' && raceBooking.apaleo_booking_id) {
+            return NextResponse.json(
+              {
+                id: raceBooking.apaleo_booking_id,
+                reservationIds: raceBooking.reservation_ids || [],
+                alreadyExists: true,
+              },
+              { status: 200 }
+            )
+          }
+
+          return NextResponse.json(
+            { message: 'Booking is being processed by another request.', alreadyProcessing: true },
+            { status: 202 }
+          )
         }
-        console.error('Failed to insert booking lock:', lockError)
+
+        // Lock insert failed for a non-conflict reason — proceed anyway so we
+        // don't drop a paid booking. Subsequent UPDATEs will no-op on the
+        // missing row but the Apaleo state will still be created.
+        bookingLog.error('lock insert failed — proceeding without lock', { error: lockError })
       }
     }
 
-    const bookingPayload = { ...booking, reservations: booking.reservations }
+    // Step 2: Create booking in Apaleo
+    const token = await getOrRefreshToken()
 
-    console.log('📦 Booking payload:', JSON.stringify(bookingPayload, null, 2))
+    // Guard: if arrival check-in datetime (arrival date at the hotel check-in
+    // hour, Berlin time) is in the past, shift it to now + 5 minutes.
+    const now = new Date()
 
-    // Create booking in Apaleo with retry logic (3 attempts: 1 initial + 2 retries)
+    // Returns Berlin UTC offset in ms (e.g. UTC+2 → +7200000)
+    const getBerlinOffsetMs = (date: Date): number => {
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Europe/Berlin',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: false,
+      }).formatToParts(date)
+      const get = (type: string) => parseInt(parts.find(p => p.type === type)?.value ?? '0')
+      const berlinMs = Date.UTC(get('year'), get('month') - 1, get('day'), get('hour'), get('minute'), get('second'))
+      return berlinMs - date.getTime()
+    }
+
+    const HOTEL_CHECKIN_HOUR = parseInt(HOTEL_INFO.checkinTime.split(':')[0])
+    const berlinOffsetMs = getBerlinOffsetMs(now)
+
+    const adjustedReservations = booking.reservations.map(reservation => {
+      const arrivalDateStr = reservation.arrival.slice(0, 10)
+      const arrivalCheckinUTC = new Date(`${arrivalDateStr}T${String(HOTEL_CHECKIN_HOUR).padStart(2, '0')}:00:00Z`).getTime() - berlinOffsetMs
+      const arrivalCheckin = new Date(arrivalCheckinUTC)
+
+      if (arrivalCheckin < now) {
+        const corrected = dayjs(now).add(5, 'minute').tz('Europe/Berlin').format()
+        bookingLog.warn('arrival check-in in the past — correcting', {
+          arrivalDate: arrivalDateStr,
+          hotelCheckinHour: HOTEL_CHECKIN_HOUR,
+          corrected,
+        })
+        return { ...reservation, arrival: corrected }
+      }
+
+      return reservation
+    })
+
+    const bookingPayload = {
+      ...booking,
+      reservations: adjustedReservations,
+    }
+
+    bookingLog.info('STEP 6 — POST Apaleo /bookings', {
+      pspReference,
+      reservationsCount: bookingPayload.reservations.length,
+    })
     const result = await createApaleoBookingWithRetry(bookingPayload, token, 3)
 
     if (!result.success) {
-      console.error('❌ All booking attempts failed')
+      bookingLog.error('all booking attempts failed', { pspReference, status: result.status })
 
-      // Mark lock as failed
-      if (booking.transactionReference) {
-        await supabaseAdmin.from('bookings')
-          .update({ status: 'failed' })
-          .eq('transaction_reference', booking.transactionReference)
-          .eq('status', 'processing')
-      }
+      await supabaseAdmin
+        .from('bookings')
+        .update({ status: 'failed' })
+        .eq('transaction_reference', pspReference)
+        .eq('status', 'processing')
 
-      // Reverse the payment — customer gets refunded automatically
-      if (booking.transactionReference) {
-        console.log('💸 [CREATE BOOKING] payment was charged but booking failed — initiating reversal')
-        await reversePayment(booking.transactionReference)
-      }
+      bookingLog.warn('initiating reversal — payment charged but booking never created', { pspReference })
+      await reversePayment(pspReference)
 
       return NextResponse.json(
         {
           error: 'Failed to create booking after multiple attempts',
           details: result.error,
-          status: result.status
+          status: result.status,
         },
         { status: result.status || 500 }
       )
     }
 
     const apaleoData = result.data!
-    
-    // Step 2: Pay all folios with single payment
-    let folioPaymentSuccess = true
-    const folioErrors: string[] = []
-    
-    if (apaleoData.reservationIds && apaleoData.reservationIds.length > 0 && booking.transactionReference) {
-      console.log('📋 Step 2: Paying folios...')
-      
-      for (let i = 0; i < apaleoData.reservationIds.length; i++) {
-        const reservationId = apaleoData.reservationIds[i]?.id
-        
-        if (!reservationId) continue;
-        
-        try {
-          const result = await bookReservationServices(
-            reservationId, 
-            [],
-            booking.transactionReference
-          )
-          
-          if (result.payment && 'amount' in result.payment) {
-            console.log(`   ✅ Folio ${i + 1} paid: ${result.payment.amount} EUR`)
-          }
-          
-        } catch (error) {
-          folioPaymentSuccess = false
-          const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-          folioErrors.push(`Reservation ${reservationId}: ${errorMsg}`)
-          console.error(`❌ Error paying folio for reservation ${reservationId}:`, error)
+    const apaleoReservationIds = apaleoData.reservationIds.map(r => r.id)
+
+    // Track PAs at outer scope so the cleanup helper sees them even if the
+    // post-booking block throws.
+    let paymentAccountIds: string[] = []
+
+    // Idempotent cleanup: cancel reservations, cancel created PAs, refund Adyen.
+    const cleanupFailedBooking = async () => {
+      bookingLog.error('cleanup initiated', {
+        pspReference,
+        apaleoBookingId: apaleoData.id,
+        reservationIds: apaleoReservationIds,
+        paymentAccountIds,
+      })
+
+      const cancelResults = await Promise.allSettled(
+        apaleoReservationIds.map(id => cancelReservation(id))
+      )
+      cancelResults.forEach((r, i) => {
+        if (r.status === 'rejected') {
+          bookingLog.error('reservation cancel threw', {
+            reservationId: apaleoReservationIds[i],
+            error: String(r.reason),
+          })
+        }
+      })
+
+      await reversePayment(pspReference, {
+        apaleoPaymentAccountIds: paymentAccountIds,
+      })
+
+      await supabaseAdmin
+        .from('bookings')
+        .update({ status: 'failed' })
+        .eq('transaction_reference', pspReference)
+
+      await supabaseAdmin
+        .from('pending_bookings')
+        .update({ status: 'failed', updated_at: new Date().toISOString() })
+        .eq('reference', pspReference)
+    }
+
+    // Atomic post-booking block: any throw → cleanup + 502. No partial state
+    // can escape to the outer catch unrolled, no money sits charged without
+    // a recorded outcome on the Apaleo side.
+    try {
+      // Step 3: persist Apaleo IDs; status stays 'processing' until all
+      // PAs + captures land.
+      await supabaseAdmin
+        .from('bookings')
+        .update({
+          apaleo_booking_id: apaleoData.id,
+          reservation_ids: apaleoReservationIds,
+        })
+        .eq('transaction_reference', pspReference)
+
+      // Step 4: resume from any state persisted by a previous attempt so
+      // retries (client, webhook fallback, or both) don't double-register PAs.
+      const { data: existing } = await supabaseAdmin
+        .from('bookings')
+        .select('apaleo_payment_account_ids')
+        .eq('transaction_reference', pspReference)
+        .maybeSingle()
+      paymentAccountIds = existing?.apaleo_payment_account_ids ?? []
+
+      // Step 5: for each reservation, register the Adyen authorization as a
+      // per-reservation Apaleo Payment Account.
+      bookingLog.info('STEP 7 — Apaleo payment accounts (per reservation)', {
+        apaleoBookingId: apaleoData.id,
+        pspReference,
+        reservationCount: apaleoReservationIds.length,
+        reusing: paymentAccountIds.length,
+      })
+      for (let i = paymentAccountIds.length; i < apaleoReservationIds.length; i++) {
+        const reservationId = apaleoReservationIds[i]
+        const paymentAccountId = await createPaymentAccount({
+          reservationId,
+          pspReference,
+        })
+        paymentAccountIds.push(paymentAccountId)
+        await supabaseAdmin
+          .from('bookings')
+          .update({ apaleo_payment_account_ids: paymentAccountIds })
+          .eq('transaction_reference', pspReference)
+      }
+
+      // Step 6: capture each reservation folio via its Payment Account.
+      // Skip is the expected path when Apaleo Pay has auto-distributed funds.
+      bookingLog.info('STEP 8 — folio captures via payment account', {
+        pspReference,
+        reservationCount: apaleoReservationIds.length,
+      })
+      for (let i = 0; i < apaleoReservationIds.length; i++) {
+        const reservationId = apaleoReservationIds[i]
+        const paymentAccountId = paymentAccountIds[i]
+        const reservation = booking.reservations[i]
+        const amount = reservation?.prepaymentAmount?.amount
+
+        if (typeof amount !== 'number' || amount <= 0) {
+          throw new Error(`Reservation ${i + 1} (${reservationId}) has no prepayment amount`)
+        }
+
+        const currency = reservation.prepaymentAmount?.currency || 'EUR'
+        const folioResult = await payFolioByPaymentAccount({
+          reservationId,
+          paymentAccountId,
+          amount,
+          currency,
+        })
+
+        if (!folioResult.success) {
+          throw new Error(`Folio capture failed for reservation ${reservationId}: ${folioResult.error}`)
         }
       }
-      
-      if (folioPaymentSuccess) {
-        console.log('\n✅ Step 2 complete: All folios paid')
-      } else {
-        console.error('\n⚠️ Step 2 PARTIAL FAILURE: Some folios failed to pay')
-        console.error('Failed folios:', folioErrors)
-      }
+
+      // Step 7: all captures succeeded — flip status to 'completed'.
+      bookingLog.success('STEP 9 — booking completed', {
+        apaleoBookingId: apaleoData.id,
+        paymentAccountIds,
+        reservationIds: apaleoReservationIds,
+        pspReference,
+      })
+      await supabaseAdmin
+        .from('bookings')
+        .update({ status: 'completed' })
+        .eq('transaction_reference', pspReference)
+    } catch (postBookingError) {
+      bookingLog.error('post-booking flow failed — running cleanup', {
+        apaleoBookingId: apaleoData.id,
+        paymentAccountCount: paymentAccountIds.length,
+        error: postBookingError instanceof Error ? postBookingError.message : String(postBookingError),
+      })
+      await cleanupFailedBooking()
+      return NextResponse.json(
+        {
+          error: 'Booking rolled back — payment refunded',
+          details: postBookingError instanceof Error ? postBookingError.message : 'Unknown error',
+        },
+        { status: 502 }
+      )
     }
 
-    // Mark booking lock with appropriate status
-    if (booking.transactionReference) {
-      const finalStatus = folioPaymentSuccess ? 'completed' : 'partial_success'
-      const updateData: any = {
-        status: finalStatus,
-        apaleo_booking_id: apaleoData.id,
-        reservation_ids: apaleoData.reservationIds.map(r => r.id)
-      }
-      
-      // Store folio errors if any occurred
-      if (!folioPaymentSuccess) {
-        updateData.error_details = JSON.stringify({
-          type: 'folio_payment_failure',
-          errors: folioErrors,
-          timestamp: new Date().toISOString()
-        })
-        
-        // Log alert for operations team
-        console.error('🚨 ALERT: Booking created but folio payment failed')
-        console.error('🚨 Booking ID:', apaleoData.id)
-        console.error('🚨 Transaction Reference:', booking.transactionReference)
-        console.error('🚨 MANUAL ACTION REQUIRED: Complete folio payment in Apaleo')
-      }
-      
-      await supabaseAdmin.from('bookings')
-        .update(updateData)
-        .eq('transaction_reference', booking.transactionReference)
-    }
+    // Booking is complete and money is captured. The two side-effects below
+    // are best-effort — a failure here doesn't roll back the booking.
 
-    // Save consent record if consent was given
     try {
       if (booking.consent && apaleoData.id) {
         const headersList = await headers()
-        const ip = 
-          headersList.get('x-forwarded-for')?.split(',')[0]?.trim() || 
-          headersList.get('x-real-ip') || 
+        const ip =
+          headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+          headersList.get('x-real-ip') ||
           'unknown'
 
-        const consentData = {
+        await supabase.from('consents').insert({
           user_id: user?.id || null,
           booking_id: apaleoData.id,
           consent_type: 'booking',
@@ -274,26 +470,39 @@ export async function POST(request: Request) {
           ip_address: ip,
           privacy_policy_version: '1.0',
           consent_date: new Date().toISOString(),
-        }
-
-        await supabase.from('consents').insert(consentData)
+        })
       }
     } catch (supabaseError) {
-      console.error('Failed to save consent to Supabase:', supabaseError)
+      bookingLog.error('failed to save consent', {
+        apaleoBookingId: apaleoData.id,
+        error: supabaseError instanceof Error ? supabaseError.message : String(supabaseError),
+      })
     }
 
+    try {
+      await supabaseAdmin
+        .from('pending_bookings')
+        .update({ status: 'completed', apaleo_booking_id: apaleoData.id, updated_at: new Date().toISOString() })
+        .eq('reference', pspReference)
+    } catch {
+      // Non-critical.
+    }
 
     return NextResponse.json(
       {
         ...apaleoData,
-        reservationIds: apaleoData.reservationIds.map(r => r.id)
+        reservationIds: apaleoReservationIds,
       },
       { status: 201 }
     )
-    
+
   } catch (error) {
-    console.error('Create booking error:', error)
-    
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Internal server error' },{ status: 500 })
+    bookingLog.error('create booking — unhandled exception', {
+      error: error instanceof Error ? error.message : String(error),
+    })
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { status: 500 },
+    )
   }
 }

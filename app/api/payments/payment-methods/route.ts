@@ -1,15 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Client, CheckoutAPI, EnvironmentEnum } from "@adyen/api-library";
-
-const isLive = process.env.NEXT_PUBLIC_ADYEN_ENVIRONMENT === 'live';
-const client = new Client({
-  apiKey: process.env.ADYEN_API_KEY!,
-  environment: isLive ? EnvironmentEnum.LIVE : EnvironmentEnum.TEST,
-  ...(isLive && process.env.ADYEN_LIVE_URL_PREFIX && {
-    liveEndpointUrlPrefix: process.env.ADYEN_LIVE_URL_PREFIX,
-  }),
-});
-const checkout = new CheckoutAPI(client);
+import { checkout } from "@/lib/adyen";
+import { adyenLog } from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,7 +19,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error: any) {
-    console.error("Payment methods error:", error);
+    adyenLog.error('payment-methods threw', { error: error?.message ?? String(error) });
     return NextResponse.json(
       { error: "Failed to get payment methods", details: error.message },
       { status: 500 }

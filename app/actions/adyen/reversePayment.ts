@@ -1,38 +1,91 @@
-import { Client, CheckoutAPI, EnvironmentEnum } from '@adyen/api-library';
+import { checkout } from "@/lib/adyen"
+import { cancelPaymentAccount } from "@/services/apaleo/cancelPaymentAccount"
+import { adyenLog } from "@/lib/logger"
 
-const isLive = process.env.NEXT_PUBLIC_ADYEN_ENVIRONMENT === 'live';
+interface ReversePaymentOptions {
+  /**
+   * Apaleo Payment Account IDs (from payment-accounts/by-authorization).
+   * Cancelled best-effort BEFORE the Adyen refund. Failures are logged and
+   * do not block the refund.
+   */
+  apaleoPaymentAccountIds?: string[]
+  internalReference?: string
+}
 
-const client = new Client({
-  apiKey: process.env.ADYEN_API_KEY!,
-  environment: isLive ? EnvironmentEnum.LIVE : EnvironmentEnum.TEST,
-  ...(isLive && process.env.ADYEN_LIVE_URL_PREFIX && {
-    liveEndpointUrlPrefix: process.env.ADYEN_LIVE_URL_PREFIX,
-  }),
-});
-
-const checkout = new CheckoutAPI(client);
-
-// Uses Reversal (refundOrCancelPayment) — not a manual Refund.
-// Adyen decides automatically: cancel if not yet captured, refund if already captured.
+/**
+ * Backwards-compatible signature: also accepts a plain string as the second
+ * argument to mean `internalReference` — keeps legacy callers working
+ * (e.g. tests that pass `reversePayment(psp, ref)`).
+ *
+ * Uses Reversal (refundOrCancelPayment) — not a manual Refund. Adyen decides
+ * automatically: cancel if not yet captured, refund if already captured.
+ */
 export async function reversePayment(
   pspReference: string,
-  internalReference?: string
-): Promise<{ success: boolean }> {
-  console.log(`🔄 [REVERSAL] initiating | psp: ${pspReference}`);
+  optionsOrReference: ReversePaymentOptions | string = {},
+): Promise<{
+  success: boolean
+  status?: string
+  error?: string
+  apaleoCancelResults?: { paymentAccountId: string; success: boolean; error?: string }[]
+}> {
+  const options: ReversePaymentOptions =
+    typeof optionsOrReference === 'string'
+      ? { internalReference: optionsOrReference }
+      : optionsOrReference
+  const { apaleoPaymentAccountIds = [], internalReference } = options
+
+  adyenLog.info('reversal initiating', {
+    pspReference,
+    internalReference: internalReference ?? null,
+    apaleoPaCount: apaleoPaymentAccountIds.length,
+  })
+
+  // Cancel Apaleo Payment Accounts first so they don't linger active after
+  // the Adyen money goes back.
+  let apaleoCancelResults: { paymentAccountId: string; success: boolean; error?: string }[] | undefined
+  if (apaleoPaymentAccountIds.length > 0) {
+    const settled = await Promise.allSettled(
+      apaleoPaymentAccountIds.map(id => cancelPaymentAccount(id))
+    )
+    apaleoCancelResults = settled.map((r, i) => {
+      const paymentAccountId = apaleoPaymentAccountIds[i]
+      if (r.status === 'fulfilled') {
+        return { paymentAccountId, success: r.value.success, error: r.value.error }
+      }
+      return { paymentAccountId, success: false, error: String(r.reason) }
+    })
+
+    const failed = apaleoCancelResults.filter(r => !r.success)
+    if (failed.length > 0) {
+      adyenLog.warn('reversal: some Apaleo PA cancels failed — continuing with Adyen refund', {
+        failed: failed.length,
+        total: apaleoPaymentAccountIds.length,
+      })
+    }
+  }
 
   try {
-    const response = await checkout.ModificationsApi.refundOrCancelPayment(pspReference, {
-      merchantAccount: process.env.ADYEN_MERCHANT_ACCOUNT!,
-      ...(internalReference && { reference: internalReference }),
-    });
+    const response = await checkout.ModificationsApi.refundOrCancelPayment(
+      pspReference,
+      {
+        merchantAccount: process.env.ADYEN_MERCHANT_ACCOUNT!,
+        ...(internalReference && { reference: internalReference }),
+      }
+    )
 
-    console.log(`✅ [REVERSAL] accepted by Adyen | psp: ${pspReference} | status: ${response.status}`);
-    console.log(`ℹ️  [REVERSAL] async — result arrives via webhook (CANCEL or REFUND event)`);
-    return { success: true };
+    adyenLog.success('reversal accepted by Adyen — final result via webhook', {
+      pspReference,
+      status: response.status,
+    })
+
+    return { success: true, status: response.status, apaleoCancelResults }
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error(`❌ [REVERSAL] FAILED | psp: ${pspReference} | error: ${message}`);
-    console.error(`🚨 [REVERSAL] MANUAL ACTION REQUIRED — payment charged but booking not created | psp: ${pspReference}`);
-    return { success: false };
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    adyenLog.error('reversal FAILED — MANUAL ACTION REQUIRED, payment charged but reversal not accepted', {
+      pspReference,
+      error: message,
+    })
+    return { success: false, error: message, apaleoCancelResults }
   }
 }
