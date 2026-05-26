@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { getOrRefreshToken } from "@/services/Request"
-import { bookReservationServices } from "@/services/bookReservationServices"
+import { bookReservationServicesLegacy, payFolioByPaymentAccount } from "@/services/bookReservationServices"
+import { adyenLog, bookingLog, apaleoLog, folioLog } from "@/lib/logger"
 import { reversePayment } from "@/app/actions/adyen/reversePayment"
+import { createPaymentAccount } from "@/services/apaleo/createPaymentAccount"
+import { cancelReservation } from "@/services/apaleo/cancelReservation"
 import crypto from "crypto"
 
 // Webhook has no user session — must use service_role to bypass RLS
@@ -20,22 +23,17 @@ const ADYEN_HMAC_KEY = process.env.ADYEN_HMAC_KEY || ''
 function verifyHmacSignature(notificationItem: any, hmacKey: string): boolean {
   if (!hmacKey) {
     if (process.env.NODE_ENV === 'production') {
-      console.error('🚨 ADYEN_HMAC_KEY not set in production — rejecting webhook')
+      adyenLog.error('ADYEN_HMAC_KEY not set in production — rejecting webhook')
       return false
     }
-    console.warn('⚠️ ADYEN_HMAC_KEY not set — skipping HMAC verification (dev mode)')
-    return true
+    return true // Skip verification if no key configured (dev mode).
   }
 
   try {
-    const hmacSignature = notificationItem.additionalData?.hmacSignature
-    if (!hmacSignature) {
-      console.error('❌ No HMAC signature in notification')
-      return false
-    }
+    const additionalData = notificationItem.additionalData || {}
+    const hmacSignature = additionalData.hmacSignature
 
-    const escapeHmac = (v: string | number | undefined | null) =>
-      String(v ?? '').replace(/\\/g, '\\\\').replace(/:/g, '\\:');
+    if (!hmacSignature) return false
 
     const payload = [
       notificationItem.pspReference,
@@ -46,40 +44,48 @@ function verifyHmacSignature(notificationItem: any, hmacKey: string): boolean {
       notificationItem.amount?.currency,
       notificationItem.eventCode,
       notificationItem.success,
-    ].map(escapeHmac).join(':')
+    ].join(':')
 
     const key = Buffer.from(hmacKey, 'hex')
-    const expectedSignature = crypto.createHmac('sha256', key).update(payload).digest('base64')
+    const expectedSignature = crypto
+      .createHmac('sha256', key)
+      .update(payload)
+      .digest('base64')
 
     return hmacSignature === expectedSignature
   } catch (error) {
-    console.error('❌ HMAC verification error:', error)
+    adyenLog.error('HMAC verification threw', {
+      error: error instanceof Error ? error.message : String(error),
+    })
     return false
   }
 }
 
-async function createBookingFromPending(reference: string, pspReference: string) {
+async function createBookingFromPending(
+  reference: string,
+  pspReference: string
+) {
   const supabase = createAdminClient()
 
-  console.log(`📞 Webhook: Processing booking for reference ${reference}, pspReference ${pspReference}`)
-
-  // Check if booking already exists
+  // 1. Check if booking already exists or is being processed
   const { data: existingBooking } = await supabase
     .from('bookings')
     .select('apaleo_booking_id, status')
     .eq('transaction_reference', pspReference)
     .single()
 
-  if (existingBooking?.status === 'completed') {
-    console.log(`✅ Webhook: Booking already completed for ${pspReference}`)
-    return { alreadyExists: true, bookingId: existingBooking.apaleo_booking_id }
-  }
-  if (existingBooking?.status === 'processing') {
-    console.log(`⏳ Webhook: Booking already being processed for ${pspReference}`)
-    return { alreadyProcessing: true }
+  if (existingBooking) {
+    if (existingBooking.status === 'completed') {
+      bookingLog.info('webhook: booking already completed', { apaleoBookingId: existingBooking.apaleo_booking_id })
+      return { alreadyExists: true, bookingId: existingBooking.apaleo_booking_id }
+    }
+    if (existingBooking.status === 'processing') {
+      bookingLog.info('webhook: booking processing — skipping', { pspReference })
+      return { alreadyProcessing: true }
+    }
   }
 
-  // Get payload from pending_bookings
+  // 2. Get pending booking payload
   const { data: pendingBooking, error: pendingError } = await supabase
     .from('pending_bookings')
     .select('booking_payload, status')
@@ -87,39 +93,54 @@ async function createBookingFromPending(reference: string, pspReference: string)
     .single()
 
   if (pendingError || !pendingBooking) {
-    console.log(`ℹ️ Webhook: No pending booking found for reference ${reference} — client likely handled it`)
+    bookingLog.info('webhook: no pending booking found — client likely handled it', { reference })
     return { noPending: true }
   }
 
   if (pendingBooking.status === 'completed') {
-    console.log(`✅ Webhook: Pending booking already completed for ${reference}`)
+    bookingLog.info('webhook: pending booking already completed', { reference })
     return { alreadyExists: true }
   }
 
-  // Acquire idempotency lock
+  // 3. Acquire lock — insert with status 'processing'
   const { error: lockError } = await supabase.from('bookings').insert({
     transaction_reference: pspReference,
     status: 'processing',
     user_id: null,
+    created_at: new Date().toISOString(),
   })
 
-  if (lockError?.code === '23505') {
-    console.log(`⚠️ Webhook: Lock already exists for ${pspReference} — another process handling it`)
-    return { alreadyProcessing: true }
-  }
-
   if (lockError) {
-    console.error(`❌ Webhook: Failed to acquire lock:`, lockError)
-    return { error: 'Failed to acquire lock', details: lockError }
+    if (lockError.code === '23505') {
+      bookingLog.info('webhook: lock taken by another process — skipping', { pspReference })
+      return { alreadyProcessing: true }
+    }
+    // Non-conflict lock error — proceed anyway so we don't drop a paid booking.
+    bookingLog.error('webhook: lock insert failed — proceeding without lock', { error: lockError })
   }
 
-  // Create booking in Apaleo
-  const booking = pendingBooking.booking_payload
-  booking.transactionReference = pspReference
+  // 4. Create booking in Apaleo. Spread to avoid mutating the cached payload.
+  const booking = {
+    ...pendingBooking.booking_payload,
+    transactionReference: pspReference,
+  }
 
-  console.log(`🔄 Webhook: Creating booking in Apaleo...`)
+  apaleoLog.info('webhook → Apaleo POST /bookings', {
+    reference,
+    pspReference,
+    totalAmount: booking.totalAmount,
+    reservationsCount: booking.reservations?.length,
+    reservations: booking.reservations?.map((r: any) => ({
+      adults: r.adults,
+      prepayment: r.prepaymentAmount?.amount,
+      timeSlicesCount: r.timeSlices?.length,
+      ratePlanId: r.timeSlices?.[0]?.ratePlanId,
+      servicesCount: r.services?.length,
+    })),
+  })
 
   const token = await getOrRefreshToken()
+
   const response = await fetch(`${APALEO_API_URL}/booking/v1/bookings`, {
     method: 'POST',
     headers: {
@@ -132,61 +153,183 @@ async function createBookingFromPending(reference: string, pspReference: string)
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}))
-    console.error(`❌ Webhook: Apaleo booking failed:`, errorData)
+    bookingLog.error('webhook: Apaleo POST /bookings failed', {
+      pspReference,
+      status: response.status,
+      error: errorData,
+    })
 
-    await supabase.from('bookings')
+    await supabase
+      .from('bookings')
       .update({ status: 'failed' })
       .eq('transaction_reference', pspReference)
       .eq('status', 'processing')
 
-    await supabase.from('pending_bookings')
-      .update({ status: 'failed' })
+    await supabase
+      .from('pending_bookings')
+      .update({ status: 'failed', updated_at: new Date().toISOString() })
       .eq('reference', reference)
 
-    // Reverse the payment — customer gets refunded automatically
-    console.log(`💸 Webhook: booking failed after charge — initiating reversal | psp: ${pspReference}`)
-    await reversePayment(pspReference, reference)
+    bookingLog.warn('webhook: initiating reversal — payment charged but booking never created', { pspReference })
+    await reversePayment(pspReference, { internalReference: reference })
 
     return { error: 'Failed to create booking', details: errorData }
   }
 
   const apaleoData = await response.json()
-  console.log(`✅ Webhook: Booking created in Apaleo with ID ${apaleoData.id}`)
+  const apaleoReservationIds: string[] = apaleoData.reservationIds?.map((r: any) => r.id) || []
+  apaleoLog.success('webhook: booking created', {
+    id: apaleoData.id,
+    reservationIds: apaleoReservationIds,
+  })
 
-  // Mark as completed
-  await supabase.from('bookings').update({
-    apaleo_booking_id: apaleoData.id,
-    reservation_ids: apaleoData.reservationIds?.map((r: any) => r.id) || [],
-    status: 'completed',
-  }).eq('transaction_reference', pspReference)
+  // Track PAs at outer scope so the cleanup helper sees them even if the
+  // post-booking block throws.
+  let paymentAccountIds: string[] = []
 
-  // Pay folios
-  console.log(`💰 Webhook: Paying folios for ${apaleoData.reservationIds?.length || 0} reservation(s)...`)
-  for (const res of (apaleoData.reservationIds || [])) {
-    try {
-      await bookReservationServices(res.id, [], pspReference)
-      console.log(`   ✅ Webhook: Folio paid for reservation ${res.id}`)
-    } catch (error) {
-      console.error(`   ❌ Webhook: Failed to pay folio for ${res.id}:`, error)
-    }
+  const cleanup = async () => {
+    bookingLog.error('webhook cleanup initiated', {
+      pspReference,
+      apaleoBookingId: apaleoData.id,
+      reservationIds: apaleoReservationIds,
+      paymentAccountIds,
+    })
+
+    await Promise.allSettled(apaleoReservationIds.map((id: string) => cancelReservation(id)))
+
+    await reversePayment(pspReference, {
+      apaleoPaymentAccountIds: paymentAccountIds,
+      internalReference: reference,
+    })
+
+    await supabase
+      .from('bookings')
+      .update({ status: 'failed' })
+      .eq('transaction_reference', pspReference)
+    await supabase
+      .from('pending_bookings')
+      .update({ status: 'failed', updated_at: new Date().toISOString() })
+      .eq('reference', reference)
   }
 
-  // Mark pending booking as completed
-  await supabase.from('pending_bookings').update({
-    status: 'completed',
-    apaleo_booking_id: apaleoData.id,
-  }).eq('reference', reference)
+  // Apaleo returned a booking without reservations — impossible per spec, but
+  // a defensive guard against silent success with zero PAs/captures.
+  if (apaleoReservationIds.length === 0) {
+    bookingLog.error('webhook: Apaleo returned no reservation IDs — rolling back', {
+      apaleoBookingId: apaleoData.id,
+    })
+    await cleanup()
+    return { error: 'Apaleo returned a booking without reservation IDs' }
+  }
 
-  console.log(`✅ Webhook: Successfully processed booking ${apaleoData.id}`)
-  return { success: true, bookingId: apaleoData.id }
+  // Atomic post-booking block: any throw → cleanup + structured error return.
+  try {
+    // 5. Persist Apaleo IDs but keep status='processing' until all captures land.
+    await supabase
+      .from('bookings')
+      .update({
+        apaleo_booking_id: apaleoData.id,
+        reservation_ids: apaleoReservationIds,
+      })
+      .eq('transaction_reference', pspReference)
+
+    // 6. Resume from any state persisted by a previous attempt so retries don't
+    // double-register PAs.
+    const { data: existing } = await supabase
+      .from('bookings')
+      .select('apaleo_payment_account_ids')
+      .eq('transaction_reference', pspReference)
+      .maybeSingle()
+    paymentAccountIds = existing?.apaleo_payment_account_ids ?? []
+
+    // 7. For each reservation, register the Adyen authorization as a
+    // per-reservation Apaleo Payment Account.
+    bookingLog.info('webhook: STEP 7 — Apaleo payment accounts (per reservation)', {
+      apaleoBookingId: apaleoData.id,
+      pspReference,
+      reservationCount: apaleoReservationIds.length,
+      reusing: paymentAccountIds.length,
+    })
+    for (let i = paymentAccountIds.length; i < apaleoReservationIds.length; i++) {
+      const reservationId = apaleoReservationIds[i]
+      const paymentAccountId = await createPaymentAccount({
+        reservationId,
+        pspReference,
+      })
+      paymentAccountIds.push(paymentAccountId)
+      await supabase
+        .from('bookings')
+        .update({ apaleo_payment_account_ids: paymentAccountIds })
+        .eq('transaction_reference', pspReference)
+    }
+
+    // 8. Capture each reservation folio via its Payment Account.
+    bookingLog.info('webhook: STEP 8 — folio captures via payment account', {
+      pspReference,
+      reservationCount: apaleoReservationIds.length,
+    })
+    for (let i = 0; i < apaleoReservationIds.length; i++) {
+      const reservationId = apaleoReservationIds[i]
+      const paymentAccountId = paymentAccountIds[i]
+      const reservation = booking.reservations[i]
+      const amount = reservation?.prepaymentAmount?.amount
+      const currency = reservation?.prepaymentAmount?.currency || 'EUR'
+
+      if (typeof amount !== 'number' || amount <= 0) {
+        throw new Error(`webhook: reservation ${i + 1} (${reservationId}) has no prepayment amount`)
+      }
+
+      const folioResult = await payFolioByPaymentAccount({
+        reservationId,
+        paymentAccountId,
+        amount,
+        currency,
+      })
+
+      if (!folioResult.success) {
+        throw new Error(`webhook: folio capture failed for reservation ${reservationId}: ${folioResult.error}`)
+      }
+    }
+
+    // 9. All captures succeeded — flip to completed.
+    await supabase
+      .from('bookings')
+      .update({ status: 'completed' })
+      .eq('transaction_reference', pspReference)
+    await supabase
+      .from('pending_bookings')
+      .update({
+        status: 'completed',
+        apaleo_booking_id: apaleoData.id,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('reference', reference)
+
+    return { success: true, bookingId: apaleoData.id }
+  } catch (postBookingError) {
+    bookingLog.error('webhook: post-booking flow failed — running cleanup', {
+      apaleoBookingId: apaleoData.id,
+      paymentAccountCount: paymentAccountIds.length,
+      error: postBookingError instanceof Error ? postBookingError.message : String(postBookingError),
+    })
+    await cleanup()
+    return {
+      error: 'Booking rolled back — payment refunded',
+      details: postBookingError instanceof Error ? postBookingError.message : 'Unknown error',
+    }
+  }
 }
 
-async function addServicesFromPending(reference: string, pspReference: string) {
+// Late-services flow: a separate Adyen authorization may target a single
+// existing reservation to add extras after the initial booking. The CharlieM
+// `pending_services` schema uses `lock_key` + `transaction_reference` +
+// `services_payload` (see migration 14_pending_services_update.sql).
+async function bookServicesFromPending(
+  reference: string,
+  pspReference: string
+) {
   const supabase = createAdminClient()
 
-  console.log(`📞 Webhook: Processing services for reference ${reference}`)
-
-  // Query by `transaction_reference` — matches updated schema
   const { data: pendingServices, error: pendingError } = await supabase
     .from('pending_services')
     .select('reservation_id, services_payload, status, lock_key')
@@ -194,19 +337,17 @@ async function addServicesFromPending(reference: string, pspReference: string) {
     .maybeSingle()
 
   if (pendingError || !pendingServices) {
-    console.log(`ℹ️ Webhook: No pending services found for ${reference}`)
-    return { noPending: true }
+    folioLog.info('webhook: no pending services found', { reference })
+    return { notFound: true }
   }
 
   if (pendingServices.status === 'completed') {
-    console.log(`✅ Webhook: Services already completed for ${reference}`)
+    folioLog.info('webhook: services already booked', { reference })
     return { alreadyExists: true }
   }
 
-  console.log(`🔄 Webhook: Adding services to reservation ${pendingServices.reservation_id}...`)
-
   try {
-    const result = await bookReservationServices(
+    const result = await bookReservationServicesLegacy(
       pendingServices.reservation_id,
       pendingServices.services_payload || [],
       pspReference
@@ -214,11 +355,11 @@ async function addServicesFromPending(reference: string, pspReference: string) {
 
     const failedServices = result.services.filter((r: any) => !r.success)
     if (failedServices.length > 0 || (result.payment && !result.payment.success)) {
-      console.error(`❌ Webhook: Services failed:`, failedServices)
+      folioLog.error('webhook: services failed', { failedServices, payment: result.payment })
       await supabase.from('pending_services')
-        .update({ 
+        .update({
           status: 'failed',
-          error_details: JSON.stringify({ failedServices, payment: result.payment })
+          error_details: JSON.stringify({ failedServices, payment: result.payment }),
         })
         .eq('lock_key', pendingServices.lock_key)
       return { error: 'Services failed', details: failedServices }
@@ -228,64 +369,79 @@ async function addServicesFromPending(reference: string, pspReference: string) {
       .update({ status: 'completed' })
       .eq('lock_key', pendingServices.lock_key)
 
-    console.log(`✅ Webhook: Services added successfully`)
+    folioLog.success('webhook: services booked', { reservationId: pendingServices.reservation_id })
     return { success: true }
-  } catch (error) {
-    console.error(`❌ Webhook: Services error:`, error)
+  } catch (err) {
+    folioLog.error('webhook: services threw', {
+      reservationId: pendingServices.reservation_id,
+      error: err instanceof Error ? err.message : String(err),
+    })
     await supabase.from('pending_services')
-      .update({ 
+      .update({
         status: 'failed',
-        error_details: JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' })
+        error_details: JSON.stringify({ error: err instanceof Error ? err.message : String(err) }),
       })
       .eq('lock_key', pendingServices.lock_key)
-    return { error: 'Services error', details: error }
+    return { error: 'Services error', details: err }
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-
     const notificationItems = body.notificationItems || []
 
     for (const item of notificationItems) {
       const notification = item.NotificationRequestItem
 
       if (!verifyHmacSignature(notification, ADYEN_HMAC_KEY)) {
-        console.error('❌ Webhook: Invalid HMAC signature for', notification.pspReference)
+        adyenLog.error('webhook: invalid HMAC signature')
         continue
       }
 
       const { eventCode, success, merchantReference, pspReference } = notification
 
-      console.log(`📞 Webhook: Event ${eventCode}, success: ${success}, ref: ${merchantReference}`)
+      adyenLog.info('webhook received', {
+        eventCode,
+        success,
+        amountEUR: notification.amount ? notification.amount.value / 100 : null,
+        amountCents: notification.amount?.value,
+        merchantReference,
+        pspReference,
+      })
 
+      // We only act on successful authorisations; other event codes (CANCEL,
+      // REFUND, etc.) arrive but reach no business logic yet.
       if (eventCode === 'AUTHORISATION' && success === 'true') {
         try {
-          const bookingResult = await createBookingFromPending(merchantReference, pspReference)
-          console.log(`✅ Webhook booking result:`, bookingResult)
-
-          const servicesResult = await addServicesFromPending(merchantReference, pspReference)
-          console.log(`✅ Webhook services result:`, servicesResult)
-        } catch (error) {
-          console.error(`❌ Webhook: Error processing ${merchantReference}:`, error)
+          const result = await createBookingFromPending(merchantReference, pspReference)
+          if (result.alreadyExists) { bookingLog.info('webhook: booking already exists', { bookingId: result.bookingId }); continue }
+          if (result.alreadyProcessing) { bookingLog.info('webhook: booking already processing'); continue }
+          if (result.error) { bookingLog.error('webhook: booking failed', { reference: merchantReference, error: result.error }) }
+          else if (result.success) { bookingLog.success('webhook: booking created', { bookingId: result.bookingId }); continue }
+        } catch (error: any) {
+          bookingLog.error('webhook: booking threw', { reference: merchantReference, error: error.message })
         }
-      } else {
-        console.log(`ℹ️ Webhook: Ignoring event ${eventCode} with success=${success}`)
+
+        // Fallback: no booking — assume payment was for a late-services add.
+        try {
+          const result = await bookServicesFromPending(merchantReference, pspReference)
+          if (result.notFound) folioLog.info('webhook: no pending services', { reference: merchantReference })
+          else if (result.alreadyExists) folioLog.info('webhook: services already booked', { reference: merchantReference })
+          else if (result.error) folioLog.error('webhook: services failed', { reference: merchantReference })
+          else folioLog.success('webhook: services booked', { reference: merchantReference })
+        } catch (error: any) {
+          folioLog.error('webhook: services threw', { reference: merchantReference, error: error.message })
+        }
       }
     }
 
-    // Adyen requires plain text [accepted], NOT JSON
-    return new NextResponse('[accepted]', {
-      status: 200,
-      headers: { 'Content-Type': 'text/plain' }
-    })
+    // Adyen requires a plaintext [accepted] response on every delivery.
+    return new NextResponse('[accepted]', { status: 200 })
   } catch (error) {
-    console.error('❌ Webhook error:', error)
-    // Always return [accepted] to Adyen even on error — prevents Adyen from retrying
-    return new NextResponse('[accepted]', {
-      status: 200,
-      headers: { 'Content-Type': 'text/plain' }
+    adyenLog.error('webhook: unhandled exception', {
+      error: error instanceof Error ? error.message : String(error),
     })
+    return new NextResponse('[accepted]', { status: 200 })
   }
 }

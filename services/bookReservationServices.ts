@@ -1,4 +1,5 @@
 import { Fetch } from '@/services/Request'
+import { folioLog } from '@/lib/logger'
 
 interface ServiceDate {
   serviceDate: string
@@ -14,7 +15,7 @@ interface BookServicePayload {
   dates?: ServiceDate[]
 }
 
-interface FolioResponse {
+interface FolioCaptureView {
   id: string
   balance?: {
     amount: number
@@ -23,14 +24,9 @@ interface FolioResponse {
   allowedPayment?: number
 }
 
-/**
- * Book a service for a specific reservation
- * @param reservationId - Apaleo reservation ID
- * @param service - Service to book
- */
 export async function bookReservationService(
   reservationId: string,
-  service: BookServicePayload
+  service: BookServicePayload,
 ) {
   try {
     await Fetch(
@@ -38,113 +34,215 @@ export async function bookReservationService(
       {
         method: 'PUT',
         body: service,
-      }
+      },
     )
 
-    console.log(`✅ Service ${service.serviceId} booked for reservation ${reservationId}`)
+    folioLog.success('service booked', { reservationId, serviceId: service.serviceId })
     return { success: true }
   } catch (error) {
-    console.error(`Failed to book service ${service.serviceId}:`, error)
+    folioLog.error('service booking failed', {
+      reservationId,
+      serviceId: service.serviceId,
+      error: error instanceof Error ? error.message : String(error),
+    })
     throw error
   }
 }
 
 /**
- * Pay folio for a reservation
- * @param reservationId - Apaleo reservation ID (also folio ID)
- * @param transactionReference - Payment transaction reference
+ * Capture a folio against an Apaleo Payment Account.
+ * Endpoint per Apaleo support: POST /finance/v1/folios/{id}/payments/by-payment-account
+ * with body { paymentAccountId, amount: { amount, currency } }.
+ *
+ * Skip when Apaleo Pay has already auto-covered the folio (allowedPayment=0
+ * or balance>=0) — capturing on top would return 422.
  */
-async function payReservationFolio(
-  reservationId: string,
-  transactionReference: string
-) {
-  try {
-    const folioId = `${reservationId}-1`;
-    // Get folio details
-    const folio = await Fetch<FolioResponse>(`/finance/v1/folios/${folioId}`);
-    
-    const balance = folio.balance?.amount || 0;
-    const allowedPayment = folio.allowedPayment || 0;
-    
-    console.log(` 💰 Folio ${reservationId}: Balance ${balance}, Allowed ${allowedPayment}`);
-    
-    // If no payment allowed or balance is positive (we owe them), skip payment
-    if (allowedPayment <= 0 || balance >= 0) {
-      console.log(`   ℹ️ No payment required for folio ${reservationId}`);
-      return { success: true, skipped: true };
-    }
-    
-    // Create payment by authorization
-    await Fetch(
-      `/finance/v1/folios/${folioId}/payments/by-authorization`,
-      {
-        method: 'POST',
-        body: {
-          transactionReference: transactionReference,
-          referenceType: 'PspReference',
-          amount: {
-            amount: allowedPayment,
-            currency: folio.balance?.currency || 'EUR'
-          }
-        }
-      }
-    );
+export async function payFolioByPaymentAccount(params: {
+  reservationId: string
+  paymentAccountId: string
+  amount: number
+  currency?: string
+  maxAttempts?: number
+}): Promise<{ success: true; skipped?: boolean; amount?: number } | { success: false; error: string }> {
+  const {
+    reservationId,
+    paymentAccountId,
+    amount,
+    currency = 'EUR',
+    maxAttempts = 3,
+  } = params
+  const folioId = `${reservationId}-1`
 
-    console.log(`   ✅ Folio ${folioId} paid: ${allowedPayment} ${folio.balance?.currency || 'EUR'}`);
-    return { success: true, amount: allowedPayment };
-  } catch (error) {
-    console.error(`   ❌ Failed to pay folio ${reservationId}-1:`, error);
-    throw error;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const folio = await Fetch<FolioCaptureView>(`/finance/v1/folios/${folioId}`)
+
+      const balance = folio.balance?.amount ?? 0
+      const allowedPayment = folio.allowedPayment ?? 0
+
+      folioLog.info('folio read', {
+        folioId,
+        attempt: `${attempt}/${maxAttempts}`,
+        balance,
+        allowedPayment,
+        intendedAmount: amount,
+        currency: folio.balance?.currency || currency,
+        paymentAccountId,
+      })
+
+      if (allowedPayment <= 0 || balance >= 0) {
+        folioLog.info('folio already covered — skipping capture', {
+          folioId,
+          balance,
+          allowedPayment,
+        })
+        return { success: true, skipped: true }
+      }
+
+      folioLog.info('POST /folios/{id}/payments/by-payment-account', {
+        folioId,
+        amount,
+        currency,
+        paymentAccountId,
+        attempt: `${attempt}/${maxAttempts}`,
+      })
+
+      await Fetch(
+        `/finance/v1/folios/${folioId}/payments/by-payment-account`,
+        {
+          method: 'POST',
+          body: {
+            paymentAccountId,
+            amount: { amount, currency },
+          },
+        },
+      )
+
+      folioLog.success('folio paid', { folioId, amount, currency, paymentAccountId })
+      return { success: true, amount }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      folioLog.error('folio payment failed', {
+        folioId,
+        attempt: `${attempt}/${maxAttempts}`,
+        error: message,
+      })
+
+      if (attempt < maxAttempts) {
+        const delayMs = attempt * 1000
+        folioLog.warn('retrying folio payment', { folioId, delayMs })
+        await new Promise(resolve => setTimeout(resolve, delayMs))
+        continue
+      }
+
+      return { success: false, error: message }
+    }
   }
+
+  return { success: false, error: `Failed to pay folio ${folioId} after ${maxAttempts} attempts` }
 }
 
 /**
- * Book multiple services for a reservation and pay the folio
- * @param reservationId - Apaleo reservation ID
- * @param services - Array of services to book
- * @param transactionReference - Payment transaction reference (optional)
+ * Single-capture folio payment via raw Adyen pspReference. Used by the
+ * late-services flow where each add-services request runs its own dedicated
+ * Adyen authorization. The initial multi-room booking goes through Apaleo
+ * Payment Account instead (see /api/bookings/create).
  */
-export async function bookReservationServices(
+async function payReservationFolioLegacy(
+  reservationId: string,
+  pspReference: string,
+  maxAttempts: number = 3,
+): Promise<{ success: true; skipped?: boolean; amount?: number } | { success: false; error: string }> {
+  const folioId = `${reservationId}-1`
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const folio = await Fetch<FolioCaptureView>(`/finance/v1/folios/${folioId}`)
+
+      const balance = folio.balance?.amount ?? 0
+      const allowedPayment = folio.allowedPayment ?? 0
+
+      folioLog.info('legacy folio read', {
+        folioId,
+        attempt: `${attempt}/${maxAttempts}`,
+        balance,
+        allowedPayment,
+        pspReference,
+      })
+
+      if (allowedPayment <= 0 || balance >= 0) {
+        folioLog.info('legacy: no payment required — skipping', { folioId, balance, allowedPayment })
+        return { success: true, skipped: true }
+      }
+
+      await Fetch(
+        `/finance/v1/folios/${folioId}/payments/by-authorization`,
+        {
+          method: 'POST',
+          body: {
+            transactionReference: pspReference,
+            referenceType: 'PspReference',
+            amount: {
+              amount: allowedPayment,
+              currency: folio.balance?.currency || 'EUR',
+            },
+          },
+        },
+      )
+
+      folioLog.success('legacy folio paid', { folioId, amount: allowedPayment, pspReference })
+      return { success: true, amount: allowedPayment }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      folioLog.error('legacy folio payment failed', {
+        folioId,
+        attempt: `${attempt}/${maxAttempts}`,
+        error: message,
+      })
+
+      if (attempt < maxAttempts) {
+        const delayMs = attempt * 1000
+        await new Promise(resolve => setTimeout(resolve, delayMs))
+        continue
+      }
+
+      return { success: false, error: message }
+    }
+  }
+
+  return { success: false, error: `Failed to pay folio ${folioId} after ${maxAttempts} attempts` }
+}
+
+/**
+ * Late-services flow: books services on a reservation, then captures the
+ * folio via a dedicated Adyen pspReference. Initial multi-room bookings use
+ * Apaleo Payment Account directly in /api/bookings/create.
+ */
+export async function bookReservationServicesLegacy(
   reservationId: string,
   services: BookServicePayload[],
-  transactionReference?: string
+  pspReference?: string,
 ) {
   const results = []
-  
-  // Step 1: Book all services
-  console.log(`📦 Booking ${services.length} service(s) for reservation ${reservationId}`)
+
+  folioLog.info('booking services (legacy)', { reservationId, count: services.length })
   for (const service of services) {
     try {
       await bookReservationService(reservationId, service)
       results.push({ serviceId: service.serviceId, success: true })
     } catch (error) {
-      console.error(`Failed to book service ${service.serviceId}:`, error)
-      results.push({ 
-        serviceId: service.serviceId, 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error'
+      results.push({
+        serviceId: service.serviceId,
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
       })
     }
   }
-  
-  // Step 2: Pay folio if transaction reference is provided
-  if (transactionReference) {
-    try {
-      const paymentResult = await payReservationFolio(reservationId, transactionReference);
-      return { 
-        services: results, 
-        payment: paymentResult 
-      };
-    } catch (error) {
-      return { 
-        services: results, 
-        payment: { 
-          success: false, 
-          error: error instanceof Error ? error.message : 'Unknown error' 
-        } 
-      };
-    }
+
+  if (pspReference) {
+    const paymentResult = await payReservationFolioLegacy(reservationId, pspReference)
+    return { services: results, payment: paymentResult }
   }
-  
-  return { services: results, payment: null };
+
+  return { services: results, payment: null }
 }

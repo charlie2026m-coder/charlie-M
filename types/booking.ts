@@ -34,8 +34,13 @@ export interface Booking {
     timeSlices: { ratePlanId: string; }[];
 
     services: {
-      serviceId: string; 
+      serviceId: string;
     }[];
+
+    prepaymentAmount?: {
+      amount: number;
+      currency: string;
+    };
 
     reservationAmount?: number; // Price for this specific reservation
   }[]

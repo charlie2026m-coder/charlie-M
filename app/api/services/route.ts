@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { bookReservationServices } from '@/services/bookReservationServices';
+import { bookReservationServicesLegacy } from '@/services/bookReservationServices';
 import { Fetch } from '@/services/Request';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { reversePayment } from '@/app/actions/adyen/reversePayment';
@@ -107,7 +107,7 @@ export async function POST(request: Request) {
 
     try {
       // Book services and pay folio
-      result = await bookReservationServices(
+      result = await bookReservationServicesLegacy(
         reservationId,
         formattedServices,
         transactionReference
