@@ -1,6 +1,16 @@
 'use client';
 import { useMutation } from '@tanstack/react-query';
-import type { FolioDebitor } from '@/types/apaleo';
+import type { FolioDebitor, InvoiceWarningType } from '@/types/apaleo';
+
+export class InvoiceCreateError extends Error {
+  constructor(
+    message: string,
+    public readonly warning?: InvoiceWarningType | 'Unknown',
+  ) {
+    super(message);
+    this.name = 'InvoiceCreateError';
+  }
+}
 
 export function useUpdateDebitor() {
   return useMutation({
@@ -35,8 +45,14 @@ export function useCreateInvoice() {
         body: JSON.stringify({ folioId, languageCode, debitor }),
       });
       if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error((data as { error?: string }).error ?? 'Failed to create invoice');
+        const data = (await response.json().catch(() => ({}))) as {
+          error?: string;
+          warning?: InvoiceWarningType | 'Unknown';
+        };
+        throw new InvoiceCreateError(
+          data.error ?? 'Failed to create invoice',
+          data.warning,
+        );
       }
       return response.json();
     },

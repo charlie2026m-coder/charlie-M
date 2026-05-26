@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import {
@@ -11,9 +11,24 @@ import {
 } from '@/app/_components/ui/dialog'
 import { Button } from '@/app/_components/ui/button'
 import { CountrySelect } from '@/app/_components/ui/CountrySelect'
-import { FiEdit2 } from 'react-icons/fi'
-import { useUpdateDebitor, useCreateInvoice, useDownloadInvoicePdf } from '@/app/hooks/useInvoice'
-import type { FolioDebitor } from '@/types/apaleo'
+import { useUpdateDebitor, useCreateInvoice, useDownloadInvoicePdf, InvoiceCreateError } from '@/app/hooks/useInvoice'
+import type { FolioDebitor, InvoiceWarningType } from '@/types/apaleo'
+
+const warningKeyMap: Record<InvoiceWarningType | 'Unknown', string> = {
+  DebitorDetailsMissing: 'invoiceErrDebitorMissing',
+  NotAllChargesPosted: 'invoiceErrChargesNotPosted',
+  InvoiceAlreadyExists: 'invoiceErrAlreadyExists',
+  InvoiceHasPendingPayments: 'invoiceErrPendingPayments',
+  IsEmptyFolio: 'emptyFolioError',
+  FolioState: 'invoiceErrFolioState',
+  CashPaymentLimitExceeded: 'invoiceErrCashLimit',
+  NoCompanyFound: 'invoiceGenerationFailed',
+  CompanyCannotCheckOutOnAr: 'invoiceGenerationFailed',
+  IsHouseFolio: 'invoiceGenerationFailed',
+  CannotCreateCompanyInvoiceForExternal: 'invoiceGenerationFailed',
+  CheckOutOnArIsNotAllowed: 'invoiceGenerationFailed',
+  Unknown: 'invoiceGenerationFailed',
+}
 
 interface BillingDataDialogProps {
   open: boolean
@@ -80,8 +95,6 @@ export function BillingDataDialog({
 }: BillingDataDialogProps) {
   const t = useTranslations('profile')
   const [form, setForm] = useState<BillingForm>(() => toForm(debitor))
-  const [savedForm, setSavedForm] = useState<BillingForm>(() => toForm(debitor))
-  const [isEditing, setIsEditing] = useState(false)
   const [language, setLanguage] = useState<'en' | 'de'>('en')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
@@ -89,56 +102,47 @@ export function BillingDataDialog({
   const createInvoice = useCreateInvoice()
   const downloadPdf = useDownloadInvoicePdf()
 
-  const isGenerating = createInvoice.isPending || downloadPdf.isPending
+  const isBusy = updateDebitor.isPending || createInvoice.isPending || downloadPdf.isPending
+  const requiredMissing =
+    !form.lastName.trim() ||
+    !form.city.trim() ||
+    !form.postalCode.trim() ||
+    !form.countryCode.trim()
 
-  useEffect(() => {
-    if (open) {
-      const initial = toForm(debitor)
-      setForm(initial)
-      setSavedForm(initial)
-      setIsEditing(false)
-      setLanguage('en')
-      setErrorMessage(null)
-    }
-  }, [open, debitor])
+  // No useEffect reset: the parent passes a fresh `key` prop on every open,
+  // remounting this component so the useState initializers above always pick
+  // up the current `debitor` and start with a clean error/language state.
 
   const set = (field: keyof BillingForm) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }))
 
-  const handleSave = async () => {
+  const handleGenerate = async () => {
+    if (requiredMissing) return
     setErrorMessage(null)
+    const debitorPayload = toDebitor(form)
     try {
-      await updateDebitor.mutateAsync({ folioId, debitor: toDebitor(form) })
-      setSavedForm(form)
-      setIsEditing(false)
+      await updateDebitor.mutateAsync({ folioId, debitor: debitorPayload })
     } catch {
       setErrorMessage(t('saveBillingDataFailed'))
+      return
     }
-  }
-
-  const handleCancel = () => {
-    setForm(savedForm)
-    setIsEditing(false)
-  }
-
-  const handleGenerate = async () => {
-    setErrorMessage(null)
     try {
       const { invoiceId } = await createInvoice.mutateAsync({
         folioId,
         languageCode: language,
-        debitor: toDebitor(savedForm),
+        debitor: debitorPayload,
       })
       await downloadPdf.mutateAsync({ invoiceId, filename: `invoice-${folioId}.pdf` })
       toast.success(t('invoiceGenerated'))
       onOpenChange(false)
     } catch (error) {
+      if (error instanceof InvoiceCreateError && error.warning) {
+        const key = warningKeyMap[error.warning] ?? 'invoiceGenerationFailed'
+        setErrorMessage(t(key as 'invoiceGenerationFailed'))
+        return
+      }
       const message = error instanceof Error ? error.message : ''
-      if (message.includes('folioBalanceError') || message.includes('outstanding balance')) {
-        setErrorMessage(t('folioBalanceError'))
-      } else if (message.includes('emptyFolioError') || message.includes('empty folio')) {
-        setErrorMessage(t('emptyFolioError'))
-      } else if (message.includes('invoiceNotReady')) {
+      if (message === 'invoiceNotReady') {
         setErrorMessage(t('invoiceNotReady'))
       } else {
         setErrorMessage(t('invoiceGenerationFailed'))
@@ -154,171 +158,129 @@ export function BillingDataDialog({
           <DialogDescription>{t('billingDataDescription')}</DialogDescription>
         </DialogHeader>
 
-        {!isEditing ? (
-          /* View mode */
-          <div className='flex flex-col gap-4'>
-            <div className='flex items-center justify-between'>
-              <span className='text-sm font-semibold text-gray-700'>{t('billingData')}</span>
+        <div className='flex flex-col gap-4'>
+          <div className='grid grid-cols-2 gap-3'>
+            <div className='relative'>
+              <label className={labelClass}>{t('firstName')}</label>
+              <input type='text' value={form.firstName} onChange={set('firstName')} className={inputClass} />
+            </div>
+            <div className='relative'>
+              <label className={labelClass}>{t('lastName')} *</label>
+              <input type='text' value={form.lastName} onChange={set('lastName')} className={inputClass} />
+            </div>
+          </div>
+
+          <div className='grid grid-cols-2 gap-3'>
+            <div className='relative'>
+              <label className={labelClass}>{t('email')}</label>
+              <input type='email' value={form.email} onChange={set('email')} className={inputClass} />
+            </div>
+            <div className='relative'>
+              <label className={labelClass}>{t('phone')}</label>
+              <input type='tel' value={form.phone} onChange={set('phone')} className={inputClass} />
+            </div>
+          </div>
+
+          <div className='relative'>
+            <label className={labelClass}>{t('companyName')}</label>
+            <input type='text' value={form.companyName} onChange={set('companyName')} className={inputClass} />
+          </div>
+
+          {form.companyName && (
+            <div className='relative'>
+              <label className={labelClass}>{t('taxId')}</label>
+              <input type='text' value={form.companyTaxId} onChange={set('companyTaxId')} className={inputClass} />
+            </div>
+          )}
+
+          <div className='relative'>
+            <label className={labelClass}>{t('streetAddress')}</label>
+            <input type='text' value={form.addressLine1} onChange={set('addressLine1')} className={inputClass} />
+          </div>
+          <div className='relative'>
+            <label className={labelClass}>{t('houseNumber')}</label>
+            <input type='text' value={form.addressLine2} onChange={set('addressLine2')} className={inputClass} />
+          </div>
+
+          <div className='grid grid-cols-2 gap-3'>
+            <div className='relative'>
+              <label className={labelClass}>{t('postalCode')} *</label>
+              <input type='text' value={form.postalCode} onChange={set('postalCode')} className={inputClass} />
+            </div>
+            <div className='relative'>
+              <label className={labelClass}>{t('city')} *</label>
+              <input type='text' value={form.city} onChange={set('city')} className={inputClass} />
+            </div>
+          </div>
+
+          <div className='relative'>
+            <label className='absolute left-3 -top-2.5 px-1 bg-white text-xs text-gray-600 z-10'>
+              {t('country')} *
+            </label>
+            <CountrySelect
+              value={form.countryCode}
+              onValueChange={(value) => setForm((prev) => ({ ...prev, countryCode: value }))}
+            />
+          </div>
+
+          <div className='flex flex-col gap-2'>
+            <span className='text-sm text-gray-600'>{t('invoiceLanguage')}</span>
+            <div className='flex gap-2'>
               <button
-                onClick={() => setIsEditing(true)}
-                className='p-2 hover:bg-gray-100 rounded-lg transition-colors'
-                aria-label={t('editAddress')}
+                type='button'
+                onClick={() => setLanguage('en')}
+                className={`flex-1 py-2 rounded-md text-sm border transition-colors ${
+                  language === 'en'
+                    ? 'bg-green text-white border-green'
+                    : 'border-gray-300 hover:border-green'
+                }`}
               >
-                <FiEdit2 className='size-4 text-gray-600' />
+                🇬🇧 English
+              </button>
+              <button
+                type='button'
+                onClick={() => setLanguage('de')}
+                className={`flex-1 py-2 rounded-md text-sm border transition-colors ${
+                  language === 'de'
+                    ? 'bg-green text-white border-green'
+                    : 'border-gray-300 hover:border-green'
+                }`}
+              >
+                🇩🇪 Deutsch
               </button>
             </div>
+          </div>
 
-            <div className='border border-gray-200 rounded-lg p-4 bg-gray-50/50 flex flex-col gap-1 text-sm'>
-              {(savedForm.firstName || savedForm.lastName) && (
-                <span className='font-medium'>{savedForm.firstName} {savedForm.lastName}</span>
-              )}
-              {savedForm.email && <span>{savedForm.email}</span>}
-              {savedForm.phone && <span>{savedForm.phone}</span>}
-              {savedForm.companyName && (
-                <span>{savedForm.companyName}{savedForm.companyTaxId ? ` (${savedForm.companyTaxId})` : ''}</span>
-              )}
-              {savedForm.addressLine1 && <span>{savedForm.addressLine1} {savedForm.addressLine2}</span>}
-              {(savedForm.postalCode || savedForm.city) && (
-                <span>{savedForm.postalCode} {savedForm.city}</span>
-              )}
-              {savedForm.countryCode && <span>{savedForm.countryCode}</span>}
+          {errorMessage && (
+            <div className='rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700'>
+              {errorMessage}
             </div>
+          )}
 
-            <div className='flex flex-col gap-2'>
-              <span className='text-sm text-gray-600'>{t('invoiceLanguage')}</span>
-              <div className='flex gap-2'>
-                <button
-                  type='button'
-                  onClick={() => setLanguage('en')}
-                  className={`flex-1 py-2 rounded-md text-sm border transition-colors ${
-                    language === 'en'
-                      ? 'bg-green text-white border-green'
-                      : 'border-gray-300 hover:border-green'
-                  }`}
-                >
-                  EN English
-                </button>
-                <button
-                  type='button'
-                  onClick={() => setLanguage('de')}
-                  className={`flex-1 py-2 rounded-md text-sm border transition-colors ${
-                    language === 'de'
-                      ? 'bg-green text-white border-green'
-                      : 'border-gray-300 hover:border-green'
-                  }`}
-                >
-                  DE Deutsch
-                </button>
-              </div>
+          {requiredMissing ? (
+            <div className='rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700'>
+              <p className='font-medium mb-1'>{t('invoiceRequiredFieldsTitle')}</p>
+              <ul className='list-disc list-inside space-y-0.5'>
+                {!form.lastName.trim() && <li>{t('lastName')}</li>}
+                {!form.postalCode.trim() && <li>{t('postalCode')}</li>}
+                {!form.city.trim() && <li>{t('city')}</li>}
+                {!form.countryCode.trim() && <li>{t('country')}</li>}
+              </ul>
             </div>
-
-            {errorMessage && (
-              <div className='rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700'>
-                {errorMessage}
-              </div>
-            )}
-
+          ) : (
             <div className='rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800'>
               {t('invoiceFinalActionWarning')}
             </div>
+          )}
 
-            <Button
-              onClick={handleGenerate}
-              disabled={isGenerating}
-              className='w-full mt-2'
-            >
-              {isGenerating ? t('generatingInvoice') : t('generateInvoice')}
-            </Button>
-          </div>
-        ) : (
-          /* Edit mode */
-          <div className='flex flex-col gap-4'>
-            <div className='grid grid-cols-2 gap-3'>
-              <div className='relative'>
-                <label className={labelClass}>{t('firstName')}</label>
-                <input type='text' value={form.firstName} onChange={set('firstName')} className={inputClass} />
-              </div>
-              <div className='relative'>
-                <label className={labelClass}>{t('lastName')} *</label>
-                <input type='text' value={form.lastName} onChange={set('lastName')} className={inputClass} />
-              </div>
-            </div>
-
-            <div className='grid grid-cols-2 gap-3'>
-              <div className='relative'>
-                <label className={labelClass}>{t('email')}</label>
-                <input type='email' value={form.email} onChange={set('email')} className={inputClass} />
-              </div>
-              <div className='relative'>
-                <label className={labelClass}>{t('phone')}</label>
-                <input type='tel' value={form.phone} onChange={set('phone')} className={inputClass} />
-              </div>
-            </div>
-
-            <div className='relative'>
-              <label className={labelClass}>{t('companyName')}</label>
-              <input type='text' value={form.companyName} onChange={set('companyName')} className={inputClass} />
-            </div>
-
-            {form.companyName && (
-              <div className='relative'>
-                <label className={labelClass}>{t('taxId')}</label>
-                <input type='text' value={form.companyTaxId} onChange={set('companyTaxId')} className={inputClass} />
-              </div>
-            )}
-
-            <div className='relative'>
-              <label className={labelClass}>{t('streetAddress')}</label>
-              <input type='text' value={form.addressLine1} onChange={set('addressLine1')} className={inputClass} />
-            </div>
-            <div className='relative'>
-              <label className={labelClass}>{t('houseNumber')}</label>
-              <input type='text' value={form.addressLine2} onChange={set('addressLine2')} className={inputClass} />
-            </div>
-            <div className='grid grid-cols-2 gap-3'>
-              <div className='relative'>
-                <label className={labelClass}>{t('postalCode')} *</label>
-                <input type='text' value={form.postalCode} onChange={set('postalCode')} className={inputClass} />
-              </div>
-              <div className='relative'>
-                <label className={labelClass}>{t('city')} *</label>
-                <input type='text' value={form.city} onChange={set('city')} className={inputClass} />
-              </div>
-            </div>
-            <div className='relative'>
-              <label className='absolute left-3 -top-2.5 px-1 bg-white text-xs text-gray-600 z-10'>
-                {t('country')} *
-              </label>
-              <CountrySelect
-                value={form.countryCode}
-                onValueChange={(value) => setForm((prev) => ({ ...prev, countryCode: value }))}
-              />
-            </div>
-
-            {errorMessage && (
-              <div className='rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700'>
-                {errorMessage}
-              </div>
-            )}
-
-            <div className='flex gap-2 mt-2'>
-              <button
-                onClick={handleCancel}
-                disabled={updateDebitor.isPending}
-                className='flex-1 px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
-              >
-                {t('cancel')}
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={updateDebitor.isPending}
-                className='flex-1 px-4 py-2 text-sm bg-green text-white rounded-md hover:bg-green/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
-              >
-                {updateDebitor.isPending ? t('saving') : t('save')}
-              </button>
-            </div>
-          </div>
-        )}
+          <Button
+            onClick={handleGenerate}
+            disabled={isBusy || requiredMissing}
+            className='w-full mt-2'
+          >
+            {isBusy ? t('generatingInvoice') : t('generateInvoice')}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   )

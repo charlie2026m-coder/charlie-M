@@ -13,6 +13,7 @@ import { Link } from '@/navigation';
 import { useTranslations } from 'next-intl';
 import { CheckinButton } from './CheckInButton';
 import { InvoiceButton } from './InvoiceButton';
+import { canShowInvoice } from '@/lib/reservationStatus';
 import { CheckedInLabel } from './CheckedInLabel';
 
 const ReservationCard = ({ reservation }: { reservation: ReservationType }  ) => {
@@ -25,6 +26,7 @@ const ReservationCard = ({ reservation }: { reservation: ReservationType }  ) =>
   
   const isPincode = reservation.accesses?.pinCode && isPinCodeAvailable(reservation.arrival);
   const isClosed = isCheckedOut || isCancelled;
+  const showInvoice = canShowInvoice(reservation);
   const showCheckInButton = !reservation.isPreCheckedIn && !isCancelled;
   const isCheckedIn = reservation.isPreCheckedIn && !isCancelled;
   return (
@@ -61,7 +63,7 @@ const ReservationCard = ({ reservation }: { reservation: ReservationType }  ) =>
               isCheckedIn && <CheckedInLabel isBig={false} />
             )}
             {isClosed && <BookAgainButton reservation={reservation} />}
-            {isClosed && <InvoiceButton reservationId={id} className='h-[30px] ' />}
+            {showInvoice && <InvoiceButton reservationId={id} className='h-[30px] ' />}
             <DetailsButton id={id} />
           </div>
         </div>
