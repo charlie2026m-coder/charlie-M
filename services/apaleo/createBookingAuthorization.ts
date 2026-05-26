@@ -1,47 +1,55 @@
 import { getOrRefreshToken } from '@/services/Request'
-import { paymentAccountLog } from '@/lib/logger'
+import { authorizationLog } from '@/lib/logger'
 
 const APALEO_API_URL = 'https://api.apaleo.com'
 
-interface CreatePaymentAccountResponse {
+interface CreateAuthorizationResponse {
   id: string
 }
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 /**
- * Register an Adyen authorization as an Apaleo Payment Account on a
- * specific reservation. The same Adyen pspReference can back N payment
- * accounts across the reservations of one booking — per Apaleo support.
+ * Register an Adyen pre-authorization with Apaleo as a booking-level
+ * authorization. The returned id covers folios in every reservation of the
+ * booking, enabling multi-folio captures from a single prepay charge.
  *
  * Retries 3× on 5xx and network errors. Throws immediately on 4xx.
  */
-export async function createPaymentAccount(params: {
-  reservationId: string
+export async function createBookingAuthorization(params: {
+  bookingId: string
+  propertyId: string
   pspReference: string
+  amount: { amount: number; currency: string }
   maxAttempts?: number
 }): Promise<string> {
-  const { reservationId, pspReference, maxAttempts = 3 } = params
+  const { bookingId, propertyId, pspReference, amount, maxAttempts = 3 } = params
+
   let lastError: Error | null = null
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     if (attempt > 1) {
       const delayMs = Math.pow(2, attempt - 1) * 1000
-      paymentAccountLog.warn('retry', { reservationId, attempt: `${attempt}/${maxAttempts}`, delayMs })
+      authorizationLog.warn('retry', {
+        bookingId,
+        attempt: `${attempt}/${maxAttempts}`,
+        delayMs,
+      })
       await delay(delayMs)
     }
 
     try {
       const token = await getOrRefreshToken()
 
-      paymentAccountLog.info('POST /payment-accounts/by-authorization', {
-        reservationId,
+      authorizationLog.info('POST /authorizations/by-authorization', {
+        bookingId,
         pspReference,
+        amount,
         attempt: `${attempt}/${maxAttempts}`,
       })
 
       const response = await fetch(
-        `${APALEO_API_URL}/booking/v1/payment-accounts/by-authorization`,
+        `${APALEO_API_URL}/booking/v1/authorizations/by-authorization`,
         {
           method: 'POST',
           headers: {
@@ -50,7 +58,8 @@ export async function createPaymentAccount(params: {
             'Accept': 'application/json',
           },
           body: JSON.stringify({
-            target: { type: 'Reservation', id: reservationId },
+            target: { type: 'Booking', id: bookingId, propertyId },
+            amount,
             transactionReference: pspReference,
           }),
         },
@@ -61,17 +70,17 @@ export async function createPaymentAccount(params: {
         const status = response.status
 
         if (status >= 400 && status < 500) {
-          paymentAccountLog.error('client error — not retrying', {
-            reservationId,
+          authorizationLog.error('client error — not retrying', {
+            bookingId,
             status,
             error: errorBody,
           })
-          throw new Error(`Apaleo payment account creation failed (${status}): ${JSON.stringify(errorBody)}`)
+          throw new Error(`Apaleo booking authorization creation failed (${status}): ${JSON.stringify(errorBody)}`)
         }
 
         lastError = new Error(`Apaleo ${status}: ${JSON.stringify(errorBody)}`)
-        paymentAccountLog.warn('server error — will retry', {
-          reservationId,
+        authorizationLog.warn('server error — will retry', {
+          bookingId,
           status,
           error: errorBody,
           attempt: `${attempt}/${maxAttempts}`,
@@ -79,28 +88,28 @@ export async function createPaymentAccount(params: {
         continue
       }
 
-      const data = (await response.json()) as CreatePaymentAccountResponse
-      paymentAccountLog.success('payment account created', {
-        reservationId,
-        paymentAccountId: data.id,
+      const data = (await response.json()) as CreateAuthorizationResponse
+      authorizationLog.success('booking-level authorization created', {
+        bookingId,
+        authorizationId: data.id,
       })
       return data.id
     } catch (err) {
-      if (err instanceof Error && err.message.startsWith('Apaleo payment account creation failed')) {
+      if (err instanceof Error && err.message.startsWith('Apaleo booking authorization creation failed')) {
         throw err
       }
       lastError = err instanceof Error ? err : new Error(String(err))
-      paymentAccountLog.warn('network error — will retry', {
-        reservationId,
+      authorizationLog.warn('network error — will retry', {
+        bookingId,
         error: lastError.message,
         attempt: `${attempt}/${maxAttempts}`,
       })
     }
   }
 
-  paymentAccountLog.error('exhausted retries', {
-    reservationId,
+  authorizationLog.error('exhausted retries', {
+    bookingId,
     lastError: lastError?.message,
   })
-  throw lastError ?? new Error('createPaymentAccount: unknown failure')
+  throw lastError ?? new Error('createBookingAuthorization: unknown failure')
 }

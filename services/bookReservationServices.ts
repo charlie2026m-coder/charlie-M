@@ -15,6 +15,9 @@ interface BookServicePayload {
   dates?: ServiceDate[]
 }
 
+// Subset of the Apaleo folio payload we need for capture decisions. The
+// canonical FolioResponse in types/apaleo.ts is shaped for invoice rendering
+// (status, debitor, etc.) and doesn't carry allowedPayment.
 interface FolioCaptureView {
   id: string
   balance?: {
@@ -26,7 +29,7 @@ interface FolioCaptureView {
 
 export async function bookReservationService(
   reservationId: string,
-  service: BookServicePayload,
+  service: BookServicePayload
 ) {
   try {
     await Fetch(
@@ -34,7 +37,7 @@ export async function bookReservationService(
       {
         method: 'PUT',
         body: service,
-      },
+      }
     )
 
     folioLog.success('service booked', { reservationId, serviceId: service.serviceId })
@@ -50,23 +53,21 @@ export async function bookReservationService(
 }
 
 /**
- * Capture a folio against an Apaleo Payment Account.
- * Endpoint per Apaleo support: POST /finance/v1/folios/{id}/payments/by-payment-account
- * with body { paymentAccountId, amount: { amount, currency } }.
- *
- * Skip when Apaleo Pay has already auto-covered the folio (allowedPayment=0
- * or balance>=0) — capturing on top would return 422.
+ * Capture a booking-level Apaleo authorization against a reservation's folio.
+ * The authorization must already exist (POST /booking/v1/authorizations/by-authorization).
+ * When Apaleo Pay auto-distributes funds, the folio read returns allowedPayment=0
+ * and we skip the explicit capture — the funds settle asynchronously.
  */
-export async function payFolioByPaymentAccount(params: {
+async function payReservationFolio(params: {
   reservationId: string
-  paymentAccountId: string
+  apaleoAuthorizationId: string
   amount: number
   currency?: string
   maxAttempts?: number
 }): Promise<{ success: true; skipped?: boolean; amount?: number } | { success: false; error: string }> {
   const {
     reservationId,
-    paymentAccountId,
+    apaleoAuthorizationId,
     amount,
     currency = 'EUR',
     maxAttempts = 3,
@@ -87,9 +88,15 @@ export async function payFolioByPaymentAccount(params: {
         allowedPayment,
         intendedAmount: amount,
         currency: folio.balance?.currency || currency,
-        paymentAccountId,
+        apaleoAuthorizationId,
       })
 
+      // Skip if Apaleo Pay already covered the folio: when the booking-level
+      // authorization is registered, Apaleo Pay auto-distributes funds across
+      // reservation folios as pending payments, leaving allowedPayment=0.
+      // Trying to capture on top of that returns
+      // "Cannot pay more than the open balance with pending payments".
+      // Also covers idempotent retries where the folio is already in credit.
       if (allowedPayment <= 0 || balance >= 0) {
         folioLog.info('folio already covered — skipping capture', {
           folioId,
@@ -99,26 +106,30 @@ export async function payFolioByPaymentAccount(params: {
         return { success: true, skipped: true }
       }
 
-      folioLog.info('POST /folios/{id}/payments/by-payment-account', {
+      folioLog.info('POST /folios/{id}/payments/by-authorization', {
         folioId,
         amount,
         currency,
-        paymentAccountId,
+        apaleoAuthorizationId,
         attempt: `${attempt}/${maxAttempts}`,
       })
 
       await Fetch(
-        `/finance/v1/folios/${folioId}/payments/by-payment-account`,
+        `/finance/v1/folios/${folioId}/payments/by-authorization`,
         {
           method: 'POST',
           body: {
-            paymentAccountId,
-            amount: { amount, currency },
+            transactionReference: apaleoAuthorizationId,
+            referenceType: 'AuthorizationId',
+            amount: {
+              amount,
+              currency,
+            },
           },
-        },
+        }
       )
 
-      folioLog.success('folio paid', { folioId, amount, currency, paymentAccountId })
+      folioLog.success('folio paid', { folioId, amount, currency, apaleoAuthorizationId })
       return { success: true, amount }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
@@ -143,10 +154,8 @@ export async function payFolioByPaymentAccount(params: {
 }
 
 /**
- * Single-capture folio payment via raw Adyen pspReference. Used by the
- * late-services flow where each add-services request runs its own dedicated
- * Adyen authorization. The initial multi-room booking goes through Apaleo
- * Payment Account instead (see /api/bookings/create).
+ * Legacy single-capture path used by the late-services flow:
+ * one Adyen pspReference captures `allowedPayment` on one folio.
  */
 async function payReservationFolioLegacy(
   reservationId: string,
@@ -187,7 +196,7 @@ async function payReservationFolioLegacy(
               currency: folio.balance?.currency || 'EUR',
             },
           },
-        },
+        }
       )
 
       folioLog.success('legacy folio paid', { folioId, amount: allowedPayment, pspReference })
@@ -214,14 +223,62 @@ async function payReservationFolioLegacy(
 }
 
 /**
- * Late-services flow: books services on a reservation, then captures the
- * folio via a dedicated Adyen pspReference. Initial multi-room bookings use
- * Apaleo Payment Account directly in /api/bookings/create.
+ * Book services and, when an Apaleo authorization + amount are provided,
+ * capture the folio against that authorization. Without them, only the
+ * services are booked (e.g. adding extras to an already-paid reservation).
+ */
+export async function bookReservationServices(
+  reservationId: string,
+  services: BookServicePayload[],
+  apaleoAuthorizationId?: string,
+  amount?: number,
+  currency: string = 'EUR'
+) {
+  const results = []
+
+  folioLog.info('booking services', { reservationId, count: services.length })
+  for (const service of services) {
+    try {
+      await bookReservationService(reservationId, service)
+      results.push({ serviceId: service.serviceId, success: true })
+    } catch (error) {
+      results.push({
+        serviceId: service.serviceId,
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      })
+    }
+  }
+
+  if (apaleoAuthorizationId && typeof amount === 'number') {
+    const paymentResult = await payReservationFolio({
+      reservationId,
+      apaleoAuthorizationId,
+      amount,
+      currency,
+    })
+    return { services: results, payment: paymentResult }
+  }
+
+  if (apaleoAuthorizationId || typeof amount === 'number') {
+    folioLog.warn('skip capture — only one of apaleoAuthorizationId/amount provided', {
+      reservationId,
+      hasAuthorizationId: !!apaleoAuthorizationId,
+      hasAmount: typeof amount === 'number',
+    })
+  }
+
+  return { services: results, payment: null }
+}
+
+/**
+ * Late-services flow: book services and capture the folio via pspReference
+ * (a dedicated Adyen authorization for those extras).
  */
 export async function bookReservationServicesLegacy(
   reservationId: string,
   services: BookServicePayload[],
-  pspReference?: string,
+  pspReference?: string
 ) {
   const results = []
 
@@ -234,7 +291,7 @@ export async function bookReservationServicesLegacy(
       results.push({
         serviceId: service.serviceId,
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : 'Unknown error'
       })
     }
   }

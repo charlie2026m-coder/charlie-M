@@ -1,14 +1,14 @@
 import { checkout } from "@/lib/adyen"
-import { cancelPaymentAccount } from "@/services/apaleo/cancelPaymentAccount"
+import { cancelAuthorization } from "@/services/apaleo/cancelAuthorization"
 import { adyenLog } from "@/lib/logger"
 
 interface ReversePaymentOptions {
   /**
-   * Apaleo Payment Account IDs (from payment-accounts/by-authorization).
+   * Apaleo booking-level authorization IDs (from authorizations/by-authorization).
    * Cancelled best-effort BEFORE the Adyen refund. Failures are logged and
-   * do not block the refund.
+   * do not block the refund — leftover Apaleo authorizations expire in 28 days.
    */
-  apaleoPaymentAccountIds?: string[]
+  apaleoAuthorizationIds?: string[]
   internalReference?: string
 }
 
@@ -27,40 +27,40 @@ export async function reversePayment(
   success: boolean
   status?: string
   error?: string
-  apaleoCancelResults?: { paymentAccountId: string; success: boolean; error?: string }[]
+  apaleoCancelResults?: { authorizationId: string; success: boolean; error?: string }[]
 }> {
   const options: ReversePaymentOptions =
     typeof optionsOrReference === 'string'
       ? { internalReference: optionsOrReference }
       : optionsOrReference
-  const { apaleoPaymentAccountIds = [], internalReference } = options
+  const { apaleoAuthorizationIds = [], internalReference } = options
 
   adyenLog.info('reversal initiating', {
     pspReference,
     internalReference: internalReference ?? null,
-    apaleoPaCount: apaleoPaymentAccountIds.length,
+    apaleoAuthCount: apaleoAuthorizationIds.length,
   })
 
-  // Cancel Apaleo Payment Accounts first so they don't linger active after
-  // the Adyen money goes back.
-  let apaleoCancelResults: { paymentAccountId: string; success: boolean; error?: string }[] | undefined
-  if (apaleoPaymentAccountIds.length > 0) {
+  // Cancel Apaleo authorizations first so the holds don't linger in Apaleo
+  // dashboards after the Adyen money goes back.
+  let apaleoCancelResults: { authorizationId: string; success: boolean; error?: string }[] | undefined
+  if (apaleoAuthorizationIds.length > 0) {
     const settled = await Promise.allSettled(
-      apaleoPaymentAccountIds.map(id => cancelPaymentAccount(id))
+      apaleoAuthorizationIds.map(id => cancelAuthorization(id))
     )
     apaleoCancelResults = settled.map((r, i) => {
-      const paymentAccountId = apaleoPaymentAccountIds[i]
+      const authorizationId = apaleoAuthorizationIds[i]
       if (r.status === 'fulfilled') {
-        return { paymentAccountId, success: r.value.success, error: r.value.error }
+        return { authorizationId, success: r.value.success, error: r.value.error }
       }
-      return { paymentAccountId, success: false, error: String(r.reason) }
+      return { authorizationId, success: false, error: String(r.reason) }
     })
 
     const failed = apaleoCancelResults.filter(r => !r.success)
     if (failed.length > 0) {
-      adyenLog.warn('reversal: some Apaleo PA cancels failed — continuing with Adyen refund', {
+      adyenLog.warn('reversal: some Apaleo cancels failed — continuing with Adyen refund', {
         failed: failed.length,
-        total: apaleoPaymentAccountIds.length,
+        total: apaleoAuthorizationIds.length,
       })
     }
   }

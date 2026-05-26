@@ -63,16 +63,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate required reference. After validation skipped/valid branches,
-    // we still need a reference for the Adyen request below.
-    if (!reference) {
-      adyenLog.error('payment reference missing');
-      return NextResponse.json(
-        { error: 'Payment reference is required' },
-        { status: 400 }
-      );
-    }
-
     const shopperIP = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
       || request.headers.get('x-real-ip')
       || undefined;
@@ -83,7 +73,7 @@ export async function POST(request: NextRequest) {
         currency: currency || "EUR",
         value: amount,
       },
-      reference,
+      reference: reference || crypto.randomUUID(),
       paymentMethod: paymentMethod,
       returnUrl: returnUrl,
       shopperInteraction: "Ecommerce" as any,
@@ -98,8 +88,6 @@ export async function POST(request: NextRequest) {
       }),
       ...(booker?.phone && { telephoneNumber: booker.phone }),
       shopperReference: shopperReference || reference,
-      storePaymentMethod: true,
-      recurringProcessingModel: "UnscheduledCardOnFile" as any,
 
       ...(shopperIP && { shopperIP }),
       ...(booker?.address && {
@@ -123,11 +111,14 @@ export async function POST(request: NextRequest) {
       ...(checkoutAttemptId && { checkoutAttemptId }),
       ...(deliveryDate && { deliveryDate }),
 
+      // BlockNHold + PreAuth unlock Adyen's multi-capture lifecycle so Apaleo
+      // Pay can settle each reservation folio independently.
       additionalData: {
-        "metadata.flowType": "CaptureOnly",
+        "metadata.flowType": "BlockNHold",
         "metadata.accountId": process.env.APALEO_ACCOUNT_ID!,
         "metadata.propertyId": process.env.APALEO_PROPERTY_ID!,
         "subMerchantID": process.env.ADYEN_SUB_MERCHANT_ID!,
+        "authorisationType": "PreAuth",
       }
     };
 
