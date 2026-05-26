@@ -1,14 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 import { Fetch, getOrRefreshToken } from '@/services/Request';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { ensureReservationLink } from '@/services/ensureReservationLink';
-import type { FolioResponse, ApaleoInvoiceListResponse, FolioDebitor } from '@/types/apaleo';
+import { verifyReservationInProperty } from '@/services/verifyReservationInProperty';
+import type {
+  ApaleoInvoiceListResponse,
+  FolioDebitor,
+  PreviewInvoiceResponse,
+} from '@/types/apaleo';
 
 const APALEO_API_URL = 'https://api.apaleo.com';
 
 const folioToReservationId = (folioId: string) => folioId.replace(/-\d+$/, '');
 
+function createAdminClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } },
+  );
+}
+
 export async function POST(request: NextRequest) {
+  // Session is required (registered or anonymous via guest booking-id login),
+  // but reservation ownership is enforced by property match, not by email.
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -23,22 +38,22 @@ export async function POST(request: NextRequest) {
     if (!folioId || !languageCode) {
       return NextResponse.json(
         { error: 'folioId and languageCode are required' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const reservationId = folioToReservationId(folioId);
 
-    // Verify ownership via Apaleo email match + auto-link to local reservations
-    // table so the RLS-gated INSERT below is allowed.
-    const link = await ensureReservationLink(supabase, user, reservationId);
-    if (!link.ok) {
-      return NextResponse.json({ error: link.error }, { status: link.status });
+    const verified = await verifyReservationInProperty(reservationId);
+    if (!verified.ok) {
+      return NextResponse.json({ error: verified.error }, { status: verified.status });
     }
+
+    const admin = createAdminClient();
 
     // Idempotency: if already locked, return the saved invoice id without
     // touching Apaleo. Re-clicking Generate never duplicates the invoice.
-    const { data: existingLock } = await supabase
+    const { data: existingLock } = await admin
       .from('invoice_states')
       .select('invoice_id, language_code')
       .eq('reservation_id', reservationId)
@@ -55,50 +70,50 @@ export async function POST(request: NextRequest) {
     // Recovery: if Apaleo already has an invoice for this folio (prior attempt
     // created it but our lock INSERT didn't land), reuse it instead of POSTing
     // a duplicate.
+    const folioIdQuery = encodeURIComponent(folioId);
     const existingInvoices = await Fetch<ApaleoInvoiceListResponse>(
-      `/finance/v1/invoices?folioIds=${folioId}`
+      `/finance/v1/invoices?folioIds=${folioIdQuery}`,
     );
-    const recoveredInvoiceId = existingInvoices.invoices?.[0]?.id;
+    const recoveredInvoice = existingInvoices.invoices?.[0];
 
     let invoiceId: string;
+    // The language stored in invoice_states must match the language baked into
+    // the actual Apaleo PDF — on recovery we read it from Apaleo, otherwise we
+    // use the one we just sent on POST.
+    let storedLanguageCode: string;
 
-    if (recoveredInvoiceId) {
-      invoiceId = recoveredInvoiceId;
+    if (recoveredInvoice) {
+      invoiceId = recoveredInvoice.id;
+      storedLanguageCode = recoveredInvoice.languageCode ?? languageCode;
     } else {
-      const folio = await Fetch<FolioResponse>(`/finance/v1/folios/${folioId}`);
-
-      if (folio.balance && folio.balance.amount !== 0) {
-        return NextResponse.json({ error: 'folioBalanceError' }, { status: 422 });
-      }
-
-      if (folio.status === 'Open') {
-        const closeToken = await getOrRefreshToken();
-        const closeResponse = await fetch(
-          `${APALEO_API_URL}/finance/v1/folio-actions/${folioId}/close`,
+      // Pre-flight: surface Apaleo's blocking reason as a typed warning the
+      // client can localize, instead of string-matching error messages.
+      const preview = await Fetch<PreviewInvoiceResponse>(
+        `/finance/v1/invoices/preview?folioId=${folioIdQuery}`,
+      );
+      if (preview.createInvoiceAction === 'CannotCreateInvoice') {
+        return NextResponse.json(
           {
-            method: 'PUT',
-            headers: {
-              Authorization: `Bearer ${closeToken}`,
-              'Content-Type': 'application/json',
-            },
-          }
+            error: 'invoiceNotAllowed',
+            warning: preview.createInvoiceWarning?.type ?? 'Unknown',
+          },
+          { status: 422 },
         );
-
-        if (!closeResponse.ok) {
-          const details = await closeResponse.text();
-          return NextResponse.json(
-            { error: 'Failed to close folio', details },
-            { status: closeResponse.status }
-          );
-        }
       }
 
+      // POST /invoices atomically closes the folio + creates the invoice
+      // (CreatesInvoiceAndClosesFolio per Apaleo spec).
+      //
+      // Idempotency-Key includes languageCode because Apaleo rejects key
+      // reuse with different request parameters; without it, a retry in DE
+      // after a failed EN attempt would be blocked for 24h.
       const createToken = await getOrRefreshToken();
       const createResponse = await fetch(`${APALEO_API_URL}/finance/v1/invoices`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${createToken}`,
           'Content-Type': 'application/json',
+          'Idempotency-Key': `${reservationId}-${languageCode}`,
         },
         body: JSON.stringify({ folioId, languageCode }),
       });
@@ -106,14 +121,9 @@ export async function POST(request: NextRequest) {
       if (!createResponse.ok) {
         const errorData = await createResponse.json().catch(() => ({}));
         const apaleoMessage = (errorData as { messages?: string[] })?.messages?.[0] ?? '';
-
-        if (apaleoMessage.includes('empty folio')) {
-          return NextResponse.json({ error: 'emptyFolioError' }, { status: 422 });
-        }
-
         return NextResponse.json(
           { error: apaleoMessage || 'Failed to create invoice' },
-          { status: createResponse.status }
+          { status: createResponse.status },
         );
       }
 
@@ -122,15 +132,16 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Invoice created but ID not returned' }, { status: 500 });
       }
       invoiceId = invoice.id;
+      storedLanguageCode = languageCode;
     }
 
-    const { error: insertError } = await supabase
+    const { error: insertError } = await admin
       .from('invoice_states')
       .insert({
         reservation_id: reservationId,
         user_id: user.id,
         invoice_id: invoiceId,
-        language_code: languageCode,
+        language_code: storedLanguageCode,
         edited_debitor: debitor ?? null,
       });
 
@@ -138,7 +149,7 @@ export async function POST(request: NextRequest) {
       // PK conflict means a concurrent request locked first. Re-fetch the
       // stored row so the client gets the winner's invoice_id, not ours.
       if (insertError.code === '23505') {
-        const { data: stored } = await supabase
+        const { data: stored } = await admin
           .from('invoice_states')
           .select('invoice_id, language_code')
           .eq('reservation_id', reservationId)
@@ -155,15 +166,15 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json(
         { error: 'Failed to persist invoice lock', details: insertError.message },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
-    return NextResponse.json({ invoiceId, languageCode });
+    return NextResponse.json({ invoiceId, languageCode: storedLanguageCode });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Internal server error' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
