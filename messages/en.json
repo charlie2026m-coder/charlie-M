@@ -779,7 +779,7 @@
     "locatedOnFloor": "Located on the {floor} floor",
     "editAddress": "Edit address",
     "streetAddress": "Street Address",
-    "houseNumber": "House / Building Number",
+    "houseNumber": "Address 2",
     "postalCode": "Postal Code",
     "city": "City",
     "country": "Country",

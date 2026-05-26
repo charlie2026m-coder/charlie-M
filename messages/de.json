@@ -779,7 +779,7 @@
     "locatedOnFloor": "Befindet sich im {floor}. Stock",
     "editAddress": "Adresse bearbeiten",
     "streetAddress": "Straße",
-    "houseNumber": "Hausnummer",
+    "houseNumber": "Adresse 2",
     "postalCode": "Postleitzahl",
     "city": "Ort",
     "country": "Land",
