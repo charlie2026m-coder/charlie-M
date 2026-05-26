@@ -13,6 +13,7 @@ import { bookingStatuses } from '@/types/types';
 import { cn, isPinCodeAvailable } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
 import { InvoiceButton } from '../../components/InvoiceButton';
+import { canShowInvoice } from '@/lib/reservationStatus';
 import { PinCodeComponent } from './PinCodeComponent';
 import { HOTEL_INFO, DEFAULT_CHECKIN_TIME, DEFAULT_CHECKOUT_TIME } from '@/lib/Constants';
 import { Floor } from './Floor';
@@ -49,6 +50,7 @@ const MainInfo = ({ reservation }: { reservation: any } ) => {
   
   const isPincode = reservation.accesses?.pinCode && isPinCodeAvailable(reservation.arrival);
   const isClosed = isCheckedOut || isCancelled;
+  const showInvoice = canShowInvoice(reservation);
   const isActive = reservation.status === bookingStatuses.Confirmed || reservation.status === bookingStatuses.InHouse;
   const showCheckInButton = !reservation.isPreCheckedIn && !isCancelled;
   const isCheckedIn = reservation.isPreCheckedIn && !isCancelled;
@@ -87,7 +89,7 @@ const MainInfo = ({ reservation }: { reservation: any } ) => {
         <RoomDetailsButton reservation={reservation} />
 
         {isClosed && <BookAgainButton reservation={reservation} />}
-        {isClosed && <InvoiceButton reservationId={reservation.id} className='!h-[35px] justify-start' />}
+        {showInvoice && <InvoiceButton reservationId={reservation.id} className='!h-[35px] justify-start' />}
 
         {isActive && <ExtendButton />}
       </div>  

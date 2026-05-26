@@ -439,7 +439,7 @@ export interface FolioDebitor {
 
 export interface FolioResponse {
   id: string;
-  status: 'Open' | 'Closed';
+  status: 'Open' | 'Closed' | 'ClosedWithInvoice';
   debitor: FolioDebitor;
   balance: Money;
 }
@@ -452,6 +452,34 @@ export interface ApaleoInvoiceItem {
 export interface ApaleoInvoiceListResponse {
   invoices: ApaleoInvoiceItem[];
   count: number;
+}
+
+export type CreateInvoiceAction =
+  | 'CannotCreateInvoice'
+  | 'CreatesInvoice'
+  | 'CreatesInvoiceAndClosesFolio'
+  | 'CreatesArInvoiceAndClosesFolio';
+
+export type InvoiceWarningType =
+  | 'InvoiceAlreadyExists'
+  | 'NotAllChargesPosted'
+  | 'DebitorDetailsMissing'
+  | 'InvoiceHasPendingPayments'
+  | 'NoCompanyFound'
+  | 'CompanyCannotCheckOutOnAr'
+  | 'IsHouseFolio'
+  | 'CannotCreateCompanyInvoiceForExternal'
+  | 'CheckOutOnArIsNotAllowed'
+  | 'IsEmptyFolio'
+  | 'CashPaymentLimitExceeded'
+  | 'FolioState';
+
+export interface PreviewInvoiceResponse {
+  createInvoiceAction: CreateInvoiceAction;
+  createInvoiceWarning?: {
+    type: InvoiceWarningType;
+    message?: string;
+  };
 }
 
 //_____________________________OFFERS

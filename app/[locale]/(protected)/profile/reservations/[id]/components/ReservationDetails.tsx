@@ -17,6 +17,7 @@ import { useState } from "react";
 import CancelBookingButton from "./CancelBookingButton";
 import { ExtraRow } from "./ExtraRow";
 import { InvoiceButton } from "../../components/InvoiceButton";
+import { canShowInvoice } from "@/lib/reservationStatus";
 import { useTranslations } from "next-intl";
 import { Reservation } from "@/types/apaleo";
 
@@ -28,7 +29,7 @@ export const ReservationButton = ({ reservation }: { reservation: Reservation })
   const { firstName, lastName } = reservation.primaryGuest;
   let guests = `${firstName} ${lastName}`;
   const isConfirmed = reservation.status === bookingStatuses.Confirmed;
-  const isClosed = reservation.status === bookingStatuses.CheckedOut || reservation.status === bookingStatuses.Canceled || reservation.status === bookingStatuses.NoShow;
+  const showInvoice = canShowInvoice(reservation);
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(id.toString());
@@ -138,7 +139,7 @@ export const ReservationButton = ({ reservation }: { reservation: Reservation })
               <span className='font-semibold ml-auto'>€{totalPrice}</span>
             </div>
           </div>
-            {isClosed && <InvoiceButton reservationId={reservation.id} className='h-[45px]' />}
+            {showInvoice && <InvoiceButton reservationId={reservation.id} className='h-[45px]' />}
             {isConfirmed && (
               <CancelBookingButton 
                 reservationId={id} 
