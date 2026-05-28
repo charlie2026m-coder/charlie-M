@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkout } from "@/lib/adyen";
 import { adyenLog } from "@/lib/logger";
-import { validatePaymentAmount } from "@/lib/payments-validation";
+import { validatePaymentAmount, validateServicesPayment } from "@/lib/payments-validation";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { paymentMethod, amount, currency, reference, returnUrl, browserInfo, checkoutAttemptId, origin, booker, shopperReference, arrivals } = body;
+    const { paymentMethod, amount, currency, reference, returnUrl, browserInfo, checkoutAttemptId, origin, booker, shopperReference, arrivals, flow } = body;
 
     // Earliest arrival across all reservations — required by Adyen for
     // chargeback-exposure scoring on multi-reservation prepaid bookings.
@@ -15,62 +15,146 @@ export async function POST(request: NextRequest) {
       : undefined
     const deliveryDate: Date | undefined = deliveryDateStr ? new Date(deliveryDateStr) : undefined
 
-    // Server-side strict amount validation closes the gap where stale Zustand
-    // state could send a different amount than what Apaleo will bill.
-    let validation: Awaited<ReturnType<typeof validatePaymentAmount>>
-    try {
-      validation = await validatePaymentAmount(reference, amount)
-    } catch (err: any) {
-      adyenLog.error('validation threw unexpected error', {
-        reference,
-        error: err?.message ?? String(err),
-      })
-      validation = { status: 'unavailable', reason: 'validation threw' }
-    }
-
-    adyenLog.info('payment validation outcome', {
-      reference,
-      status: validation.status,
-      ...(validation.status === 'mismatch' && {
-        clientCents: validation.clientCents,
-        expectedCents: validation.expectedCents,
-        diffCents: validation.clientCents - validation.expectedCents,
-      }),
-      ...(validation.status === 'unavailable' && { reason: validation.reason }),
-      ...(validation.status === 'skipped' && { reason: validation.reason }),
-    })
-
-    if (validation.status === 'mismatch') {
+    if (flow !== 'booking' && flow !== 'services') {
+      adyenLog.error('make-payment: missing or invalid flow', { reference, flow })
       return NextResponse.json(
-        {
-          error: 'PriceChanged',
-          message: 'The price has changed since you last loaded the page. Please refresh and try again.',
-          clientCents: validation.clientCents,
-          expectedCents: validation.expectedCents,
-        },
+        { error: 'InvalidFlow', message: 'flow must be "booking" or "services"' },
         { status: 400 },
       )
     }
 
-    if (validation.status === 'unavailable') {
+    // `amount` is forwarded to Adyen's amount.value (integer cents) and to
+    // the validators' strict cent-equality check. Reject anything that isn't
+    // a positive integer up front so we can't end up sending a string or NaN
+    // to Adyen, and so the validators get well-typed input.
+    if (!Number.isInteger(amount) || amount <= 0) {
+      adyenLog.error('make-payment: invalid amount', { reference, amount, flow })
       return NextResponse.json(
-        {
-          error: 'ValidationUnavailable',
-          message: 'Price verification service is temporarily unavailable. Please try again in a moment.',
-          reason: validation.reason,
-        },
-        { status: 503 },
+        { error: 'InvalidAmount', message: 'amount must be a positive integer (cents)' },
+        { status: 400 },
       )
     }
 
-    // Validate required reference. After validation skipped/valid branches,
-    // we still need a reference for the Adyen request below.
-    if (!reference) {
-      adyenLog.error('payment reference missing');
-      return NextResponse.json(
-        { error: 'Payment reference is required' },
-        { status: 400 }
-      );
+    if (flow === 'booking') {
+      let validation: Awaited<ReturnType<typeof validatePaymentAmount>>
+      try {
+        validation = await validatePaymentAmount(reference, amount)
+      } catch (err: unknown) {
+        adyenLog.error('booking validation threw unexpected error', {
+          reference,
+          error: err instanceof Error ? err.message : String(err),
+        })
+        validation = { status: 'unavailable', reason: 'validation threw' }
+      }
+
+      adyenLog.info('booking payment validation outcome', {
+        reference,
+        status: validation.status,
+        ...(validation.status === 'mismatch' && {
+          clientCents: validation.clientCents,
+          expectedCents: validation.expectedCents,
+          diffCents: validation.clientCents - validation.expectedCents,
+        }),
+        ...(validation.status === 'unavailable' && { reason: validation.reason }),
+      })
+
+      if (validation.status === 'mismatch') {
+        return NextResponse.json(
+          {
+            error: 'PriceChanged',
+            message: 'The price has changed since you last loaded the page. Please refresh and try again.',
+            clientCents: validation.clientCents,
+            expectedCents: validation.expectedCents,
+          },
+          { status: 400 },
+        )
+      }
+
+      if (validation.status === 'unavailable') {
+        return NextResponse.json(
+          {
+            error: 'ValidationUnavailable',
+            message: 'Price verification service is temporarily unavailable. Please try again in a moment.',
+            reason: validation.reason,
+          },
+          { status: 503 },
+        )
+      }
+
+      // Compile-time exhaustiveness: if `ValidationResult` gains a new
+      // variant, this assignment errors out so a future contributor cannot
+      // silently widen the union past the explicit checks above.
+      if (validation.status !== 'valid') {
+        const _exhaustive: never = validation
+        adyenLog.error('booking validation: unknown status — refusing to charge', {
+          reference,
+          unhandled: _exhaustive,
+        })
+        return NextResponse.json(
+          { error: 'UnknownValidationStatus' },
+          { status: 500 },
+        )
+      }
+    } else {
+      // services flow — every non-valid outcome is fail-closed.
+      let validation: Awaited<ReturnType<typeof validateServicesPayment>>
+      try {
+        validation = await validateServicesPayment(reference, amount)
+      } catch (err: unknown) {
+        adyenLog.error('services validation threw unexpected error', {
+          reference,
+          error: err instanceof Error ? err.message : String(err),
+        })
+        validation = { status: 'unavailable', reason: 'validation threw' }
+      }
+
+      adyenLog.info('services payment validation outcome', {
+        reference,
+        status: validation.status,
+        ...(validation.status === 'mismatch' && {
+          clientCents: validation.clientCents,
+          expectedCents: validation.expectedCents,
+          diffCents: validation.clientCents - validation.expectedCents,
+        }),
+        ...(validation.status === 'unavailable' && { reason: validation.reason }),
+      })
+
+      if (validation.status === 'mismatch') {
+        return NextResponse.json(
+          {
+            error: 'PriceChanged',
+            message: 'The price has changed since you last loaded the page. Please refresh and try again.',
+            clientCents: validation.clientCents,
+            expectedCents: validation.expectedCents,
+          },
+          { status: 400 },
+        )
+      }
+
+      if (validation.status === 'unavailable') {
+        return NextResponse.json(
+          {
+            error: 'ValidationUnavailable',
+            message: 'Price verification service is temporarily unavailable. Please try again in a moment.',
+            reason: validation.reason,
+          },
+          { status: 503 },
+        )
+      }
+
+      // Compile-time exhaustiveness for ServicesValidationResult. Adding a
+      // new variant without updating the checks above produces a TS error.
+      if (validation.status !== 'valid') {
+        const _exhaustive: never = validation
+        adyenLog.error('services validation: unknown status — refusing to charge', {
+          reference,
+          unhandled: _exhaustive,
+        })
+        return NextResponse.json(
+          { error: 'UnknownValidationStatus' },
+          { status: 500 },
+        )
+      }
     }
 
     const shopperIP = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
@@ -83,7 +167,7 @@ export async function POST(request: NextRequest) {
         currency: currency || "EUR",
         value: amount,
       },
-      reference,
+      reference: reference || crypto.randomUUID(),
       paymentMethod: paymentMethod,
       returnUrl: returnUrl,
       shopperInteraction: "Ecommerce" as any,

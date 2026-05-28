@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { getOrRefreshToken } from "@/services/Request"
-import { bookReservationServicesLegacy, payFolioByPaymentAccount } from "@/services/bookReservationServices"
-import { adyenLog, bookingLog, apaleoLog, folioLog } from "@/lib/logger"
+import { payFolioByPaymentAccount } from "@/services/bookReservationServices"
+import { bookPendingServices, refundAndMarkFailed } from "@/services/bookPendingServices"
+import { adyenLog, bookingLog, apaleoLog } from "@/lib/logger"
 import { reversePayment } from "@/app/actions/adyen/reversePayment"
 import { createPaymentAccount } from "@/services/apaleo/createPaymentAccount"
 import { cancelReservation } from "@/services/apaleo/cancelReservation"
@@ -100,6 +101,36 @@ async function createBookingFromPending(
   if (pendingBooking.status === 'completed') {
     bookingLog.info('webhook: pending booking already completed', { reference })
     return { alreadyExists: true }
+  }
+
+  // GDPR-deleted payload: the user wiped their account between save-pending
+  // and the Adyen authorisation. We cannot reconstruct the booking, so the
+  // only correct move is to refund and mark the row failed. Without this
+  // guard the next `booking_payload` spread would expand `{ cleared: true }`
+  // into the Apaleo POST and throw later — leaving money captured with no
+  // Apaleo state and no refund.
+  const rawPayload = pendingBooking.booking_payload as unknown
+  if (
+    rawPayload &&
+    typeof rawPayload === 'object' &&
+    (rawPayload as { cleared?: unknown }).cleared === true
+  ) {
+    bookingLog.error('webhook: pending payload was cleared (GDPR delete) — refunding', {
+      reference,
+      pspReference,
+    })
+    await supabase
+      .from('pending_bookings')
+      .update({ status: 'failed', updated_at: new Date().toISOString() })
+      .eq('reference', reference)
+    const reversal = await reversePayment(pspReference, { internalReference: reference })
+    if (!reversal.success) {
+      bookingLog.error('webhook: refund failed for cleared payload — manual action required', {
+        pspReference,
+        refundError: reversal.error,
+      })
+    }
+    return { cleared: true }
   }
 
   // 3. Acquire lock — insert with status 'processing'
@@ -320,72 +351,6 @@ async function createBookingFromPending(
   }
 }
 
-// Late-services flow: a separate Adyen authorization may target a single
-// existing reservation to add extras after the initial booking. The CharlieM
-// `pending_services` schema uses `lock_key` + `transaction_reference` +
-// `services_payload` (see migration 14_pending_services_update.sql).
-async function bookServicesFromPending(
-  reference: string,
-  pspReference: string
-) {
-  const supabase = createAdminClient()
-
-  const { data: pendingServices, error: pendingError } = await supabase
-    .from('pending_services')
-    .select('reservation_id, services_payload, status, lock_key')
-    .eq('transaction_reference', reference)
-    .maybeSingle()
-
-  if (pendingError || !pendingServices) {
-    folioLog.info('webhook: no pending services found', { reference })
-    return { notFound: true }
-  }
-
-  if (pendingServices.status === 'completed') {
-    folioLog.info('webhook: services already booked', { reference })
-    return { alreadyExists: true }
-  }
-
-  try {
-    const result = await bookReservationServicesLegacy(
-      pendingServices.reservation_id,
-      pendingServices.services_payload || [],
-      pspReference
-    )
-
-    const failedServices = result.services.filter((r: any) => !r.success)
-    if (failedServices.length > 0 || (result.payment && !result.payment.success)) {
-      folioLog.error('webhook: services failed', { failedServices, payment: result.payment })
-      await supabase.from('pending_services')
-        .update({
-          status: 'failed',
-          error_details: JSON.stringify({ failedServices, payment: result.payment }),
-        })
-        .eq('lock_key', pendingServices.lock_key)
-      return { error: 'Services failed', details: failedServices }
-    }
-
-    await supabase.from('pending_services')
-      .update({ status: 'completed' })
-      .eq('lock_key', pendingServices.lock_key)
-
-    folioLog.success('webhook: services booked', { reservationId: pendingServices.reservation_id })
-    return { success: true }
-  } catch (err) {
-    folioLog.error('webhook: services threw', {
-      reservationId: pendingServices.reservation_id,
-      error: err instanceof Error ? err.message : String(err),
-    })
-    await supabase.from('pending_services')
-      .update({
-        status: 'failed',
-        error_details: JSON.stringify({ error: err instanceof Error ? err.message : String(err) }),
-      })
-      .eq('lock_key', pendingServices.lock_key)
-    return { error: 'Services error', details: err }
-  }
-}
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -417,6 +382,7 @@ export async function POST(request: NextRequest) {
           const result = await createBookingFromPending(merchantReference, pspReference)
           if (result.alreadyExists) { bookingLog.info('webhook: booking already exists', { bookingId: result.bookingId }); continue }
           if (result.alreadyProcessing) { bookingLog.info('webhook: booking already processing'); continue }
+          if (result.cleared) { bookingLog.warn('webhook: pending payload cleared — refunded and skipped', { reference: merchantReference, pspReference }); continue }
           if (result.error) { bookingLog.error('webhook: booking failed', { reference: merchantReference, error: result.error }) }
           else if (result.success) { bookingLog.success('webhook: booking created', { bookingId: result.bookingId }); continue }
         } catch (error: any) {
@@ -424,14 +390,47 @@ export async function POST(request: NextRequest) {
         }
 
         // Fallback: no booking — assume payment was for a late-services add.
+        const amountCents = notification.amount?.value
+        if (!Number.isInteger(amountCents) || amountCents <= 0) {
+          bookingLog.error('webhook: invalid amount.value — skipping services flow', {
+            reference: merchantReference,
+            pspReference,
+            amountCents,
+          })
+          continue
+        }
         try {
-          const result = await bookServicesFromPending(merchantReference, pspReference)
-          if (result.notFound) folioLog.info('webhook: no pending services', { reference: merchantReference })
-          else if (result.alreadyExists) folioLog.info('webhook: services already booked', { reference: merchantReference })
-          else if (result.error) folioLog.error('webhook: services failed', { reference: merchantReference })
-          else folioLog.success('webhook: services booked', { reference: merchantReference })
-        } catch (error: any) {
-          folioLog.error('webhook: services threw', { reference: merchantReference, error: error.message })
+          const result = await bookPendingServices(merchantReference, pspReference, amountCents)
+          if (result.notFound) bookingLog.info('webhook: no pending services', { reference: merchantReference })
+          else if (result.alreadyExists) bookingLog.info('webhook: services already booked', { reference: merchantReference })
+          else if (result.alreadyFailed) bookingLog.warn('webhook: services row already failed — duplicate delivery', { reference: merchantReference, pspReference })
+          else if (result.alreadyProcessing) bookingLog.info('webhook: services already processing', { reference: merchantReference })
+          else if (result.error) bookingLog.error('webhook: services failed', { reference: merchantReference })
+        } catch (error: unknown) {
+          // Outer catch covers anything inside bookPendingServices that didn't
+          // already refund — DB transient errors, unexpected exceptions. We
+          // must refund here too: returning [accepted] to Adyen otherwise
+          // means money captured with no Apaleo state.
+          bookingLog.error('webhook: services threw — fallback refund', {
+            reference: merchantReference,
+            pspReference,
+            error: error instanceof Error ? error.message : String(error),
+          })
+          try {
+            const supabase = createAdminClient()
+            await refundAndMarkFailed(
+              supabase,
+              merchantReference,
+              pspReference,
+              'outer catch fallback',
+            )
+          } catch (refundErr: unknown) {
+            bookingLog.error('webhook: fallback refund itself failed — manual intervention required', {
+              reference: merchantReference,
+              pspReference,
+              error: refundErr instanceof Error ? refundErr.message : String(refundErr),
+            })
+          }
         }
       }
     }
