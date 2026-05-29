@@ -375,8 +375,142 @@ export async function POST(request: NextRequest) {
         pspReference,
       })
 
-      // We only act on successful authorisations; other event codes (CANCEL,
-      // REFUND, etc.) arrive but reach no business logic yet.
+      // Reversal & dispute events. reversePayment / refundCapturedPayment are
+      // asynchronous — Adyen reports the final outcome here. Without this they
+      // are "fire and forget": a failed refund or a chargeback would be lost.
+      // Every such event is recorded durably in payment_reversals (idempotent
+      // on its own pspReference), failures/disputes are flagged needs_action
+      // for a manual work-list, and guest-cancel refund rows are finalized.
+      const isReversalEvent =
+        eventCode === 'REFUND' ||
+        eventCode === 'CANCELLATION' ||
+        eventCode === 'REFUND_FAILED' ||
+        eventCode === 'REFUNDED_REVERSED'
+      const isDisputeEvent =
+        eventCode === 'NOTIFICATION_OF_CHARGEBACK' ||
+        eventCode === 'CHARGEBACK' ||
+        eventCode === 'CHARGEBACK_REVERSED' ||
+        eventCode === 'SECOND_CHARGEBACK' ||
+        eventCode === 'PREARBITRATION_WON' ||
+        eventCode === 'PREARBITRATION_LOST'
+
+      if (isReversalEvent || isDisputeEvent) {
+        const supabase = createAdminClient()
+        // A clean reversal = a refund/cancellation that succeeded. REFUND_FAILED
+        // and REFUNDED_REVERSED are never clean. Disputes resolved in our favor
+        // need no action; every other dispute does.
+        const reversalSucceeded = (eventCode === 'REFUND' || eventCode === 'CANCELLATION') && success === 'true'
+        const disputeResolvedFavorably = eventCode === 'CHARGEBACK_REVERSED' || eventCode === 'PREARBITRATION_WON'
+        const needsAction = isDisputeEvent ? !disputeResolvedFavorably : !reversalSucceeded
+
+        // Finalize a guest-cancel refund row if this event corresponds to one.
+        // Guest-cancel refunds are partial refunds of a CAPTURED payment, so
+        // Adyen reports them as REFUND / REFUND_FAILED — never CANCELLATION
+        // (an uncaptured reversal). Only those two finalize a refund row; the
+        // cancel route set reference = reservation id → merchantReference here.
+        let matchedReservationId: string | null = null
+        if (eventCode === 'REFUND' || eventCode === 'REFUND_FAILED') {
+          const refundOk = eventCode === 'REFUND' && success === 'true'
+          try {
+            const { data: updated } = await supabase
+              .from('reservation_refunds')
+              .update({
+                status: refundOk ? 'completed' : 'failed',
+                adyen_modification_ref: pspReference,
+                ...(refundOk ? {} : { note: `Adyen ${eventCode} success=${success}` }),
+                updated_at: new Date().toISOString(),
+              })
+              .eq('reservation_id', merchantReference)
+              .eq('status', 'requested')
+              .select('reservation_id')
+            if (updated && updated.length > 0) {
+              matchedReservationId = merchantReference
+            } else if (eventCode === 'REFUND_FAILED') {
+              // A failed refund that matched no requested row is the most
+              // financially sensitive miss — the guest may not have their money
+              // back. payment_reversals.needs_action also flags it, but log it
+              // explicitly so it isn't lost in the work-list.
+              adyenLog.warn('webhook: REFUND_FAILED with no matching requested refund row — verify manually', {
+                merchantReference,
+                pspReference,
+              })
+            }
+          } catch (error: unknown) {
+            adyenLog.error('webhook: reservation_refunds finalize threw', {
+              reservationId: merchantReference,
+              pspReference,
+              error: error instanceof Error ? error.message : String(error),
+            })
+          }
+        }
+
+        // Durable system of record — idempotent on the event's own pspReference.
+        // Insert first; on a duplicate (Adyen redelivers at-least-once) refresh
+        // only the volatile fields and DO NOT overwrite reservation_id: a
+        // redelivery can't re-match the already-finalized refund row, so its
+        // matchedReservationId is null and a blind upsert would wipe the link.
+        try {
+          const { error: insertErr } = await supabase.from('payment_reversals').insert({
+            psp_reference: pspReference,
+            original_reference: notification.originalReference ?? null,
+            merchant_reference: merchantReference ?? null,
+            reservation_id: matchedReservationId,
+            event_code: eventCode,
+            success: success === 'true',
+            amount_cents: notification.amount?.value ?? null,
+            currency: notification.amount?.currency ?? null,
+            needs_action: needsAction,
+          })
+          if (insertErr?.code === '23505') {
+            const { error: updErr } = await supabase
+              .from('payment_reversals')
+              .update({
+                event_code: eventCode,
+                success: success === 'true',
+                needs_action: needsAction,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('psp_reference', pspReference)
+            if (updErr) {
+              adyenLog.error('webhook: payment_reversals dup-update failed', { pspReference, error: updErr.message })
+            }
+          } else if (insertErr) {
+            adyenLog.error('webhook: payment_reversals insert failed — event not durably recorded', {
+              eventCode,
+              pspReference,
+              error: insertErr.message,
+            })
+          }
+        } catch (error: unknown) {
+          adyenLog.error('webhook: payment_reversals write threw — event not durably recorded', {
+            eventCode,
+            pspReference,
+            error: error instanceof Error ? error.message : String(error),
+          })
+        }
+
+        if (needsAction) {
+          adyenLog.error('webhook: reversal/dispute needs manual action', {
+            eventCode,
+            success,
+            pspReference,
+            originalReference: notification.originalReference ?? null,
+            merchantReference,
+            reservationId: matchedReservationId,
+          })
+        } else {
+          adyenLog.success('webhook: reversal/dispute recorded', {
+            eventCode,
+            pspReference,
+            originalReference: notification.originalReference ?? null,
+            reservationId: matchedReservationId,
+          })
+        }
+        continue
+      }
+
+      // We only act on successful authorisations; remaining event codes are
+      // recorded above (reversals/disputes) or intentionally ignored.
       if (eventCode === 'AUTHORISATION' && success === 'true') {
         try {
           const result = await createBookingFromPending(merchantReference, pspReference)
