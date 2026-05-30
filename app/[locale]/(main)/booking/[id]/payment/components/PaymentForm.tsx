@@ -26,6 +26,26 @@ export default function PaymentForm({ amount }: { amount: number }) {
   const setTransactionReference = useBookingStore(state => state.setTransactionReference);
   const setPaymentReference = useBookingStore(state => state.setPaymentReference);
 
+  // Save pending booking to Supabase before initiating payment. The server
+  // validator at /api/payments/make-payment reads this row to recompute the
+  // expected amount, so a missing row would let the payment go through
+  // without cent-level validation. Fail loud here instead of swallowing.
+  const savePendingBooking = async (reference: string): Promise<void> => {
+    const currentBooking = useBookingStore.getState().booking;
+    if (!currentBooking) {
+      throw new Error('No booking in store to persist');
+    }
+    const response = await fetch("/api/bookings/save-pending", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reference, booking: currentBooking }),
+    });
+    if (!response.ok) {
+      const body = await response.text().catch(() => '');
+      throw new Error(`save-pending failed: ${response.status} ${body}`);
+    }
+  };
+
   useEffect(() => {
     if (isInitialized.current) return;
     if (!amount) return; // wait for Zustand to hydrate from localStorage
@@ -58,16 +78,21 @@ export default function PaymentForm({ amount }: { amount: number }) {
               const reference = crypto.randomUUID();
               setPaymentReference(reference);
 
-              // Save booking payload before sending to Adyen
-              // If tab closes after payment, webhook uses this to recreate the booking
-              await fetch("/api/bookings/save-pending", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  reference,
-                  booking: useBookingStore.getState().booking,
-                }),
-              });
+              // Save full booking payload to DB before payment. The server
+              // amount validator reads this row — if it isn't here, the
+              // server has nothing to recompute against and would refuse
+              // to charge. Block the payment and surface the error.
+              try {
+                await savePendingBooking(reference);
+              } catch (saveErr) {
+                console.error('save-pending failed — aborting payment', saveErr);
+                // Clear the ref so a retry doesn't reuse a UUID that has no
+                // corresponding pending_bookings row.
+                setPaymentReference(null);
+                toast.error(t('savePendingFailed'), { duration: 6000 });
+                actions.reject();
+                return;
+              }
 
               const response = await fetch("/api/payments/make-payment", {
                 method: "POST",
@@ -76,6 +101,7 @@ export default function PaymentForm({ amount }: { amount: number }) {
                   paymentMethod: state.data.paymentMethod,
                   amount: amountInCents,
                   reference,
+                  flow: 'booking',
                   returnUrl: `${window.location.origin}/${urlParams.locale}/booking/${urlParams.id}/payment/checkout?reference=${reference}`,
                   browserInfo: state.data.browserInfo,
                   checkoutAttemptId: state.data.checkoutAttemptId,
@@ -114,10 +140,14 @@ export default function PaymentForm({ amount }: { amount: number }) {
 
           onPaymentCompleted: async () => {
             const transactionRef = useBookingStore.getState().transactionReference;
+            // merchantReference (UUID) under which the pending payload was stored.
+            // create() needs it to locate the trusted payload — the pspReference
+            // is rotated by Adyen across 3DS and is NOT the pending_bookings key.
+            const merchantRef = useBookingStore.getState().paymentReference;
             const currentBooking = useBookingStore.getState().booking;
-            
-            if (!transactionRef || !currentBooking?.reservations) {
-              console.error('⚠️ Payment completed but booking data missing:', { transactionRef, hasBooking: !!currentBooking });
+
+            if (!transactionRef || !merchantRef || !currentBooking?.reservations) {
+              console.error('⚠️ Payment completed but booking data missing:', { transactionRef, merchantRef, hasBooking: !!currentBooking });
               toast.error(t('bookingDataMissing') || 'Booking data is missing. Please try again.');
               setBookingError(true);
               return;
@@ -130,7 +160,7 @@ export default function PaymentForm({ amount }: { amount: number }) {
               const response = await fetch("/api/bookings/create", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...currentBooking, transactionReference: transactionRef }),
+                body: JSON.stringify({ ...currentBooking, transactionReference: transactionRef, paymentReference: merchantRef }),
               });
 
               if (!response.ok) {

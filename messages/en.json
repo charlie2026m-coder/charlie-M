@@ -491,6 +491,7 @@
     "addingServicesToReservation": "Adding services to reservation...",
     "servicesAddedSuccessfully": "Services added successfully!",
     "failedToAddServices": "Failed to add services. Please contact support.",
+    "savePendingFailed": "Could not start the payment — please check your connection and try again.",
     "summary": "Summary",
     "services": "Services:",
     "total": "Total:"

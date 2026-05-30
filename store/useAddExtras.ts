@@ -12,6 +12,11 @@ export interface AddExtrasService {
       amount: number;
       currency: string;
     };
+    // Client-only marker: true means this date is already on the Apaleo folio
+    // (charged on a previous request) and should be excluded from the current
+    // total. The server validator ignores this field and derives existing
+    // dates from Apaleo itself — never trust the client here.
+    isExisting?: boolean;
   }[];
 }
 

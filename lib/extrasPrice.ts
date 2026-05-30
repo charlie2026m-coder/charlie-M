@@ -1,0 +1,198 @@
+import type { Service } from '@/types/apaleo'
+import type { AddExtrasService } from '@/store/useAddExtras'
+
+export interface ExtrasPriceContext {
+  nights: number
+}
+
+export interface ExtrasPriceLine {
+  serviceId: string
+  catalogPriceCents: number
+  units: number
+  subtotalCents: number
+}
+
+export interface ExtrasPriceResult {
+  totalCents: number
+  breakdown: ExtrasPriceLine[]
+}
+
+export class UnknownServiceError extends Error {
+  constructor(public readonly serviceId: string) {
+    super(`service ${serviceId} not in Apaleo catalog`)
+    this.name = 'UnknownServiceError'
+  }
+}
+
+// Single source of truth for "is this a cleaning service".
+// CMH-ADCLN is the canonical CharlieM code; the name-substring branch catches
+// a future second cleaning SKU before the UI and server diverge on it.
+export function isCleaningService(
+  serviceId: string,
+  catalogName?: string,
+): boolean {
+  if (serviceId === 'CMH-ADCLN') return true
+  return catalogName?.toLowerCase().includes('clean') ?? false
+}
+
+// Baby bed (CMH-BAB) is priced per night regardless of `count` — UI and
+// validator both treat it as `nights` units. Kept as a named predicate so
+// pricing and the Apaleo payload builder classify it identically.
+export function isBabyBedService(serviceId: string): boolean {
+  return serviceId === 'CMH-BAB'
+}
+
+// A daily Person/Room service is charged `count × nights`, so it must be
+// booked on every night. Shared between the price computation and the Apaleo
+// payload builder so "how many units" can never diverge from "what we book".
+export function isDailyMultiplied(cat: Service): boolean {
+  const isDaily = cat.pricingType === 'Daily'
+  const isPersonOrRoom = cat.pricingUnit === 'Person' || cat.pricingUnit === 'Room'
+  return isDaily && isPersonOrRoom
+}
+
+export function computeServicesTotalCents(
+  services: readonly AddExtrasService[],
+  catalog: readonly Service[],
+  ctx: ExtrasPriceContext,
+  existingCleaningDates: ReadonlySet<string> = new Set(),
+): ExtrasPriceResult {
+  let totalCents = 0
+  const breakdown: ExtrasPriceLine[] = []
+
+  for (const service of services) {
+    const cat = catalog.find(c => c.id === service.serviceId)
+    if (!cat) {
+      throw new UnknownServiceError(service.serviceId)
+    }
+
+    const catalogPriceCents = Math.round(cat.price * 100)
+    const isCleaning = isCleaningService(service.serviceId, cat.name)
+
+    let units = 0
+
+    if (isBabyBedService(service.serviceId)) {
+      // UI sums baby bed as price × nights regardless of `count`. Mirrored
+      // so the server doesn't reject the same total the UI displays. If/when
+      // the UI starts respecting count, update both call sites together.
+      units = ctx.nights
+    } else if (service.count != null) {
+      units = isDailyMultiplied(cat)
+        ? service.count * ctx.nights
+        : service.count
+    } else if (service.dates?.length) {
+      const eligible = isCleaning
+        ? service.dates.filter(d => !existingCleaningDates.has(d.serviceDate))
+        : service.dates
+      units = eligible.reduce((sum, d) => sum + (d.count ?? 1), 0)
+    }
+
+    const subtotalCents = catalogPriceCents * units
+    totalCents += subtotalCents
+    breakdown.push({
+      serviceId: service.serviceId,
+      catalogPriceCents,
+      units,
+      subtotalCents,
+    })
+  }
+
+  return { totalCents, breakdown }
+}
+
+// Apaleo PUT /reservation-actions/{id}/book-service payload. Mirrors the shape
+// the working AddLimitedExtra flow already sends (per-date count + amount).
+export interface ApaleoServiceDate {
+  serviceDate: string
+  count?: number
+  amount?: { amount: number; currency: string }
+}
+export interface ApaleoBookServicePayload {
+  serviceId: string
+  count?: number
+  dates?: ApaleoServiceDate[]
+}
+
+export interface BuildPayloadContext {
+  // Consecutive night dates (YYYY-MM-DD), arrival .. departure-1. Length must
+  // equal the `nights` used by computeServicesTotalCents so the booked unit
+  // count matches the charged amount exactly.
+  nightDates: readonly string[]
+}
+
+// Builds the Apaleo book-service payloads from the same store services the
+// price was computed from. Daily-multiplied services and baby bed are expanded
+// to one date entry per night (so the folio gets count×nights units, matching
+// the charge); services that already carry `dates[]` and one-time `count`
+// services pass through unchanged. Keeping this in lockstep with
+// computeServicesTotalCents (same predicates) is what prevents "charged ≠
+// booked" desync.
+export function buildApaleoServicePayloads(
+  services: readonly AddExtrasService[],
+  catalog: readonly Service[],
+  ctx: BuildPayloadContext,
+  existingCleaningDates: ReadonlySet<string> = new Set(),
+): ApaleoBookServicePayload[] {
+  return services.flatMap((service): ApaleoBookServicePayload[] => {
+    const cat = catalog.find(c => c.id === service.serviceId)
+    if (!cat) {
+      throw new UnknownServiceError(service.serviceId)
+    }
+
+    const currency = cat.currency || 'EUR'
+    const isCleaning = isCleaningService(service.serviceId, cat.name)
+
+    // Already per-date (cleaning / limited). For cleaning, drop dates already
+    // on the Apaleo folio — the validator excludes them from the charge (using
+    // the same Apaleo-derived set, NOT the client `isExisting` flag), so
+    // re-booking them would put more on the folio than the guest paid for. If
+    // nothing new remains, omit the service entirely.
+    if (service.dates?.length) {
+      const eligible = isCleaning
+        ? service.dates.filter(d => !existingCleaningDates.has(d.serviceDate))
+        : service.dates
+      if (eligible.length === 0) return []
+      return [{
+        serviceId: service.serviceId,
+        dates: eligible.map(d => ({
+          serviceDate: d.serviceDate,
+          count: d.count,
+          amount: d.amount,
+        })),
+      }]
+    }
+
+    // Baby bed: one bed per night across the whole stay.
+    if (isBabyBedService(service.serviceId)) {
+      return [{
+        serviceId: service.serviceId,
+        dates: ctx.nightDates.map(serviceDate => ({
+          serviceDate,
+          count: 1,
+          amount: { amount: cat.price, currency },
+        })),
+      }]
+    }
+
+    // Daily Person/Room with a count: book the count on every night.
+    if (service.count != null && isDailyMultiplied(cat)) {
+      const count = service.count
+      return [{
+        serviceId: service.serviceId,
+        dates: ctx.nightDates.map(serviceDate => ({
+          serviceDate,
+          count,
+          amount: { amount: cat.price * count, currency },
+        })),
+      }]
+    }
+
+    // One-time count service (not daily) — booked once at the given count.
+    if (service.count != null) {
+      return [{ serviceId: service.serviceId, count: service.count }]
+    }
+
+    // No count, no dates, not baby bed — book once.
+    return [{ serviceId: service.serviceId }]
+  })
+}

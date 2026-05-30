@@ -28,14 +28,25 @@ export default function PaymentForm({
   const selectedServices = useAddExtrasStore(state => state.services);
   const clearServices = useAddExtrasStore(state => state.clearServices);
   const setTransactionReference = useAddExtrasStore(state => state.setTransactionReference);
+  // Merchant-side UUID minted in onSubmit. Shared with /api/services and the
+  // Adyen webhook so both compete for the same pending_services row (keyed by
+  // `reference`) instead of writing two rows. Survives 3DS via the
+  // `reference` query param on returnUrl.
+  const referenceRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (isInitialized.current) return;
     isInitialized.current = true;
-    
+
     const init = async () => {
       try {
         const amountInCents = Math.round(amount * 100);
+
+        // Recover the merchant UUID after a 3DS bank redirect — onSubmit
+        // (where it is generated) does not run again on return, but
+        // returnUrl carries it as `?reference=...`.
+        const referenceFromUrl = new URLSearchParams(window.location.search).get('reference');
+        if (referenceFromUrl) referenceRef.current = referenceFromUrl;
 
         const paymentMethodsRes = await fetch("/api/payments/payment-methods", {
           method: "POST",
@@ -61,7 +72,8 @@ export default function PaymentForm({
           onSubmit: async (state: any, _: any, actions: any) => {
             try {
               const reference = crypto.randomUUID();
-              
+              referenceRef.current = reference;
+
               // Save pending services before payment (webhook fallback)
               try {
                 await fetch("/api/services/save-pending", {
@@ -86,7 +98,8 @@ export default function PaymentForm({
                   paymentMethod: state.data.paymentMethod,
                   amount: amountInCents,
                   reference: reference,
-                  returnUrl: `${window.location.origin}/${urlParams.locale}/profile/reservations/${reservationId}/payment`,
+                  flow: 'services',
+                  returnUrl: `${window.location.origin}/${urlParams.locale}/profile/reservations/${reservationId}/payment?reference=${reference}`,
                   browserInfo: state.data.browserInfo,
                   checkoutAttemptId: state.data.checkoutAttemptId,
                 }),
@@ -153,13 +166,32 @@ export default function PaymentForm({
             setProcessing(true);
             toast.loading(t('addingServicesToReservation'), { id: "add-services" });
 
+            // The merchant UUID is what binds /api/services to the same
+            // pending_services row that the webhook will look up. Missing
+            // here means save-pending never ran (e.g. silent failure) and
+            // any /api/services call would 400; let the webhook handle the
+            // refund via no-pending → notFound + no-op, instead of double-
+            // writing.
+            const merchantReference = referenceRef.current;
+            if (!merchantReference) {
+              console.error('❌ Missing merchant reference — refusing /api/services call', {
+                transactionRef,
+                hasReferenceInUrl: !!new URLSearchParams(window.location.search).get('reference'),
+              });
+              toast.error(t('failedToAddServices'), { id: 'add-services' });
+              setProcessing(false);
+              return;
+            }
+
             try {
               const requestBody = {
                 reservationId: reservationId,
                 services: selectedServices,
-                transactionReference: transactionRef
+                transactionReference: transactionRef,
+                reference: merchantReference,
+                amountCents: amountInCents,
               };
-              
+
               console.log('🚀 Sending request to /api/services:', requestBody);
               
               const response = await fetch(`/api/services`, {

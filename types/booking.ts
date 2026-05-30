@@ -13,6 +13,7 @@ export interface Booking {
   consent?: boolean; // GDPR consent flag
   totalAmount?: number; // Total price including rooms, extras and tax
   transactionReference?: string; // Adyen pspReference for transaction tracking
+  paymentReference?: string; // client merchantReference (UUID) — key into pending_bookings
 
   reservations: {
     arrival: string;

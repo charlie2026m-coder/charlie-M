@@ -491,6 +491,7 @@
     "addingServicesToReservation": "Leistungen werden zur Reservierung hinzugefügt …",
     "servicesAddedSuccessfully": "Leistungen erfolgreich hinzugefügt!",
     "failedToAddServices": "Leistungen konnten nicht hinzugefügt werden. Bitte kontaktieren Sie den Support.",
+    "savePendingFailed": "Zahlung konnte nicht gestartet werden — bitte überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
     "summary": "Zusammenfassung",
     "services": "Leistungen:",
     "total": "Gesamt:"
