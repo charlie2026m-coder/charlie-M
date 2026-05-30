@@ -40,6 +40,7 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 async function createApaleoBookingWithRetry(
   bookingPayload: any,
   token: string,
+  pspReference: string,
   maxAttempts: number = 3
 ): Promise<{ success: boolean; data?: ApaleoBookingResponse; error?: any; status?: number }> {
   let lastError: any = null
@@ -61,6 +62,7 @@ async function createApaleoBookingWithRetry(
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'Idempotency-Key': pspReference,
         },
         body: JSON.stringify(bookingPayload),
       })
@@ -270,10 +272,11 @@ export async function POST(request: Request) {
           )
         }
 
-        // Lock insert failed for a non-conflict reason — proceed anyway so we
-        // don't drop a paid booking. Subsequent UPDATEs will no-op on the
-        // missing row but the Apaleo state will still be created.
-        bookingLog.error('lock insert failed — proceeding without lock', { error: lockError })
+        // Non-conflict DB error — fail loudly so the client retries.
+        // With Idempotency-Key on POST /bookings, a retry is safe: Apaleo
+        // returns the same booking instead of creating a duplicate.
+        bookingLog.error('lock insert failed — returning 503 for client retry', { error: lockError })
+        return NextResponse.json({ error: 'BookingLockFailed' }, { status: 503 })
       }
     }
 
@@ -421,7 +424,7 @@ export async function POST(request: Request) {
       pspReference,
       reservationsCount: bookingPayload.reservations.length,
     })
-    const result = await createApaleoBookingWithRetry(bookingPayload, token, 3)
+    const result = await createApaleoBookingWithRetry(bookingPayload, token, pspReference, 3)
 
     if (!result.success) {
       bookingLog.error('all booking attempts failed', { pspReference, status: result.status })

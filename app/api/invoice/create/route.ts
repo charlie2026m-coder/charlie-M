@@ -74,7 +74,12 @@ export async function POST(request: NextRequest) {
     const existingInvoices = await Fetch<ApaleoInvoiceListResponse>(
       `/finance/v1/invoices?folioIds=${folioIdQuery}`,
     );
-    const recoveredInvoice = existingInvoices.invoices?.[0];
+    // Prefer the invoice whose language matches the request; fall back to the
+    // most recent (last) one so we don't silently return a stale EN invoice
+    // when the guest requested DE (or vice-versa).
+    const invoices = existingInvoices.invoices ?? [];
+    const recoveredInvoice =
+      invoices.find((inv) => inv.languageCode === languageCode) ?? invoices.at(-1);
 
     let invoiceId: string;
     // The language stored in invoice_states must match the language baked into

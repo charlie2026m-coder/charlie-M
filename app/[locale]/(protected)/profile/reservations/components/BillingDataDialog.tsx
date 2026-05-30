@@ -12,6 +12,7 @@ import {
 import { Button } from '@/app/_components/ui/button'
 import { CountrySelect } from '@/app/_components/ui/CountrySelect'
 import { useUpdateDebitor, useCreateInvoice, useDownloadInvoicePdf, InvoiceCreateError } from '@/app/hooks/useInvoice'
+import { EMAIL } from '@/lib/Constants'
 import type { FolioDebitor, InvoiceWarningType } from '@/types/apaleo'
 
 const warningKeyMap: Record<InvoiceWarningType | 'Unknown', string> = {
@@ -280,6 +281,11 @@ export function BillingDataDialog({
           >
             {isBusy ? t('generatingInvoice') : t('generateInvoice')}
           </Button>
+
+          <p className='text-xs text-gray-500 text-center'>
+            {t('invoiceContactNote')}{' '}
+            <a href={`mailto:${EMAIL}`} className='underline text-gray-600'>{EMAIL}</a>
+          </p>
         </div>
       </DialogContent>
     </Dialog>
