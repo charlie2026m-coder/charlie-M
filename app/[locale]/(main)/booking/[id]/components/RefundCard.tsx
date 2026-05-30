@@ -17,7 +17,7 @@ import timezone from 'dayjs/plugin/timezone'
 dayjs.extend(utc)
 dayjs.extend(timezone)
 
-const EARLY_CHECKIN_ID = 'MOT-ECI'
+const EARLY_CHECKIN_ID = 'CMH-ECI'
 const CANCELLATION_HOURS = 48
 
 const RefundCard = ({ rooms, nights, checkInDate }: { rooms: RoomOffer[], nights: number, checkInDate: string }) => {
