@@ -178,6 +178,7 @@ async function createBookingFromPending(
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
       'Accept': 'application/json',
+      'Idempotency-Key': pspReference,
     },
     body: JSON.stringify(booking),
   })

@@ -593,6 +593,7 @@
     "invoiceErrFolioState": "Das Konto befindet sich in einem Zustand, der derzeit keine Rechnungserstellung erlaubt.",
     "invoiceErrCashLimit": "Das Bargeld-Zahlungslimit wurde für dieses Konto überschritten. Bitte kontaktieren Sie den Support.",
     "invoiceRequiredFieldsTitle": "Bitte füllen Sie diese Felder aus, bevor Sie die Rechnung erstellen:",
+    "invoiceContactNote": "Korrekturen nach der Erstellung? Kontaktieren Sie uns:",
     "completeCheckIn": "Check-In abschließen",
     "checkedIn": "Eingecheckt",
     "redirectingToCheckIn": "Weiterleitung zum Check-In...",

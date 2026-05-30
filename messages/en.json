@@ -593,6 +593,7 @@
     "invoiceErrFolioState": "The folio is in a state that does not allow creating an invoice right now.",
     "invoiceErrCashLimit": "Cash payment limit was exceeded for this folio. Please contact support.",
     "invoiceRequiredFieldsTitle": "Please fill these fields before generating the invoice:",
+    "invoiceContactNote": "Need corrections after generating? Contact us:",
     "completeCheckIn": "Complete Check-In",
     "checkedIn": "Checked-in",
     "redirectingToCheckIn": "Redirecting to check-in...",
