@@ -158,6 +158,15 @@ export async function POST(request: Request) {
     const pspReference = booking.transactionReference
     pspReferenceForCatchLog = pspReference
 
+    // Adyen rotates the pspReference across the 3DS redirect, so the value the
+    // client posts here (the final, post-3DS psp) does NOT match the
+    // merchantReference under which the pending payload was stored. The pending
+    // row is keyed by the client merchantReference (the UUID used in
+    // save-pending + make-payment validation), so we look it up by that — same
+    // as the Adyen webhook does. The bookings idempotency lock stays keyed on
+    // pspReference below.
+    const merchantReference = booking.paymentReference
+
     const supabase = await createSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
     const supabaseAdmin = createAdminClient()
@@ -276,6 +285,7 @@ export async function POST(request: Request) {
     // request could under-capture from the authorization (passing the
     // aggregate cent check while letting folio capture grab less).
     type FailTrustedReason =
+      | 'reference_missing'
       | 'pending_query_failed'
       | 'pending_missing'
       | 'pending_cleared'
@@ -292,11 +302,15 @@ export async function POST(request: Request) {
         .eq('transaction_reference', pspReference)
         .eq('status', 'processing')
       // Best-effort: also mark pending_bookings failed so consistency
-      // dashboards don't surface this row as stuck. No-ops if missing.
-      await supabaseAdmin
-        .from('pending_bookings')
-        .update({ status: 'failed', updated_at: new Date().toISOString() })
-        .eq('reference', pspReference)
+      // dashboards don't surface this row as stuck. Keyed by merchantReference
+      // (the pending_bookings key), not pspReference. Skipped when the
+      // merchantReference is absent (reference_missing) — nothing to match.
+      if (merchantReference) {
+        await supabaseAdmin
+          .from('pending_bookings')
+          .update({ status: 'failed', updated_at: new Date().toISOString() })
+          .eq('reference', merchantReference)
+      }
       const reversal = await reversePayment(pspReference)
       if (!reversal.success) {
         bookingLog.error('trusted-source fail — refund did not complete, manual action required', {
@@ -324,10 +338,16 @@ export async function POST(request: Request) {
       )
     }
 
+    // No merchantReference → we can't locate the trusted payload at all.
+    // Fail closed (refund) rather than fall back to the request body.
+    if (!merchantReference) {
+      return await failTrustedSource('reference_missing', 'no paymentReference in request body')
+    }
+
     const { data: pendingRow, error: pendingErr } = await supabaseAdmin
       .from('pending_bookings')
       .select('booking_payload')
-      .eq('reference', pspReference)
+      .eq('reference', merchantReference)
       .maybeSingle()
 
     if (pendingErr) {
@@ -492,7 +512,7 @@ export async function POST(request: Request) {
       await supabaseAdmin
         .from('pending_bookings')
         .update({ status: 'failed', updated_at: new Date().toISOString() })
-        .eq('reference', pspReference)
+        .eq('reference', merchantReference)
 
       return { reversalOk: reversal.success }
     }
@@ -640,7 +660,7 @@ export async function POST(request: Request) {
       await supabaseAdmin
         .from('pending_bookings')
         .update({ status: 'completed', apaleo_booking_id: apaleoData.id, updated_at: new Date().toISOString() })
-        .eq('reference', pspReference)
+        .eq('reference', merchantReference)
     } catch {
       // Non-critical.
     }

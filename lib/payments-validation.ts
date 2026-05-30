@@ -18,9 +18,11 @@ import { Fetch } from '@/services/Request'
 import { getExtraPrice } from '@/lib/utils'
 import {
   computeServicesTotalCents,
+  buildApaleoServicePayloads,
   isCleaningService,
   UnknownServiceError,
   type ExtrasPriceLine,
+  type ApaleoBookServicePayload,
 } from '@/lib/extrasPrice'
 import { priceLog, apaleoLog } from '@/lib/logger'
 import { pendingServicesReadSchema } from '@/types/schemas'
@@ -313,7 +315,15 @@ export async function validatePaymentAmount(
 
 
 export type ServicesValidationResult =
-  | { status: 'valid'; expectedCents: number; clientCents: number }
+  | {
+      status: 'valid'
+      expectedCents: number
+      clientCents: number
+      // Apaleo book-service payloads built from the SAME services + catalog the
+      // amount was validated against — daily services already expanded to
+      // per-night dates so the folio matches the charge.
+      apaleoServices: ApaleoBookServicePayload[]
+    }
   | {
       status: 'mismatch'
       expectedCents: number
@@ -412,11 +422,10 @@ async function fetchReservationForValidation(
   }
 }
 
-// Lookup uses `transaction_reference` (CharlieM `pending_services` schema —
-// see migration 14_pending_services_update.sql). Payload is read from
-// `services_payload` JSONB. The validator never trusts the column shape:
-// `pendingServicesReadSchema.safeParse` runs first so any malformed legacy
-// row fails closed before reaching the price computation.
+// Lookup uses `reference` (canonical pending_services schema). Payload is read
+// from the `services` JSONB. The validator never trusts the column shape:
+// `pendingServicesReadSchema.safeParse` runs first so any malformed row fails
+// closed before reaching the price computation.
 export async function validateServicesPayment(
   reference: string | undefined,
   clientAmountCents: number,
@@ -428,8 +437,8 @@ export async function validateServicesPayment(
   const supabase = createAdminClient()
   const { data: row, error } = await supabase
     .from('pending_services')
-    .select('reservation_id, services_payload')
-    .eq('transaction_reference', reference)
+    .select('reservation_id, services')
+    .eq('reference', reference)
     .maybeSingle()
 
   if (error) {
@@ -444,7 +453,7 @@ export async function validateServicesPayment(
     return { status: 'unavailable', reason: 'no pending_services row' }
   }
 
-  const parsedServices = pendingServicesReadSchema.safeParse(row.services_payload)
+  const parsedServices = pendingServicesReadSchema.safeParse(row.services)
   if (!parsedServices.success) {
     priceLog.error('services validation: malformed pending payload', {
       reference,
@@ -537,6 +546,20 @@ export async function validateServicesPayment(
     }
   }
 
+  // Build the Apaleo payloads from the SAME services + catalog + nights the
+  // amount was just validated against. nightDates spans arrival .. departure-1
+  // (exactly `reservation.nights` dates) so daily services book on every night
+  // and the folio total equals expectedCents.
+  const nightDates = Array.from({ length: reservation.nights }, (_, i) =>
+    dayjs(reservation.arrival).add(i, 'day').format('YYYY-MM-DD'),
+  )
+  const apaleoServices = buildApaleoServicePayloads(
+    services,
+    catalog,
+    { nightDates },
+    reservation.existingCleaningDates,
+  )
+
   priceLog.success('💰 services amount valid', {
     reference,
     clientCents: clientAmountCents,
@@ -546,5 +569,6 @@ export async function validateServicesPayment(
     status: 'valid',
     clientCents: clientAmountCents,
     expectedCents,
+    apaleoServices,
   }
 }

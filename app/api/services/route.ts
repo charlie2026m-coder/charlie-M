@@ -2,11 +2,13 @@ import { NextResponse } from 'next/server';
 import { Fetch } from '@/services/Request';
 import { bookPendingServices } from '@/services/bookPendingServices';
 import { bookingLog } from '@/lib/logger';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { assertReservationAccess } from '@/lib/assertReservationAccess';
 
 // Late-services flow: client calls this after Adyen authorises the dedicated
 // services payment. Delegates to `bookPendingServices` so the client and the
 // Adyen webhook compete for the SAME `pending_services` row (keyed by
-// `transaction_reference = reference`, the UUID the client minted before
+// `reference`, the UUID the client minted before
 // payment). Whichever path arrives first takes the two-phase CAS lock; the
 // other observes `processing`/`completed` and no-ops. Without this, the
 // client's request would self-lock under a `pspReference`-keyed row while
@@ -17,6 +19,13 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { reservationId, transactionReference, reference, amountCents } = body;
+
+    bookingLog.info('▶ POST /api/services — late-services request received', {
+      reference,
+      pspReference: transactionReference,
+      reservationId,
+      amountCents,
+    });
 
     if (!reservationId) {
       return NextResponse.json(
@@ -61,6 +70,11 @@ export async function POST(request: Request) {
     }
 
     const result = await bookPendingServices(reference, transactionReference, amountCents);
+
+    bookingLog.info('◀ POST /api/services — bookPendingServices returned', {
+      reference,
+      result,
+    });
 
     if (result.notFound) {
       return NextResponse.json(
@@ -162,6 +176,15 @@ export async function DELETE(request: Request) {
         { error: 'serviceId is required' },
         { status: 400 }
       );
+    }
+
+    // Ownership gate: only the booking's owner (email match) or a user with an
+    // explicit reservations link may delete services from this reservation.
+    const supabase = await createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const access = await assertReservationAccess(supabase, user, reservationId);
+    if (!access.ok) {
+      return NextResponse.json({ error: access.error }, { status: access.status });
     }
 
     await Fetch(`/booking/v1/reservations/${reservationId}/services?serviceId=${serviceId}`, {

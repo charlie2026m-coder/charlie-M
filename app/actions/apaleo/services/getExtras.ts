@@ -4,6 +4,7 @@ import { Service, ServicesResponse, AvailabilityResponse } from '@/types/apaleo'
 import { Fetch } from '@/services/Request';
 import { serviceTranslations } from '@/content/ServiceTranslations';
 import { getServicesDetails } from '@/app/actions/supabase/services/getServicesDetails';
+import { apaleoLog } from '@/lib/logger';
 
 export enum usageType {
   Once = 'once',
@@ -118,6 +119,25 @@ async function fetchExtras(from?: string, to?: string, locale: string = 'en'): P
       });
 
       return { ...item, name, description, imageUrl, timeSlices, isSoldOut, minAvailable };
+    });
+
+    // TEMP diagnostic: dump per-service availability from Apaleo so we can see
+    // why a service is sold out / has no add button on a given date.
+    apaleoLog.info('extras availability', {
+      arrival,
+      departure,
+      services: formattedServices.map(s => ({
+        id: s.id,
+        mode: s.availability?.mode,
+        isSoldOut: s.isSoldOut,
+        minAvailable: s.minAvailable,
+        timeSlices: s.timeSlices.map(ts => ({
+          date: ts.serviceDate,
+          availableCount: ts.availableCount,
+          soldCount: ts.soldCount,
+          quantity: ts.quantity,
+        })),
+      })),
     });
 
     return formattedServices.filter(service => {

@@ -29,8 +29,8 @@ export default function PaymentForm({
   const clearServices = useAddExtrasStore(state => state.clearServices);
   const setTransactionReference = useAddExtrasStore(state => state.setTransactionReference);
   // Merchant-side UUID minted in onSubmit. Shared with /api/services and the
-  // Adyen webhook so both compete for the same pending_services row instead
-  // of writing two rows under different lock_keys. Survives 3DS via the
+  // Adyen webhook so both compete for the same pending_services row (keyed by
+  // `reference`) instead of writing two rows. Survives 3DS via the
   // `reference` query param on returnUrl.
   const referenceRef = useRef<string | null>(null);
 

@@ -69,7 +69,7 @@ export async function refundAndMarkFailed(
   const { error: updateError } = await supabase
     .from('pending_services')
     .update({ status: 'failed', updated_at: new Date().toISOString() })
-    .eq('transaction_reference', reference)
+    .eq('reference', reference)
   if (updateError) {
     bookingLog.error('services: failed to mark pending_services as failed', {
       reference,
@@ -132,18 +132,30 @@ export async function bookPendingServices(
 ) {
   const supabase = createAdminClient()
 
-  // 1. Get pending services payload — lookup by transaction_reference per
-  // CharlieM schema (see migration 14_pending_services_update.sql).
+  bookingLog.info('services: ① flow start', { reference, pspReference, amountCents })
+
+  // 1. Get pending services payload
   const { data: pendingServices, error } = await supabase
     .from('pending_services')
-    .select('reservation_id, services_payload, status, updated_at, apaleo_booked_at')
-    .eq('transaction_reference', reference)
+    .select('reservation_id, services, status, updated_at, apaleo_booked_at')
+    .eq('reference', reference)
     .single()
 
   if (error || !pendingServices) {
-    bookingLog.info('services: no pending services found', { reference })
+    bookingLog.info('services: no pending services found', {
+      reference,
+      dbError: error?.message,
+    })
     return { notFound: true }
   }
+
+  bookingLog.info('services: ② pending row loaded', {
+    reference,
+    reservationId: pendingServices.reservation_id,
+    status: pendingServices.status,
+    servicesCount: Array.isArray(pendingServices.services) ? pendingServices.services.length : 0,
+    apaleoBookedAt: pendingServices.apaleo_booked_at,
+  })
 
   if (pendingServices.status === 'completed') {
     bookingLog.info('services: already booked', { reference })
@@ -209,6 +221,15 @@ export async function bookPendingServices(
     return { error: 'Validation threw — refunded' }
   }
 
+  bookingLog.info('services: ③ amount re-validation result', {
+    reference,
+    status: validation.status,
+    ...(validation.status === 'valid' && {
+      expectedCents: validation.expectedCents,
+      apaleoServicesCount: validation.apaleoServices.length,
+    }),
+  })
+
   if (validation.status !== 'valid') {
     priceLog.error('services: amount re-validation failed — refunding', {
       reference,
@@ -240,9 +261,9 @@ export async function bookPendingServices(
   const { data: locked, error: lockError } = await supabase
     .from('pending_services')
     .update({ status: 'processing', updated_at: new Date().toISOString() })
-    .eq('transaction_reference', reference)
+    .eq('reference', reference)
     .eq('status', 'pending')
-    .select('transaction_reference')
+    .select('reference')
 
   if (lockError) {
     bookingLog.error('services: lock query failed — aborting to avoid double-charge', {
@@ -257,12 +278,34 @@ export async function bookPendingServices(
     return { alreadyExists: true }
   }
 
+  bookingLog.info('services: ④ lock acquired (pending → processing)', {
+    reference,
+    reservationId: pendingServices.reservation_id,
+  })
+
   try {
+    // Book the Apaleo payloads the validator built from the same services +
+    // catalog + nights — daily services already expanded to per-night dates so
+    // the folio matches the charge. expectedCents arms the folio safety net.
+    bookingLog.info('services: ⑤ booking + capturing via by-authorization', {
+      reference,
+      reservationId: pendingServices.reservation_id,
+      expectedCents: validation.expectedCents,
+      apaleoServices: validation.apaleoServices,
+    })
     const bookResult = await bookReservationServicesLegacy(
       pendingServices.reservation_id,
-      pendingServices.services_payload,
+      validation.apaleoServices,
       pspReference,
+      validation.expectedCents,
     )
+
+    bookingLog.info('services: ⑥ bookReservationServicesLegacy result', {
+      reference,
+      reservationId: pendingServices.reservation_id,
+      services: bookResult.services,
+      payment: bookResult.payment,
+    })
 
     // bookReservationServicesLegacy swallows per-service failures into its
     // result. Inspect result.services and result.payment explicitly and treat
@@ -309,7 +352,7 @@ export async function bookPendingServices(
     const { error: stampError } = await supabase
       .from('pending_services')
       .update({ apaleo_booked_at: apaleoBookedAt, updated_at: apaleoBookedAt })
-      .eq('transaction_reference', reference)
+      .eq('reference', reference)
     if (stampError) {
       bookingLog.error('services: failed to stamp apaleo_booked_at — apaleo booked but sentinel missing', {
         reference,
@@ -324,7 +367,7 @@ export async function bookPendingServices(
     const { error: completeError } = await supabase
       .from('pending_services')
       .update({ status: 'completed', updated_at: new Date().toISOString() })
-      .eq('transaction_reference', reference)
+      .eq('reference', reference)
     if (completeError) {
       bookingLog.error('services: failed to flip status after stamp — sentinel safe', {
         reference,

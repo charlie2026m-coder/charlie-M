@@ -140,10 +140,14 @@ export default function PaymentForm({ amount }: { amount: number }) {
 
           onPaymentCompleted: async () => {
             const transactionRef = useBookingStore.getState().transactionReference;
+            // merchantReference (UUID) under which the pending payload was stored.
+            // create() needs it to locate the trusted payload — the pspReference
+            // is rotated by Adyen across 3DS and is NOT the pending_bookings key.
+            const merchantRef = useBookingStore.getState().paymentReference;
             const currentBooking = useBookingStore.getState().booking;
-            
-            if (!transactionRef || !currentBooking?.reservations) {
-              console.error('⚠️ Payment completed but booking data missing:', { transactionRef, hasBooking: !!currentBooking });
+
+            if (!transactionRef || !merchantRef || !currentBooking?.reservations) {
+              console.error('⚠️ Payment completed but booking data missing:', { transactionRef, merchantRef, hasBooking: !!currentBooking });
               toast.error(t('bookingDataMissing') || 'Booking data is missing. Please try again.');
               setBookingError(true);
               return;
@@ -156,7 +160,7 @@ export default function PaymentForm({ amount }: { amount: number }) {
               const response = await fetch("/api/bookings/create", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...currentBooking, transactionReference: transactionRef }),
+                body: JSON.stringify({ ...currentBooking, transactionReference: transactionRef, paymentReference: merchantRef }),
               });
 
               if (!response.ok) {

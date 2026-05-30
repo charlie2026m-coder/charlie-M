@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { pendingServicesPayloadSchema } from '@/types/schemas';
 import { bookingLog } from '@/lib/logger';
+import { assertReservationAccess } from '@/lib/assertReservationAccess';
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,57 +26,30 @@ export async function POST(request: NextRequest) {
     const supabase = await createSupabaseServerClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
-    const { data: ownership, error: ownershipError } = await supabase
-      .from('reservations')
-      .select('reservation_id')
-      .eq('user_id', user.id)
-      .eq('reservation_id', reservationId)
-      .maybeSingle();
-
-    if (ownershipError) {
-      bookingLog.error('save-pending: ownership check failed', {
-        code: ownershipError.code,
-        message: ownershipError.message,
+    // Centralized ownership: email match (same trust as the profile listing)
+    // OR an explicit `reservations` link (anonymous guests / added bookings).
+    const access = await assertReservationAccess(supabase, user, reservationId);
+    if (!access.ok) {
+      bookingLog.error('save-pending: access denied', {
+        reservationId,
+        status: access.status,
       });
-      return NextResponse.json(
-        { error: 'Failed to verify reservation ownership' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: access.error }, { status: access.status });
     }
-    if (!ownership) {
-      // `maybeSingle()` returns null with no error for both "no matching row"
-      // and "RLS hid every row" — same 403 either way so the status code
-      // doesn't leak reservation existence to non-owners.
-      return NextResponse.json(
-        { error: 'Reservation not found or not owned by current user' },
-        { status: 403 }
-      );
-    }
-
-    const lockKey = `${reference}-${reservationId}`;
 
     const { error } = await supabase.from('pending_services').upsert(
       {
-        lock_key: lockKey,
-        transaction_reference: reference,
+        reference,
         reservation_id: reservationId,
-        service_ids: parsed.data.map(s => s.serviceId),
-        services_payload: parsed.data,
-        user_id: user.id,
+        services: parsed.data,
+        user_id: user?.id ?? null,
         status: 'pending',
         // Explicitly null the sentinel so a stale value from a prior failed
-        // attempt under the same lock_key cannot mislead bookPendingServices
+        // attempt under the same reference cannot mislead bookPendingServices
         // into thinking Apaleo was already booked.
         apaleo_booked_at: null,
       },
-      { onConflict: 'lock_key' }
+      { onConflict: 'reference' }
     );
 
     if (error) {
