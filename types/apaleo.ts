@@ -300,6 +300,10 @@ export interface CancellationFee {
   name: string;
   description: string;
   dueDateTime: string;
+  // Fee owed if cancelled now, computed by Apaleo from the rate plan's
+  // cancellation policy (0 before the free-cancellation deadline, the penalty
+  // after it). Source of truth for how much of a prepaid stay is refundable.
+  fee: Money;
 }
 
 export interface NoShowFee {
@@ -359,7 +363,9 @@ export interface ApaleoReservationResponse {
   balance: Money;
   totalGrossAmount: Money;
   payableAmount: PayableAmount;
-  cancellationFee: CancellationFee;
+  // Apaleo may omit this for reservations without a cancellation policy —
+  // consumers must guard before reading cancellationFee.fee.
+  cancellationFee?: CancellationFee;
   noShowFee: NoShowFee;
   booker?: Booker;
   primaryGuest: Guest;

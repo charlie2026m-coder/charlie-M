@@ -41,7 +41,7 @@ interface BookingState {
   
   setBooking: (booking: Booking) => void;
   setTransactionReference: (transactionReference: string) => void;
-  setPaymentReference: (paymentReference: string) => void;
+  setPaymentReference: (paymentReference: string | null) => void;
   setReservationId: (reservationId: string) => void;
   setApaleoBookingId: (id: string) => void;
   setReservationIds: (ids: string[]) => void;
@@ -78,7 +78,7 @@ export const useBookingStore = create<BookingState>()(
       setTransactionReference: (transactionReference: string) => set((state) => ({ ...state, transactionReference })),
 
       paymentReference: null,
-      setPaymentReference: (paymentReference: string) => set((state) => ({ ...state, paymentReference })),
+      setPaymentReference: (paymentReference: string | null) => set((state) => ({ ...state, paymentReference })),
 
       reservationId: null,
       setReservationId: (reservationId: string) => set((state) => ({ ...state, reservationId })),

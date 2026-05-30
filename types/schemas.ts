@@ -170,3 +170,49 @@ export const guestInfoSchema = z.object({
 })
 
 export type GuestInfoFormData = z.infer<typeof guestInfoSchema>
+
+
+// Pending services payload schema. Used by /api/services/save-pending to
+// reject malformed input before it reaches `pending_services` (which is then
+// trusted by validateServicesPayment and the Adyen webhook). The shape
+// mirrors AddExtrasService in `store/useAddExtras.ts`.
+// YYYY-MM-DD only — extra characters rejected. The validator and helper
+// later compare these against Apaleo date strings sliced to 10 chars, so a
+// trailing-junk acceptance here would have masked malformed input.
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Expected ISO date (YYYY-MM-DD)')
+
+export const addExtrasServiceSchema = z.object({
+  serviceId: z.string().min(1),
+  count: z.number().int().nonnegative().optional(),
+  price: z.number().nonnegative().optional(),
+  dates: z
+    .array(
+      z.object({
+        serviceDate: isoDate,
+        count: z.number().int().nonnegative().optional(),
+        amount: z
+          .object({
+            amount: z.number().nonnegative(),
+            currency: z.string().min(1),
+          })
+          .optional(),
+        isExisting: z.boolean().optional(),
+      }),
+    )
+    .optional(),
+})
+
+// Write side: save-pending requires at least one service — no point in
+// staging an empty payment.
+export const pendingServicesPayloadSchema = z
+  .array(addExtrasServiceSchema)
+  .min(1, 'services must be a non-empty array')
+
+// Read side: no length floor. The validator must tolerate any historical
+// empty array written before this PR shipped, otherwise such rows would
+// pay-and-refund. validateServicesPayment then fail-fasts on
+// `services.length === 0` with a precise `unavailable` reason, so the
+// loose schema doesn't widen the attack surface.
+export const pendingServicesReadSchema = z.array(addExtrasServiceSchema)
+
+export type PendingServicesPayload = z.infer<typeof pendingServicesPayloadSchema>

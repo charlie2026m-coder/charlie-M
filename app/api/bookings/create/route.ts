@@ -124,6 +124,11 @@ async function createApaleoBookingWithRetry(
 }
 
 export async function POST(request: Request) {
+  // Hoisted so the outer catch can log it for post-mortem correlation.
+  // Stays `undefined` if the throw happens before we read the body. The
+  // narrowed `const pspReference` inside the try block is used everywhere
+  // else; this mirror exists only for the catch log.
+  let pspReferenceForCatchLog: string | undefined
   try {
     const booking: Booking = await request.json()
     bookingLog.info('STEP 5 — /bookings/create entered', {
@@ -151,6 +156,16 @@ export async function POST(request: Request) {
       )
     }
     const pspReference = booking.transactionReference
+    pspReferenceForCatchLog = pspReference
+
+    // Adyen rotates the pspReference across the 3DS redirect, so the value the
+    // client posts here (the final, post-3DS psp) does NOT match the
+    // merchantReference under which the pending payload was stored. The pending
+    // row is keyed by the client merchantReference (the UUID used in
+    // save-pending + make-payment validation), so we look it up by that — same
+    // as the Adyen webhook does. The bookings idempotency lock stays keyed on
+    // pspReference below.
+    const merchantReference = booking.paymentReference
 
     const supabase = await createSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -192,6 +207,22 @@ export async function POST(request: Request) {
             { status: 202 }
           )
         }
+
+        if (existingBooking.status === 'failed') {
+          // Previous attempt already failed and the refund (success or manual)
+          // ran. Returning 202 here would trap the client in an "in progress"
+          // state forever. Surface the failure explicitly with `pspReference`
+          // so support can correlate.
+          bookingLog.warn('booking already marked failed — refusing retry', { pspReference })
+          return NextResponse.json(
+            {
+              error: 'BookingPreviouslyFailed',
+              message: `A previous attempt for this payment was rolled back. Please contact support and quote reference: ${pspReference}.`,
+              pspReference,
+            },
+            { status: 410 }
+          )
+        }
       }
 
       const { error: lockError } = await supabaseAdmin.from('bookings').insert({
@@ -221,6 +252,18 @@ export async function POST(request: Request) {
             )
           }
 
+          if (raceBooking?.status === 'failed') {
+            bookingLog.warn('race-fetched booking marked failed — refusing retry', { pspReference })
+            return NextResponse.json(
+              {
+                error: 'BookingPreviouslyFailed',
+                message: `A previous attempt for this payment was rolled back. Please contact support and quote reference: ${pspReference}.`,
+                pspReference,
+              },
+              { status: 410 }
+            )
+          }
+
           return NextResponse.json(
             { message: 'Booking is being processed by another request.', alreadyProcessing: true },
             { status: 202 }
@@ -233,6 +276,100 @@ export async function POST(request: Request) {
         bookingLog.error('lock insert failed — proceeding without lock', { error: lockError })
       }
     }
+
+    // Step 1.5: Source the trusted reservation breakdown from the server-
+    // stored pending payload, not the request body. validatePaymentAmount
+    // already confirmed the pending row matches the Adyen authorization in
+    // aggregate, so it is the trusted source. The body's per-reservation
+    // prepaymentAmount and ratePlanId are otherwise unverified — a crafted
+    // request could under-capture from the authorization (passing the
+    // aggregate cent check while letting folio capture grab less).
+    type FailTrustedReason =
+      | 'reference_missing'
+      | 'pending_query_failed'
+      | 'pending_missing'
+      | 'pending_cleared'
+      | 'pending_invalid'
+    const failTrustedSource = async (code: FailTrustedReason, internalDetail: string) => {
+      bookingLog.error('trusted pending payload unavailable — refunding', {
+        pspReference,
+        code,
+        internalDetail,
+      })
+      await supabaseAdmin
+        .from('bookings')
+        .update({ status: 'failed' })
+        .eq('transaction_reference', pspReference)
+        .eq('status', 'processing')
+      // Best-effort: also mark pending_bookings failed so consistency
+      // dashboards don't surface this row as stuck. Keyed by merchantReference
+      // (the pending_bookings key), not pspReference. Skipped when the
+      // merchantReference is absent (reference_missing) — nothing to match.
+      if (merchantReference) {
+        await supabaseAdmin
+          .from('pending_bookings')
+          .update({ status: 'failed', updated_at: new Date().toISOString() })
+          .eq('reference', merchantReference)
+      }
+      const reversal = await reversePayment(pspReference)
+      if (!reversal.success) {
+        bookingLog.error('trusted-source fail — refund did not complete, manual action required', {
+          pspReference,
+          code,
+          refundError: reversal.error,
+        })
+        return NextResponse.json(
+          {
+            error: 'BookingFailedRefundFailed',
+            message: `Booking could not be completed and the refund did not complete. Please contact support and quote reference: ${pspReference}.`,
+            code,
+            pspReference,
+          },
+          { status: 503 },
+        )
+      }
+      return NextResponse.json(
+        {
+          error: 'TrustedPayloadUnavailable',
+          message: 'Cannot complete booking — payment refunded.',
+          code,
+        },
+        { status: 503 },
+      )
+    }
+
+    // No merchantReference → we can't locate the trusted payload at all.
+    // Fail closed (refund) rather than fall back to the request body.
+    if (!merchantReference) {
+      return await failTrustedSource('reference_missing', 'no paymentReference in request body')
+    }
+
+    const { data: pendingRow, error: pendingErr } = await supabaseAdmin
+      .from('pending_bookings')
+      .select('booking_payload')
+      .eq('reference', merchantReference)
+      .maybeSingle()
+
+    if (pendingErr) {
+      return await failTrustedSource('pending_query_failed', `pending_bookings query failed: ${pendingErr.message}`)
+    }
+    if (!pendingRow?.booking_payload) {
+      return await failTrustedSource('pending_missing', 'no pending_bookings row')
+    }
+    const stored = pendingRow.booking_payload as Booking | { cleared: true }
+    if ('cleared' in stored && stored.cleared) {
+      return await failTrustedSource('pending_cleared', 'pending payload cleared (GDPR delete)')
+    }
+    const trustedBooking = stored as Booking
+    if (!Array.isArray(trustedBooking.reservations) || trustedBooking.reservations.length === 0) {
+      return await failTrustedSource('pending_invalid', 'pending payload has no reservations')
+    }
+
+    // Replace the request body's reservations with the server-stored,
+    // validator-approved breakdown. All downstream code (Apaleo POST,
+    // payment account creation, folio capture) reads `booking.reservations`
+    // — it now sees the trusted values, not whatever the client posted.
+    booking.reservations = trustedBooking.reservations
 
     // Step 2: Create booking in Apaleo
     const token = await getOrRefreshToken()
@@ -296,7 +433,23 @@ export async function POST(request: Request) {
         .eq('status', 'processing')
 
       bookingLog.warn('initiating reversal — payment charged but booking never created', { pspReference })
-      await reversePayment(pspReference)
+      const reversal = await reversePayment(pspReference)
+      if (!reversal.success) {
+        bookingLog.error('apaleo book failed and refund did not complete — manual action required', {
+          pspReference,
+          apaleoStatus: result.status,
+          refundError: reversal.error,
+        })
+        return NextResponse.json(
+          {
+            error: 'BookingFailedRefundFailed',
+            message: `Booking could not be completed and the refund did not complete. Please contact support and quote reference: ${pspReference}.`,
+            details: result.error,
+            pspReference,
+          },
+          { status: 503 }
+        )
+      }
 
       return NextResponse.json(
         {
@@ -316,7 +469,10 @@ export async function POST(request: Request) {
     let paymentAccountIds: string[] = []
 
     // Idempotent cleanup: cancel reservations, cancel created PAs, refund Adyen.
-    const cleanupFailedBooking = async () => {
+    // Returns `reversalOk` so the caller can phrase the response correctly:
+    // refund-failure means the customer is still charged and must contact
+    // support, not "rolled back — payment refunded".
+    const cleanupFailedBooking = async (): Promise<{ reversalOk: boolean }> => {
       bookingLog.error('cleanup initiated', {
         pspReference,
         apaleoBookingId: apaleoData.id,
@@ -336,9 +492,17 @@ export async function POST(request: Request) {
         }
       })
 
-      await reversePayment(pspReference, {
+      const reversal = await reversePayment(pspReference, {
         apaleoPaymentAccountIds: paymentAccountIds,
       })
+      if (!reversal.success) {
+        bookingLog.error('post-booking cleanup — refund did not complete, manual action required', {
+          pspReference,
+          apaleoBookingId: apaleoData.id,
+          paymentAccountIds,
+          refundError: reversal.error,
+        })
+      }
 
       await supabaseAdmin
         .from('bookings')
@@ -348,7 +512,9 @@ export async function POST(request: Request) {
       await supabaseAdmin
         .from('pending_bookings')
         .update({ status: 'failed', updated_at: new Date().toISOString() })
-        .eq('reference', pspReference)
+        .eq('reference', merchantReference)
+
+      return { reversalOk: reversal.success }
     }
 
     // Atomic post-booking block: any throw → cleanup + 502. No partial state
@@ -441,7 +607,18 @@ export async function POST(request: Request) {
         paymentAccountCount: paymentAccountIds.length,
         error: postBookingError instanceof Error ? postBookingError.message : String(postBookingError),
       })
-      await cleanupFailedBooking()
+      const cleanup = await cleanupFailedBooking()
+      if (!cleanup.reversalOk) {
+        return NextResponse.json(
+          {
+            error: 'BookingFailedRefundFailed',
+            message: `Booking could not be completed and the refund did not complete. Please contact support and quote reference: ${pspReference}.`,
+            details: postBookingError instanceof Error ? postBookingError.message : 'Unknown error',
+            pspReference,
+          },
+          { status: 503 }
+        )
+      }
       return NextResponse.json(
         {
           error: 'Booking rolled back — payment refunded',
@@ -483,7 +660,7 @@ export async function POST(request: Request) {
       await supabaseAdmin
         .from('pending_bookings')
         .update({ status: 'completed', apaleo_booking_id: apaleoData.id, updated_at: new Date().toISOString() })
-        .eq('reference', pspReference)
+        .eq('reference', merchantReference)
     } catch {
       // Non-critical.
     }
@@ -498,6 +675,7 @@ export async function POST(request: Request) {
 
   } catch (error) {
     bookingLog.error('create booking — unhandled exception', {
+      pspReference: pspReferenceForCatchLog,
       error: error instanceof Error ? error.message : String(error),
     })
     return NextResponse.json(
