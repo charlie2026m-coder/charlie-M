@@ -33,6 +33,10 @@ export default function PaymentForm({
   // `reference`) instead of writing two rows. Survives 3DS via the
   // `reference` query param on returnUrl.
   const referenceRef = useRef<string | null>(null);
+  // pspReference kept in a ref as well as the store: useAddExtras is NOT
+  // persisted, so after the 3DS redirect the store is empty. The ref survives
+  // the same component lifecycle (set in onSubmit / onAdditionalDetails).
+  const pspReferenceRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (isInitialized.current) return;
@@ -99,7 +103,14 @@ export default function PaymentForm({
                   amount: amountInCents,
                   reference: reference,
                   flow: 'services',
-                  returnUrl: `${window.location.origin}/${urlParams.locale}/profile/reservations/${reservationId}/payment?reference=${reference}`,
+                  // Carry both the merchant UUID AND the charged amount (cents)
+                  // on the returnUrl: useAddExtras is NOT persisted, so after the
+                  // 3DS redirect the store is empty and the page can't recompute
+                  // the total. amountInCents is exactly what Adyen authorizes here
+                  // (== webhook's notification.amount.value); the server re-validates
+                  // it against live Apaleo before booking, so a tampered value only
+                  // triggers a refund, never an incorrect charge.
+                  returnUrl: `${window.location.origin}/${urlParams.locale}/profile/reservations/${reservationId}/payment?reference=${reference}&amount=${amountInCents}`,
                   browserInfo: state.data.browserInfo,
                   checkoutAttemptId: state.data.checkoutAttemptId,
                 }),
@@ -112,12 +123,13 @@ export default function PaymentForm({
 
               const result = await response.json();
               
-              // Save transaction reference to store
+              // Save transaction reference to ref (survives 3DS redirect) and store
               if (result.pspReference) {
+                pspReferenceRef.current = result.pspReference;
                 console.log('💾 Saving pspReference to store:', result.pspReference);
                 setTransactionReference(result.pspReference);
               }
-              
+
               actions.resolve(result);
             } catch (error) {
               console.error("onSubmit error:", error);
@@ -139,6 +151,13 @@ export default function PaymentForm({
               }
 
               const result = await response.json();
+              // 3DS return path: onSubmit did not run again, so capture the
+              // pspReference here into both the ref (reliable after redirect)
+              // and the store.
+              if (result.pspReference) {
+                pspReferenceRef.current = result.pspReference;
+                setTransactionReference(result.pspReference);
+              }
               actions.resolve(result);
             } catch (error) {
               console.error("onAdditionalDetails error:", error);
@@ -148,16 +167,27 @@ export default function PaymentForm({
 
           onPaymentCompleted: async (result: any) => {
             console.log('💳 Payment completed, result:', result);
-            
-            // Get transaction reference from store (saved in onSubmit)
-            const transactionRef = useAddExtrasStore.getState().transactionReference;
-            console.log('📝 Transaction reference from store:', transactionRef);
-            console.log('📦 Selected services:', selectedServices);
-            
-            if (!transactionRef || selectedServices.length === 0) {
-              console.error('❌ Missing transaction reference or services:', {
+
+            // The store is NOT persisted, so after a 3DS redirect its
+            // transactionReference is gone — fall back to pspReferenceRef. The
+            // merchant UUID likewise comes from the ref (recovered from the
+            // returnUrl in init). We do NOT read selectedServices here: the
+            // server derives the services from the pending_services row, so an
+            // empty store after the redirect is expected and fine.
+            const transactionRef = useAddExtrasStore.getState().transactionReference || pspReferenceRef.current;
+            // The merchant UUID is what binds /api/services to the same
+            // pending_services row that the webhook will look up. Missing here
+            // means save-pending never ran (e.g. silent failure) and any
+            // /api/services call would 400; bail and let the webhook handle the
+            // refund via no-pending → notFound + no-op, instead of double-writing.
+            const merchantReference = referenceRef.current;
+            console.log('📝 Transaction reference:', transactionRef, '| reference:', merchantReference);
+
+            if (!transactionRef || !merchantReference) {
+              console.error('❌ Missing transaction reference or merchant reference:', {
                 transactionRef,
-                servicesCount: selectedServices.length
+                merchantReference,
+                hasReferenceInUrl: !!new URLSearchParams(window.location.search).get('reference'),
               });
               toast.error(t('paymentCompletedMissing'));
               return;
@@ -165,23 +195,6 @@ export default function PaymentForm({
 
             setProcessing(true);
             toast.loading(t('addingServicesToReservation'), { id: "add-services" });
-
-            // The merchant UUID is what binds /api/services to the same
-            // pending_services row that the webhook will look up. Missing
-            // here means save-pending never ran (e.g. silent failure) and
-            // any /api/services call would 400; let the webhook handle the
-            // refund via no-pending → notFound + no-op, instead of double-
-            // writing.
-            const merchantReference = referenceRef.current;
-            if (!merchantReference) {
-              console.error('❌ Missing merchant reference — refusing /api/services call', {
-                transactionRef,
-                hasReferenceInUrl: !!new URLSearchParams(window.location.search).get('reference'),
-              });
-              toast.error(t('failedToAddServices'), { id: 'add-services' });
-              setProcessing(false);
-              return;
-            }
 
             try {
               const requestBody = {
@@ -245,22 +258,32 @@ export default function PaymentForm({
 
         const checkout = await AdyenCheckout(configuration);
 
-        const dropin = new Dropin(checkout, {
-          openFirstPaymentMethod: false,
-          openPaymentMethod: {
-            type: "scheme",
-          },
-          paymentMethodsConfiguration: {
-            card: {
-              hasHolderName: true,
-              holderNameRequired: true,
+        // Returning from a 3DS bank redirect — complete the payment instead of
+        // mounting a fresh Drop-in. Adyen appends ?redirectResult=... to the
+        // returnUrl; submitDetails drives onAdditionalDetails → onPaymentCompleted.
+        const redirectResult = new URLSearchParams(window.location.search).get('redirectResult');
+
+        if (redirectResult) {
+          console.log('🔐 Returning from 3DS redirect, submitting details...');
+          checkout.submitDetails({ details: { redirectResult } });
+          setLoading(false);
+        } else {
+          const dropin = new Dropin(checkout, {
+            openFirstPaymentMethod: false,
+            openPaymentMethod: {
+              type: "scheme",
             },
-          },
-        });
+            paymentMethodsConfiguration: {
+              card: {
+                hasHolderName: true,
+                holderNameRequired: true,
+              },
+            },
+          });
 
-        if (dropinRef.current) dropin.mount(dropinRef.current);
-
-        setLoading(false);
+          if (dropinRef.current) dropin.mount(dropinRef.current);
+          setLoading(false);
+        }
       } catch (error) {
         console.error("Error initializing payment:", error);
         toast.error(t('paymentInitFailed'));
