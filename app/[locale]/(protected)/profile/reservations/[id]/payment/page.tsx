@@ -18,7 +18,16 @@ const PaymentPage = () => {
 
   // If returning from 3DS redirect, always show PaymentForm so the
   // submitDetails flow can complete even when the store is empty.
+  // useAddExtras is NOT persisted, so on return the store-derived total is 0 —
+  // the amount the user authorized is carried on the returnUrl `amount` query
+  // param (cents). The server re-validates it against live Apaleo before
+  // booking, so a tampered value triggers a refund, never an incorrect charge.
   const isReturningFrom3DS = !!searchParams.get('redirectResult')
+  const amountParamCents = Number(searchParams.get('amount'))
+  const amountFromRedirect =
+    isReturningFrom3DS && Number.isInteger(amountParamCents) && amountParamCents > 0
+      ? amountParamCents / 100
+      : null
 
   if (selectedServices.length === 0 && !isReturningFrom3DS) {
     return (
@@ -55,7 +64,9 @@ const PaymentPage = () => {
     { nights },
     existingCleaningDates,
   )
-  const totalAmount = totalCents / 100
+  // Prefer the amount carried across the 3DS redirect; fall back to the
+  // store-derived total on the normal (pre-redirect) render.
+  const totalAmount = amountFromRedirect ?? totalCents / 100
 
   return (
     <div className='flex flex-col flex-1 p-3 lg:p-[30px]'>
