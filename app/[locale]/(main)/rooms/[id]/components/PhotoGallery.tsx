@@ -1,6 +1,6 @@
 'use client'
 import { IoMdImage } from "react-icons/io";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from 'next/image'
 import { Dialog, DialogContent } from "@/app/_components/ui/dialog";
 
@@ -12,6 +12,22 @@ const PhotoGallery = ({ images, roomName }: { images: string[]; roomName?: strin
   // Check if there are no images
   const hasImages = images && images.length > 0
 
+  const nextPhoto = useCallback(() => {
+    setShowImages((current) => {
+      if (current === null) return null
+      if (current === images.length - 1) return 0
+      return current + 1
+    })
+  }, [images.length])
+
+  const prevPhoto = useCallback(() => {
+    setShowImages((current) => {
+      if (current === null) return null
+      if (current === 0) return images.length - 1
+      return current - 1
+    })
+  }, [images.length])
+
   useEffect(() => {
     if (showImages === null) return
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -20,24 +36,16 @@ const PhotoGallery = ({ images, roomName }: { images: string[]; roomName?: strin
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [showImages])
+  }, [showImages, prevPhoto, nextPhoto])
 
-  const nextPhoto = () => {
-    if (showImages === null) return
-    if (showImages === images.length - 1) {
-      setShowImages(0) // Loop to first image
-    } else {
-      setShowImages(showImages + 1)
-    }
+  const handlePrevClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    prevPhoto()
   }
 
-  const prevPhoto = () => {
-    if (showImages === null) return
-    if (showImages === 0) {
-      setShowImages(images.length - 1) // Loop to last image
-    } else {
-      setShowImages(showImages - 1)
-    }
+  const handleNextClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    nextPhoto()
   }
 
   // Show placeholder if no images
@@ -112,8 +120,17 @@ const PhotoGallery = ({ images, roomName }: { images: string[]; roomName?: strin
           </div>
         )}
       </div>
-      <Dialog open={showImages !== null} onOpenChange={() => setShowImages(null)}>
-        <DialogContent className='p-0 !rounded-none w-fit max-w-[95vw] md:max-w-[90vw] overflow-hidden [&>button]:text-white [&>button]:z-10 [&>button]:top-2 [&>button]:right-2'>
+      <Dialog
+        open={showImages !== null}
+        onOpenChange={(open) => {
+          if (!open) setShowImages(null)
+        }}
+      >
+        <DialogContent
+          className='p-0 !rounded-none w-fit max-w-[95vw] md:max-w-[90vw] overflow-hidden [&>button]:text-white [&>button]:z-10 [&>button]:top-2 [&>button]:right-2'
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
           <div className='flex items-center justify-center select-none'>
             <div className='relative'>
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -123,10 +140,10 @@ const PhotoGallery = ({ images, roomName }: { images: string[]; roomName?: strin
                 className='w-auto h-auto max-w-[95vw] md:max-w-[90vw] max-h-[80vh] block cursor-pointer'
                 onClick={nextPhoto}
               />
-              <div onClick={prevPhoto} className='absolute left-0 top-0 bottom-0 w-10 md:w-16 flex items-center justify-center cursor-pointer bg-gradient-to-l from-transparent to-black/40'>
+              <div onClick={handlePrevClick} className='absolute left-0 top-0 bottom-0 w-10 md:w-16 flex items-center justify-center cursor-pointer bg-gradient-to-l from-transparent to-black/40'>
                 <IoChevronBack className='size-10 md:size-16 text-white drop-shadow-lg' />
               </div>
-              <div onClick={nextPhoto} className='absolute right-0 top-0 bottom-0 w-10 md:w-16 flex items-center justify-center cursor-pointer bg-gradient-to-r from-transparent to-black/40'>
+              <div onClick={handleNextClick} className='absolute right-0 top-0 bottom-0 w-10 md:w-16 flex items-center justify-center cursor-pointer bg-gradient-to-r from-transparent to-black/40'>
                 <IoChevronForward className='size-10 md:size-16 text-white drop-shadow-lg' />
               </div>
               <div className='absolute bottom-3 left-1/2 -translate-x-1/2 text-white text-sm font-medium bg-black/40 px-3 py-1 rounded-full whitespace-nowrap'>
