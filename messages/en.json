@@ -5,6 +5,10 @@
   "check_in_btn": "Check In",
   "sign_in_btn": "Login",
   "loading": "Loading...",
+  "phoneInput": {
+    "searchPlaceholder": "Search country or code...",
+    "empty": "No country found."
+  },
   "discount": {
     "text": "Get the best rate directly with us"
   },
@@ -575,6 +579,7 @@
     "firstName": "First Name",
     "billingData": "Billing Data",
     "billingDataDescription": "Please review your billing details before generating the invoice",
+    "invalidPhone": "Invalid phone number",
     "generateInvoice": "Generate Invoice",
     "generatingInvoice": "Generating...",
     "invoiceGenerated": "Invoice generated successfully",

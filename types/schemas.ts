@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isValidPhoneNumber } from "@/lib/phone";
 
 // More permissive email regex that allows short local parts (like "a@domain.com")
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -81,8 +82,8 @@ export const guestDetailsSchema = z.object({
     .min(1, 'Email is required')
     .regex(emailRegex, 'Invalid email address'),
   phone: z.string()
-    .min(10, 'Phone number must be at least 10 digits')
-    .regex(/^[0-9+\s()-]+$/, 'Invalid phone number format'),
+    .min(1, 'Phone number is required')
+    .refine((value) => isValidPhoneNumber(value), 'Invalid phone number'),
     company_name: z.string().optional().or(z.literal('')),
     street_address: z.string()
       .min(2, 'Street address must be at least 2 characters')
@@ -118,6 +119,7 @@ export const profileDetailsSchema = z.object({
     .min(1, 'Email is required')
     .regex(emailRegex, 'Invalid email address'),
   phone: z.string()
+    .refine((value) => !value || isValidPhoneNumber(value), 'Invalid phone number')
     .optional()
     .or(z.literal('')),
 })
