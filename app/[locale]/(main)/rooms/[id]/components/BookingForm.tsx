@@ -19,6 +19,10 @@ import TaxesInfo from "@/app/_components/ui/Taxes"
 import { useStore } from "@/store/useStore"
 import { UrlParams } from "@/types/apaleo"
 import { getRoomPrice } from "@/app/actions/apaleo/rooms/getRoomPrice"
+import {
+  BOOKING_SECTION_ID,
+  setScrollToBookingOnNextPage,
+} from "@/app/hooks/useScrollToBookingSection"
 
 const BookingForm = ({
   id,
@@ -151,8 +155,9 @@ const BookingForm = ({
       adults: guests.adults.toString(),
       children: guests.children.toString(),
     })
+    setScrollToBookingOnNextPage()
     startNavigation(() => {
-      router.push(`/booking/${id}?${queryString}`)
+      router.push(`/booking/${id}?${queryString}#${BOOKING_SECTION_ID}`)
     })
   }
 

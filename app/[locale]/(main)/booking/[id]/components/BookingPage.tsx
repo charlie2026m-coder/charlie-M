@@ -14,6 +14,10 @@ import { useBookingStore } from "@/store/useBookingStore"
 import { calculateNights } from "@/lib/utils"
 import { resolveRatePlan } from "@/lib/Constants"
 import { useTranslations } from "next-intl"
+import {
+  BOOKING_SECTION_ID,
+  useScrollToBookingSection,
+} from "@/app/hooks/useScrollToBookingSection"
 
 const BookingPage = ({
   params,
@@ -47,12 +51,14 @@ const BookingPage = ({
   const mainRoom = resolveRatePlan(rooms, nights, false)
   const tCommon = useTranslations()
 
+  useScrollToBookingSection()
+
   // When Apaleo is unavailable, show Supabase content with date picker only
   if (isUnavailable && roomDetail) {
     return (
       <>
         <PhotoGallery images={roomDetail.photos || []} />
-        <div className='grid grid-cols-1 lg:grid-cols-3 mb-[30px]'>
+        <div id={BOOKING_SECTION_ID} className='scroll-mt-24 grid grid-cols-1 lg:grid-cols-3 mb-[30px]'>
           <div className='col-span-1 lg:col-span-2 flex flex-col lg:pr-10'>
             <RoomContent room={{ name: roomDetail.title_en, attributes: roomDetail.attributes, maxPersons: roomDetail.max_persons, size: roomDetail.size, description: roomDetail.description_en ?? '', images: roomDetail.photos } as any} />
           </div>
@@ -129,7 +135,7 @@ const BookingPage = ({
   return (
     <>  
       <PhotoGallery images={mainRoom.images || []} />
-      <div className='grid grid-cols-1  lg:grid-cols-3 mb-[30px]'>
+      <div id={BOOKING_SECTION_ID} className='scroll-mt-24 grid grid-cols-1 lg:grid-cols-3 mb-[30px]'>
         <div className='col-span-1 lg:col-span-2 flex flex-col lg:pr-10'>
           <RoomContent room={mainRoom} />
           {extras.length > 0 && 
