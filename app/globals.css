@@ -222,12 +222,3 @@ main {
   z-index: 1 !important;
   position: relative !important;
 }
-[data-radix-portal] {
-  z-index: 2147483647 !important;
-}
-[data-radix-popper-content-wrapper] {
-  z-index: 2147483647 !important;
-}
-[data-slot="popover-content"] {
-  z-index: 2147483647 !important;
-}
