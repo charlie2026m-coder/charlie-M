@@ -6,8 +6,10 @@ import { RiSearchLine } from "react-icons/ri";
 import { DateInput } from '@/app/_components/ui/DateInput';
 import { Guests } from '@/app/_components/ui/guests';
 import { Calendar } from '@/app/_components/ui/calendar';
+import { DateRange } from 'react-day-picker';
 import { Button } from '@/app/_components/ui/button'
 import { useRouter } from 'next/navigation';
+import { usePathname } from '@/navigation';
 import { useStore } from '@/store/useStore';
 import { UrlParams } from '@/types/apaleo';
 import { useTranslations } from 'next-intl';
@@ -17,11 +19,16 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
   const t = useTranslations('dateInput');
   const { dateRange, guests, setValue } = useStore();
   const router = useRouter();
+  const pathname = usePathname();
+  const isRoomsPage = pathname === '/rooms';
   const [openCalendar, setOpenCalendar] = useState(false);
   const [dateError, setDateError] = useState(false);
   const [numberOfMonths, setNumberOfMonths] = useState(1);
   const [pickingCheckout, setPickingCheckout] = useState(false);
   const checkinRef = useRef<Date | undefined>(undefined);
+  const [hasAppliedOnce, setHasAppliedOnce] = useState(
+    () => Boolean(params?.from && params?.to)
+  );
 
   useEffect(() => {
     const update = () => setNumberOfMonths(window.innerWidth >= 1024 ? 2 : 1);
@@ -62,26 +69,38 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const hasDateError = !dateRange?.from || !dateRange?.to;
+  const triggerSearch = (rangeOverride?: DateRange, closeCalendar = false) => {
+    const r = rangeOverride ?? dateRange;
+    const hasDateError = !r?.from || !r?.to;
     setDateError(hasDateError);
 
     if (hasDateError) return;
 
+    const from = getDate(r.from!) ?? '';
+    const to = getDate(r.to!) ?? '';
+    trackSearch({ arrival: from, departure: to, guests: guests.adults + guests.children });
     const queryString = getPath({
-      from: getDate(dateRange.from!),
-      to: getDate(dateRange.to!),
+      from,
+      to,
       adults: guests.adults.toString(),
       children: guests.children.toString(),
     });
-    const arrival = getDate(dateRange.from!);
-    const departure = getDate(dateRange.to!);
-    if (arrival && departure) {
-      trackSearch({ arrival, departure, guests: guests.adults + guests.children });
-    }
     router.push(`/rooms?${queryString}`);
+    setHasAppliedOnce(true);
+    if (closeCalendar) setOpenCalendar(false);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    triggerSearch();
+  };
+
+  const handleApply = () => {
+    if (isRoomsPage) {
+      triggerSearch(undefined, true);
+      return;
+    }
+    setOpenCalendar(false);
   };
 
   const getNights = () => {
@@ -135,9 +154,13 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
                   const start = checkinRef.current!;
                   if (triggerDate.getTime() >= start.getTime()) {
                     // Клик после start — завершаем range
-                    setValue({ from: start, to: triggerDate }, 'dateRange');
+                    const newRange = { from: start, to: triggerDate };
+                    setValue(newRange, 'dateRange');
                     checkinRef.current = undefined;
                     setPickingCheckout(false);
+                    if (isRoomsPage && hasAppliedOnce) {
+                      triggerSearch(newRange, false);
+                    }
                   } else {
                     // Клик до start — двигаем start, остаёмся в режиме выбора конца
                     checkinRef.current = triggerDate;
@@ -153,14 +176,14 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
           <div className='h-12 flex items-center border-t font-semibold'>
             {getNights() ?? ''}
           </div>
-          <div className='grid grid-cols-2 gap-2 md:hidden'>
+          <div className={cn('grid grid-cols-2 gap-2', isRoomsPage ? '' : 'md:hidden')}>
             <Button onClick={resetForm} className='w-full text-sm md:text-base h-10' variant='outline'>{t('cancel')}</Button>
-            <Button onClick={() => setOpenCalendar(false)} className='w-full text-sm md:text-base h-10'>{t('apply')}</Button>
+            <Button onClick={handleApply} className='w-full text-sm md:text-base h-10'>{t('apply')}</Button>
           </div>
         </DateInput>
       </label>
       <label className='w-full max-w-2/5 border-l md:border-none'>
-        <Guests setValue={(value) => setValue(value, 'guests')} value={guests} />
+        <Guests setValue={(value) => { setValue(value, 'guests'); setHasAppliedOnce(false); }} value={guests} />
       </label>
       <Button
         className={cn('cursor-pointer size-10 active:scale-95 md:size-15 flex items-center justify-center rounded-full transition-all duration-300 bg-blue hover:bg-blue/80')}
