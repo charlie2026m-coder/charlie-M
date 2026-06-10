@@ -1,5 +1,5 @@
 'use client';
-import { cn, getDate, getPath } from '@/lib/utils';
+import { cn, getDate, getPath, getMinArrivalDate } from '@/lib/utils';
 import { trackSearch } from '@/lib/analytics';
 import { useEffect, useRef, useState } from 'react';
 import { RiSearchLine } from "react-icons/ri";
@@ -30,6 +30,8 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
     return () => window.removeEventListener('resize', update);
   }, []);
 
+  const minArrivalDate = getMinArrivalDate()
+
   // Handle URL params
   useEffect(() => {
     if (params) {
@@ -52,11 +54,10 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
   // Set default dates only once on mount if no params and no dateRange
   useEffect(() => {
     if (!params && (!dateRange?.from || !dateRange?.to)) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      setValue({ from: today, to: tomorrow }, 'dateRange');
+      const from = getMinArrivalDate();
+      const to = new Date(from);
+      to.setDate(to.getDate() + 1);
+      setValue({ from, to }, 'dateRange');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -145,7 +146,7 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
                 }
                 if (dateError) setDateError(false);
               }}
-              disabled={{ before: new Date() }}
+              disabled={{ before: minArrivalDate }}
               classNames={{ months: 'flex flex-col lg:flex-row gap-4' }}
             />
           </div>

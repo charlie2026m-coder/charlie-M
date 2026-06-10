@@ -5,7 +5,7 @@ import { Guests } from "@/app/_components/ui/guests"
 import { Button } from "@/app/_components/ui/button"
 import { Calendar } from "@/app/_components/ui/calendar"
 import { Spinner } from "@/app/_components/ui/spinner"
-import { useState, useEffect, useTransition } from "react"
+import { useState, useEffect, useMemo, useTransition } from "react"
 import { DateRange } from "react-day-picker"
 import { useRouter } from "@/navigation"
 import { useQuery } from "@tanstack/react-query"
@@ -13,7 +13,7 @@ import { useTranslations } from "next-intl"
 import { BsFillPersonFill } from "react-icons/bs"
 import dayjs from "dayjs"
 
-import { getDate, getPath, calculateNights, calculateTotalTaxes } from "@/lib/utils"
+import { getDate, getPath, getMinArrivalDate, calculateNights, calculateTotalTaxes } from "@/lib/utils"
 import { resolveRatePlan } from "@/lib/Constants"
 import TaxesInfo from "@/app/_components/ui/Taxes"
 import { useStore } from "@/store/useStore"
@@ -37,6 +37,8 @@ const BookingForm = ({
   const dateRangeStore = useStore(state => state.dateRange)
   const guestsStore = useStore(state => state.guests)
   const setValue = useStore(state => state.setValue)
+
+  const minArrivalDate = useMemo(() => getMinArrivalDate(), []);
 
   const [openCheckIn, setOpenCheckIn] = useState(false)
   const [dateError, setDateError] = useState(false)
@@ -222,7 +224,7 @@ const BookingForm = ({
                   setDateRange(date as DateRange)
                 }
               }}
-              disabled={{ before: new Date() }}
+              disabled={{ before: minArrivalDate }}
             />
           </DateInput>
           {dateError && (
