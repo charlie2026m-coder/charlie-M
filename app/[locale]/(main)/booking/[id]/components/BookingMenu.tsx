@@ -8,7 +8,8 @@ import { Room } from '@/types/types';
 import ChangeDate from './ChangeDate';
 import AddRooms from './AddRooms';
 import Price from "@/app/_components/ui/price";
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
+import { useRouter } from '@/navigation';
 import { useTranslations } from 'next-intl';
 import { Spinner } from '@/app/_components/ui/spinner';
 import TaxesInfo from '@/app/_components/ui/Taxes';
@@ -33,7 +34,6 @@ const BookingMenu = ({
   const tCommon = useTranslations()
   const router = useRouter()
   const urlParams = useParams()
-  const locale = urlParams.locale as 'en' | 'de'
   const { from, to } = params
   const nights = calculateNights(from as string, to as string)
   const setBooking = useBookingStore(state => state.setBooking)
@@ -103,7 +103,7 @@ const BookingMenu = ({
       totalAmount,
     })
 
-    router.push(`/${urlParams.locale}/booking/${urlParams.id}/payment`)
+    router.push(`/booking/${urlParams.id}/payment`, { scroll: true })
   }
 
 
