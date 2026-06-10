@@ -14,6 +14,7 @@ function Calendar({
   className,
   classNames,
   showOutsideDays = true,
+  fixedWeeks = true,
   captionLayout = "label",
   buttonVariant = "ghost",
   formatters,
@@ -27,6 +28,7 @@ function Calendar({
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
+      fixedWeeks={fixedWeeks}
       className={cn(
         " w-full rounded-[20px] group/calendar [--cell-size:--spacing(8)] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent",
         String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,
@@ -110,7 +112,7 @@ function Calendar({
           defaultClassNames.today
         ),
         outside: cn(
-          "text-blue aria-selected:text-blue",
+          "text-gray-300 aria-selected:text-gray-300 pointer-events-none",
           defaultClassNames.outside
         ),
         disabled: cn(
@@ -196,8 +198,9 @@ function CalendarDayButton({
       data-range-start={modifiers.range_start}
       data-range-end={modifiers.range_end}
       data-range-middle={modifiers.range_middle}
+      data-outside={modifiers.outside}
       className={cn(
-        "rounded-none text-[14px] max-h-[40px] bg-white text-gray-900 hover:bg-gray-50 data-[selected-single=true]:bg-blue data-[selected-single=true]:text-white data-[selected-single=true]:rounded-l-[4px] data-[selected-single=true]:!rounded-r-none data-[range-middle=true]:bg-blue data-[range-middle=true]:text-white data-[range-start=true]:bg-blue data-[range-start=true]:text-white data-[range-start=true]:rounded-l-[4px] data-[range-start=true]:!rounded-r-none data-[range-end=true]:bg-blue data-[range-end=true]:text-white data-[range-end=true]:rounded-r-[4px] data-[range-end=true]:!rounded-l-none dark:hover:text-accent-foreground flex aspect-square size-auto w-full min-w-(--cell-size) flex-col gap-1 leading-none font-normal [&>span]:text-xs [&>span]:opacity-70",
+        "rounded-none text-[14px] max-h-[40px] bg-white text-gray-900 hover:bg-gray-50 data-[selected-single=true]:bg-blue data-[selected-single=true]:text-white data-[selected-single=true]:rounded-l-[4px] data-[selected-single=true]:!rounded-r-none data-[range-middle=true]:bg-blue data-[range-middle=true]:text-white data-[range-start=true]:bg-blue data-[range-start=true]:text-white data-[range-start=true]:rounded-l-[4px] data-[range-start=true]:!rounded-r-none data-[range-end=true]:bg-blue data-[range-end=true]:text-white data-[range-end=true]:rounded-r-[4px] data-[range-end=true]:!rounded-l-none data-[outside=true]:text-gray-300 data-[outside=true]:pointer-events-none data-[outside=true]:hover:bg-white dark:hover:text-accent-foreground flex aspect-square size-auto w-full min-w-(--cell-size) flex-col gap-1 leading-none font-normal [&>span]:text-xs [&>span]:opacity-70",
         defaultClassNames.day,
         className
       )}
