@@ -16,6 +16,12 @@ const SHOW_THRESHOLD = 400
 const HIDE_THRESHOLD_WITH_DISCOUNT = 60
 const HIDE_THRESHOLD_WITHOUT_DISCOUNT = 0
 
+export function getHideThreshold(isDiscountClosed: boolean): number {
+  return isDiscountClosed
+    ? HIDE_THRESHOLD_WITHOUT_DISCOUNT
+    : HIDE_THRESHOLD_WITH_DISCOUNT
+}
+
 export const useScrollStore = create<ScrollState>((set, get) => ({
   scrollY: 0,
   scrollDirection: 'down',
@@ -26,9 +32,7 @@ export const useScrollStore = create<ScrollState>((set, get) => ({
   updateScroll: (newY) => {
     const state = get()
     const direction: 'up' | 'down' = newY > state.scrollY ? 'down' : 'up'
-    const hideThreshold = state.isDiscountClosed
-      ? HIDE_THRESHOLD_WITHOUT_DISCOUNT
-      : HIDE_THRESHOLD_WITH_DISCOUNT
+    const hideThreshold = getHideThreshold(state.isDiscountClosed)
 
     let isHeaderVisible = state.isHeaderVisible
 

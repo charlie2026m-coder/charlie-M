@@ -11,21 +11,18 @@ interface StickyHeaderProps {
 
 const StickyHeader = ({ locale, isWhite = false }: StickyHeaderProps) => {
   const isVisible = useScrollStore(s => s.isHeaderVisible);
-  const isAtTop = useScrollStore(s => s.scrollY < 60);
 
   return (
     <div
       className={cn(
-        'fixed top-0 left-0 right-0 z-50 bg-white/95 shadow-lg ease-out',
-        isVisible
-          ? 'translate-y-0 opacity-100 transition-all duration-300'
-          : isAtTop
-            ? 'translate-y-0 opacity-0 pointer-events-none transition-opacity duration-500'
-            : '-translate-y-full opacity-100 transition-transform duration-300'
+        'fixed top-0 left-0 right-0 z-50 bg-white/95 shadow-lg ease-out transition-transform duration-300',
+        isVisible ? 'translate-y-0' : '-translate-y-full'
       )}
       style={{
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
+        opacity: isVisible ? 1 : 0,
+        transitionDuration: '300ms',
       }}
     >
       <Header locale={locale} isWhite={isWhite} />
