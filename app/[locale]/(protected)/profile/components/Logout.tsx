@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/app/_components/ui/ClientDialog'
 import { Button } from '@/app/_components/ui/button'
 import { IoLogOut } from 'react-icons/io5'
@@ -9,7 +9,13 @@ import Image from 'next/image'
 import { useTranslations } from 'next-intl'
 import { useRouter } from '@/navigation'
 
-const Logout = () => {
+const Logout = ({
+  trigger,
+  onSuccess,
+}: {
+  trigger?: ReactNode
+  onSuccess?: () => void
+}) => {
   const t = useTranslations('profile')
   const [isOpen, setIsOpen] = useState(false)
   const logoutMutation = useLogout()
@@ -19,12 +25,14 @@ const Logout = () => {
     try {
       await logoutMutation.mutateAsync()
       setIsOpen(false)
+      onSuccess?.()
     } catch (error) {
       // Even if logout fails (e.g., no session), redirect to home
       console.error('Logout error:', error)
       sessionStorage.removeItem('guestMode')
       sessionStorage.removeItem('guestData')
       setIsOpen(false)
+      onSuccess?.()
       router.push('/')
       router.refresh()
     }
@@ -33,13 +41,15 @@ const Logout = () => {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <div 
-          className={cn(
-            'flex items-center p-2.5 rounded-[16px] gap-2 w-full cursor-pointer hover:bg-light-bg transition-all duration-300 text-mute'
-          )}
-        >
-          <IoLogOut className='size-6 text-blue' /> {t('logout')}
-        </div>
+        {trigger ?? (
+          <div 
+            className={cn(
+              'flex items-center p-2.5 rounded-[16px] gap-2 w-full cursor-pointer hover:bg-light-bg transition-all duration-300 text-mute'
+            )}
+          >
+            <IoLogOut className='size-6 text-blue' /> {t('logout')}
+          </div>
+        )}
       </DialogTrigger>
       
       <DialogContent className='w-[90%] max-w-[600px] px-6 rounded-3xl gap-0'>
