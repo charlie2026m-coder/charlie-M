@@ -83,20 +83,7 @@ const BookingPage = ({
     const storedRooms = useBookingStore.getState().rooms
     
     const currentBookingId = `${mainRoom.id || mainRoom.ratePlan?.id}-${from}-${to}-${adults}-${children}`
-    const babyBedService = extras.find(extra => extra.id === 'CMH-BAB')
-    const roomsWithBabyBeds: Room[] = filledRooms.map(room => {
-      if (room.children > 0 && isKidsBedAvailable && babyBedService) {
-        return {
-          ...room,
-          extras: [{
-            ...babyBedService,
-            totalPrice: Math.round(babyBedService.price * nights * 100) / 100
-          }],
-        }
-      }
-      return room
-    })
-    
+
     if (storedBookingId && storedBookingId !== currentBookingId) {
       if (isExtend && booking?.booker) {
         const savedBooker = booking.booker
@@ -112,12 +99,12 @@ const BookingPage = ({
         clearBooking()
       }
       
-      setRooms(roomsWithBabyBeds)
+      setRooms(filledRooms as Room[])
       setBookingId(currentBookingId)
     } else if (!storedBookingId) {
       if (!storedRooms || storedRooms.length === 0) {
         setBookingId(currentBookingId)
-        setRooms(roomsWithBabyBeds)
+        setRooms(filledRooms as Room[])
       } else {
         setBookingId(currentBookingId)
       }

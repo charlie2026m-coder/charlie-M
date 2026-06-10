@@ -406,7 +406,11 @@
   "addRooms": {
     "room": "Zimmer",
     "addRoom": "Zimmer hinzufügen",
-    "left": "noch verfügbar"
+    "left": "noch verfügbar",
+    "cribOption": "Babybett",
+    "cribRequiresBaby": "Fügen Sie zuerst ein Baby hinzu, um ein Babybett auszuwählen",
+    "cribUnavailable": "Kein Babybett für die gewählten Daten verfügbar",
+    "cribVisibleInExtras": "Wird in Extras und im Gesamtpreis angezeigt"
   },
   "bookingForm": {
     "title": "BUCHEN",

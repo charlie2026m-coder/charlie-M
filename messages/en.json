@@ -406,7 +406,11 @@
   "addRooms": {
     "room": "Room",
     "addRoom": "Add Room",
-    "left": "left"
+    "left": "left",
+    "cribOption": "Crib",
+    "cribRequiresBaby": "Add a baby first to select a crib",
+    "cribUnavailable": "No crib available for selected dates",
+    "cribVisibleInExtras": "Shown in extras and total price"
   },
   "bookingForm": {
     "title": "BOOK",
