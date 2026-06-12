@@ -210,7 +210,7 @@ const BookingForm = ({
               mode="range"
               captionLayout="label"
               selected={dateRange}
-              month={visibleMonth}
+              defaultMonth={visibleMonth}
               onMonthChange={setVisibleMonth}
               excludeDisabled
               modifiers={{ soldOut: isSoldOut }}

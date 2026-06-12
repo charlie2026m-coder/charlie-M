@@ -172,7 +172,7 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
               captionLayout="label"
               numberOfMonths={numberOfMonths}
               selected={dateRange}
-              month={visibleMonth}
+              defaultMonth={visibleMonth}
               onMonthChange={setVisibleMonth}
               excludeDisabled
               modifiers={{ soldOut: isSoldOut }}
