@@ -1,4 +1,5 @@
 'use client'
+import { useLayoutEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useBookingStore } from '@/store/useBookingStore'
 import { GuestDetailsFormData } from '@/types/schemas'
@@ -9,6 +10,10 @@ const GuestDetailsPage = () => {
   const params = useParams()
   const setBooking = useBookingStore(state => state.setBooking)
   const booking = useBookingStore(state => state.booking)
+
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
 
   const handleSubmit = (data: GuestDetailsFormData) => {
     if (!booking?.reservations) {

@@ -1,8 +1,10 @@
 'use client'
 import CustomInput from "@/app/_components/ui/customInput";
-import { useForm } from "react-hook-form";
+import PhoneInput from "@/app/_components/ui/PhoneInput";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ProfileDetailsFormData, profileDetailsSchema } from "@/types/schemas";
+import { toE164 } from "@/lib/phone";
 import { Button } from "@/app/_components/ui/button";
 import { useProfile } from "@/app/hooks/useProfile";
 import { useEffect, useState } from "react";
@@ -40,6 +42,7 @@ export default function Profile() {
   // Profile form
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors, isDirty: isProfileDirty },
     reset,
@@ -70,7 +73,7 @@ export default function Profile() {
         name: profile.name || '',
         last_name: profile.last_name || '',
         email: profile.email || '',
-        phone: profile.mobile || '',
+        phone: toE164(profile.mobile),
       });
     }
   }, [profile, reset]);
@@ -183,13 +186,17 @@ export default function Profile() {
           </div>
           
           <div className='relative flex flex-col gap-1 '>
-            <CustomInput 
-              register={register}
-              name='phone' 
-              type='phone' 
-              placeholder={t('phone')} 
-              icon='phone'
-              isError={!!errors.phone}
+            <Controller
+              name='phone'
+              control={control}
+              render={({ field }) => (
+                <PhoneInput
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  placeholder={t('phone')}
+                  error={!!errors.phone}
+                />
+              )}
             />
             {errors.phone && (
               <span className='absolute -bottom-5 left-0 text-red text-xs pl-4'>{errors.phone.message}</span>

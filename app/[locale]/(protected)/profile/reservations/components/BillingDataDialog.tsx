@@ -11,6 +11,8 @@ import {
 } from '@/app/_components/ui/dialog'
 import { Button } from '@/app/_components/ui/button'
 import { CountrySelect } from '@/app/_components/ui/CountrySelect'
+import PhoneInput from '@/app/_components/ui/PhoneInput'
+import { isValidPhoneNumber, toE164 } from '@/lib/phone'
 import { useUpdateDebitor, useCreateInvoice, useDownloadInvoicePdf, InvoiceCreateError } from '@/app/hooks/useInvoice'
 import { EMAIL } from '@/lib/Constants'
 import type { FolioDebitor, InvoiceWarningType } from '@/types/apaleo'
@@ -57,7 +59,7 @@ function toForm(debitor: FolioDebitor | null): BillingForm {
     firstName: debitor?.firstName ?? '',
     lastName: debitor?.name ?? '',
     email: debitor?.email ?? '',
-    phone: debitor?.phone ?? '',
+    phone: toE164(debitor?.phone),
     companyName: debitor?.company?.name ?? '',
     companyTaxId: debitor?.company?.taxId ?? '',
     addressLine1: debitor?.address?.addressLine1 ?? '',
@@ -104,6 +106,7 @@ export function BillingDataDialog({
   const downloadPdf = useDownloadInvoicePdf()
 
   const isBusy = updateDebitor.isPending || createInvoice.isPending || downloadPdf.isPending
+  const phoneInvalid = !!form.phone && !isValidPhoneNumber(form.phone)
   const requiredMissing =
     !form.lastName.trim() ||
     !form.city.trim() ||
@@ -118,7 +121,7 @@ export function BillingDataDialog({
     setForm((prev) => ({ ...prev, [field]: e.target.value }))
 
   const handleGenerate = async () => {
-    if (requiredMissing) return
+    if (requiredMissing || phoneInvalid) return
     setErrorMessage(null)
     const debitorPayload = toDebitor(form)
     try {
@@ -178,7 +181,14 @@ export function BillingDataDialog({
             </div>
             <div className='relative'>
               <label className={labelClass}>{t('phone')}</label>
-              <input type='tel' value={form.phone} onChange={set('phone')} className={inputClass} />
+              <PhoneInput
+                value={form.phone}
+                onChange={(value) => setForm((prev) => ({ ...prev, phone: value }))}
+                error={phoneInvalid}
+              />
+              {phoneInvalid && (
+                <span className='absolute -bottom-4 left-1 text-red text-xs'>{t('invalidPhone')}</span>
+              )}
             </div>
           </div>
 
@@ -276,7 +286,7 @@ export function BillingDataDialog({
 
           <Button
             onClick={handleGenerate}
-            disabled={isBusy || requiredMissing}
+            disabled={isBusy || requiredMissing || phoneInvalid}
             className='w-full mt-2'
           >
             {isBusy ? t('generatingInvoice') : t('generateInvoice')}

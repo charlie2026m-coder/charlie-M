@@ -93,12 +93,11 @@ async function getRoomsInternal(
       };
     });
 
-    const availableRooms = guests < 2
-      ? formattedRooms
-      : formattedRooms.filter(room => {
-          const volume = room.maxPersons * room.availableUnits;
-          return volume >= guests;
-        });
+    const availableRooms = formattedRooms.filter((room) => {
+      if (room.availableUnits < 1) return false;
+      if (guests < 2) return true;
+      return room.maxPersons * room.availableUnits >= guests;
+    });
 
     return availableRooms as RoomOffer[];
   } catch (e: unknown) {
