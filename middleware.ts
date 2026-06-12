@@ -12,7 +12,9 @@ const intlMiddleware = createMiddleware({
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  if (pathname.startsWith('/admin') || pathname.startsWith('/auth') || pathname.startsWith('/api')) {
+  // /checkout/{token} is the guest QR self-checkout — locale-free by design
+  // (printed QR URLs must stay short; the page has its own DE/EN toggle).
+  if (pathname.startsWith('/admin') || pathname.startsWith('/auth') || pathname.startsWith('/api') || pathname.startsWith('/checkout')) {
     return NextResponse.next();
   }
 
@@ -21,7 +23,7 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Match all pathnames EXCEPT admin, api, auth/callback and system files
-    '/((?!admin|api|auth/callback|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // Match all pathnames EXCEPT admin, api, auth/callback, checkout and system files
+    '/((?!admin|api|auth/callback|checkout|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
