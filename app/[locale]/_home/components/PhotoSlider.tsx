@@ -47,7 +47,9 @@ const PhotoSlider = ({
   }
 
   return (
-    <div className="relative">
+    // data-photo-slider: swipes starting here flip photos (inner carousel),
+    // the outer rooms carousel ignores them via its watchDrag callback
+    <div className="relative" data-photo-slider>
       <Carousel
         className="w-full relative"
         setApi={setApi}
