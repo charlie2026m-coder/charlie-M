@@ -164,7 +164,10 @@ export async function POST(request: NextRequest) {
     const paymentRequest = {
       merchantAccount: process.env.ADYEN_MERCHANT_ACCOUNT!,
       amount: {
-        currency: currency || "EUR",
+        // Pin to EUR server-side. The Apaleo folio is always settled in EUR
+        // and the amount validator checks cents only — never let the client
+        // pick the charge currency.
+        currency: "EUR",
         value: amount,
       },
       reference: reference || crypto.randomUUID(),

@@ -19,6 +19,7 @@ import TaxesInfo from "@/app/_components/ui/Taxes"
 import { useStore } from "@/store/useStore"
 import { UrlParams } from "@/types/apaleo"
 import { getRoomPrice } from "@/app/actions/apaleo/rooms/getRoomPrice"
+import { useMonthAvailability, toYmd } from "@/app/hooks/useMonthAvailability"
 import {
   BOOKING_SECTION_ID,
   setScrollToBookingOnNextPage,
@@ -56,6 +57,12 @@ const BookingForm = ({
     from: dateRangeStore.from || (params.from ? dayjs(params.from).toDate() : undefined),
     to: dateRangeStore.to || (params.to ? dayjs(params.to).toDate() : undefined),
   })
+
+  // Real per-night availability for THIS room type (sold-out nights disabled).
+  const [visibleMonth, setVisibleMonth] = useState<Date>(() => dateRange?.from ?? new Date())
+  const availFrom = toYmd(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1))
+  const availTo = toYmd(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 2, 1))
+  const { isSoldOut } = useMonthAvailability(availFrom, availTo, id)
 
   // Sync dateRange from store (when Availability applies dates)
   useEffect(() => {
@@ -203,7 +210,11 @@ const BookingForm = ({
               mode="range"
               captionLayout="label"
               selected={dateRange}
-              defaultMonth={dateRange?.from || new Date()}
+              defaultMonth={visibleMonth}
+              onMonthChange={setVisibleMonth}
+              excludeDisabled
+              modifiers={{ soldOut: isSoldOut }}
+              modifiersClassNames={{ soldOut: 'line-through' }}
               onSelect={(date) => {
                 if (date?.from && !date?.to) {
                   const nextDay = new Date(date.from)
@@ -229,7 +240,7 @@ const BookingForm = ({
                   setDateRange(date as DateRange)
                 }
               }}
-              disabled={{ before: minArrivalDate }}
+              disabled={[{ before: minArrivalDate }, isSoldOut]}
             />
           </DateInput>
           {dateError && (

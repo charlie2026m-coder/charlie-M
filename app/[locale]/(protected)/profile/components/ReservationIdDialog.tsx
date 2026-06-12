@@ -13,37 +13,42 @@ const ReservationIdDialog = () => {
     const [isNotFound, setIsNotFound] = useState(false)
     const [isSuccess, setIsSuccess] = useState(false)
     const [reservationId, setReservationId] = useState('')
+    const [lastName, setLastName] = useState('')
     const [error, setError] = useState<string | null>(null)
     const addReservation = useAddReservation()
 
     const close = () => {
       setIsOpen(false)
       setReservationId('')
+      setLastName('')
       setIsNotFound(false)
       setIsSuccess(false)
       setError(null)
     }
 
     const handleSubmit = () => {
-        if (reservationId.trim() === '') {
+        if (reservationId.trim() === '' || lastName.trim() === '') {
             setError(t('reservationNotFoundCheckId'))
             return
         }
 
         setError(null)
 
-        addReservation.mutate({ reservationId: reservationId.trim() }, {
+        addReservation.mutate({ reservationId: reservationId.trim(), lastName: lastName.trim() }, {
             onSuccess: () => {
                 setIsSuccess(true)
                 toast.success(t('reservationAddedSuccess'))
             },
             onError: (error) => {
-                if (error.message === 'BOOKING_ID_INVALID') {
+                if (error.message === 'BOOKING_ID_OR_NAME_INVALID') {
                     setIsNotFound(true)
                     setError(null)
                 } else if (error.message === 'ALREADY_ADDED') {
                     setError(t('reservationAlreadyAdded'))
                     toast.error(t('reservationAlreadyAdded'))
+                } else if (error.message === 'TOO_MANY_ATTEMPTS') {
+                    setError(t('tooManyAttempts'))
+                    toast.error(t('tooManyAttempts'))
                 } else if (error.message === 'EMAIL_BELONGS_TO_USER') {
                     setError(t('reservationBelongsToEmail'))
                     toast.error(t('reservationBelongsToEmail'))
@@ -78,6 +83,11 @@ const ReservationIdDialog = () => {
                   setReservationId(value)
                   if (error) setError(null)
                 }}
+                lastName={lastName}
+                setLastName={(value) => {
+                  setLastName(value)
+                  if (error) setError(null)
+                }}
                 handleSubmit={handleSubmit}
                 close={close}
                 isPending={addReservation.isPending}
@@ -96,11 +106,13 @@ export default ReservationIdDialog
 const Form = ({
   reservationId,
   setReservationId,
+  lastName,
+  setLastName,
   handleSubmit,
   close,
   isPending,
   error
-}: { reservationId: string, setReservationId: (reservationId: string) => void, handleSubmit: () => void, close: () => void, isPending: boolean, error: string | null }) => {
+}: { reservationId: string, setReservationId: (reservationId: string) => void, lastName: string, setLastName: (lastName: string) => void, handleSubmit: () => void, close: () => void, isPending: boolean, error: string | null }) => {
   const t = useTranslations('profile')
 
   return (
@@ -109,12 +121,25 @@ const Form = ({
       <Input
         type='text'
         placeholder={`${t('reservationIdPlaceholder')} (e.g. EXAMPLEID-0)`}
-        className='w-full h-10 rounded-full mb-12'
+        className='w-full h-10 rounded-full mb-4'
         value={reservationId}
         onChange={(e) => setReservationId(e.target.value)}
         disabled={isPending}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' && !isPending && reservationId.trim()) {
+          if (e.key === 'Enter' && !isPending && reservationId.trim() && lastName.trim()) {
+            handleSubmit()
+          }
+        }}
+      />
+      <Input
+        type='text'
+        placeholder={t('enterLastName')}
+        className='w-full h-10 rounded-full mb-12'
+        value={lastName}
+        onChange={(e) => setLastName(e.target.value)}
+        disabled={isPending}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && !isPending && reservationId.trim() && lastName.trim()) {
             handleSubmit()
           }
         }}
@@ -126,7 +151,7 @@ const Form = ({
         )}
       <div className='flex gap-4 items-center justify-center'>
         <Button variant='outline' className='flex-1 max-w-[190px] h-[45px]' onClick={close} disabled={isPending}>{t('cancel')}</Button>
-        <Button className='flex-1 max-w-[190px] h-[45px]' onClick={handleSubmit} disabled={isPending || reservationId.trim() === ''}>
+        <Button className='flex-1 max-w-[190px] h-[45px]' onClick={handleSubmit} disabled={isPending || reservationId.trim() === '' || lastName.trim() === ''}>
           {isPending ? t('adding') || 'Adding...' : t('add')}
         </Button>
       </div>

@@ -11,24 +11,29 @@ interface AddReservationResponse {
 export function useAddReservation() {
   const queryClient = useQueryClient();
 
-  return useMutation<AddReservationResponse, Error, { reservationId: string }>({
-    mutationFn: async (params: { reservationId: string }) => {
-      const { reservationId } = params;
+  return useMutation<AddReservationResponse, Error, { reservationId: string; lastName: string }>({
+    mutationFn: async (params: { reservationId: string; lastName: string }) => {
+      const { reservationId, lastName } = params;
 
-      if (!reservationId.trim()) {
-        throw new Error('Reservation ID is required');
+      if (!reservationId.trim() || !lastName.trim()) {
+        throw new Error('Reservation ID and last name are required');
       }
 
-      const response = await fetch(`/api/reservations/search-reservation?reservationId=${encodeURIComponent(reservationId)}`);
+      const response = await fetch(
+        `/api/reservations/search-reservation?reservationId=${encodeURIComponent(reservationId)}&lastName=${encodeURIComponent(lastName)}`
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         const errorMessage = errorData.error || 'Failed to fetch reservation';
 
         if (response.status === 404) {
-          throw new Error('BOOKING_ID_INVALID');
+          // Neutral: covers a wrong ID AND a wrong last name.
+          throw new Error('BOOKING_ID_OR_NAME_INVALID');
         } else if (response.status === 409 && errorMessage === 'already_added') {
           throw new Error('ALREADY_ADDED');
+        } else if (response.status === 429) {
+          throw new Error('TOO_MANY_ATTEMPTS');
         } else if (response.status >= 500) {
           throw new Error('SERVER_ERROR');
         }

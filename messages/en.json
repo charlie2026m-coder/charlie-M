@@ -277,7 +277,8 @@
     "chooseDate": "Choose date",
     "cancel": "Cancel",
     "apply": "Apply",
-    "nights": "{count, plural, =1 {# night} other {# nights}}"
+    "nights": "{count, plural, =1 {# night} other {# nights}}",
+    "priceFromPerNight": "from €{price} / night"
   },
   "imprint": {
     "title": "Information pursuant to Section 5 of the German Telemedia Act (TMG)",
@@ -759,6 +760,8 @@
     },
     "name": "Name",
     "lastName": "Last Name",
+    "enterLastName": "Enter the guest's last name",
+    "tooManyAttempts": "Too many attempts. Please try again in a few minutes.",
     "email": "Email",
     "phone": "Phone",
     "discard": "Discard",
@@ -1274,6 +1277,9 @@
     "enterBookingNumber": "Enter Booking ID or Reservation ID",
     "enterReservationId": "Enter your Reservation ID",
     "lastName": "Last Name",
+    "enterLastName": "Enter your last name",
+    "checkBookingIdOrName": "Please check the Reservation ID and last name.",
+    "tooManyAttempts": "Too many attempts. Please try again in a few minutes.",
     "searching": "Searching...",
     "continue": "Continue",
     "notFound": "No found",

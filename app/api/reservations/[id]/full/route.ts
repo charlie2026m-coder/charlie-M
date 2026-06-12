@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getReservationById } from '@/services/getReservation';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { verifyReservationOwnership } from '@/lib/verifyReservationOwnership';
 
 export async function GET(
   request: NextRequest,
@@ -15,8 +17,21 @@ export async function GET(
       );
     }
 
+    const supabase = await createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
+    // Ownership gate — this endpoint returns the door PIN (accesses), so it
+    // must confirm ownership BEFORE reading the reservation.
+    const ownership = await verifyReservationOwnership(supabase, user, id);
+    if (!ownership.ok) {
+      return NextResponse.json({ error: ownership.error }, { status: ownership.status });
+    }
+
     const reservation = await getReservationById(id);
-    console.log(reservation, 'reservation');
     if (!reservation) {
       return NextResponse.json(
         { error: 'Reservation not found' },
@@ -25,11 +40,11 @@ export async function GET(
     }
 
     return NextResponse.json(reservation);
-  } catch (error: any) {
-    console.error('Error fetching reservation:', error);
-    
-    // Check if it's a 404 from Apaleo
-    if (error.message?.includes('404') || error.message?.includes('not found')) {
+  } catch (error: unknown) {
+    console.error('Error fetching reservation:', error instanceof Error ? error.message : 'unknown');
+
+    const message = error instanceof Error ? error.message : '';
+    if (message.includes('404') || message.includes('not found')) {
       return NextResponse.json(
         { error: 'Reservation not found' },
         { status: 404 }

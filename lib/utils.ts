@@ -50,6 +50,7 @@ export const getDefaultArrivalDate = (): string => {
   return dayjs().format('YYYY-MM-DD')
 }
 
+
 const PIN_AVAILABLE_HOUR = 10
 
 // PIN may be issued early (pre-check-in), but we hide it until 10:00 Berlin

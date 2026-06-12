@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { cancelAndRefundReservation } from '@/services/cancelAndRefundReservation';
 import { bookingLog } from '@/lib/logger';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { verifyReservationOwnership } from '@/lib/verifyReservationOwnership';
 
 export async function POST(
   request: Request,
@@ -8,6 +10,19 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
+
+    // Ownership gate — only the owner may cancel + refund this reservation.
+    const supabase = await createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
+    const ownership = await verifyReservationOwnership(supabase, user, id);
+    if (!ownership.ok) {
+      return NextResponse.json({ error: ownership.error }, { status: ownership.status });
+    }
 
     const result = await cancelAndRefundReservation(id);
 

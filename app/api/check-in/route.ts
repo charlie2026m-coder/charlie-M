@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 
 const API_URL = process.env.GUESTWAY_API_URL;
 const PARTNERSHIP_API_KEY = process.env.GUESTWAY_API_KEY;
@@ -8,35 +9,11 @@ const ACCESS_TOKEN = process.env.GUESTWAY_ACCESS_TOKEN;
 const RESERVATION_ID_MAX_LENGTH = 64;
 const RESERVATION_ID_SAFE_CHARS = /^[A-Za-z0-9-]+$/;
 
-// In-memory rate limiter: 10 requests per IP per 10 minutes
-// Resets on server restart; not shared across Vercel instances (acceptable for this use case)
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT_MAX = 10;
-const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return true;
-  }
-
-  if (entry.count >= RATE_LIMIT_MAX) return false;
-
-  entry.count++;
-  return true;
-}
-
 export async function POST(request: NextRequest) {
   try {
-    const ip =
-      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-      request.headers.get('x-real-ip') ??
-      'unknown';
+    const ip = getClientIp(request);
 
-    if (!checkRateLimit(ip)) {
+    if (!checkRateLimit('check-in', ip)) {
       return NextResponse.json(
         { error: 'Too many requests, please try again later' },
         { status: 429 }
@@ -52,7 +29,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const normalized = String(reservationId).trim();
+    // Apaleo / Guestway reservation ids are uppercase — normalize so a
+    // lowercased input still resolves.
+    const normalized = String(reservationId).trim().toUpperCase();
 
     if (
       !normalized ||
@@ -103,14 +82,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Return only safe fields — never echo guest PII (email, name, phone)
+    // that Guestway includes in the reservation object.
     return NextResponse.json({
       id: reservation.id,
       confirmationCode: reservation.confirmationCode,
       status: reservation.status,
       guestAppUrl: reservation.guestAppUrl,
     });
-  } catch (error) {
-    console.error('Error in check-in API:', error);
+  } catch {
+    // Don't log the error object — it can carry the Guestway response (PII).
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

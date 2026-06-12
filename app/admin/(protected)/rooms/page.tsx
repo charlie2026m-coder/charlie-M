@@ -8,7 +8,7 @@ import { ServiceDetails } from '@/app/actions/supabase/services/getServicesDetai
 import { Button } from '@/app/_components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/_components/ui/table'
 import { IoLogOut } from 'react-icons/io5'
-import { MdEdit } from 'react-icons/md'
+import { MdEdit, MdQrCode2 } from 'react-icons/md'
 
 export default function AdminRoomsPage() {
   const router = useRouter()
@@ -91,6 +91,17 @@ export default function AdminRoomsPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="gap-1.5 border-black text-black hover:bg-black hover:text-white h-8"
+            >
+              <a href="/admin/checkout">
+                <MdQrCode2 className="size-3.5" />
+                QR Check-out
+              </a>
+            </Button>
             <Button
               onClick={handleLogout}
               variant="outline"
