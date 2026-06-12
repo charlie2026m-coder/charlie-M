@@ -91,10 +91,27 @@ export function RoomsCarousel({
         </div>
 
         <div className="flex-1 relative min-w-0">
-          <Carousel className="w-full" setApi={setApi} opts={{ loop: true, watchDrag: false }}>
-            <CarouselContent className="-ml-4 pb-8 xl:pb-[90px] px-2">
+          <Carousel
+            className="w-full"
+            setApi={setApi}
+            opts={{
+              loop: true,
+              align: 'center',
+              // keep the active card centered even when few rooms are available
+              // (loop can't engage with 1-2 slides and trimSnaps would left-align them)
+              containScroll: false,
+              breakpoints: { '(min-width: 768px)': { align: 'start' } },
+              // Drag the rooms carousel everywhere except the photo area —
+              // there the inner PhotoSlider handles the swipe (photo flip)
+              watchDrag: (_api, event) => {
+                const target = event.target as HTMLElement | null
+                return !target?.closest('[data-photo-slider]')
+              },
+            }}
+          >
+            <CarouselContent className="ml-0 pb-8 xl:pb-[90px]">
               {roomsWithPrices.map((item) => (
-                <CarouselItem key={item.id} className="pl-4 basis-[85%] md:basis-1/2 xl:basis-1/3 shrink-0">
+                <CarouselItem key={item.id} className="px-2 basis-[80%] md:basis-1/2 xl:basis-1/3 shrink-0">
                   <RoomCard item={item} locale={locale} translations={translations} />
                 </CarouselItem>
               ))}
