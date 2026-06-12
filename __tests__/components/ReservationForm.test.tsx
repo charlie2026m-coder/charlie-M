@@ -70,7 +70,7 @@ describe('ReservationForm (CharlieM)', () => {
     render(<ReservationForm />);
     await fillForm('RCMH-MISSING');
     await userEvent.click(screen.getByRole('button'));
-    await waitFor(() => expect(screen.getByText('checkBookingId')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('checkBookingIdOrName')).toBeInTheDocument());
   });
 
   it('saves to store on success', async () => {

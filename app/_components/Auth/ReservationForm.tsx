@@ -51,9 +51,10 @@ const ReservationForm = () => {
         const errorData = await response.json().catch(() => ({}));
 
         if (response.status === 404) {
-          setError(t('checkBookingId') || 'Please check the reservation ID and last name');
-        } else if (response.status === 403) {
-          setError(t('noMatchesFound') || 'No matches found');
+          // Neutral message — covers a wrong ID AND a wrong last name.
+          setError(t('checkBookingIdOrName') || 'Please check the Reservation ID and last name.');
+        } else if (response.status === 429) {
+          setError(t('tooManyAttempts') || 'Too many attempts. Please try again in a few minutes.');
         } else if (response.status >= 500) {
           setError(t('serverErrorTryAgain') || 'Server error. Please try again.');
         } else {
@@ -99,7 +100,7 @@ const ReservationForm = () => {
         <Input
           name="lastName"
           type="text"
-          placeholder={t('lastName')}
+          placeholder={t('enterLastName')}
           value={lastName}
           onChange={(e) => {
             setLastName(e.target.value);

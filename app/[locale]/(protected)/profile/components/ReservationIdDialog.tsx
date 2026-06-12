@@ -40,12 +40,15 @@ const ReservationIdDialog = () => {
                 toast.success(t('reservationAddedSuccess'))
             },
             onError: (error) => {
-                if (error.message === 'BOOKING_ID_INVALID') {
+                if (error.message === 'BOOKING_ID_OR_NAME_INVALID') {
                     setIsNotFound(true)
                     setError(null)
                 } else if (error.message === 'ALREADY_ADDED') {
                     setError(t('reservationAlreadyAdded'))
                     toast.error(t('reservationAlreadyAdded'))
+                } else if (error.message === 'TOO_MANY_ATTEMPTS') {
+                    setError(t('tooManyAttempts'))
+                    toast.error(t('tooManyAttempts'))
                 } else if (error.message === 'EMAIL_BELONGS_TO_USER') {
                     setError(t('reservationBelongsToEmail'))
                     toast.error(t('reservationBelongsToEmail'))
@@ -130,7 +133,7 @@ const Form = ({
       />
       <Input
         type='text'
-        placeholder={t('lastName')}
+        placeholder={t('enterLastName')}
         className='w-full h-10 rounded-full mb-12'
         value={lastName}
         onChange={(e) => setLastName(e.target.value)}

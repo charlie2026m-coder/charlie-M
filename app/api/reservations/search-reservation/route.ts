@@ -2,23 +2,36 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Fetch } from '@/services/Request';
 import { ApaleoReservationResponse } from '@/types/apaleo';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { lastNameMatches } from '@/lib/matchLastName';
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
+
+// Neutral "not found" — same body for missing / wrong-property / name-mismatch
+// so the endpoint can't be used to enumerate valid reservation IDs.
+const notFound = () =>
+  NextResponse.json({ error: 'Please check the booking ID and last name' }, { status: 404 });
 
 export async function GET(request: NextRequest) {
   try {
+    if (!checkRateLimit('search-reservation', getClientIp(request))) {
+      return NextResponse.json(
+        { error: 'Too many requests, please try again later' },
+        { status: 429 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
-    const reservationId = searchParams.get('reservationId');
-    const lastName = searchParams.get('lastName');
+    const reservationId = searchParams.get('reservationId')?.trim();
+    const lastName = searchParams.get('lastName')?.trim();
 
     // Second factor (last name) is required so a reservation can't be added to
     // an account by knowing only its number.
-    if (!reservationId || !lastName || !lastName.trim()) {
+    if (!reservationId || !lastName) {
       return NextResponse.json(
         { error: 'Reservation ID and last name are required' },
         { status: 400 }
       );
     }
 
-    // Get current user
     const supabase = await createSupabaseServerClient();
     const { data: { user }, error: userError } = await supabase.auth.getUser();
 
@@ -29,7 +42,39 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Check if this user already added this reservation
+    // Fetch Apaleo reservation and room photos in parallel
+    const [reservationResult, roomsResult] = await Promise.allSettled([
+      Fetch<ApaleoReservationResponse>(
+        `/booking/v1/reservations/${encodeURIComponent(reservationId)}?propertyIds=${process.env.APALEO_PROPERTY_ID}&expand=booker,services`
+      ),
+      supabase.from('rooms').select('*').order('id', { ascending: true }),
+    ]);
+
+    if (reservationResult.status === 'rejected') {
+      const message = reservationResult.reason instanceof Error ? reservationResult.reason.message : '';
+      if (message.includes('404') || message.includes('not found')) {
+        return notFound();
+      }
+      throw reservationResult.reason;
+    }
+
+    const reservation = reservationResult.value;
+
+    // Apaleo's single-resource endpoint ignores propertyIds — enforce it so a
+    // reservation from the other hotel (shared Apaleo account) can't be added.
+    if (reservation.property?.id !== process.env.APALEO_PROPERTY_ID) {
+      return notFound();
+    }
+
+    // SECOND FACTOR: typed last name must match guest or booker (format/
+    // diacritic/transliteration tolerant — see lib/matchLastName).
+    if (!lastNameMatches(lastName, [reservation.primaryGuest?.lastName, reservation.booker?.lastName])) {
+      return notFound();
+    }
+
+    // Identity verified — only now check whether it's already linked to this
+    // user. Done AFTER the last-name check so a bare ID can't reveal "you
+    // already have this booking" without proving the name.
     const { data: existingReservation } = await supabase
       .from('reservations')
       .select('id')
@@ -44,54 +89,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Fetch Apaleo reservation and room photos in parallel
-    const [reservationResult, roomsResult] = await Promise.allSettled([
-      Fetch<ApaleoReservationResponse>(
-        `/booking/v1/reservations/${reservationId}?propertyIds=${process.env.APALEO_PROPERTY_ID}&expand=booker,services`
-      ),
-      supabase.from('rooms').select('*').order('id', { ascending: true }),
-    ]);
-
-    if (reservationResult.status === 'rejected') {
-      const message = reservationResult.reason instanceof Error ? reservationResult.reason.message : '';
-      if (message.includes('404') || message.includes('not found')) {
-        return NextResponse.json(
-          { error: 'Please check the booking ID' },
-          { status: 404 }
-        );
-      }
-      throw reservationResult.reason;
-    }
-
-    const reservation = reservationResult.value;
-
-    // Apaleo's single-resource endpoint ignores propertyIds — enforce it
-    // ourselves so a reservation from the other hotel (sharing the same
-    // Apaleo account) can't be added on this site.
-    if (reservation.property?.id !== process.env.APALEO_PROPERTY_ID) {
-      return NextResponse.json(
-        { error: 'Please check the booking ID' },
-        { status: 404 }
-      );
-    }
-
-    // Verify last name against the reservation (same 404 as a wrong id so the
-    // response isn't an oracle for confirming a number without the name).
-    const normalize = (v: string | null | undefined) => v?.toLowerCase().trim() ?? '';
-    const candidateNames = [
-      normalize(reservation.primaryGuest?.lastName),
-      normalize(reservation.booker?.lastName),
-    ];
-    if (!candidateNames.includes(normalize(lastName))) {
-      return NextResponse.json(
-        { error: 'Please check the booking ID' },
-        { status: 404 }
-      );
-    }
-
     const roomsData = roomsResult.status === 'fulfilled' ? roomsResult.value.data : [];
 
-    // Check if reservation email matches current user's email
     const reservationEmail = reservation.primaryGuest?.email?.toLowerCase() || '';
     const userEmail = user.email?.toLowerCase() || '';
     const emailBelongsToUser = reservationEmail === userEmail && reservationEmail !== '';
@@ -112,10 +111,7 @@ export async function GET(request: NextRequest) {
 
     const message = error instanceof Error ? error.message : '';
     if (message.includes('404') || message.includes('not found')) {
-      return NextResponse.json(
-        { error: 'Please check the booking ID' },
-        { status: 404 }
-      );
+      return notFound();
     }
 
     return NextResponse.json(

@@ -28,9 +28,12 @@ export function useAddReservation() {
         const errorMessage = errorData.error || 'Failed to fetch reservation';
 
         if (response.status === 404) {
-          throw new Error('BOOKING_ID_INVALID');
+          // Neutral: covers a wrong ID AND a wrong last name.
+          throw new Error('BOOKING_ID_OR_NAME_INVALID');
         } else if (response.status === 409 && errorMessage === 'already_added') {
           throw new Error('ALREADY_ADDED');
+        } else if (response.status === 429) {
+          throw new Error('TOO_MANY_ATTEMPTS');
         } else if (response.status >= 500) {
           throw new Error('SERVER_ERROR');
         }
