@@ -13,6 +13,8 @@ import { usePathname } from '@/navigation';
 import { useStore } from '@/store/useStore';
 import { UrlParams } from '@/types/apaleo';
 import { useTranslations } from 'next-intl';
+import { useMonthAvailability, toYmd } from '@/app/hooks/useMonthAvailability';
+import { getPrices } from '@/app/actions/apaleo/rooms/getPrices';
 
 
 const CheckInForm = ({ className = '', params }: { className?: string, params?: UrlParams }) => {
@@ -29,6 +31,14 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
   const [hasAppliedOnce, setHasAppliedOnce] = useState(
     () => Boolean(params?.from && params?.to)
   );
+  const [visibleMonth, setVisibleMonth] = useState<Date>(() => dateRange?.from ?? new Date());
+  const [fromPrice, setFromPrice] = useState<number | null>(null);
+
+  // Real per-night availability for the visible window (current + next month
+  // when two are shown). Sold-out nights become non-selectable.
+  const availFrom = toYmd(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1));
+  const availTo = toYmd(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + numberOfMonths, 1));
+  const { isSoldOut } = useMonthAvailability(availFrom, availTo);
 
   useEffect(() => {
     const update = () => setNumberOfMonths(window.innerWidth >= 1024 ? 2 : 1);
@@ -38,6 +48,25 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
   }, []);
 
   const minArrivalDate = getMinArrivalDate()
+
+  // "from €X / night" for the selected range — the cheapest real offer across
+  // rooms (same source as the rooms list). Null when no offer exists, so we
+  // never show a made-up price.
+  useEffect(() => {
+    if (!dateRange?.from || !dateRange?.to) { setFromPrice(null); return; }
+    const f = getDate(dateRange.from);
+    const t = getDate(dateRange.to);
+    if (!f || !t) { setFromPrice(null); return; }
+    let cancelled = false;
+    getPrices(f, t, guests.adults + guests.children)
+      .then((prices) => {
+        if (cancelled) return;
+        const valid = prices.map((p) => p.minNightPrice).filter((p) => p > 0);
+        setFromPrice(valid.length ? Math.min(...valid) : null);
+      })
+      .catch(() => { if (!cancelled) setFromPrice(null); });
+    return () => { cancelled = true; };
+  }, [dateRange?.from, dateRange?.to, guests.adults, guests.children]);
 
   // Handle URL params
   useEffect(() => {
@@ -143,7 +172,11 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
               captionLayout="label"
               numberOfMonths={numberOfMonths}
               selected={dateRange}
-              defaultMonth={dateRange?.from ?? new Date()}
+              month={visibleMonth}
+              onMonthChange={setVisibleMonth}
+              excludeDisabled
+              modifiers={{ soldOut: isSoldOut }}
+              modifiersClassNames={{ soldOut: 'line-through' }}
               onSelect={(_date, triggerDate) => {
                 if (!pickingCheckout) {
                   // Клик 1 (или клик когда range уже выбран) — ставим начало
@@ -181,12 +214,15 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
                 }
                 if (dateError) setDateError(false);
               }}
-              disabled={{ before: minArrivalDate }}
+              disabled={[{ before: minArrivalDate }, isSoldOut]}
               classNames={{ months: 'flex flex-col lg:flex-row gap-4' }}
             />
           </div>
-          <div className='h-12 flex items-center border-t font-semibold'>
-            {getNights() ?? ''}
+          <div className='h-12 flex items-center justify-between gap-2 border-t font-semibold'>
+            <span>{getNights() ?? ''}</span>
+            {fromPrice != null && (
+              <span className='text-blue'>{t('priceFromPerNight', { price: Math.round(fromPrice) })}</span>
+            )}
           </div>
           <div className={cn('grid grid-cols-2 gap-2', isRoomsPage ? '' : 'md:hidden')}>
             <Button onClick={resetForm} className='w-full text-sm md:text-base h-10' variant='outline'>{t('cancel')}</Button>

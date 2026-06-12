@@ -277,7 +277,8 @@
     "chooseDate": "Choose date",
     "cancel": "Cancel",
     "apply": "Apply",
-    "nights": "{count, plural, =1 {# night} other {# nights}}"
+    "nights": "{count, plural, =1 {# night} other {# nights}}",
+    "priceFromPerNight": "from €{price} / night"
   },
   "imprint": {
     "title": "Information pursuant to Section 5 of the German Telemedia Act (TMG)",
