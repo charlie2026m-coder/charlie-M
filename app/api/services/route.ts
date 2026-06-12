@@ -3,7 +3,7 @@ import { Fetch } from '@/services/Request';
 import { bookPendingServices } from '@/services/bookPendingServices';
 import { bookingLog } from '@/lib/logger';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { assertReservationAccess } from '@/lib/assertReservationAccess';
+import { verifyReservationOwnership } from '@/lib/verifyReservationOwnership';
 
 // Late-services flow: client calls this after Adyen authorises the dedicated
 // services payment. Delegates to `bookPendingServices` so the client and the
@@ -182,9 +182,9 @@ export async function DELETE(request: Request) {
     // explicit reservations link may delete services from this reservation.
     const supabase = await createSupabaseServerClient();
     const { data: { user } } = await supabase.auth.getUser();
-    const access = await assertReservationAccess(supabase, user, reservationId);
-    if (!access.ok) {
-      return NextResponse.json({ error: access.error }, { status: access.status });
+    const ownership = await verifyReservationOwnership(supabase, user, reservationId);
+    if (!ownership.ok) {
+      return NextResponse.json({ error: ownership.error }, { status: ownership.status });
     }
 
     await Fetch(`/booking/v1/reservations/${reservationId}/services?serviceId=${serviceId}`, {

@@ -10,6 +10,8 @@ let currentAdminFrom = vi.fn();
 vi.mock('@supabase/supabase-js', () => ({
   createClient: vi.fn(() => ({
     from: (...args: any[]) => currentAdminFrom(...args),
+    // Anonymization runs through an atomic RPC (anonymize_user_data_for_deletion).
+    rpc: vi.fn().mockResolvedValue({ error: null }),
     auth: makeAdminAuth(),
   })),
 }));
@@ -72,15 +74,11 @@ describe('POST /api/account/delete', () => {
     expect(res.status).toBe(200);
   });
 
-  it('records deletion consent before deleting account', async () => {
-    const supabase = makeSupabase({ id: 'u1', email: 'user@test.com' });
-    const insertSpy = vi.spyOn(supabase, 'from').mockReturnValue({
-      insert: vi.fn().mockResolvedValue({ error: null }),
-      update: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) }),
-      select: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ data: [], error: null }) }),
-    } as any);
-    mockCreateClient.mockResolvedValue(supabase);
+  it('records deletion consent (via service_role) before deleting account', async () => {
+    mockCreateClient.mockResolvedValue(makeSupabase({ id: 'u1', email: 'user@test.com' }));
     await POST(makeRequest());
-    expect(insertSpy).toHaveBeenCalledWith('consents');
+    // The GDPR audit consent is written with the service_role client so the
+    // row survives (consents.user_id FK is SET NULL, not CASCADE).
+    expect(currentAdminFrom).toHaveBeenCalledWith('consents');
   });
 });

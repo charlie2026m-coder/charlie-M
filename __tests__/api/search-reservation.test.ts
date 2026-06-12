@@ -13,7 +13,7 @@ const mockFetch = vi.mocked(Fetch);
 
 const fakeReservation = {
   id: 'RCMH-SEARCH', property: { id: 'CMH' }, // CharlieM property
-  primaryGuest: { email: 'user@test.com' },
+  primaryGuest: { email: 'user@test.com', lastName: 'Smith' },
   unitGroup: { id: 'CMH-SGB', name: 'Studio' },
   adults: 1,
 };
@@ -29,11 +29,12 @@ function makeSupabase(user: object | null, existingReservation: object | null = 
   } as any;
 }
 
-function makeRequest(reservationId?: string) {
-  const url = reservationId
-    ? `http://localhost/api/reservations/search-reservation?reservationId=${reservationId}`
-    : 'http://localhost/api/reservations/search-reservation';
-  return new NextRequest(url);
+function makeRequest(reservationId?: string, lastName: string | null = 'Smith') {
+  const params = new URLSearchParams();
+  if (reservationId) params.set('reservationId', reservationId);
+  if (lastName) params.set('lastName', lastName);
+  const qs = params.toString();
+  return new NextRequest(`http://localhost/api/reservations/search-reservation${qs ? `?${qs}` : ''}`);
 }
 
 beforeEach(() => {
@@ -45,6 +46,16 @@ describe('GET /api/reservations/search-reservation (CharlieM)', () => {
   it('returns 400 when reservationId missing', async () => {
     mockCreateClient.mockResolvedValue(makeSupabase({ id: 'u1' }));
     expect((await GET(makeRequest())).status).toBe(400);
+  });
+
+  it('returns 400 when lastName missing', async () => {
+    mockCreateClient.mockResolvedValue(makeSupabase({ id: 'u1' }));
+    expect((await GET(makeRequest('RCMH-TEST', null))).status).toBe(400);
+  });
+
+  it('returns 404 when lastName does not match the reservation', async () => {
+    mockCreateClient.mockResolvedValue(makeSupabase({ id: 'u1', email: 'u@test.com' }));
+    expect((await GET(makeRequest('RCMH-MINE', 'WrongName'))).status).toBe(404);
   });
 
   it('returns 401 when no session', async () => {

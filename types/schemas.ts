@@ -107,6 +107,30 @@ export const guestDetailsSchema = z.object({
 export type GuestDetailsFormData = z.infer<typeof guestDetailsSchema>
 
 
+// Booker/guest address update — server-side validation for
+// /api/reservations/[id]/booker-address (PATCH). Mirrors the Apaleo
+// primaryGuest shape sent by useUpdateBookingAddress. Validating here stops
+// arbitrary client objects from being PATCHed straight into Apaleo.
+export const bookerAddressSchema = z.object({
+  firstName: z.string().min(1).max(100),
+  lastName: z.string().min(1).max(100),
+  email: z.string().regex(emailRegex, 'Invalid email address').max(254),
+  phone: z.string().min(1).max(40),
+  address: z.object({
+    addressLine1: z.string().min(1).max(200),
+    addressLine2: z.string().max(200).optional().or(z.literal('')),
+    postalCode: z.string().max(20).optional().or(z.literal('')),
+    city: z.string().min(1).max(100),
+    countryCode: z.string().min(2).max(2),
+  }),
+  company: z
+    .object({ name: z.string().max(200).optional().or(z.literal('')) })
+    .optional(),
+})
+
+export type BookerAddressData = z.infer<typeof bookerAddressSchema>
+
+
 // Profile details schema - for profile page (phone is optional)
 export const profileDetailsSchema = z.object({
   name: z.string()

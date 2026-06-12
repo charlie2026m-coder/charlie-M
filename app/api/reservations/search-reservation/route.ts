@@ -7,10 +7,13 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const reservationId = searchParams.get('reservationId');
+    const lastName = searchParams.get('lastName');
 
-    if (!reservationId) {
+    // Second factor (last name) is required so a reservation can't be added to
+    // an account by knowing only its number.
+    if (!reservationId || !lastName || !lastName.trim()) {
       return NextResponse.json(
-        { error: 'Reservation ID is required' },
+        { error: 'Reservation ID and last name are required' },
         { status: 400 }
       );
     }
@@ -66,6 +69,20 @@ export async function GET(request: NextRequest) {
     // ourselves so a reservation from the other hotel (sharing the same
     // Apaleo account) can't be added on this site.
     if (reservation.property?.id !== process.env.APALEO_PROPERTY_ID) {
+      return NextResponse.json(
+        { error: 'Please check the booking ID' },
+        { status: 404 }
+      );
+    }
+
+    // Verify last name against the reservation (same 404 as a wrong id so the
+    // response isn't an oracle for confirming a number without the name).
+    const normalize = (v: string | null | undefined) => v?.toLowerCase().trim() ?? '';
+    const candidateNames = [
+      normalize(reservation.primaryGuest?.lastName),
+      normalize(reservation.booker?.lastName),
+    ];
+    if (!candidateNames.includes(normalize(lastName))) {
       return NextResponse.json(
         { error: 'Please check the booking ID' },
         { status: 404 }

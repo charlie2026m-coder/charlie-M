@@ -1,34 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Fetch } from '@/services/Request';
-
-// In-memory rate limiter: 10 requests per IP per 10 minutes
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT_MAX = 10;
-const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return true;
-  }
-
-  if (entry.count >= RATE_LIMIT_MAX) return false;
-
-  entry.count++;
-  return true;
-}
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 
 export async function GET(request: NextRequest) {
   try {
-    const ip =
-      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-      request.headers.get('x-real-ip') ??
-      'unknown';
+    const ip = getClientIp(request);
 
-    if (!checkRateLimit(ip)) {
+    if (!checkRateLimit('bookings-search', ip)) {
       return NextResponse.json(
         { error: 'Too many requests, please try again later' },
         { status: 429 }
@@ -39,9 +17,11 @@ export async function GET(request: NextRequest) {
     const bookingId = searchParams.get('externalCode');
     const lastName = searchParams.get('lastName');
 
+    // Public endpoint by design, but the last name is a required second factor
+    // so a booking can't be looked up by guessing only its code.
     if (!bookingId || !lastName) {
       return NextResponse.json(
-        { error: 'bookingId and lastName are required' },
+        { error: 'externalCode and lastName are required' },
         { status: 400 }
       );
     }
@@ -76,7 +56,7 @@ export async function GET(request: NextRequest) {
       booking: foundBooking,
       count: 1,
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'No booking found with provided details' },
       { status: 404 }

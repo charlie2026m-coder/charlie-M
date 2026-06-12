@@ -11,15 +11,17 @@ interface AddReservationResponse {
 export function useAddReservation() {
   const queryClient = useQueryClient();
 
-  return useMutation<AddReservationResponse, Error, { reservationId: string }>({
-    mutationFn: async (params: { reservationId: string }) => {
-      const { reservationId } = params;
+  return useMutation<AddReservationResponse, Error, { reservationId: string; lastName: string }>({
+    mutationFn: async (params: { reservationId: string; lastName: string }) => {
+      const { reservationId, lastName } = params;
 
-      if (!reservationId.trim()) {
-        throw new Error('Reservation ID is required');
+      if (!reservationId.trim() || !lastName.trim()) {
+        throw new Error('Reservation ID and last name are required');
       }
 
-      const response = await fetch(`/api/reservations/search-reservation?reservationId=${encodeURIComponent(reservationId)}`);
+      const response = await fetch(
+        `/api/reservations/search-reservation?reservationId=${encodeURIComponent(reservationId)}&lastName=${encodeURIComponent(lastName)}`
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

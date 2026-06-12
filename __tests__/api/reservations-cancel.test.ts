@@ -1,24 +1,24 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NextRequest } from 'next/server';
 
 vi.mock('@/lib/supabase-server', () => ({
   createSupabaseServerClient: vi.fn(),
-}));
-
-vi.mock('@/services/Request', () => ({
-  Fetch: vi.fn(),
 }));
 
 vi.mock('@/lib/verifyReservationOwnership', () => ({
   verifyReservationOwnership: vi.fn(),
 }));
 
+// CharlieM cancels AND refunds via this service (unlike Motz19's bare cancel).
+vi.mock('@/services/cancelAndRefundReservation', () => ({
+  cancelAndRefundReservation: vi.fn(),
+}));
+
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { Fetch } from '@/services/Request';
 import { verifyReservationOwnership } from '@/lib/verifyReservationOwnership';
+import { cancelAndRefundReservation } from '@/services/cancelAndRefundReservation';
 import { POST } from '@/app/api/reservations/[id]/cancel/route';
 
-const mockFetch = vi.mocked(Fetch);
+const mockCancel = vi.mocked(cancelAndRefundReservation);
 const mockVerify = vi.mocked(verifyReservationOwnership);
 const mockCreateClient = vi.mocked(createSupabaseServerClient);
 
@@ -28,64 +28,54 @@ function makeSupabase(user: object | null) {
   } as any;
 }
 
-function makeRequest(id = 'RMOT-ABC123') {
+function makeRequest(id = 'RCMH-ABC123') {
   return new Request(`http://localhost/api/reservations/${id}/cancel`, { method: 'POST' });
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockFetch.mockResolvedValue({} as any);
+  mockCancel.mockResolvedValue({ ok: true, cancelled: true, refund: { status: 'requested' } } as any);
 });
 
 describe('POST /api/reservations/[id]/cancel', () => {
-  it('returns 401 when no session', async () => {
+  it('returns 401 when no session and does not verify or cancel', async () => {
     mockCreateClient.mockResolvedValue(makeSupabase(null));
-    const res = await POST(makeRequest() as any, { params: Promise.resolve({ id: 'RMOT-ABC123' }) });
+    const res = await POST(makeRequest() as any, { params: Promise.resolve({ id: 'RCMH-ABC123' }) });
     expect(res.status).toBe(401);
     expect(mockVerify).not.toHaveBeenCalled();
+    expect(mockCancel).not.toHaveBeenCalled();
   });
 
-  it('returns 200 and calls Fetch cancel when ownership ok (DB fast path)', async () => {
+  it('returns 200 and cancels when ownership ok', async () => {
     mockCreateClient.mockResolvedValue(makeSupabase({ id: 'u1', email: 'u@test.com' }));
     mockVerify.mockResolvedValue({ ok: true });
-    const res = await POST(makeRequest() as any, { params: Promise.resolve({ id: 'RMOT-ABC123' }) });
+    const res = await POST(makeRequest() as any, { params: Promise.resolve({ id: 'RCMH-ABC123' }) });
     expect(res.status).toBe(200);
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining('RMOT-ABC123'),
-      expect.objectContaining({ method: 'PUT' })
-    );
+    expect(mockCancel).toHaveBeenCalledWith('RCMH-ABC123');
+    expect(await res.json()).toMatchObject({ success: true });
   });
 
-  it('returns 403 and does NOT call cancel Fetch when ownership fails', async () => {
+  it('returns 403 and does NOT cancel when ownership fails', async () => {
     mockCreateClient.mockResolvedValue(makeSupabase({ id: 'u1', email: 'u@test.com' }));
     mockVerify.mockResolvedValue({ ok: false, status: 403, error: 'Forbidden' });
-    const res = await POST(makeRequest() as any, { params: Promise.resolve({ id: 'RMOT-ABC123' }) });
+    const res = await POST(makeRequest() as any, { params: Promise.resolve({ id: 'RCMH-ABC123' }) });
     expect(res.status).toBe(403);
-    expect(mockFetch).not.toHaveBeenCalled();
+    expect(mockCancel).not.toHaveBeenCalled();
   });
 
-  it('returns 404 when verifyReservationOwnership returns not-found', async () => {
+  it('returns 404 when ownership returns not-found', async () => {
     mockCreateClient.mockResolvedValue(makeSupabase({ id: 'u1', email: 'u@test.com' }));
     mockVerify.mockResolvedValue({ ok: false, status: 404, error: 'Reservation not found' });
-    const res = await POST(makeRequest() as any, { params: Promise.resolve({ id: 'RMOT-MISSING' }) });
+    const res = await POST(makeRequest('RCMH-MISSING') as any, { params: Promise.resolve({ id: 'RCMH-MISSING' }) });
     expect(res.status).toBe(404);
-    expect(mockFetch).not.toHaveBeenCalled();
+    expect(mockCancel).not.toHaveBeenCalled();
   });
 
-  it('cancel Fetch called with PUT method on correct Apaleo endpoint', async () => {
+  it('propagates a service failure status (e.g. 409 already handled)', async () => {
     mockCreateClient.mockResolvedValue(makeSupabase({ id: 'u1', email: 'u@test.com' }));
     mockVerify.mockResolvedValue({ ok: true });
-    await POST(makeRequest('RMOT-TESTID') as any, { params: Promise.resolve({ id: 'RMOT-TESTID' }) });
-    expect(mockFetch).toHaveBeenCalledWith(
-      '/booking/v1/reservation-actions/RMOT-TESTID/cancel',
-      { method: 'PUT' }
-    );
-  });
-
-  it('returns 200 JSON with {success: true} on successful cancel', async () => {
-    mockCreateClient.mockResolvedValue(makeSupabase({ id: 'u1', email: 'u@test.com' }));
-    mockVerify.mockResolvedValue({ ok: true });
-    const res = await POST(makeRequest() as any, { params: Promise.resolve({ id: 'RMOT-ABC123' }) });
-    expect(await res.json()).toEqual({ success: true });
+    mockCancel.mockResolvedValue({ ok: false, status: 409, error: 'Already cancelled' } as any);
+    const res = await POST(makeRequest() as any, { params: Promise.resolve({ id: 'RCMH-ABC123' }) });
+    expect(res.status).toBe(409);
   });
 });

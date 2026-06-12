@@ -3,14 +3,20 @@ import { Fetch } from '@/services/Request';
 import { ApaleoReservationResponse } from '@/types/apaleo';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
+const normalize = (v: string | null | undefined): string =>
+  v?.toLowerCase().trim() ?? '';
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const reservationId = searchParams.get('reservationId');
+    const lastName = searchParams.get('lastName');
 
-    if (!reservationId) {
+    // Second factor (last name) is now required — knowing the reservation
+    // number alone must NOT grant access to the booking (PIN, guest data).
+    if (!reservationId || !lastName || !lastName.trim()) {
       return NextResponse.json(
-        { error: 'Reservation ID is required' },
+        { error: 'Reservation ID and last name are required' },
         { status: 400 }
       );
     }
@@ -20,18 +26,6 @@ export async function GET(request: NextRequest) {
 
     if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Check if this reservation is already added for this user
-    const { data: existing } = await supabase
-      .from('reservations')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('reservation_id', reservationId)
-      .maybeSingle();
-
-    if (existing) {
-      return NextResponse.json({ error: 'already_added' }, { status: 409 });
     }
 
     let reservation: ApaleoReservationResponse;
@@ -57,9 +51,47 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const reservationEmail = reservation.primaryGuest?.email?.toLowerCase() ?? '';
-    const userEmail = user.email?.toLowerCase() ?? '';
-    const emailBelongsToUser = reservationEmail !== '' && reservationEmail === userEmail;
+    // Verify the last name against the reservation. Return the SAME 404 as a
+    // wrong id so the response can't be used as an oracle to confirm a number
+    // without the matching name.
+    const candidateNames = [
+      normalize(reservation.primaryGuest?.lastName),
+      normalize(reservation.booker?.lastName),
+    ];
+    if (!candidateNames.includes(normalize(lastName))) {
+      return NextResponse.json(
+        { error: 'Please check the reservation ID' },
+        { status: 404 }
+      );
+    }
+
+    // Last name verified — link this reservation to the (possibly anonymous)
+    // user so the ownership-gated routes (/[id], /[id]/full, /[id]/cancel)
+    // recognise them. Idempotent: re-submitting is a no-op.
+    const { error: linkError } = await supabase
+      .from('reservations')
+      .upsert(
+        {
+          user_id: user.id,
+          reservation_id: reservation.id,
+          booking_id: reservation.bookingId || '',
+          last_name: reservation.primaryGuest?.lastName || lastName.trim(),
+          email: reservation.primaryGuest?.email || '',
+        },
+        { onConflict: 'user_id,reservation_id', ignoreDuplicates: true }
+      );
+
+    if (linkError) {
+      console.error('Error linking reservation to guest:', linkError.message);
+      return NextResponse.json(
+        { error: 'Failed to open reservation' },
+        { status: 500 }
+      );
+    }
+
+    const emailBelongsToUser =
+      normalize(reservation.primaryGuest?.email) !== '' &&
+      normalize(reservation.primaryGuest?.email) === normalize(user.email);
 
     return NextResponse.json({ ...reservation, emailBelongsToUser });
   } catch (error: unknown) {
