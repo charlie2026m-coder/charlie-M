@@ -112,8 +112,13 @@ function significantTokens(value: string | null | undefined): string[] {
 /**
  * True when `input` matches ANY candidate, by either:
  *   - full normalized equality ("Mueller" === "Müller"), or
- *   - a shared significant token (>= 4 chars), so a guest who types one surname
- *     of a compound name ("Márquez" of "García Márquez") still matches.
+ *   - the WHOLE input equalling one significant token (>= 4 chars) of a
+ *     compound candidate, so a guest who types one surname of a compound name
+ *     ("Márquez" of "García Márquez") still matches.
+ *
+ * The input is deliberately NEVER tokenized: tokenizing it let a single
+ * request carry many guesses at once ("Smith Jones Brown Mueller …" matched
+ * if ANY token hit). One request = one guess; this is a security factor.
  * Empty input never matches.
  */
 export function lastNameMatches(
@@ -123,16 +128,15 @@ export function lastNameMatches(
   const inputJoined = normalizeLastName(input);
   if (!inputJoined) return false;
 
-  const inputTokens = significantTokens(input).filter((t) => t.length >= TOKEN_MIN_LENGTH);
-
   return candidates.some((candidate) => {
     const candidateJoined = normalizeLastName(candidate);
     if (!candidateJoined) return false;
 
     if (candidateJoined === inputJoined) return true;
 
-    // Compound-name token overlap, min length enforced.
-    const candidateTokens = significantTokens(candidate);
-    return inputTokens.some((token) => candidateTokens.includes(token));
+    // Compound-name fallback: the whole input vs candidate tokens only,
+    // min length enforced so short fragments can't be guessed.
+    if (inputJoined.length < TOKEN_MIN_LENGTH) return false;
+    return significantTokens(candidate).includes(inputJoined);
   });
 }

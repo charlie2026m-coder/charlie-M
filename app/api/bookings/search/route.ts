@@ -1,6 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Fetch } from '@/services/Request';
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
+import { lastNameMatches } from '@/lib/matchLastName';
+
+interface ApaleoBookingNames {
+  booker?: { lastName?: string | null };
+  reservations?: Array<{ primaryGuest?: { lastName?: string | null } }>;
+}
+
+// Every last name Apaleo exposes on a booking (booker + each reservation's
+// primary guest) — the payer and the staying guest are often different people.
+function bookingLastNames(booking: ApaleoBookingNames | null | undefined): Array<string | null | undefined> {
+  const reservationGuests = booking?.reservations?.map((r) => r?.primaryGuest?.lastName) ?? [];
+  return [booking?.booker?.lastName, ...reservationGuests];
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -27,23 +40,27 @@ export async function GET(request: NextRequest) {
     }
 
     const searchMethods = [
-      // Method 1: Search by Booking.com external code
+      // Method 1: Search by Booking.com external code. Apaleo's textSearch is
+      // FUZZY — it can return a booking whose name merely resembles the input,
+      // so the last name MUST be re-verified locally before anything is
+      // returned (same trust model as search-booking / search-reservation).
       (async () => {
-        const response = await Fetch<any>(
-          `/booking/v1/bookings?externalCode=${bookingId}&textSearch=${lastName}&expand=reservations`
+        const response = await Fetch<{ bookings?: ApaleoBookingNames[] }>(
+          `/booking/v1/bookings?externalCode=${encodeURIComponent(bookingId)}&textSearch=${encodeURIComponent(lastName)}&expand=reservations`
         );
-        if (response.bookings && response.bookings.length > 0) {
-          return response.bookings[0];
-        }
+        const match = (response.bookings ?? []).find((b: ApaleoBookingNames) =>
+          lastNameMatches(lastName, bookingLastNames(b))
+        );
+        if (match) return match;
         throw new Error('Not found');
       })(),
 
       // Method 2: Search by Apaleo booking ID directly
       (async () => {
-        const booking = await Fetch<any>(
-          `/booking/v1/bookings/${bookingId}?expand=reservations`
+        const booking = await Fetch<ApaleoBookingNames>(
+          `/booking/v1/bookings/${encodeURIComponent(bookingId)}?expand=reservations`
         );
-        if (booking.booker?.lastName?.toLowerCase() === lastName.toLowerCase()) {
+        if (lastNameMatches(lastName, bookingLastNames(booking))) {
           return booking;
         }
         throw new Error('LastName mismatch');

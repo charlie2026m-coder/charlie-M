@@ -1,4 +1,5 @@
 import { Fetch } from '@/services/Request'
+import { bookingLog } from '@/lib/logger'
 
 /**
  * The card payments captured on a reservation's folio(s), each with the Adyen
@@ -13,16 +14,34 @@ import { Fetch } from '@/services/Request'
  * share). Refunding has to walk these per-payment, not lump everything onto the
  * room psp — Adyen rejects a refund larger than what a single psp captured.
  *
+ * Money-safety rules (review findings #10–#12):
+ *   - Refund/reversal-typed or negative entries are emitted with a NEGATIVE
+ *     amount so the per-psp NET shrinks — an already-refunded payment can't be
+ *     refunded again just because the original capture row is still listed.
+ *   - `Pending` entries are counted in `unsettled` (not summed): money in
+ *     flight makes any auto-refund amount untrustworthy — the caller must
+ *     route to manual instead of silently dropping them.
+ *   - Exact duplicate rows within one folio (same psp+amount+type) are
+ *     skipped with a warning — a double-listed capture must not double the
+ *     refund.
+ *
  * NOTE: the summary `/folios?...&expand=payments` does NOT include
  * externalReference; only the dedicated `/folios/{id}/payments` does.
  */
 
 export interface FolioPayment {
   pspReference: string
+  /** Cents; NEGATIVE for refunds/reversals already on the folio. */
   amountCents: number
   currency: string
   type: string
   status: string
+}
+
+export interface FolioPaymentsResult {
+  payments: FolioPayment[]
+  /** Count of Pending entries with a psp — settle state unknown, go manual. */
+  unsettled: number
 }
 
 interface FoliosListResponse {
@@ -38,33 +57,56 @@ interface FolioPaymentsResponse {
   }>
 }
 
+const OUTFLOW_TYPE = /refund|reversal|chargeback|payout/i
+
 export async function getReservationFolioPayments(
   reservationId: string,
-): Promise<FolioPayment[]> {
+): Promise<FolioPaymentsResult> {
   const list = await Fetch<FoliosListResponse>(
     `/finance/v1/folios?reservationIds=${encodeURIComponent(reservationId)}`,
   )
   const folioIds = (list.folios ?? []).map((f) => f.id).filter(Boolean)
 
-  const out: FolioPayment[] = []
+  const payments: FolioPayment[] = []
+  let unsettled = 0
+
   for (const folioId of folioIds) {
     const detail = await Fetch<FolioPaymentsResponse>(
       `/finance/v1/folios/${encodeURIComponent(folioId)}/payments`,
     )
+    // Dedupe within ONE folio only — the same psp legitimately appears on
+    // several folios (room payment split across the booking's reservations).
+    const seen = new Set<string>()
+
     for (const p of detail.payments ?? []) {
       const psp = p.externalReference?.pspReference
       const amount = p.amount?.amount
-      // Inflows only: a successful card capture with a psp and a positive
-      // amount. Skip refunds/reversals (negative or refund-typed) so we never
-      // try to "refund a refund".
       if (!psp) continue
-      if (typeof amount !== 'number' || amount <= 0) continue
-      if (p.status !== 'Success') continue
-      if (p.type && /refund|reversal|chargeback/i.test(p.type)) continue
+      if (typeof amount !== 'number' || amount === 0) continue
 
-      out.push({
+      if (p.status !== 'Success') {
+        if (p.status === 'Pending') unsettled++
+        continue
+      }
+
+      const dupeKey = `${psp}|${amount}|${p.type ?? ''}`
+      if (seen.has(dupeKey)) {
+        bookingLog.warn('folio payments: exact duplicate row skipped', {
+          reservationId,
+          folioId,
+          psp,
+          type: p.type ?? '',
+        })
+        continue
+      }
+      seen.add(dupeKey)
+
+      const outflow = OUTFLOW_TYPE.test(p.type ?? '') || amount < 0
+      const cents = Math.round(Math.abs(amount) * 100)
+
+      payments.push({
         pspReference: psp,
-        amountCents: Math.round(amount * 100),
+        amountCents: outflow ? -cents : cents,
         currency: p.amount?.currency ?? 'EUR',
         type: p.type ?? '',
         status: p.status ?? '',
@@ -72,5 +114,5 @@ export async function getReservationFolioPayments(
     }
   }
 
-  return out
+  return { payments, unsettled }
 }

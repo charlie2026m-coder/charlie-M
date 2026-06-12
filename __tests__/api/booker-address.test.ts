@@ -75,6 +75,20 @@ describe('PATCH /api/reservations/[id]/booker-address (CharlieM only)', () => {
     expect(vi.mocked(globalThis.fetch)).toHaveBeenCalled();
   });
 
+  it('returns 502 when the folio debitor PATCH fails — no fake success (review #13)', async () => {
+    mockCreateClient.mockResolvedValue(makeSupabase({ id: 'u1', email: 'u@test.com' }));
+    globalThis.fetch = vi.fn().mockImplementation(async (url: string | URL) => {
+      if (String(url).includes('/finance/v1/folios/')) {
+        return { ok: false, status: 422, text: async () => 'debitor rejected' };
+      }
+      return { ok: true, status: 204, text: async () => '' };
+    });
+    const res = await PATCH(makeRequest() as any, makeParams());
+    expect(res.status).toBe(502);
+    const body = await res.json();
+    expect(body.success).toBeUndefined();
+  });
+
   it('returns 404 when verifyOwnership returns not-found', async () => {
     mockCreateClient.mockResolvedValue(makeSupabase({ id: 'u1', email: 'u@test.com' }));
     mockVerify.mockResolvedValue({ ok: false, status: 404, error: 'Reservation not found' });

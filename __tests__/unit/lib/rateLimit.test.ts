@@ -52,18 +52,39 @@ describe('checkRateLimit', () => {
 });
 
 describe('getClientIp', () => {
-  it('extracts first IP from x-forwarded-for', () => {
-    const req = new Request('http://x', { headers: { 'x-forwarded-for': '1.2.3.4, 5.6.7.8' } });
-    expect(getClientIp(req)).toBe('1.2.3.4');
+  it('prefers x-real-ip (Vercel-controlled) over x-forwarded-for', () => {
+    const req = new Request('http://x', {
+      headers: { 'x-real-ip': '9.10.11.12', 'x-forwarded-for': 'spoofed, 5.6.7.8' },
+    });
+    expect(getClientIp(req)).toBe('9.10.11.12');
   });
 
-  it('falls back to x-real-ip', () => {
-    const req = new Request('http://x', { headers: { 'x-real-ip': '9.10.11.12' } });
-    expect(getClientIp(req)).toBe('9.10.11.12');
+  it('takes the LAST x-forwarded-for entry — the leftmost is client-appendable', () => {
+    // A spoofer prepends fake entries; the trusted proxy appends the real one
+    // last. Keying on the first entry let attackers reset their bucket freely.
+    const req = new Request('http://x', { headers: { 'x-forwarded-for': 'fake1, fake2, 5.6.7.8' } });
+    expect(getClientIp(req)).toBe('5.6.7.8');
   });
 
   it('returns unknown when no IP headers', () => {
     const req = new Request('http://x');
     expect(getClientIp(req)).toBe('unknown');
+  });
+});
+
+describe('bucket sweeping', () => {
+  it('drops expired buckets so the map does not grow unboundedly', async () => {
+    vi.useFakeTimers();
+    for (let i = 0; i < 50; i++) checkRateLimit('sweep-store', `ip-${i}`);
+
+    // Past the window AND past the sweep interval: next call sweeps.
+    vi.advanceTimersByTime(11 * 60 * 1000);
+    checkRateLimit('sweep-store', 'fresh-ip');
+
+    // Old buckets are gone: an old IP starts a fresh window (count 1 again,
+    // i.e. 10 more requests allowed).
+    for (let i = 0; i < 9; i++) checkRateLimit('sweep-store', 'ip-0');
+    expect(checkRateLimit('sweep-store', 'ip-0')).toBe(true);
+    vi.useRealTimers();
   });
 });

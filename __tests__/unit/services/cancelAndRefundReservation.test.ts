@@ -51,12 +51,12 @@ function makeAdmin(roomPsp: string | null) {
   };
 }
 
-function setReservation(opts: { feeAmount?: number; feeCurrency?: string } = {}) {
+function setReservation(opts: { feeAmount?: number; feeCurrency?: string; status?: string } = {}) {
   mockVerify.mockResolvedValue({
     ok: true,
     reservation: {
       id: RES,
-      status: 'Confirmed',
+      status: opts.status ?? 'Confirmed',
       totalGrossAmount: { amount: 0, currency: 'EUR' },
       cancellationFee:
         opts.feeAmount !== undefined
@@ -64,6 +64,10 @@ function setReservation(opts: { feeAmount?: number; feeCurrency?: string } = {})
           : undefined,
     },
   } as any);
+}
+
+function setFolio(payments: Array<Record<string, unknown>>, unsettled = 0) {
+  mockFolio.mockResolvedValue({ payments, unsettled } as any);
 }
 
 beforeEach(() => {
@@ -77,13 +81,13 @@ beforeEach(() => {
   }));
   currentAdmin = makeAdmin(ROOM_PSP);
   setReservation({ feeAmount: 0 });
-  mockFolio.mockResolvedValue([]);
+  setFolio([]);
 });
 
 describe('cancelAndRefundReservation — per-payment refund split', () => {
   it('free cancel: refunds room and services each on its own psp, in full', async () => {
     setReservation({ feeAmount: 0 });
-    mockFolio.mockResolvedValue([
+    setFolio([
       { pspReference: ROOM_PSP, amountCents: 32900, currency: 'EUR', type: 'Authorization', status: 'Success' },
       { pspReference: SVC_PSP, amountCents: 3000, currency: 'EUR', type: 'Authorization', status: 'Success' },
     ]);
@@ -91,14 +95,14 @@ describe('cancelAndRefundReservation — per-payment refund split', () => {
     const res = await cancelAndRefundReservation(RES);
 
     expect(res).toMatchObject({ ok: true, cancelled: true, refund: { status: 'requested', amountCents: 35900 } });
-    expect(mockRefund).toHaveBeenCalledWith(ROOM_PSP, 32900, 'EUR', RES);
-    expect(mockRefund).toHaveBeenCalledWith(SVC_PSP, 3000, 'EUR', RES);
+    expect(mockRefund).toHaveBeenCalledWith(ROOM_PSP, 32900, 'EUR', `${RES}::${ROOM_PSP}`);
+    expect(mockRefund).toHaveBeenCalledWith(SVC_PSP, 3000, 'EUR', `${RES}::${SVC_PSP}`);
     expect(mockRefund).toHaveBeenCalledTimes(2);
   });
 
   it('penalty applies to the ROOM only; services refunded in full', async () => {
     setReservation({ feeAmount: 50 }); // €50 penalty
-    mockFolio.mockResolvedValue([
+    setFolio([
       { pspReference: ROOM_PSP, amountCents: 32900, currency: 'EUR', type: 'Authorization', status: 'Success' },
       { pspReference: SVC_PSP, amountCents: 3000, currency: 'EUR', type: 'Authorization', status: 'Success' },
     ]);
@@ -106,26 +110,26 @@ describe('cancelAndRefundReservation — per-payment refund split', () => {
     const res = await cancelAndRefundReservation(RES);
 
     // room: 329.00 - 50.00 = 279.00 ; services untouched
-    expect(mockRefund).toHaveBeenCalledWith(ROOM_PSP, 27900, 'EUR', RES);
-    expect(mockRefund).toHaveBeenCalledWith(SVC_PSP, 3000, 'EUR', RES);
+    expect(mockRefund).toHaveBeenCalledWith(ROOM_PSP, 27900, 'EUR', `${RES}::${ROOM_PSP}`);
+    expect(mockRefund).toHaveBeenCalledWith(SVC_PSP, 3000, 'EUR', `${RES}::${SVC_PSP}`);
     expect(res).toMatchObject({ refund: { amountCents: 30900, status: 'requested' } });
   });
 
   it('room-only booking: single refund on the room psp', async () => {
     setReservation({ feeAmount: 0 });
-    mockFolio.mockResolvedValue([
+    setFolio([
       { pspReference: ROOM_PSP, amountCents: 20000, currency: 'EUR', type: 'Authorization', status: 'Success' },
     ]);
 
     await cancelAndRefundReservation(RES);
 
     expect(mockRefund).toHaveBeenCalledTimes(1);
-    expect(mockRefund).toHaveBeenCalledWith(ROOM_PSP, 20000, 'EUR', RES);
+    expect(mockRefund).toHaveBeenCalledWith(ROOM_PSP, 20000, 'EUR', `${RES}::${ROOM_PSP}`);
   });
 
   it('penalty covers the whole room and no services: nothing to refund, status completed', async () => {
     setReservation({ feeAmount: 100 });
-    mockFolio.mockResolvedValue([
+    setFolio([
       { pspReference: ROOM_PSP, amountCents: 10000, currency: 'EUR', type: 'Authorization', status: 'Success' },
     ]);
 
@@ -137,7 +141,7 @@ describe('cancelAndRefundReservation — per-payment refund split', () => {
 
   it('no captured card payments (e.g. OTA/bank transfer): manual, no Adyen refund', async () => {
     setReservation({ feeAmount: 0 });
-    mockFolio.mockResolvedValue([]);
+    setFolio([]);
 
     const res = await cancelAndRefundReservation(RES);
 
@@ -147,7 +151,7 @@ describe('cancelAndRefundReservation — per-payment refund split', () => {
 
   it('unknown cancellation fee: cancels but routes refund to manual', async () => {
     setReservation({}); // no cancellationFee
-    mockFolio.mockResolvedValue([
+    setFolio([
       { pspReference: ROOM_PSP, amountCents: 20000, currency: 'EUR', type: 'Authorization', status: 'Success' },
     ]);
 
@@ -159,7 +163,7 @@ describe('cancelAndRefundReservation — per-payment refund split', () => {
 
   it('a payment that fails to refund flags the whole cancellation manual', async () => {
     setReservation({ feeAmount: 0 });
-    mockFolio.mockResolvedValue([
+    setFolio([
       { pspReference: ROOM_PSP, amountCents: 20000, currency: 'EUR', type: 'Authorization', status: 'Success' },
       { pspReference: SVC_PSP, amountCents: 3000, currency: 'EUR', type: 'Authorization', status: 'Success' },
     ]);
@@ -174,6 +178,56 @@ describe('cancelAndRefundReservation — per-payment refund split', () => {
     // both were attempted; result is manual because one failed
     expect(mockRefund).toHaveBeenCalledTimes(2);
     expect(res).toMatchObject({ refund: { status: 'failed', manual: true } });
+  });
+
+  it('already-Canceled reservation: never auto-refunds again (review #3)', async () => {
+    // Cancelled through another path (staff in Apaleo/Adyen dashboard) — the
+    // folio still lists the original captures, so refunding here would pay
+    // the guest twice.
+    setReservation({ feeAmount: 0, status: 'Canceled' });
+    setFolio([
+      { pspReference: ROOM_PSP, amountCents: 20000, currency: 'EUR', type: 'Authorization', status: 'Success' },
+    ]);
+
+    const res = await cancelAndRefundReservation(RES);
+
+    expect(res).toMatchObject({
+      ok: true,
+      cancelled: true,
+      alreadyHandled: true,
+      refund: { status: 'failed', manual: true },
+    });
+    expect(insertSpy).not.toHaveBeenCalled(); // no new lock row
+    expect(mockCancel).not.toHaveBeenCalled();
+    expect(mockRefund).not.toHaveBeenCalled();
+  });
+
+  it('pending (unsettled) folio payments route the refund to manual (review #10)', async () => {
+    setReservation({ feeAmount: 0 });
+    setFolio(
+      [{ pspReference: ROOM_PSP, amountCents: 20000, currency: 'EUR', type: 'Authorization', status: 'Success' }],
+      1 // one Pending payment in flight
+    );
+
+    const res = await cancelAndRefundReservation(RES);
+
+    expect(mockRefund).not.toHaveBeenCalled();
+    expect(res).toMatchObject({ refund: { status: 'failed', manual: true } });
+  });
+
+  it('nets folio refunds against captures — an already-refunded psp gets nothing (review #12)', async () => {
+    setReservation({ feeAmount: 0 });
+    setFolio([
+      { pspReference: ROOM_PSP, amountCents: 20000, currency: 'EUR', type: 'Authorization', status: 'Success' },
+      { pspReference: SVC_PSP, amountCents: 3000, currency: 'EUR', type: 'Authorization', status: 'Success' },
+      { pspReference: SVC_PSP, amountCents: -3000, currency: 'EUR', type: 'Refund', status: 'Success' },
+    ]);
+
+    const res = await cancelAndRefundReservation(RES);
+
+    expect(mockRefund).toHaveBeenCalledTimes(1);
+    expect(mockRefund).toHaveBeenCalledWith(ROOM_PSP, 20000, 'EUR', `${RES}::${ROOM_PSP}`);
+    expect(res).toMatchObject({ refund: { amountCents: 20000, status: 'requested' } });
   });
 
   it('does not cancel/refund when the reservation is not in this property', async () => {

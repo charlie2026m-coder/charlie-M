@@ -109,12 +109,19 @@ export async function PATCH(
     }
 
     if (!updateFolioResponse.ok) {
+      // The reservation updated but the folio debitor didn't — the invoice
+      // would carry the OLD name/address. Don't claim success: both PATCHes
+      // are idempotent, so the guest can simply retry (review finding #13).
       const detail = await updateFolioResponse.text();
       bookingLog.error('booker-address: folio debitor update failed', {
         reservationId,
         status: updateFolioResponse.status,
         detail,
       });
+      return NextResponse.json(
+        { error: 'Failed to update invoice address — please try again' },
+        { status: 502 }
+      );
     }
 
     return NextResponse.json(

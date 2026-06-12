@@ -51,6 +51,22 @@ describe('lastNameMatches', () => {
     expect(check('Schmidt', 'Müller')).toBe(false);
   });
 
+  it('rejects multi-name fishing — the input is never tokenized', () => {
+    // One request must be one guess: a bag of common surnames matching when
+    // ANY token hits was the review's 🔴 finding.
+    expect(check('Smith Jones Brown Mueller', 'Hans Brown')).toBe(false);
+    expect(check('Garcia Schmidt', 'Schmidt')).toBe(false);
+    expect(check('Anna Maria', 'Anna Maria Schmidt')).toBe(false);
+  });
+
+  it('still accepts the full compound input against the same compound candidate', () => {
+    expect(check('Garcia Marquez', 'García Márquez')).toBe(true);
+  });
+
+  it('rejects fragments shorter than the token minimum', () => {
+    expect(check('Li', 'Li Wei Zhang')).toBe(false);
+  });
+
   it('never matches empty input', () => {
     expect(lastNameMatches('', ['Müller'])).toBe(false);
     expect(lastNameMatches('Müller', [null, undefined])).toBe(false);

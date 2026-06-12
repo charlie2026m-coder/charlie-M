@@ -157,3 +157,159 @@ describe('POST /api/webhooks/adyen (CharlieM)', () => {
     expect(payload).toContain('REF\\\\BACK');
   });
 });
+
+// ── guest-cancel refund finalization (multi-psp, review finding #4) ───────────
+
+interface RefundState {
+  refundRow: { reservation_id: string; amount_cents: number; status: string } | null;
+  reversals: Array<{
+    reservation_id: string | null;
+    event_code: string;
+    success: boolean;
+    amount_cents: number | null;
+  }>;
+}
+
+function makeRefundFromMock(state: RefundState) {
+  return vi.fn().mockImplementation((table: string) => {
+    if (table === 'reservation_refunds') {
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockImplementation((_col: string, val: string) => ({
+            maybeSingle: vi.fn().mockResolvedValue({
+              data:
+                state.refundRow && state.refundRow.reservation_id === val
+                  ? { ...state.refundRow }
+                  : null,
+            }),
+          })),
+        }),
+        update: vi.fn().mockImplementation((fields: Record<string, unknown>) => ({
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockImplementation(async () => {
+              // mirrors `.eq('status','requested')` CAS semantics
+              if (state.refundRow && state.refundRow.status === 'requested') {
+                Object.assign(state.refundRow, fields);
+              }
+              return { error: null };
+            }),
+          }),
+        })),
+      };
+    }
+    if (table === 'payment_reversals') {
+      return {
+        insert: vi.fn().mockImplementation(async (row: RefundState['reversals'][number]) => {
+          state.reversals.push(row);
+          return { error: null };
+        }),
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockImplementation((_c: string, resId: string) => ({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockImplementation(async () => ({
+                data: state.reversals
+                  .filter((r) => r.reservation_id === resId && r.event_code === 'REFUND' && r.success)
+                  .map((r) => ({ amount_cents: r.amount_cents })),
+              })),
+            }),
+          })),
+        }),
+      };
+    }
+    return {
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: null }),
+          maybeSingle: vi.fn().mockResolvedValue({ data: null }),
+        }),
+      }),
+    };
+  });
+}
+
+describe('guest-cancel refund rows: multi-psp completion', () => {
+  const RES_ID = 'RCMH-REV1';
+
+  function refundEvent(psp: string, modRef: string, cents: number, ok = true) {
+    return makeBody({
+      eventCode: ok ? 'REFUND' : 'REFUND_FAILED',
+      success: ok ? 'true' : 'false',
+      pspReference: modRef,
+      merchantReference: `${RES_ID}::${psp}`,
+      amount: { value: cents, currency: 'EUR' },
+    });
+  }
+
+  it('the first psp of a multi-psp refund does NOT complete the row; the last one does', async () => {
+    const state: RefundState = {
+      refundRow: { reservation_id: RES_ID, amount_cents: 30900, status: 'requested' },
+      reversals: [],
+    };
+    currentFrom = makeRefundFromMock(state);
+
+    await POST(makeRequest(refundEvent('PSP_ROOM', 'MOD-1', 27900)));
+    expect(state.refundRow?.status).toBe('requested'); // 279.00 of 309.00 settled
+
+    await POST(makeRequest(refundEvent('PSP_SVC', 'MOD-2', 3000)));
+    expect(state.refundRow?.status).toBe('completed'); // every cent settled
+  });
+
+  it('a REFUND_FAILED for one psp fails the whole row — a later success cannot flip it back', async () => {
+    const state: RefundState = {
+      refundRow: { reservation_id: RES_ID, amount_cents: 30900, status: 'requested' },
+      reversals: [],
+    };
+    currentFrom = makeRefundFromMock(state);
+
+    await POST(makeRequest(refundEvent('PSP_SVC', 'MOD-1', 3000, false)));
+    expect(state.refundRow?.status).toBe('failed');
+
+    await POST(makeRequest(refundEvent('PSP_ROOM', 'MOD-2', 27900)));
+    expect(state.refundRow?.status).toBe('failed'); // manual follow-up stays
+  });
+
+  it('legacy plain reservation-id reference still matches and completes', async () => {
+    const state: RefundState = {
+      refundRow: { reservation_id: RES_ID, amount_cents: 30900, status: 'requested' },
+      reversals: [],
+    };
+    currentFrom = makeRefundFromMock(state);
+
+    await POST(
+      makeRequest(
+        makeBody({
+          eventCode: 'REFUND',
+          success: 'true',
+          pspReference: 'MOD-LEGACY',
+          merchantReference: RES_ID,
+          amount: { value: 30900, currency: 'EUR' },
+        })
+      )
+    );
+    expect(state.refundRow?.status).toBe('completed');
+  });
+
+  it('a REFUND for an unrelated reference touches nothing', async () => {
+    const state: RefundState = {
+      refundRow: { reservation_id: RES_ID, amount_cents: 30900, status: 'requested' },
+      reversals: [],
+    };
+    currentFrom = makeRefundFromMock(state);
+
+    await POST(
+      makeRequest(
+        makeBody({
+          eventCode: 'REFUND',
+          success: 'true',
+          pspReference: 'MOD-OTHER',
+          merchantReference: 'REF-SOMETHING-ELSE',
+          amount: { value: 5000, currency: 'EUR' },
+        })
+      )
+    );
+    expect(state.refundRow?.status).toBe('requested');
+    // The reversal itself is still durably recorded, just unlinked.
+    expect(state.reversals).toHaveLength(1);
+    expect(state.reversals[0].reservation_id).toBeNull();
+  });
+});

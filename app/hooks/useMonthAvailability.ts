@@ -18,13 +18,18 @@ export function toYmd(d: Date): string {
  * Unknown dates (data not loaded yet) are treated as NOT sold out, so the
  * calendar never blocks a date just because its month hasn't been fetched.
  */
+const MAX_RETRIES = 2;
+const RETRY_DELAY_MS = 5000;
+
 export function useMonthAvailability(
   from: string | null,
   to: string | null,
   unitGroupId?: string,
 ) {
   const [availability, setAvailability] = useState<Record<string, DayAvailability>>({});
+  const [retryTick, setRetryTick] = useState(0);
   const requestedRef = useRef<Record<string, true>>({});
+  const retriesRef = useRef<Record<string, number>>({});
 
   useEffect(() => {
     if (!from || !to) return;
@@ -33,9 +38,11 @@ export function useMonthAvailability(
     requestedRef.current[key] = true;
 
     let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
     getMonthAvailability(from, to, unitGroupId)
       .then((days) => {
         if (cancelled) return;
+        retriesRef.current[key] = 0;
         setAvailability((prev) => {
           const next = { ...prev };
           for (const d of days) next[d.date] = d;
@@ -43,14 +50,24 @@ export function useMonthAvailability(
         });
       })
       .catch(() => {
-        // Allow a retry on the next render if the fetch failed.
+        // Failed fetch: clear the marker and retry up to MAX_RETRIES times
+        // with a delay (a bare marker-clear never re-ran the effect — its
+        // deps hadn't changed). After that the window simply stays unknown:
+        // unknown dates remain selectable and the search itself validates.
         delete requestedRef.current[key];
+        const attempts = retriesRef.current[key] ?? 0;
+        if (attempts >= MAX_RETRIES) return;
+        retriesRef.current[key] = attempts + 1;
+        retryTimer = setTimeout(() => {
+          if (!cancelled) setRetryTick((t) => t + 1);
+        }, RETRY_DELAY_MS);
       });
 
     return () => {
       cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
     };
-  }, [from, to, unitGroupId]);
+  }, [from, to, unitGroupId, retryTick]);
 
   const isSoldOut = useCallback(
     (date: Date): boolean => {

@@ -1,7 +1,7 @@
 'use client';
 import { cn, getDate, getPath, getMinArrivalDate } from '@/lib/utils';
 import { trackSearch } from '@/lib/analytics';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { RiSearchLine } from "react-icons/ri";
 import { DateInput } from '@/app/_components/ui/DateInput';
 import { Guests } from '@/app/_components/ui/guests';
@@ -31,7 +31,13 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
   const [hasAppliedOnce, setHasAppliedOnce] = useState(
     () => Boolean(params?.from && params?.to)
   );
-  const [visibleMonth, setVisibleMonth] = useState<Date>(() => dateRange?.from ?? new Date());
+  const [visibleMonth, setVisibleMonth] = useState<Date>(() => {
+    // Deep-links carry ?from= for a future month — the calendar must open
+    // (and fetch availability for) THAT month, not today's (review #6).
+    const fromParam = params?.from ? new Date(params.from) : undefined;
+    if (fromParam && !isNaN(fromParam.getTime())) return fromParam;
+    return dateRange?.from ?? new Date();
+  });
   const [fromPrice, setFromPrice] = useState<number | null>(null);
 
   // Real per-night availability for the visible window (current + next month
@@ -39,6 +45,19 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
   const availFrom = toYmd(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1));
   const availTo = toYmd(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + numberOfMonths, 1));
   const { isSoldOut } = useMonthAvailability(availFrom, availTo);
+
+  // The custom two-click onSelect below bypasses the library's excludeDisabled
+  // truncation, so a completed range must be re-checked against sold-out
+  // nights here (review #5).
+  const rangeHasSoldOutNight = useCallback(
+    (from: Date, to: Date): boolean => {
+      for (const night = new Date(from); night < to; night.setDate(night.getDate() + 1)) {
+        if (isSoldOut(night)) return true;
+      }
+      return false;
+    },
+    [isSoldOut]
+  );
 
   useEffect(() => {
     const update = () => setNumberOfMonths(window.innerWidth >= 1024 ? 2 : 1);
@@ -67,6 +86,17 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
       .catch(() => { if (!cancelled) setFromPrice(null); });
     return () => { cancelled = true; };
   }, [dateRange?.from, dateRange?.to, guests.adults, guests.children]);
+
+  // Late-arriving availability (review #14): a range selected before the data
+  // loaded (or restored from URL params) may cross a sold-out night — drop it
+  // as soon as we know, so a stale selection never reaches the search.
+  useEffect(() => {
+    if (!dateRange?.from || !dateRange?.to) return;
+    if (!rangeHasSoldOutNight(dateRange.from, dateRange.to)) return;
+    setValue({ from: undefined, to: undefined }, 'dateRange');
+    checkinRef.current = undefined;
+    setPickingCheckout(false);
+  }, [dateRange?.from, dateRange?.to, rangeHasSoldOutNight, setValue]);
 
   // Handle URL params
   useEffect(() => {
@@ -186,13 +216,20 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
                 } else {
                   const start = checkinRef.current!;
                   if (triggerDate.getTime() > start.getTime()) {
-                    // Клик после start — завершаем range
-                    const newRange = { from: start, to: triggerDate };
-                    setValue(newRange, 'dateRange');
-                    checkinRef.current = undefined;
-                    setPickingCheckout(false);
-                    if (isRoomsPage && hasAppliedOnce) {
-                      triggerSearch(newRange, false);
+                    if (rangeHasSoldOutNight(start, triggerDate)) {
+                      // Внутри диапазона занятая ночь — так бронировать нельзя.
+                      // Начинаем выбор заново с кликнутой даты (review #5).
+                      checkinRef.current = triggerDate;
+                      setValue({ from: triggerDate, to: undefined }, 'dateRange');
+                    } else {
+                      // Клик после start — завершаем range
+                      const newRange = { from: start, to: triggerDate };
+                      setValue(newRange, 'dateRange');
+                      checkinRef.current = undefined;
+                      setPickingCheckout(false);
+                      if (isRoomsPage && hasAppliedOnce) {
+                        triggerSearch(newRange, false);
+                      }
                     }
                   } else if (triggerDate.getTime() === start.getTime()) {
                     // Тот же день — это 0 ночей. Завершаем как 1 ночь (start..start+1),

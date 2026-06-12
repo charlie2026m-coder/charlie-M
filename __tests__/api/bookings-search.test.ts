@@ -52,14 +52,45 @@ describe('GET /api/bookings/search (CharlieM only)', () => {
     expect(res.status).toBe(404);
   });
 
-  it('returns 200 when external code search succeeds', async () => {
+  it('returns 200 when external code search succeeds AND the last name verifies', async () => {
     mockFetch
-      .mockResolvedValueOnce({ bookings: [{ id: 'B-001', reservationIds: ['R-1'] }] } as any)
+      .mockResolvedValueOnce({
+        bookings: [{ id: 'B-001', booker: { lastName: 'Smith' }, reservationIds: ['R-1'] }],
+      } as any)
       .mockRejectedValueOnce(new Error('no direct')); // second method fails
     const res = await GET(makeRequest('EXT-001', 'Smith'));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.booking).toMatchObject({ id: 'B-001' });
+  });
+
+  it('fuzzy textSearch hit with a DIFFERENT last name → 404 (review finding #2)', async () => {
+    // Apaleo textSearch is fuzzy — it can return a booking whose name merely
+    // resembles the input. Without local verification this leaked bookings.
+    mockFetch
+      .mockResolvedValueOnce({
+        bookings: [{ id: 'B-LEAK', booker: { lastName: 'Smithson' }, reservations: [] }],
+      } as any)
+      .mockRejectedValueOnce(new Error('no direct'));
+    const res = await GET(makeRequest('EXT-001', 'Smith'));
+    expect(res.status).toBe(404);
+  });
+
+  it('matches via a reservation primary guest when the booker name differs', async () => {
+    mockFetch
+      .mockResolvedValueOnce({
+        bookings: [
+          {
+            id: 'B-GUEST',
+            booker: { lastName: 'Agency' },
+            reservations: [{ primaryGuest: { lastName: 'Müller' } }],
+          },
+        ],
+      } as any)
+      .mockRejectedValueOnce(new Error('no direct'));
+    const res = await GET(makeRequest('EXT-001', 'Mueller'));
+    expect(res.status).toBe(200);
+    expect((await res.json()).booking.id).toBe('B-GUEST');
   });
 
   it('uses Promise.any — succeeds if either search method works', async () => {
@@ -82,7 +113,9 @@ describe('GET /api/bookings/search (CharlieM only)', () => {
   });
 
   it('public endpoint — no auth required', async () => {
-    mockFetch.mockResolvedValueOnce({ bookings: [{ id: 'B-PUBLIC' }] } as any);
+    mockFetch.mockResolvedValueOnce({
+      bookings: [{ id: 'B-PUBLIC', booker: { lastName: 'Doe' } }],
+    } as any);
     // No session needed — route doesn't check auth
     const res = await GET(makeRequest('EXT-PUBLIC', 'Doe'));
     expect(res.status).toBe(200);
