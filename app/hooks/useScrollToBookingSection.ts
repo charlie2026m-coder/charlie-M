@@ -6,16 +6,20 @@ export const BOOKING_SECTION_ID = 'booking-section'
 
 const SCROLL_TO_BOOKING_STORAGE_KEY = 'charlie-m-scroll-to-booking'
 
+function isMobileViewport() {
+  return typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
+}
+
 export function setScrollToBookingOnNextPage() {
+  // Only the mobile booking page consumes this flag. Setting it on desktop
+  // left a stale flag in sessionStorage that could trigger an unexpected
+  // scroll on a later mobile visit, so gate the write on the viewport.
+  if (!isMobileViewport()) return
   try {
     sessionStorage.setItem(SCROLL_TO_BOOKING_STORAGE_KEY, '1')
   } catch {
     // sessionStorage unavailable (private mode, etc.)
   }
-}
-
-function isMobileViewport() {
-  return window.matchMedia('(max-width: 767px)').matches
 }
 
 function shouldScrollToBooking() {
@@ -51,9 +55,10 @@ export function useScrollToBookingSection() {
     if (!shouldScrollToBooking()) return
 
     const run = () => {
-      if (scrollToBookingSection()) {
-        clearScrollToBookingFlag()
-      }
+      // Attempt the scroll, then clear the flag unconditionally — a missing
+      // target must not leave the flag set to fire on a later navigation.
+      scrollToBookingSection()
+      clearScrollToBookingFlag()
     }
 
     requestAnimationFrame(() => {

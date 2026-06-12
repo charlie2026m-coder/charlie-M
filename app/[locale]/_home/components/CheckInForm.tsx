@@ -152,9 +152,21 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
                   setPickingCheckout(true);
                 } else {
                   const start = checkinRef.current!;
-                  if (triggerDate.getTime() >= start.getTime()) {
+                  if (triggerDate.getTime() > start.getTime()) {
                     // Клик после start — завершаем range
                     const newRange = { from: start, to: triggerDate };
+                    setValue(newRange, 'dateRange');
+                    checkinRef.current = undefined;
+                    setPickingCheckout(false);
+                    if (isRoomsPage && hasAppliedOnce) {
+                      triggerSearch(newRange, false);
+                    }
+                  } else if (triggerDate.getTime() === start.getTime()) {
+                    // Тот же день — это 0 ночей. Завершаем как 1 ночь (start..start+1),
+                    // чтобы не отправлять на сервер диапазон, который он молча +1.
+                    const nextDay = new Date(start);
+                    nextDay.setDate(nextDay.getDate() + 1);
+                    const newRange = { from: start, to: nextDay };
                     setValue(newRange, 'dateRange');
                     checkinRef.current = undefined;
                     setPickingCheckout(false);

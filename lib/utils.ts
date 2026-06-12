@@ -44,12 +44,6 @@ export const getMinArrivalDate = (): Date => {
   return berlinToday
 }
 
-// Returns default arrival date string for services (YYYY-MM-DD)
-export const getDefaultArrivalDate = (): string => {
-  if (getBerlinMinutes() >= CUTOFF_MINUTES) return dayjs().add(1, 'day').format('YYYY-MM-DD')
-  return dayjs().format('YYYY-MM-DD')
-}
-
 const PIN_AVAILABLE_HOUR = 10
 
 // PIN may be issued early (pre-check-in), but we hide it until 10:00 Berlin

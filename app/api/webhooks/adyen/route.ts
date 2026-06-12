@@ -518,7 +518,7 @@ export async function POST(request: NextRequest) {
           if (result.alreadyExists) { bookingLog.info('webhook: booking already exists', { bookingId: result.bookingId }); continue }
           if (result.alreadyProcessing) { bookingLog.info('webhook: booking already processing'); continue }
           if (result.cleared) { bookingLog.warn('webhook: pending payload cleared — refunded and skipped', { reference: merchantReference, pspReference }); continue }
-          if (result.error) { bookingLog.error('webhook: booking failed', { reference: merchantReference, error: result.error }) }
+          if (result.error) { bookingLog.error('webhook: booking failed — already refunded, not attempting services', { reference: merchantReference, error: result.error }); continue }
           else if (result.success) { bookingLog.success('webhook: booking created', { bookingId: result.bookingId }); continue }
         } catch (error: any) {
           bookingLog.error('webhook: booking threw', { reference: merchantReference, error: error.message })
