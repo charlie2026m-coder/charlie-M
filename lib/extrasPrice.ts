@@ -157,7 +157,10 @@ export function buildApaleoServicePayloads(
         dates: eligible.map(d => ({
           serviceDate: d.serviceDate,
           count: d.count,
-          amount: d.amount,
+          // Use the catalog price for the folio line (same as the baby-bed and
+          // daily branches) — never the client-supplied d.amount, which could
+          // be tampered to write a wrong amount onto the hotel's folio.
+          amount: { amount: cat.price * (d.count ?? 1), currency },
         })),
       }]
     }
