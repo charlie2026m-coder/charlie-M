@@ -41,9 +41,9 @@ export function Guests({
     : `${value.adults} ${t('guests.guests')}`
   const canAddAdult = maxPersons ? value.adults < maxPersons && value.adults < maxAdults : value.adults < maxAdults;
   
-  // Children cannot exceed adults, and maximum 5 children
-  const maxChildrenAllowed = value.adults; // Children not more than adults
-  const maxChildrenLimit = 5; // Maximum 5 children
+  // Maximum 1 baby allowed, only when there is at least 1 guest
+  const maxChildrenAllowed = value.adults >= 1 ? 1 : 0;
+  const maxChildrenLimit = 1;
   
   // Calculate available baby beds considering children in all rooms
   let availableBabyBedsForThisRoom = maxBabyBeds;

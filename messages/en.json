@@ -5,6 +5,10 @@
   "check_in_btn": "Check In",
   "sign_in_btn": "Login",
   "loading": "Loading...",
+  "phoneInput": {
+    "searchPlaceholder": "Search country or code...",
+    "empty": "No country found."
+  },
   "discount": {
     "text": "Get the best rate directly with us"
   },
@@ -402,7 +406,11 @@
   "addRooms": {
     "room": "Room",
     "addRoom": "Add Room",
-    "left": "left"
+    "left": "left",
+    "cribOption": "Crib",
+    "cribRequiresBaby": "Add a baby first to select a crib",
+    "cribUnavailable": "No crib available for selected dates",
+    "cribVisibleInExtras": "Shown in extras and total price"
   },
   "bookingForm": {
     "title": "BOOK",
@@ -575,6 +583,7 @@
     "firstName": "First Name",
     "billingData": "Billing Data",
     "billingDataDescription": "Please review your billing details before generating the invoice",
+    "invalidPhone": "Invalid phone number",
     "generateInvoice": "Generate Invoice",
     "generatingInvoice": "Generating...",
     "invoiceGenerated": "Invoice generated successfully",

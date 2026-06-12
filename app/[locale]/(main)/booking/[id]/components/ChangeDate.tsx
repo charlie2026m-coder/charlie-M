@@ -9,7 +9,7 @@ import { Button } from '@/app/_components/ui/button'
 import { DateRange } from 'react-day-picker'
 import { useRouter, usePathname } from '@/navigation'
 import { useSearchParams } from 'next/navigation'
-import { getDate } from '@/lib/utils'
+import { getDate, getMinArrivalDate } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
 
 const ChangeDate = ({ arrival, departure }: { arrival: string, departure: string }) => {
@@ -82,7 +82,7 @@ const ChangeDate = ({ arrival, departure }: { arrival: string, departure: string
               setDateRange(date as DateRange);
             }
           }}
-          disabled={{ before: new Date() }}
+          disabled={{ before: getMinArrivalDate() }}
         />
         
         <div className='grid grid-cols-2 gap-2 mt-4'>

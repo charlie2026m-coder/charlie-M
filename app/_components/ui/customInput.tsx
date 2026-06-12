@@ -16,7 +16,7 @@ import { HiMiniHome } from "react-icons/hi2";
 interface CustomInputProps<T extends FieldValues> {
   register: UseFormRegister<T>;
   name: Path<T>;
-  type: 'email' | 'password' | 'text' | 'phone';
+  type: 'email' | 'password' | 'text';
   placeholder: string;
   icon?: 'email' | 'password' | 'name' | 'booking' | 'phone' | 'id' | 'nationality' | 'address' | 'postal' | 'company';
   isError?: boolean;

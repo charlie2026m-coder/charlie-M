@@ -25,7 +25,6 @@ const TaxesInfo = ({ taxes, className = '' }: TaxesInfoProps) => {
         </PopoverTrigger>
         <PopoverContent className='flex flex-col gap-1 text-xs w-auto p-3' side='bottom'>
           <span>VAT: €{taxes.vatTax.toFixed(2)}</span>
-          <span>City Tax: €{taxes.cityTax.toFixed(2)}</span>
         </PopoverContent>
       </Popover>
     </div>

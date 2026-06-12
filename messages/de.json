@@ -5,6 +5,10 @@
   "check_in_btn": "Einchecken",
   "sign_in_btn": "Anmelden",
   "loading": "Wird geladen...",
+  "phoneInput": {
+    "searchPlaceholder": "Land oder Vorwahl suchen...",
+    "empty": "Kein Land gefunden."
+  },
   "discount": {
     "text": "Buchen Sie direkt bei uns zum besten Preis"
   },
@@ -402,7 +406,11 @@
   "addRooms": {
     "room": "Zimmer",
     "addRoom": "Zimmer hinzufügen",
-    "left": "noch verfügbar"
+    "left": "noch verfügbar",
+    "cribOption": "Babybett",
+    "cribRequiresBaby": "Fügen Sie zuerst ein Baby hinzu, um ein Babybett auszuwählen",
+    "cribUnavailable": "Kein Babybett für die gewählten Daten verfügbar",
+    "cribVisibleInExtras": "Wird in Extras und im Gesamtpreis angezeigt"
   },
   "bookingForm": {
     "title": "BUCHEN",
@@ -575,6 +583,7 @@
     "firstName": "Vorname",
     "billingData": "Rechnungsdaten",
     "billingDataDescription": "Bitte überprüfen Sie Ihre Rechnungsdaten vor der Erstellung",
+    "invalidPhone": "Ungültige Telefonnummer",
     "generateInvoice": "Rechnung erstellen",
     "generatingInvoice": "Wird erstellt...",
     "invoiceGenerated": "Rechnung erfolgreich erstellt",

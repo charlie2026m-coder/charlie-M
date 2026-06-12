@@ -4,8 +4,9 @@ const API_URL = process.env.GUESTWAY_API_URL;
 const PARTNERSHIP_API_KEY = process.env.GUESTWAY_API_KEY;
 const ACCESS_TOKEN = process.env.GUESTWAY_ACCESS_TOKEN;
 
-// Apaleo reservation ID format: R{PROPERTY}-{alphanumeric}  e.g. RCMH-4X8KZ9AB
-const RESERVATION_ID_REGEX = /^R[A-Z]{2,4}-[A-Z0-9]{4,12}$/;
+// Loose guard only (prod has none); Guestway is the source of truth for valid IDs
+const RESERVATION_ID_MAX_LENGTH = 64;
+const RESERVATION_ID_SAFE_CHARS = /^[A-Za-z0-9-]+$/;
 
 // In-memory rate limiter: 10 requests per IP per 10 minutes
 // Resets on server restart; not shared across Vercel instances (acceptable for this use case)
@@ -51,9 +52,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const normalized = String(reservationId).trim().toUpperCase();
+    const normalized = String(reservationId).trim();
 
-    if (!RESERVATION_ID_REGEX.test(normalized)) {
+    if (
+      !normalized ||
+      normalized.length > RESERVATION_ID_MAX_LENGTH ||
+      !RESERVATION_ID_SAFE_CHARS.test(normalized)
+    ) {
       return NextResponse.json(
         { error: 'Invalid reservation ID format' },
         { status: 400 }

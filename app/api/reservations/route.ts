@@ -4,6 +4,8 @@ import { Fetch } from '@/services/Request';
 import { Reservation } from '@/types/apaleo';
 import { getReservationAccessesServer } from '@/services/getReservationAccessesServer';
 
+const PAGE_SIZE = 3;
+
 // Map filter to Apaleo status
 const filterToStatus: Record<string, string> = {
   'All': '',
@@ -23,7 +25,6 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const page = Number(searchParams.get('page')) || 1;
     const filter = searchParams.get('filter') || 'All';
-    const pageSize = 3;
 
     // Get current user email
     const supabase = await createSupabaseServerClient();
@@ -37,30 +38,21 @@ export async function GET(request: Request) {
     const apaleoParams = new URLSearchParams({
       textSearch: user.email,
       pageNumber: page.toString(),
-      pageSize: pageSize.toString(),
+      pageSize: PAGE_SIZE.toString(),
+      sort: 'created:desc',
     });
 
-    // Add status filter if not "All"
     if (filter !== 'All' && filterToStatus[filter]) {
       apaleoParams.append('status', filterToStatus[filter]);
     }
 
-    // Get ALL reservations from Apaleo (without pagination for sorting)
-    const allReservationsParams = new URLSearchParams({
-      textSearch: user.email,
-      pageSize: '100', // Get more results for proper sorting
-      sort: 'created:desc', // Sort by creation date, newest first
-    });
+    const apaleoResponse = await Fetch<ApaleoReservationsListResponse>(`/booking/v1/reservations?${apaleoParams.toString()}&propertyIds=${process.env.APALEO_PROPERTY_ID}&expand=services`);
 
-    // Add status filter if not "All"
-    if (filter !== 'All' && filterToStatus[filter]) {
-      allReservationsParams.append('status', filterToStatus[filter]);
-    }
+    const totalCount = apaleoResponse?.count ?? 0;
+    const reservations = apaleoResponse?.reservations ?? [];
 
-    const apaleoResponse = await Fetch<ApaleoReservationsListResponse>(`/booking/v1/reservations?${allReservationsParams.toString()}&propertyIds=${process.env.APALEO_PROPERTY_ID}&expand=services`);
-
-    if (!apaleoResponse || !apaleoResponse.reservations || apaleoResponse.reservations.length === 0) {
-      return NextResponse.json({ count: 0, reservations: [] });
+    if (reservations.length === 0) {
+      return NextResponse.json({ count: totalCount, reservations: [] });
     }
 
     // Get room details from Supabase
@@ -72,7 +64,7 @@ export async function GET(request: Request) {
     const roomDetails = roomsData || [];
 
     // Add room photos to reservations
-    const formattedReservations: Reservation[] = apaleoResponse.reservations.map(item => {
+    let formattedReservations: Reservation[] = reservations.map(item => {
       const room = roomDetails.find((r: any) => r.id === item.unitGroup?.id);
       return {
         ...item,
@@ -82,18 +74,12 @@ export async function GET(request: Request) {
       } as Reservation;
     });
 
-    const startIndex = (page - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    let paginatedReservations = formattedReservations.slice(startIndex, endIndex);
-
-
-    // Get access data for all reservations using server service
-    const reservationIds = paginatedReservations.map(r => r.id);
+    const reservationIds = formattedReservations.map(r => r.id);
     if (reservationIds.length > 0) {
       const accessDataList = await getReservationAccessesServer(reservationIds);
       console.log('🔑 Reservation Accesses:', accessDataList);
 
-      paginatedReservations = paginatedReservations.map(reservation => {
+      formattedReservations = formattedReservations.map(reservation => {
         const accessInfo = accessDataList.find(item => item.confirmationCode === reservation.id);
         return {
           ...reservation,
@@ -103,8 +89,8 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({ 
-      count: formattedReservations.length,  
-      reservations: paginatedReservations 
+      count: totalCount,
+      reservations: formattedReservations 
     });
 
   } catch (error) {

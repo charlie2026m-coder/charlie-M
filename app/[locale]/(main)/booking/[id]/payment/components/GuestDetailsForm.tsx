@@ -12,6 +12,8 @@ import LoadingDots from '@/app/_components/ui/LoadingDots'
 import { useTranslations } from 'next-intl'
 import { useParams } from 'next/navigation'
 import { CountrySelect } from '@/app/_components/ui/CountrySelect'
+import PhoneInput from '@/app/_components/ui/PhoneInput'
+import { toE164 } from '@/lib/phone'
 
 interface GuestDetailsFormProps {
   onSubmit: (data: GuestDetailsFormData) => void
@@ -78,7 +80,7 @@ const GuestDetailsForm = ({ onSubmit,  isLoading = false }: GuestDetailsFormProp
         name: firstName,
         last_name: lastName,
         email: email,
-        phone: phone,
+        phone: toE164(phone),
         company_name: companyName,
         street_address: streetAddress,
         house_number: houseNumber,
@@ -142,13 +144,17 @@ const GuestDetailsForm = ({ onSubmit,  isLoading = false }: GuestDetailsFormProp
         </div>
         
         <div className='relative flex flex-col gap-1 pb-5'>
-          <CustomInput 
-            register={register}
-            name='phone' 
-            type='phone' 
-            placeholder={`${t('phone')} *`}
-            icon='phone'
-            isError={!!errors.phone}
+          <Controller
+            name='phone'
+            control={control}
+            render={({ field }) => (
+              <PhoneInput
+                value={field.value}
+                onChange={field.onChange}
+                placeholder={`${t('phone')} *`}
+                error={!!errors.phone}
+              />
+            )}
           />
           {errors.phone && (
             <span className='absolute bottom-0 left-0 text-red text-xs pl-4'>{errors.phone.message}</span>

@@ -17,10 +17,14 @@ dayjs.extend(timezone)
 export function cn(...inputs: ClassValue[]) { return twMerge(clsx(inputs)) }
 export const getDate = (date: Date) => { return date ? dayjs(date).format('YYYY-MM-DD') : undefined }
 
-const CUTOFF_HOUR = 17
+const CUTOFF_MINUTES = 23 * 60 + 30 // 23:30 Berlin time
 
-const getBerlinHour = () =>
-  Number(new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Berlin', hour: 'numeric', hour12: false }).format(new Date()))
+const getBerlinMinutes = () => {
+  const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Berlin', hour: 'numeric', minute: 'numeric', hour12: false }).formatToParts(new Date())
+  const hour = Number(parts.find((p) => p.type === 'hour')?.value ?? 0)
+  const minute = Number(parts.find((p) => p.type === 'minute')?.value ?? 0)
+  return hour * 60 + minute
+}
 
 // Returns Berlin's current date as local midnight Date (timezone-safe for non-European clients)
 const getBerlinToday = (): Date => {
@@ -29,10 +33,10 @@ const getBerlinToday = (): Date => {
   return new Date(year, month - 1, day)
 }
 
-// Returns Berlin today if before 17:00 Berlin, Berlin tomorrow if at/after 17:00
+// Returns Berlin today if before 23:30 Berlin, Berlin tomorrow if at/after 23:30
 export const getMinArrivalDate = (): Date => {
   const berlinToday = getBerlinToday()
-  if (getBerlinHour() >= CUTOFF_HOUR) {
+  if (getBerlinMinutes() >= CUTOFF_MINUTES) {
     const minDate = new Date(berlinToday)
     minDate.setDate(minDate.getDate() + 1)
     return minDate
@@ -42,8 +46,7 @@ export const getMinArrivalDate = (): Date => {
 
 // Returns default arrival date string for services (YYYY-MM-DD)
 export const getDefaultArrivalDate = (): string => {
-  const berlinHour = getBerlinHour()
-  if (berlinHour >= CUTOFF_HOUR) return dayjs().add(1, 'day').format('YYYY-MM-DD')
+  if (getBerlinMinutes() >= CUTOFF_MINUTES) return dayjs().add(1, 'day').format('YYYY-MM-DD')
   return dayjs().format('YYYY-MM-DD')
 }
 
