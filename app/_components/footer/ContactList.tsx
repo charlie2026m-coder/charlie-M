@@ -77,10 +77,10 @@ const ContactList = ({ contacts }: ContactListProps) => {
                 onClick={(e) => handleClick(contact.type, href, contact.value, e)}
                 className={cn(
                   "cursor-pointer flex items-center gap-1",
-                  contact.type === 'whatsapp' && "w-fit gap-2 rounded-full bg-[#25D366] px-4 py-2 text-white font-medium hover:bg-[#1da851] transition-colors"
+                  contact.type === 'whatsapp' && "w-fit gap-2 rounded-full border border-white/25 px-3 py-1.5 text-sm text-white hover:border-[#25D366] hover:bg-[#25D366]/10 transition-colors"
                 )}
               >
-                {contact.type === 'whatsapp' && <FaWhatsapp size={20} className="text-white" />}
+                {contact.type === 'whatsapp' && <FaWhatsapp size={16} className="text-[#25D366]" />}
                 {contact.label}
               </a>
             </li>
@@ -101,10 +101,10 @@ const ContactList = ({ contacts }: ContactListProps) => {
                 onClick={(e) => handleClick(contact.type, href, contact.value, e)}
                 className={cn(
                   "cursor-pointer flex items-center gap-1",
-                  contact.type === 'whatsapp' && "w-fit gap-2 rounded-full bg-[#25D366] px-4 py-2 text-white font-medium hover:bg-[#1da851] transition-colors"
+                  contact.type === 'whatsapp' && "w-fit gap-2 rounded-full border border-white/25 px-3 py-1.5 text-sm text-white hover:border-[#25D366] hover:bg-[#25D366]/10 transition-colors"
                 )}
               >
-                {contact.type === 'whatsapp' && <FaWhatsapp size={20} className="text-white" />}
+                {contact.type === 'whatsapp' && <FaWhatsapp size={16} className="text-[#25D366]" />}
                 {contact.label}
               </a>
             </li>
