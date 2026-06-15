@@ -83,7 +83,13 @@ export function DateInput({
           </div>
         </PopoverTrigger>
         <PopoverContent
-          className={cn(className, "overflow-hidden  rounded-[20px] bg-white p-2 flex flex-col w-[350px] lg:w-[660px]")}
+          className={cn(
+            className,
+            "overflow-hidden rounded-[20px] bg-white p-2 flex flex-col",
+            // "bottom" = the /rooms sticky bar, which shows a single compact
+            // month; "top" = the landing hero, two months on desktop.
+            side === 'bottom' ? "w-[350px]" : "w-[350px] lg:w-[660px]",
+          )}
           align="center"
           side={side}
           sideOffset={10}

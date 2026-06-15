@@ -55,14 +55,19 @@ export function RoomsCarousel({
           setApi={setApi}
           opts={{
             loop: true,
-            // Center the active card on every breakpoint so neighbours peek on
-            // BOTH sides — makes it obvious there are more cards to swipe to.
+            // Mobile/tablet: center the active card so neighbours peek on BOTH
+            // sides — makes it obvious the cards swipe. Desktop (≥1024): align
+            // to the start so exactly 3 full cards show with no half-card
+            // "stubs" at the edges (basis-1/3 below); arrows still scroll.
             align: 'center',
             // keep centering working even with few slides (loop can't engage
             // with 1-2 slides and trimSnaps would left-align them)
             containScroll: false,
             // Gentler settle after a swipe (default 25) — feels smoother.
             duration: 32,
+            breakpoints: {
+              '(min-width: 1024px)': { align: 'start' },
+            },
             // Drag the rooms carousel everywhere except the photo area —
             // there the inner PhotoSlider handles the swipe (photo flip)
             watchDrag: (_api, event) => {
@@ -75,7 +80,7 @@ export function RoomsCarousel({
             {rooms.map((item) => (
               <CarouselItem
                 key={item.id}
-                className="px-2 basis-[74%] sm:basis-[56%] md:basis-[44%] xl:basis-[31%] shrink-0"
+                className="px-2 basis-[74%] sm:basis-[56%] md:basis-[44%] lg:basis-1/3 shrink-0"
               >
                 <RoomCard item={item} locale={locale} translations={translations} />
               </CarouselItem>

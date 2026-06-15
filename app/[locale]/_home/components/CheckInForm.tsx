@@ -41,10 +41,16 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
   });
   const [fromPrice, setFromPrice] = useState<number | null>(null);
 
+  // On /rooms the search bar is sticky at the very top, so a 2-month calendar
+  // drops a wide block over the results. Show a single, compact month there
+  // (it reads as a normal date dropdown and leaves the side cards visible);
+  // the landing-page hero keeps two months on desktop.
+  const monthsToShow = isRoomsPage ? 1 : numberOfMonths;
+
   // Real per-night availability for the visible window (current + next month
   // when two are shown). Sold-out nights become non-selectable.
   const availFrom = toYmd(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1));
-  const availTo = toYmd(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + numberOfMonths, 1));
+  const availTo = toYmd(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + monthsToShow, 1));
   // The custom two-click onSelect below bypasses the library's excludeDisabled
   // truncation, so a completed range is re-checked against sold-out nights via
   // the shared helper (same rule in BookingForm — review #5).
@@ -200,7 +206,7 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
               required={false}
               mode="range"
               captionLayout="label"
-              numberOfMonths={numberOfMonths}
+              numberOfMonths={monthsToShow}
               selected={dateRange}
               defaultMonth={visibleMonth}
               onMonthChange={setVisibleMonth}
