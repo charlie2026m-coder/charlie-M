@@ -85,10 +85,11 @@ export function DateInput({
         <PopoverContent
           className={cn(
             className,
-            "overflow-hidden rounded-[20px] bg-white p-2 flex flex-col",
-            // "bottom" = the /rooms sticky bar, which shows a single compact
-            // month; "top" = the landing hero, two months on desktop.
-            side === 'bottom' ? "w-[350px]" : "w-[350px] lg:w-[660px]",
+            "overflow-hidden rounded-[20px] p-2 flex flex-col w-[350px] lg:w-[660px]",
+            // "bottom" = opens from a sticky bar over the results (/rooms) — make
+            // the panel frosted/semi-transparent so the cards behind stay
+            // visible; "top" = the landing hero keeps a solid white panel.
+            side === 'bottom' ? "bg-white/85 backdrop-blur-md" : "bg-white",
           )}
           align="center"
           side={side}

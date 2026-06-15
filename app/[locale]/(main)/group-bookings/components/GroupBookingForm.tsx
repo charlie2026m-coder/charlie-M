@@ -1,9 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { DateRange } from 'react-day-picker'
-import dayjs from 'dayjs'
 import { toast } from 'sonner'
 import {
   FiUser,
@@ -11,6 +10,7 @@ import {
   FiBriefcase,
   FiUsers,
   FiHome,
+  FiHash,
   FiMessageSquare,
   FiSend,
 } from 'react-icons/fi'
@@ -22,6 +22,7 @@ import { Textarea } from '@/app/_components/ui/textarea'
 import { DateInput } from '@/app/_components/ui/DateInput'
 import { Calendar } from '@/app/_components/ui/calendar'
 import PhoneInput from '@/app/_components/ui/PhoneInput'
+import { GroupGuests, type GuestCounts } from './GroupGuests'
 import { cn, getMinArrivalDate } from '@/lib/utils'
 import { EMAIL, PHONE_NUMBER } from '@/lib/Constants'
 
@@ -37,18 +38,38 @@ const GroupBookingForm = ({ locale }: { locale: string }) => {
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [company, setCompany] = useState('')
-  const [guests, setGuests] = useState('')
+  const [taxNumber, setTaxNumber] = useState('')
+  const [guests, setGuests] = useState<GuestCounts>({ adults: 2, children: 0 })
   const [rooms, setRooms] = useState('')
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined)
   const [message, setMessage] = useState('')
   const [openCal, setOpenCal] = useState(false)
-  const [errors, setErrors] = useState<{ name?: boolean; email?: boolean; guests?: boolean }>({})
+  const [errors, setErrors] = useState<{ name?: boolean; email?: boolean }>({})
+
+  // Two months on desktop, one on mobile — matches the landing-page picker.
+  const [numberOfMonths, setNumberOfMonths] = useState(1)
+  useEffect(() => {
+    const update = () => setNumberOfMonths(window.innerWidth >= 1024 ? 2 : 1)
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
+
+  // Two-click range: first click sets check-in, second sets check-out and only
+  // THEN closes the calendar (so a single click never dismisses it).
+  const checkinRef = useRef<Date | undefined>(undefined)
+  const [pickingCheckout, setPickingCheckout] = useState(false)
 
   const minDate = getMinArrivalDate()
 
-  // Localized date for the email/summary, e.g. "20 Jul 2026".
   const fmtDate = (d?: Date) =>
-    d ? new Intl.DateTimeFormat(locale === 'de' ? 'de-DE' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(d) : ''
+    d
+      ? new Intl.DateTimeFormat(locale === 'de' ? 'de-DE' : 'en-GB', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        }).format(d)
+      : ''
 
   const periodText = dateRange?.from
     ? `${fmtDate(dateRange.from)}${dateRange.to ? ` – ${fmtDate(dateRange.to)}` : ''}`
@@ -59,10 +80,11 @@ const GroupBookingForm = ({ locale }: { locale: string }) => {
     const nextErrors = {
       name: name.trim().length === 0,
       email: !isValidEmail(email.trim()),
-      guests: guests.trim().length === 0 || Number(guests) <= 0,
     }
     setErrors(nextErrors)
-    if (nextErrors.name || nextErrors.email || nextErrors.guests) return
+    if (nextErrors.name || nextErrors.email) return
+
+    const guestsText = `${guests.adults} ${t('adults')}${guests.children > 0 ? `, ${guests.children} ${t('children')}` : ''}`
 
     const subject = mode === 'corporate' ? t('emailSubjectCorporate') : t('emailSubjectGroup')
     const lines = [
@@ -71,7 +93,8 @@ const GroupBookingForm = ({ locale }: { locale: string }) => {
       `${t('email')}: ${email.trim()}`,
       phone ? `${t('phone')}: ${phone}` : null,
       mode === 'corporate' && company.trim() ? `${t('company')}: ${company.trim()}` : null,
-      `${t('guests')}: ${guests.trim()}`,
+      mode === 'corporate' && taxNumber.trim() ? `${t('taxNumber')}: ${taxNumber.trim()}` : null,
+      `${t('guests')}: ${guestsText}`,
       rooms.trim() ? `${t('rooms')}: ${rooms.trim()}` : null,
       periodText ? `${t('period')}: ${periodText}` : null,
       message.trim() ? `\n${t('message')}:\n${message.trim()}` : null,
@@ -117,9 +140,7 @@ const GroupBookingForm = ({ locale }: { locale: string }) => {
                   aria-pressed={mode === tab.key}
                   className={cn(
                     'flex flex-1 sm:flex-none items-center justify-center gap-2 rounded-full px-4 md:px-6 py-2.5 text-sm md:text-base font-medium transition-all cursor-pointer',
-                    mode === tab.key
-                      ? 'bg-blue text-mute shadow-sm'
-                      : 'text-mute/60 hover:text-mute',
+                    mode === tab.key ? 'bg-blue text-mute shadow-sm' : 'text-mute/60 hover:text-mute',
                   )}
                 >
                   {tab.icon}
@@ -167,11 +188,7 @@ const GroupBookingForm = ({ locale }: { locale: string }) => {
 
                 {/* Phone */}
                 <div className="flex flex-col gap-1">
-                  <PhoneInput
-                    value={phone}
-                    onChange={setPhone}
-                    placeholder={t('phone')}
-                  />
+                  <PhoneInput value={phone} onChange={setPhone} placeholder={t('phone')} />
                 </div>
 
                 {/* Company — corporate only */}
@@ -189,22 +206,28 @@ const GroupBookingForm = ({ locale }: { locale: string }) => {
                   </div>
                 )}
 
-                {/* Guests */}
-                <div className="flex flex-col gap-1">
-                  <div className="relative">
-                    <FiUsers className={fieldIcon} />
-                    <Input
-                      type="number"
-                      min={1}
-                      inputMode="numeric"
-                      value={guests}
-                      onChange={(e) => setGuests(e.target.value)}
-                      placeholder={`${t('guests')} *`}
-                      aria-invalid={errors.guests}
-                      className={cn(inputBase, errors.guests && '!border-red text-red')}
-                    />
+                {/* Tax number — corporate only */}
+                {mode === 'corporate' && (
+                  <div className="flex flex-col gap-1">
+                    <div className="relative">
+                      <FiHash className={fieldIcon} />
+                      <Input
+                        value={taxNumber}
+                        onChange={(e) => setTaxNumber(e.target.value)}
+                        placeholder={t('taxNumberPlaceholder')}
+                        className={inputBase}
+                      />
+                    </div>
                   </div>
-                  {errors.guests && <span className="text-red text-xs pl-4">{t('errorGuests')}</span>}
+                )}
+
+                {/* Guests — adults + children stepper */}
+                <div className="flex flex-col gap-1">
+                  <GroupGuests
+                    value={guests}
+                    onChange={setGuests}
+                    labels={{ adults: t('adults'), children: t('children') }}
+                  />
                 </div>
 
                 {/* Rooms (optional) */}
@@ -228,19 +251,46 @@ const GroupBookingForm = ({ locale }: { locale: string }) => {
                   <DateInput
                     value={dateRange}
                     open={openCal}
-                    onOpenChange={setOpenCal}
+                    onOpenChange={(o) => {
+                      setOpenCal(o)
+                      if (o) {
+                        setPickingCheckout(false)
+                        checkinRef.current = undefined
+                      }
+                    }}
                     side="bottom"
-                    inputStyle={cn(inputBase, 'pl-12')}
+                    inputStyle="h-12 rounded-full border-gray"
                   >
                     <Calendar
                       mode="range"
-                      numberOfMonths={1}
+                      numberOfMonths={numberOfMonths}
                       captionLayout="label"
                       selected={dateRange}
                       defaultMonth={dateRange?.from ?? minDate}
-                      onSelect={(range) => {
-                        setDateRange(range)
-                        if (range?.from && range?.to) setOpenCal(false)
+                      onSelect={(_range, triggerDate) => {
+                        if (!triggerDate) return
+                        if (!pickingCheckout) {
+                          checkinRef.current = triggerDate
+                          setDateRange({ from: triggerDate, to: undefined })
+                          setPickingCheckout(true)
+                          return
+                        }
+                        const start = checkinRef.current!
+                        if (triggerDate.getTime() > start.getTime()) {
+                          setDateRange({ from: start, to: triggerDate })
+                          setPickingCheckout(false)
+                          setOpenCal(false)
+                        } else if (triggerDate.getTime() === start.getTime()) {
+                          const next = new Date(start)
+                          next.setDate(next.getDate() + 1)
+                          setDateRange({ from: start, to: next })
+                          setPickingCheckout(false)
+                          setOpenCal(false)
+                        } else {
+                          // clicked before check-in → restart from the new date
+                          checkinRef.current = triggerDate
+                          setDateRange({ from: triggerDate, to: undefined })
+                        }
                       }}
                       disabled={{ before: minDate }}
                     />

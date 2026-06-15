@@ -43,14 +43,14 @@ const Navigation = ({isWhite = false}: {isWhite?: boolean}) => {
   };
 
   return (
-    <nav className="hidden md:flex items-center 2xl:w-1/4 gap-6 justify-between">
+    <nav className="hidden md:flex items-center gap-5 lg:gap-6">
       {navigation.map((item) => (
-        <Link 
+        <Link
           key={item.href}
           href={item.href}
           onClick={(e) => handleClick(e, item.href)}
           className={cn(
-            "transition-colors border-b-4 border-transparent py-1  mx-1",
+            "transition-colors border-b-4 border-transparent py-1 whitespace-nowrap",
             isWhite ? "text-white hover:underline" : "text-black hover:text-black/50",
           )}
         >
