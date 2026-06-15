@@ -75,9 +75,12 @@ const ContactList = ({ contacts }: ContactListProps) => {
               <a
                 href={href}
                 onClick={(e) => handleClick(contact.type, href, contact.value, e)}
-                className="cursor-pointer flex items-center gap-1"
+                className={cn(
+                  "cursor-pointer flex items-center gap-1",
+                  contact.type === 'whatsapp' && "w-fit gap-2 rounded-full bg-[#25D366] px-4 py-2 text-white font-medium hover:bg-[#1da851] transition-colors"
+                )}
               >
-                {contact.type === 'whatsapp' && <FaWhatsapp size={20} className="text-[#25D366]" />}
+                {contact.type === 'whatsapp' && <FaWhatsapp size={20} className="text-white" />}
                 {contact.label}
               </a>
             </li>
@@ -96,9 +99,12 @@ const ContactList = ({ contacts }: ContactListProps) => {
               <a
                 href={href}
                 onClick={(e) => handleClick(contact.type, href, contact.value, e)}
-                className="cursor-pointer flex items-center gap-1"
+                className={cn(
+                  "cursor-pointer flex items-center gap-1",
+                  contact.type === 'whatsapp' && "w-fit gap-2 rounded-full bg-[#25D366] px-4 py-2 text-white font-medium hover:bg-[#1da851] transition-colors"
+                )}
               >
-                {contact.type === 'whatsapp' && <FaWhatsapp size={20} className="text-[#25D366]" />}
+                {contact.type === 'whatsapp' && <FaWhatsapp size={20} className="text-white" />}
                 {contact.label}
               </a>
             </li>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { DateRange } from 'react-day-picker'
 import { toast } from 'sonner'
@@ -19,14 +19,20 @@ import { FaWhatsapp } from 'react-icons/fa'
 import { Button } from '@/app/_components/ui/button'
 import { Input } from '@/app/_components/ui/input'
 import { Textarea } from '@/app/_components/ui/textarea'
+import { Checkbox } from '@/app/_components/ui/checkbox'
 import { DateInput } from '@/app/_components/ui/DateInput'
 import { Calendar } from '@/app/_components/ui/calendar'
 import PhoneInput from '@/app/_components/ui/PhoneInput'
 import { GroupGuests, type GuestCounts } from './GroupGuests'
+import { Link } from '@/navigation'
 import { cn, getMinArrivalDate } from '@/lib/utils'
 import { EMAIL, PHONE_NUMBER } from '@/lib/Constants'
 
 type Mode = 'group' | 'corporate'
+
+// useLayoutEffect on the client (positions the toggle pill before paint, so it
+// never flashes at 0 width), useEffect on the server (avoids the SSR warning).
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
 
 const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
 
@@ -43,8 +49,9 @@ const GroupBookingForm = ({ locale }: { locale: string }) => {
   const [rooms, setRooms] = useState('')
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined)
   const [message, setMessage] = useState('')
+  const [consent, setConsent] = useState(false)
   const [openCal, setOpenCal] = useState(false)
-  const [errors, setErrors] = useState<{ name?: boolean; email?: boolean }>({})
+  const [errors, setErrors] = useState<{ name?: boolean; email?: boolean; consent?: boolean }>({})
 
   // Two months on desktop, one on mobile — matches the landing-page picker.
   const [numberOfMonths, setNumberOfMonths] = useState(1)
@@ -53,6 +60,27 @@ const GroupBookingForm = ({ locale }: { locale: string }) => {
     update()
     window.addEventListener('resize', update)
     return () => window.removeEventListener('resize', update)
+  }, [])
+
+  // Sliding toggle pill: measure the active tab's pixel position/size so the
+  // indicator animates with plain px transitions (reliable across browsers,
+  // unlike % transforms here).
+  const groupTabRef = useRef<HTMLButtonElement>(null)
+  const corpTabRef = useRef<HTMLButtonElement>(null)
+  const [pill, setPill] = useState({ left: 0, width: 0 })
+  const [pillReady, setPillReady] = useState(false) // enable the slide only after the first placement
+  useIsomorphicLayoutEffect(() => {
+    const measure = () => {
+      const el = mode === 'corporate' ? corpTabRef.current : groupTabRef.current
+      if (el) setPill({ left: el.offsetLeft, width: el.offsetWidth })
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [mode])
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setPillReady(true))
+    return () => cancelAnimationFrame(id)
   }, [])
 
   // Two-click range: first click sets check-in, second sets check-out and only
@@ -80,9 +108,10 @@ const GroupBookingForm = ({ locale }: { locale: string }) => {
     const nextErrors = {
       name: name.trim().length === 0,
       email: !isValidEmail(email.trim()),
+      consent: !consent,
     }
     setErrors(nextErrors)
-    if (nextErrors.name || nextErrors.email) return
+    if (nextErrors.name || nextErrors.email || nextErrors.consent) return
 
     const guestsText = `${guests.adults} ${t('adults')}${guests.children > 0 ? `, ${guests.children} ${t('children')}` : ''}`
 
@@ -130,17 +159,28 @@ const GroupBookingForm = ({ locale }: { locale: string }) => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-start">
           {/* Form card */}
           <div className="lg:col-span-2 bg-white rounded-[30px] shadow-lg p-5 md:p-8">
-            {/* Segmented toggle */}
-            <div className="inline-flex w-full sm:w-auto rounded-full bg-light-bg border border-gray p-1 mb-6">
+            {/* Segmented toggle with a sliding active pill */}
+            <div className="relative flex w-full sm:w-[440px] rounded-full bg-light-bg border border-gray p-1 mb-6">
+              <span
+                aria-hidden
+                className="pointer-events-none absolute top-1 bottom-1 rounded-full bg-blue shadow-sm"
+                style={{
+                  left: pill.left,
+                  width: pill.width,
+                  opacity: pill.width ? 1 : 0,
+                  transition: pillReady ? 'left 0.3s ease-out, width 0.3s ease-out' : 'none',
+                }}
+              />
               {tabs.map((tab) => (
                 <button
                   key={tab.key}
+                  ref={tab.key === 'group' ? groupTabRef : corpTabRef}
                   type="button"
                   onClick={() => setMode(tab.key)}
                   aria-pressed={mode === tab.key}
                   className={cn(
-                    'flex flex-1 sm:flex-none items-center justify-center gap-2 rounded-full px-4 md:px-6 py-2.5 text-sm md:text-base font-medium transition-all cursor-pointer',
-                    mode === tab.key ? 'bg-blue text-mute shadow-sm' : 'text-mute/60 hover:text-mute',
+                    'relative z-10 flex-1 flex items-center justify-center gap-2 rounded-full px-3 md:px-6 py-2.5 text-sm md:text-base font-medium transition-colors duration-300 cursor-pointer',
+                    mode === tab.key ? 'text-mute' : 'text-mute/55 hover:text-mute',
                   )}
                 >
                   {tab.icon}
@@ -311,6 +351,25 @@ const GroupBookingForm = ({ locale }: { locale: string }) => {
                   </div>
                 </div>
               </div>
+
+              {/* Consent */}
+              <div className="flex items-start gap-3 mt-1">
+                <Checkbox
+                  size="sm"
+                  id="gb-consent"
+                  checked={consent}
+                  onCheckedChange={(c) => setConsent(c === true)}
+                  className={cn('mt-0.5', errors.consent && '!border-red')}
+                />
+                <label htmlFor="gb-consent" className="text-sm text-dark leading-relaxed cursor-pointer">
+                  {t('consentPre')}
+                  <Link href="/privacy-policy" target="_blank" className="text-blue underline hover:text-blue/80">{t('privacyPolicy')}</Link>
+                  {t('consentMid')}
+                  <Link href="/terms-and-conditions" target="_blank" className="text-blue underline hover:text-blue/80">{t('termsAndConditions')}</Link>
+                  {t('consentPost')}
+                </label>
+              </div>
+              {errors.consent && <span className="text-red text-xs">{t('errorConsent')}</span>}
 
               <div className="flex items-center justify-between gap-4 mt-2">
                 <span className="text-mute/50 text-xs">{t('requiredHint')}</span>
