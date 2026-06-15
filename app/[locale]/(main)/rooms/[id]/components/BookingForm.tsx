@@ -5,7 +5,7 @@ import { Guests } from "@/app/_components/ui/guests"
 import { Button } from "@/app/_components/ui/button"
 import { Calendar } from "@/app/_components/ui/calendar"
 import { Spinner } from "@/app/_components/ui/spinner"
-import { useState, useEffect, useMemo, useTransition } from "react"
+import { useState, useEffect, useMemo, useRef, useTransition } from "react"
 import { DateRange } from "react-day-picker"
 import { useRouter } from "@/navigation"
 import { useQuery } from "@tanstack/react-query"
@@ -53,10 +53,18 @@ const BookingForm = ({
     adults: parseInt(params?.adults || guestsStore?.adults.toString() || '1'),
     children: parseInt(params?.children || guestsStore?.children.toString() || '0'),
   })
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: dateRangeStore.from || (params.from ? dayjs(params.from).toDate() : undefined),
-    to: dateRangeStore.to || (params.to ? dayjs(params.to).toDate() : undefined),
-  })
+  // URL params (a "Choose Room" card click or a shared link) carry the proposed
+  // dates and are authoritative on entry — they win over the last-used store
+  // range. Require BOTH from+to so a malformed one-sided URL can't splice a URL
+  // arrival onto a stale store checkout. Normalize to the bare YYYY-MM-DD so a
+  // time-bearing value can't render a different day on the server vs the client
+  // (hydration mismatch).
+  const hasUrlRange = Boolean(params.from && params.to)
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(() =>
+    hasUrlRange
+      ? { from: dayjs(params.from!.slice(0, 10)).toDate(), to: dayjs(params.to!.slice(0, 10)).toDate() }
+      : { from: dateRangeStore.from, to: dateRangeStore.to }
+  )
 
   // Real per-night availability for THIS room type (sold-out nights disabled).
   const [visibleMonth, setVisibleMonth] = useState<Date>(() => dateRange?.from ?? new Date())
@@ -64,8 +72,21 @@ const BookingForm = ({
   const availTo = toYmd(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 2, 1))
   const { isSoldOut, rangeHasSoldOutNight } = useMonthAvailability(availFrom, availTo, id)
 
-  // Sync dateRange from store (when Availability applies dates)
+  // Dates precedence on this page: the URL range (above) is authoritative on
+  // entry, and only store changes that happen AFTER mount (e.g. the on-page
+  // calendar, or an external "apply dates") are adopted into local state. The
+  // store's value AT mount must never override the URL-initialized range — else
+  // the home page's seeded today→tomorrow range would replace the dates a card
+  // linked to. We snapshot the store at mount and diff against it, rather than a
+  // one-shot flag, so this stays correct under React's double-invoked dev
+  // effects and any extra re-render. We also don't write the URL into the store,
+  // so a range the guest typed on the home page survives a round-trip.
+  const initialStoreRange = useRef({ from: dateRangeStore.from, to: dateRangeStore.to })
   useEffect(() => {
+    const changedSinceMount =
+      dateRangeStore.from?.getTime() !== initialStoreRange.current.from?.getTime() ||
+      dateRangeStore.to?.getTime() !== initialStoreRange.current.to?.getTime()
+    if (!changedSinceMount) return
     if (dateRangeStore.from && dateRangeStore.to) {
       setDateRange(prev => {
         if (prev?.from?.getTime() === dateRangeStore.from?.getTime() &&
