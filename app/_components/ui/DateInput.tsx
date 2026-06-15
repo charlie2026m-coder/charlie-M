@@ -23,6 +23,7 @@ export function DateInput({
   className = '',
   inputStyle = '',
   isError = false,
+  side = 'top',
 }: {
   children?: React.ReactNode,
   value?: DateRange | undefined,
@@ -31,6 +32,11 @@ export function DateInput({
   className?: string,
   inputStyle?: string,
   isError?: boolean,
+  // Where the calendar opens relative to the field. Defaults to "top" (the
+  // landing-page form sits low in the hero). On /rooms the form is sticky at
+  // the top of the viewport, so it opens "bottom" — dropping down from the bar
+  // instead of being flipped over the room cards by collision detection.
+  side?: 'top' | 'bottom',
 }) {
   const t = useTranslations();
   const [internalOpen, setInternalOpen] = useState(false)  
@@ -79,7 +85,7 @@ export function DateInput({
         <PopoverContent
           className={cn(className, "overflow-hidden  rounded-[20px] bg-white p-2 flex flex-col w-[350px] lg:w-[660px]")}
           align="center"
-          side="top"
+          side={side}
           sideOffset={10}
           onOpenAutoFocus={(e) => e.preventDefault()}
           onInteractOutside={(e) => {

@@ -28,9 +28,6 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
   const [numberOfMonths, setNumberOfMonths] = useState(1);
   const [pickingCheckout, setPickingCheckout] = useState(false);
   const checkinRef = useRef<Date | undefined>(undefined);
-  const [hasAppliedOnce, setHasAppliedOnce] = useState(
-    () => Boolean(params?.from && params?.to)
-  );
   const [visibleMonth, setVisibleMonth] = useState<Date>(() => {
     // Deep-links carry ?from= for a future month — the calendar must open
     // (and fetch availability for) THAT month, not today's (review #6).
@@ -148,7 +145,6 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
       children: guests.children.toString(),
     });
     router.push(`/rooms?${queryString}`);
-    setHasAppliedOnce(true);
     if (closeCalendar) setOpenCalendar(false);
   };
 
@@ -188,6 +184,7 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
         <DateInput
           value={dateRange || undefined}
           open={openCalendar}
+          side={isRoomsPage ? 'bottom' : 'top'}
           onOpenChange={(open) => {
             setOpenCalendar(open);
             if (open) {
@@ -230,8 +227,11 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
                       setValue(newRange, 'dateRange');
                       checkinRef.current = undefined;
                       setPickingCheckout(false);
-                      if (isRoomsPage && hasAppliedOnce) {
-                        triggerSearch(newRange, false);
+                      // На странице /rooms полный диапазон сразу применяется
+                      // (без клика по «Apply») и календарь закрывается, чтобы
+                      // не перекрывать карточки комнат.
+                      if (isRoomsPage) {
+                        triggerSearch(newRange, true);
                       }
                     }
                   } else if (triggerDate.getTime() === start.getTime()) {
@@ -243,8 +243,8 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
                     setValue(newRange, 'dateRange');
                     checkinRef.current = undefined;
                     setPickingCheckout(false);
-                    if (isRoomsPage && hasAppliedOnce) {
-                      triggerSearch(newRange, false);
+                    if (isRoomsPage) {
+                      triggerSearch(newRange, true);
                     }
                   } else {
                     // Клик до start — двигаем start, остаёмся в режиме выбора конца
@@ -271,7 +271,7 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
         </DateInput>
       </label>
       <label className='w-full max-w-2/5 border-l md:border-none'>
-        <Guests setValue={(value) => { setValue(value, 'guests'); setHasAppliedOnce(false); }} value={guests} />
+        <Guests setValue={(value) => { setValue(value, 'guests'); }} value={guests} />
       </label>
       <Button
         className={cn('cursor-pointer size-10 active:scale-95 md:size-15 flex items-center justify-center rounded-full transition-all duration-300 bg-blue hover:bg-blue/80')}
