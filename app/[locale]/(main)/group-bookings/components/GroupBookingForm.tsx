@@ -50,6 +50,7 @@ const GroupBookingForm = ({ locale }: { locale: string }) => {
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined)
   const [message, setMessage] = useState('')
   const [consent, setConsent] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const [openCal, setOpenCal] = useState(false)
   const [errors, setErrors] = useState<{ name?: boolean; email?: boolean; consent?: boolean }>({})
 
@@ -103,7 +104,7 @@ const GroupBookingForm = ({ locale }: { locale: string }) => {
     ? `${fmtDate(dateRange.from)}${dateRange.to ? ` – ${fmtDate(dateRange.to)}` : ''}`
     : ''
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const nextErrors = {
       name: name.trim().length === 0,
@@ -113,25 +114,50 @@ const GroupBookingForm = ({ locale }: { locale: string }) => {
     setErrors(nextErrors)
     if (nextErrors.name || nextErrors.email || nextErrors.consent) return
 
-    const guestsText = `${guests.adults} ${t('adults')}${guests.children > 0 ? `, ${guests.children} ${t('children')}` : ''}`
+    setSubmitting(true)
+    try {
+      const res = await fetch('/api/group-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode,
+          name: name.trim(),
+          email: email.trim(),
+          phone,
+          company: company.trim(),
+          taxNumber: taxNumber.trim(),
+          guests,
+          rooms: rooms.trim(),
+          period: periodText,
+          message: message.trim(),
+          locale,
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
 
-    const subject = mode === 'corporate' ? t('emailSubjectCorporate') : t('emailSubjectGroup')
-    const lines = [
-      `${t('emailLabelType')}: ${mode === 'corporate' ? t('emailTypeCorporate') : t('emailTypeGroup')}`,
-      `${t('name')}: ${name.trim()}`,
-      `${t('email')}: ${email.trim()}`,
-      phone ? `${t('phone')}: ${phone}` : null,
-      mode === 'corporate' && company.trim() ? `${t('company')}: ${company.trim()}` : null,
-      mode === 'corporate' && taxNumber.trim() ? `${t('taxNumber')}: ${taxNumber.trim()}` : null,
-      `${t('guests')}: ${guestsText}`,
-      rooms.trim() ? `${t('rooms')}: ${rooms.trim()}` : null,
-      periodText ? `${t('period')}: ${periodText}` : null,
-      message.trim() ? `\n${t('message')}:\n${message.trim()}` : null,
-    ].filter(Boolean)
-
-    const href = `mailto:${EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines.join('\n'))}`
-    toast.success(t('successToast'))
-    window.location.href = href
+      if (res.ok && data?.ok) {
+        toast.success(t('successToast'))
+        // Clear the form after a successful send.
+        setName('')
+        setEmail('')
+        setPhone('')
+        setCompany('')
+        setTaxNumber('')
+        setGuests({ adults: 2, children: 0 })
+        setRooms('')
+        setDateRange(undefined)
+        setMessage('')
+        setConsent(false)
+      } else if (res.status === 429) {
+        toast.error(t('errorRateLimit'))
+      } else {
+        toast.error(t('errorSend'))
+      }
+    } catch {
+      toast.error(t('errorSend'))
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const whatsappHref = `https://wa.me/${PHONE_NUMBER.replace(/[\s+]/g, '')}?text=${encodeURIComponent(t('whatsappPrefill'))}`
@@ -373,9 +399,9 @@ const GroupBookingForm = ({ locale }: { locale: string }) => {
 
               <div className="flex items-center justify-between gap-4 mt-2">
                 <span className="text-mute/50 text-xs">{t('requiredHint')}</span>
-                <Button type="submit" className="gap-2">
+                <Button type="submit" className="gap-2" disabled={submitting}>
                   <FiSend className="size-5" />
-                  {t('submit')}
+                  {submitting ? t('submitting') : t('submit')}
                 </Button>
               </div>
             </form>

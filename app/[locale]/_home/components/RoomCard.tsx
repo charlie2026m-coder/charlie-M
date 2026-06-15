@@ -74,20 +74,19 @@ const RoomCard = ({
   };
 
   return (
-    <div className='w-full flex flex-col rounded-[40px] bg-white overflow-hidden shadow-lg h-auto sm:h-full'>
+    <div className='w-full flex flex-col rounded-[40px] bg-white overflow-hidden shadow-lg h-full'>
       <PhotoSlider
         height={260}
         images={item.images}
         roomName={item.name}
         onNavigate={() => router.push(`/${locale}/rooms/${item.unitGroup.id}?${queryString}`)}
       />
-      {/* Mobile: card hugs its content (no equal-height stretch) so the white
-          area isn't padded out with empty space. Desktop keeps equal heights.
-          The rows below follow a fixed vertical pattern — clamped 2-line name,
-          a reserved "Next available" row, then the price/action pinned to the
-          bottom — so those elements line up across cards instead of jumping
-          when a name wraps or a price is missing. */}
-      <div className='flex flex-col p-4 pb-5 sm:pb-6 h-auto sm:h-full'>
+      {/* All cards are equal height (h-full fills the carousel row). The rows
+          below follow a fixed vertical pattern — clamped 2-line name, a
+          reserved "Next available" row, then the price/action pinned to the
+          bottom (mt-auto) — so those elements line up across cards regardless
+          of name length or whether a price is shown. */}
+      <div className='flex flex-col p-4 pb-5 sm:pb-6 h-full'>
         <Link href={`/${locale}/rooms/${item.unitGroup.id}?${queryString}`}>
           <h2 className='text-xl font-medium jakarta mb-2 line-clamp-2 min-h-[3.5rem] hover:text-blue transition-colors cursor-pointer'>{item.name}</h2>
         </Link>
@@ -103,7 +102,7 @@ const RoomCard = ({
           )}
         </div>
 
-        <div className='mt-4 sm:mt-auto sm:pt-4'>
+        <div className='mt-auto pt-4'>
           {item.oneNightPrice > 0 && (
             <div className='text-mute mb-2 sm:mb-3'>{translations.perNightFrom}</div>
           )}
