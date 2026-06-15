@@ -7,7 +7,6 @@ import { Separator } from '@/app/_components/ui/separator'
 import { ButtonIcon } from '@/app/_components/ui/ButtonIcon'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { FiUsers } from 'react-icons/fi'
-import { cn } from '@/lib/utils'
 
 export type GuestCounts = { adults: number; children: number }
 
@@ -15,10 +14,63 @@ const MAX_ADULTS = 99
 const MAX_CHILDREN = 30
 
 /**
+ * A count row with -/+ buttons AND a directly-editable number field, so the
+ * guest can either step or just type the number. The field may be empty while
+ * typing; it commits/clamps to [min, max] on blur.
+ */
+function CountStepper({
+  label,
+  value,
+  min,
+  max,
+  onChange,
+}: {
+  label: string
+  value: number
+  min: number
+  max: number
+  onChange: (n: number) => void
+}) {
+  const [raw, setRaw] = React.useState(String(value))
+  React.useEffect(() => {
+    setRaw(String(value))
+  }, [value])
+
+  const clamp = (n: number) => Math.min(max, Math.max(min, n))
+
+  return (
+    <div className="flex items-center justify-between">
+      <span className="font-semibold text-black">{label}</span>
+      <div className="flex items-center gap-2">
+        <ButtonIcon symbol="-" disabled={value <= min} onClick={() => onChange(clamp(value - 1))} />
+        <input
+          type="text"
+          inputMode="numeric"
+          aria-label={label}
+          value={raw}
+          onChange={(e) => {
+            const digits = e.target.value.replace(/[^0-9]/g, '')
+            setRaw(digits)
+            if (digits !== '') onChange(clamp(parseInt(digits, 10)))
+          }}
+          onBlur={() => {
+            const n = parseInt(raw, 10)
+            const next = clamp(Number.isNaN(n) ? min : n)
+            onChange(next)
+            setRaw(String(next))
+          }}
+          className="w-10 text-center font-semibold bg-transparent outline-none border-b border-transparent focus:border-gray rounded-none"
+        />
+        <ButtonIcon symbol="+" disabled={value >= max} onClick={() => onChange(clamp(value + 1))} />
+      </div>
+    </div>
+  )
+}
+
+/**
  * Group/corporate guest selector — same stepper UX as the landing-page Guests
- * picker (adults + children in a popover), but with group-sized limits and
- * neutral "children" wording instead of the single-baby-bed semantics the
- * room-booking Guests component enforces.
+ * picker (adults + children in a popover), but with group-sized limits, neutral
+ * "children" wording, and counts you can type directly (not just step).
  */
 export function GroupGuests({
   value,
@@ -61,41 +113,21 @@ export function GroupGuests({
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <span className="font-semibold text-black">{labels.adults}</span>
-            <div className="flex items-center gap-2">
-              <ButtonIcon
-                symbol="-"
-                disabled={value.adults <= 1}
-                onClick={() => onChange({ ...value, adults: Math.max(1, value.adults - 1) })}
-              />
-              <span className="font-semibold min-w-[20px] text-center">{value.adults}</span>
-              <ButtonIcon
-                symbol="+"
-                disabled={value.adults >= MAX_ADULTS}
-                onClick={() => onChange({ ...value, adults: value.adults + 1 })}
-              />
-            </div>
-          </div>
-
+          <CountStepper
+            label={labels.adults}
+            value={value.adults}
+            min={1}
+            max={MAX_ADULTS}
+            onChange={(adults) => onChange({ ...value, adults })}
+          />
           <Separator />
-
-          <div className="flex items-center justify-between">
-            <span className="font-semibold text-black">{labels.children}</span>
-            <div className="flex items-center gap-2">
-              <ButtonIcon
-                symbol="-"
-                disabled={value.children <= 0}
-                onClick={() => onChange({ ...value, children: Math.max(0, value.children - 1) })}
-              />
-              <span className="font-semibold min-w-[20px] text-center">{value.children}</span>
-              <ButtonIcon
-                symbol="+"
-                disabled={value.children >= MAX_CHILDREN}
-                onClick={() => onChange({ ...value, children: value.children + 1 })}
-              />
-            </div>
-          </div>
+          <CountStepper
+            label={labels.children}
+            value={value.children}
+            min={0}
+            max={MAX_CHILDREN}
+            onChange={(children) => onChange({ ...value, children })}
+          />
         </div>
       </PopoverContent>
     </Popover>
