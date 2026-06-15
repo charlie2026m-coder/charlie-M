@@ -1,7 +1,7 @@
 'use client';
 import { cn, getDate, getPath, getMinArrivalDate } from '@/lib/utils';
 import { trackSearch } from '@/lib/analytics';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { RiSearchLine } from "react-icons/ri";
 import { DateInput } from '@/app/_components/ui/DateInput';
 import { Guests } from '@/app/_components/ui/guests';
@@ -36,7 +36,11 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
     // (and fetch availability for) THAT month, not today's (review #6).
     const fromParam = params?.from ? new Date(params.from) : undefined;
     if (fromParam && !isNaN(fromParam.getTime())) return fromParam;
-    return dateRange?.from ?? new Date();
+    // Default to the minimum arrival date (= today, or tomorrow after the 23:30
+    // Berlin cutoff). Using getMinArrivalDate() rather than `new Date()` keeps
+    // the seed date inside the fetched availability window even on the last day
+    // of a month after cutoff, where it rolls into next month (review-fix #4).
+    return dateRange?.from ?? getMinArrivalDate();
   });
   const [fromPrice, setFromPrice] = useState<number | null>(null);
 
@@ -44,20 +48,10 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
   // when two are shown). Sold-out nights become non-selectable.
   const availFrom = toYmd(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1));
   const availTo = toYmd(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + numberOfMonths, 1));
-  const { isSoldOut } = useMonthAvailability(availFrom, availTo);
-
   // The custom two-click onSelect below bypasses the library's excludeDisabled
-  // truncation, so a completed range must be re-checked against sold-out
-  // nights here (review #5).
-  const rangeHasSoldOutNight = useCallback(
-    (from: Date, to: Date): boolean => {
-      for (const night = new Date(from); night < to; night.setDate(night.getDate() + 1)) {
-        if (isSoldOut(night)) return true;
-      }
-      return false;
-    },
-    [isSoldOut]
-  );
+  // truncation, so a completed range is re-checked against sold-out nights via
+  // the shared helper (same rule in BookingForm — review #5).
+  const { isSoldOut, dayAvailability, rangeHasSoldOutNight } = useMonthAvailability(availFrom, availTo);
 
   useEffect(() => {
     const update = () => setNumberOfMonths(window.innerWidth >= 1024 ? 2 : 1);
@@ -117,16 +111,25 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
     }
   }, [params, setValue])
 
-  // Set default dates only once on mount if no params and no dateRange
+  // Seed a default today→tomorrow range once — but ONLY after availability
+  // confirms the arrival night is bookable. Seeding a sold-out default made
+  // the date field flicker (seed → the drop-effect below clears it) and fire a
+  // wasted price fetch on every remount of the sticky form (review #4). When
+  // the night is unknown we wait (the effect re-runs as availability loads);
+  // when it's sold out we leave the field empty for the guest to pick.
+  const seededRef = useRef(false);
   useEffect(() => {
-    if (!params && (!dateRange?.from || !dateRange?.to)) {
-      const from = getMinArrivalDate();
-      const to = new Date(from);
-      to.setDate(to.getDate() + 1);
-      setValue({ from, to }, 'dateRange');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    if (seededRef.current) return;
+    if (params || (dateRange?.from && dateRange?.to)) { seededRef.current = true; return; }
+    const from = getMinArrivalDate();
+    const known = dayAvailability(from);
+    if (!known) return; // not loaded yet — re-runs when availability arrives
+    if (!known.available) { seededRef.current = true; return; } // sold out → leave empty
+    const to = new Date(from);
+    to.setDate(to.getDate() + 1);
+    setValue({ from, to }, 'dateRange');
+    seededRef.current = true;
+  }, [params, dateRange?.from, dateRange?.to, dayAvailability, setValue])
 
   const triggerSearch = (rangeOverride?: DateRange, closeCalendar = false) => {
     const r = rangeOverride ?? dateRange;

@@ -11,13 +11,7 @@ import {
 import { Button } from '@/app/_components/ui/button'
 import { MdPrint, MdDownload } from 'react-icons/md'
 import type { SelfCheckoutToken } from '@/app/hooks/useSelfCheckout'
-
-const COLOR_PRESETS = [
-  { key: 'Black', hex: '000000' },
-  { key: 'Gold', hex: 'A09060' },
-  { key: 'Brown', hex: '8B7B70' },
-  { key: 'Wine', hex: '923D4F' },
-] as const
+import { COLOR_PRESETS } from './qrPresets'
 
 const CAPTIONS = {
   de: { line: 'Self-Check-out — einfach scannen & auschecken' },

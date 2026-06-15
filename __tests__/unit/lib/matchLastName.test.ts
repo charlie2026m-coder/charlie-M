@@ -51,12 +51,19 @@ describe('lastNameMatches', () => {
     expect(check('Schmidt', 'Müller')).toBe(false);
   });
 
-  it('rejects multi-name fishing — the input is never tokenized', () => {
-    // One request must be one guess: a bag of common surnames matching when
-    // ANY token hits was the review's 🔴 finding.
+  it('rejects multi-name fishing — input with 3+ tokens never opens a single surname', () => {
+    // The reverse match is capped at 2 input tokens, so a bag of common
+    // surnames (the review's 🔴 finding) cannot fish.
     expect(check('Smith Jones Brown Mueller', 'Hans Brown')).toBe(false);
-    expect(check('Garcia Schmidt', 'Schmidt')).toBe(false);
-    expect(check('Anna Maria', 'Anna Maria Schmidt')).toBe(false);
+    expect(check('Smith Jones Brown', 'Brown')).toBe(false);
+    expect(check('Anna Maria Schmidt', 'Schmidt')).toBe(false);
+  });
+
+  it('accepts a guest who types their full name (<= 2 tokens) against a stored single surname', () => {
+    // Common: one name box, guest types "Firstname Lastname"; record has only
+    // the surname. Or a double surname stored as one part.
+    expect(check('Anna Garcia', 'Garcia')).toBe(true);
+    expect(check('Garcia Marquez', 'Marquez')).toBe(true);
   });
 
   it('still accepts the full compound input against the same compound candidate', () => {

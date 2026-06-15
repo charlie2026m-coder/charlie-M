@@ -441,7 +441,9 @@ export async function confirm(token: string, earlyAck: boolean = false): Promise
   } catch {
     return { ok: false, state: 'error', msg: 'Vorübergehender Fehler. Bitte versuchen Sie es gleich erneut.' }
   }
-  if (!row) return { ok: false, msg: 'Ungültiger Code.' }
+  // state:'invalid' so the guest page shows the "code no longer valid" card
+  // (a token deleted between page load and the button press), matching lookup().
+  if (!row) return { ok: false, state: 'invalid', msg: 'Ungültiger Code.' }
 
   const today = todayBerlin()
   let rid = ''

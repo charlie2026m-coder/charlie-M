@@ -180,10 +180,11 @@ describe('cancelAndRefundReservation — per-payment refund split', () => {
     expect(res).toMatchObject({ refund: { status: 'failed', manual: true } });
   });
 
-  it('already-Canceled reservation: never auto-refunds again (review #3)', async () => {
+  it('already-Canceled reservation: never auto-refunds again, but records a manual-review row (review #3 + #8)', async () => {
     // Cancelled through another path (staff in Apaleo/Adyen dashboard) — the
     // folio still lists the original captures, so refunding here would pay
-    // the guest twice.
+    // the guest twice. We must NOT refund, but we MUST leave a durable
+    // work-list row so ops can check whether a refund is still owed.
     setReservation({ feeAmount: 0, status: 'Canceled' });
     setFolio([
       { pspReference: ROOM_PSP, amountCents: 20000, currency: 'EUR', type: 'Authorization', status: 'Success' },
@@ -197,9 +198,45 @@ describe('cancelAndRefundReservation — per-payment refund split', () => {
       alreadyHandled: true,
       refund: { status: 'failed', manual: true },
     });
-    expect(insertSpy).not.toHaveBeenCalled(); // no new lock row
     expect(mockCancel).not.toHaveBeenCalled();
     expect(mockRefund).not.toHaveBeenCalled();
+    // A durable manual-review row is written (review #8).
+    expect(insertSpy).toHaveBeenCalledTimes(1);
+    expect(insertSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ reservation_id: RES, status: 'failed', amount_cents: 0 }),
+    );
+  });
+
+  it('already-Canceled with an EXISTING refund row: returns it, writes nothing new', async () => {
+    setReservation({ feeAmount: 0, status: 'Canceled' });
+    setFolio([]);
+    // Admin client whose reservation_refunds lookup finds a prior row.
+    currentAdmin = {
+      from: (table: string) => {
+        if (table === 'reservation_refunds') {
+          return {
+            insert: insertSpy,
+            select: () => ({
+              eq: () => ({
+                maybeSingle: () =>
+                  Promise.resolve({ data: { amount_cents: 12345, currency: 'EUR', status: 'completed' } }),
+              }),
+            }),
+          };
+        }
+        return makeAdmin(ROOM_PSP).from(table);
+      },
+    };
+
+    const res = await cancelAndRefundReservation(RES);
+
+    expect(res).toMatchObject({
+      ok: true,
+      alreadyHandled: true,
+      refund: { amountCents: 12345, status: 'completed' },
+    });
+    expect(insertSpy).not.toHaveBeenCalled();
+    expect(mockCancel).not.toHaveBeenCalled();
   });
 
   it('pending (unsettled) folio payments route the refund to manual (review #10)', async () => {

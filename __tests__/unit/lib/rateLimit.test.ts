@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // Re-import the module fresh each test to reset the module-level Map
-let checkRateLimit: (storeName: string, ip: string) => boolean;
+let checkRateLimit: (storeName: string, ip: string, max?: number) => boolean;
 let getClientIp: (request: Request) => string;
 
 beforeEach(async () => {
@@ -48,6 +48,15 @@ describe('checkRateLimit', () => {
     expect(checkRateLimit('storeC', '6.6.6.6')).toBe(false);
     // Different IP in same store → not blocked
     expect(checkRateLimit('storeC', '7.7.7.7')).toBe(true);
+  });
+
+  it('honours a custom max (coarse per-IP cap layered above the default)', () => {
+    for (let i = 0; i < 25; i++) {
+      expect(checkRateLimit('coarse', '8.8.8.8', 25)).toBe(true);
+    }
+    expect(checkRateLimit('coarse', '8.8.8.8', 25)).toBe(false); // 26th blocked
+    // The default-max store for the same IP is independent and still open.
+    expect(checkRateLimit('fine', '8.8.8.8')).toBe(true);
   });
 });
 

@@ -4,13 +4,7 @@ import { useState } from 'react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/app/_components/ui/popover'
 import { Button } from '@/app/_components/ui/button'
 import { MdFolderZip } from 'react-icons/md'
-
-const COLOR_PRESETS = [
-  { key: 'Black', hex: '000000' },
-  { key: 'Gold', hex: 'A09060' },
-  { key: 'Brown', hex: '8B7B70' },
-  { key: 'Wine', hex: '923D4F' },
-] as const
+import { COLOR_PRESETS } from './qrPresets'
 
 /** Download all room QR codes as one ZIP (svg or png). */
 export function BulkZipButton({ disabled }: { disabled?: boolean }) {

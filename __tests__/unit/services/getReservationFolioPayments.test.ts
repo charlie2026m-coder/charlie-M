@@ -7,8 +7,15 @@ import { getReservationFolioPayments } from '@/services/getReservationFolioPayme
 
 const mockFetch = vi.mocked(Fetch);
 
-function pay(psp: string, amount: number, type = 'Card', status = 'Success') {
-  return { amount: { amount, currency: 'EUR' }, type, status, externalReference: { pspReference: psp } };
+let payIdSeq = 0;
+function pay(psp: string, amount: number, type = 'Card', status = 'Success', id?: string) {
+  return {
+    id: id ?? `pay-${++payIdSeq}`,
+    amount: { amount, currency: 'EUR' },
+    type,
+    status,
+    externalReference: { pspReference: psp },
+  };
 }
 
 /** Wire folio list + per-folio payments. */
@@ -64,13 +71,23 @@ describe('getReservationFolioPayments', () => {
     expect(unsettled).toBe(0);
   });
 
-  it('skips an exact duplicate row within one folio (#11)…', async () => {
-    wire({ F1: [pay('PSP_ROOM', 150), pay('PSP_ROOM', 150)] });
+  it('skips a row with a DUPLICATE payment id (true double-listing)', async () => {
+    // Same Apaleo payment row delivered twice → one of them is dropped.
+    wire({ F1: [pay('PSP_ROOM', 150, 'Card', 'Success', 'dup-id'), pay('PSP_ROOM', 150, 'Card', 'Success', 'dup-id')] });
     const { payments } = await getReservationFolioPayments('R-1');
     expect(payments).toHaveLength(1);
   });
 
-  it('…but keeps the same psp across DIFFERENT folios (legitimate split)', async () => {
+  it('KEEPS two genuinely distinct equal movements on one psp (#9 — different ids)', async () => {
+    // Two equal partial captures on the same psp are real money, not a
+    // double-listing — both must count (a psp|amount|type key wrongly merged them).
+    wire({ F1: [pay('PSP_ROOM', 100, 'Card', 'Success', 'cap-a'), pay('PSP_ROOM', 100, 'Card', 'Success', 'cap-b')] });
+    const { payments } = await getReservationFolioPayments('R-1');
+    expect(payments).toHaveLength(2);
+    expect(payments.map((p) => p.amountCents)).toEqual([10000, 10000]);
+  });
+
+  it('keeps the same psp across DIFFERENT folios (legitimate split)', async () => {
     wire({ F1: [pay('PSP_ROOM', 150)], F2: [pay('PSP_ROOM', 150)] });
     const { payments } = await getReservationFolioPayments('R-1');
     expect(payments).toHaveLength(2);

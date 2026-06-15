@@ -223,11 +223,11 @@ describe('POST /api/public/self-checkout/[token] (confirm)', () => {
     expect(logInserts[0]).toMatchObject({ result: 'error:network' });
   });
 
-  it('unknown token → invalid message without state (HotelCheck parity)', async () => {
+  it('confirm on an unknown token → state:invalid so the page shows the right card', async () => {
     const res = await POST(makeRequest('ghost', { method: 'POST' }), params('ghost'));
     const json = await res.json();
     expect(json.ok).toBe(false);
-    expect(json.state).toBeUndefined();
+    expect(json.state).toBe('invalid');
   });
 });
 

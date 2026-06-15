@@ -62,7 +62,7 @@ const BookingForm = ({
   const [visibleMonth, setVisibleMonth] = useState<Date>(() => dateRange?.from ?? new Date())
   const availFrom = toYmd(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1))
   const availTo = toYmd(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 2, 1))
-  const { isSoldOut } = useMonthAvailability(availFrom, availTo, id)
+  const { isSoldOut, rangeHasSoldOutNight } = useMonthAvailability(availFrom, availTo, id)
 
   // Sync dateRange from store (when Availability applies dates)
   useEffect(() => {
@@ -76,6 +76,19 @@ const BookingForm = ({
       })
     }
   }, [dateRangeStore.from, dateRangeStore.to])
+
+  // Parity with the search calendar (review #5): a range seeded from the URL or
+  // the persisted store may cross a night that is (now) sold out for THIS room.
+  // The library's excludeDisabled only fires on interactive clicks, so drop
+  // such a stale range once real availability arrives — it must never reach the
+  // /booking step.
+  useEffect(() => {
+    if (!dateRange?.from || !dateRange?.to) return
+    if (!rangeHasSoldOutNight(dateRange.from, dateRange.to)) return
+    setDateRange({ from: undefined, to: undefined })
+    setValue({ from: undefined, to: undefined }, 'dateRange')
+    setDateError(true)
+  }, [dateRange?.from, dateRange?.to, rangeHasSoldOutNight, setValue])
 
   // Sync guests from store (when changed externally)
   useEffect(() => {

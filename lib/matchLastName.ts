@@ -109,16 +109,27 @@ function significantTokens(value: string | null | undefined): string[] {
     .filter((token) => token.length > 0);
 }
 
+// A request may carry at most this many input tokens for the reverse
+// compound-name match below. It bounds how many surname guesses one request
+// can make: 2 tokens = at most 2 guesses, which the rate limiter absorbs,
+// while "Smith Jones Brown Mueller" (4 tokens of common surnames) cannot fish.
+const MAX_REVERSE_INPUT_TOKENS = 2;
+
 /**
- * True when `input` matches ANY candidate, by either:
- *   - full normalized equality ("Mueller" === "Müller"), or
- *   - the WHOLE input equalling one significant token (>= 4 chars) of a
- *     compound candidate, so a guest who types one surname of a compound name
- *     ("Márquez" of "García Márquez") still matches.
+ * True when `input` matches ANY candidate, by any of:
+ *   - full normalized equality ("Mueller" === "Müller"); or
+ *   - FORWARD compound: the whole input equals one significant token (>= 4
+ *     chars) of a compound candidate — guest typed one surname of a stored
+ *     compound name ("Márquez" of "García Márquez"); or
+ *   - REVERSE compound: the candidate equals one of the input's tokens, but
+ *     ONLY when the input has <= 2 significant tokens — guest typed their full
+ *     name ("Anna García") or a compound ("García Márquez") while the stored
+ *     record holds a single surname ("García").
  *
- * The input is deliberately NEVER tokenized: tokenizing it let a single
- * request carry many guesses at once ("Smith Jones Brown Mueller …" matched
- * if ANY token hit). One request = one guess; this is a security factor.
+ * The reverse direction is deliberately capped at 2 input tokens: an unbounded
+ * "match if ANY input token hits" let one request carry dozens of guesses
+ * (the original security hole). With the cap, the last name stays a real
+ * second factor while not locking out guests with double surnames.
  * Empty input never matches.
  */
 export function lastNameMatches(
@@ -128,15 +139,25 @@ export function lastNameMatches(
   const inputJoined = normalizeLastName(input);
   if (!inputJoined) return false;
 
+  const inputTokens = significantTokens(input).filter((t) => t.length >= TOKEN_MIN_LENGTH);
+  const reverseAllowed =
+    inputTokens.length >= 1 && inputTokens.length <= MAX_REVERSE_INPUT_TOKENS;
+
   return candidates.some((candidate) => {
     const candidateJoined = normalizeLastName(candidate);
     if (!candidateJoined) return false;
 
     if (candidateJoined === inputJoined) return true;
 
-    // Compound-name fallback: the whole input vs candidate tokens only,
-    // min length enforced so short fragments can't be guessed.
-    if (inputJoined.length < TOKEN_MIN_LENGTH) return false;
-    return significantTokens(candidate).includes(inputJoined);
+    // Forward: the whole input is one surname of a compound stored name.
+    if (inputJoined.length >= TOKEN_MIN_LENGTH && significantTokens(candidate).includes(inputJoined)) {
+      return true;
+    }
+
+    // Reverse (bounded): the stored single surname is one of the few names the
+    // guest typed.
+    if (reverseAllowed && inputTokens.includes(candidateJoined)) return true;
+
+    return false;
   });
 }

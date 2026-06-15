@@ -94,6 +94,25 @@ export async function cancelAndRefundReservation(
         },
       }
     }
+    // Cancelled elsewhere AND we have no record of it. Persist a durable
+    // manual-review row so it lands in the reservation_refunds work-list
+    // (status='failed') instead of living only in a transient log — a human
+    // must check whether a refund is still owed. Swallow 23505 in case a row
+    // was created concurrently. (Review finding #8.)
+    const { error: insertErr } = await supabase.from('reservation_refunds').insert({
+      reservation_id: reservationId,
+      psp_reference: null,
+      amount_cents: 0,
+      currency,
+      status: 'failed',
+      note: 'cancelled outside this flow — manual refund review',
+    })
+    if (insertErr && insertErr.code !== '23505') {
+      bookingLog.error('cancel: failed to persist manual-review row for outside-flow cancel', {
+        reservationId,
+        error: insertErr.message,
+      })
+    }
     bookingLog.warn('cancel: reservation already cancelled outside this flow — refund (if any is due) is manual', {
       reservationId,
     })

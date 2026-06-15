@@ -26,7 +26,16 @@ function sweepExpired(now: number): void {
   }
 }
 
-export function checkRateLimit(storeName: string, ip: string): boolean {
+/**
+ * @param storeName isolates a quota per endpoint.
+ * @param ip        the bucket key within the store (may be a composite like
+ *                  `${ip}:${token}` — the caller decides the granularity).
+ * @param max       requests allowed per window for this bucket. Defaults to
+ *                  RATE_LIMIT_MAX; pass a higher value for a coarse per-IP cap
+ *                  layered on top of a fine-grained one (see the self-checkout
+ *                  route, which keys finely by ip:token AND coarsely by ip).
+ */
+export function checkRateLimit(storeName: string, ip: string, max: number = RATE_LIMIT_MAX): boolean {
   const key = `${storeName}:${ip}`;
   const now = Date.now();
   sweepExpired(now);
@@ -37,7 +46,7 @@ export function checkRateLimit(storeName: string, ip: string): boolean {
     return true;
   }
 
-  if (entry.count >= RATE_LIMIT_MAX) return false;
+  if (entry.count >= max) return false;
 
   entry.count++;
   return true;

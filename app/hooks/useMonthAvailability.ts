@@ -77,5 +77,27 @@ export function useMonthAvailability(
     [availability],
   );
 
-  return { availability, isSoldOut };
+  /** Loaded availability for a day, or undefined when not yet known. */
+  const dayAvailability = useCallback(
+    (date: Date): DayAvailability | undefined => availability[toYmd(date)],
+    [availability],
+  );
+
+  /**
+   * True when any NIGHT in [from, to) is sold out — night semantics, so the
+   * checkout day's own night (to) is NOT included (you leave that morning).
+   * Shared so every calendar (search + room page) enforces the same rule
+   * instead of each re-deriving it (review finding #5).
+   */
+  const rangeHasSoldOutNight = useCallback(
+    (from: Date, to: Date): boolean => {
+      for (const night = new Date(from); night < to; night.setDate(night.getDate() + 1)) {
+        if (isSoldOut(night)) return true;
+      }
+      return false;
+    },
+    [isSoldOut],
+  );
+
+  return { availability, isSoldOut, dayAvailability, rangeHasSoldOutNight };
 }

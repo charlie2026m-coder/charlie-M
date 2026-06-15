@@ -62,9 +62,14 @@ describe('getMonthAvailability', () => {
     );
   });
 
-  it('returns [] for missing dates and on Apaleo error', async () => {
+  it('returns [] for missing dates (no Apaleo call)', async () => {
     expect(await getMonthAvailability('', '')).toEqual([]);
+  });
+
+  it('re-throws on Apaleo error so the caller can retry (#3)', async () => {
+    // Swallowing the error into [] cached an empty window as success and the
+    // hook never retried; the rejection must propagate.
     mockFetch.mockRejectedValueOnce(new Error('boom'));
-    expect(await getMonthAvailability('2026-07-08', '2026-07-10')).toEqual([]);
+    await expect(getMonthAvailability('2026-07-08', '2026-07-10')).rejects.toThrow('boom');
   });
 });

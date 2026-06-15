@@ -21,9 +21,11 @@ import { bookingLog } from '@/lib/logger'
  *   - `Pending` entries are counted in `unsettled` (not summed): money in
  *     flight makes any auto-refund amount untrustworthy — the caller must
  *     route to manual instead of silently dropping them.
- *   - Exact duplicate rows within one folio (same psp+amount+type) are
- *     skipped with a warning — a double-listed capture must not double the
- *     refund.
+ *   - A row literally double-listed (same Apaleo payment `id`) within one
+ *     folio is skipped with a warning — a re-delivered capture must not double
+ *     the refund. Dedup is keyed on the payment `id` ONLY, never on
+ *     psp+amount+type, so two genuinely distinct equal movements on one psp
+ *     (e.g. two equal partial captures/refunds) are both kept.
  *
  * NOTE: the summary `/folios?...&expand=payments` does NOT include
  * externalReference; only the dedicated `/folios/{id}/payments` does.
@@ -50,6 +52,7 @@ interface FoliosListResponse {
 
 interface FolioPaymentsResponse {
   payments?: Array<{
+    id?: string
     amount?: { amount?: number; currency?: string }
     type?: string
     status?: string
@@ -74,9 +77,12 @@ export async function getReservationFolioPayments(
     const detail = await Fetch<FolioPaymentsResponse>(
       `/finance/v1/folios/${encodeURIComponent(folioId)}/payments`,
     )
-    // Dedupe within ONE folio only — the same psp legitimately appears on
-    // several folios (room payment split across the booking's reservations).
-    const seen = new Set<string>()
+    // Dedupe ONLY on Apaleo's own payment row id, to drop a literally
+    // double-listed row (at-least-once delivery) WITHOUT collapsing two
+    // genuinely distinct equal movements on the same psp — e.g. two equal
+    // partial captures, or two equal partial refunds — which a
+    // psp|amount|type key would wrongly merge and mis-compute the refund.
+    const seenIds = new Set<string>()
 
     for (const p of detail.payments ?? []) {
       const psp = p.externalReference?.pspReference
@@ -89,17 +95,17 @@ export async function getReservationFolioPayments(
         continue
       }
 
-      const dupeKey = `${psp}|${amount}|${p.type ?? ''}`
-      if (seen.has(dupeKey)) {
-        bookingLog.warn('folio payments: exact duplicate row skipped', {
-          reservationId,
-          folioId,
-          psp,
-          type: p.type ?? '',
-        })
-        continue
+      if (p.id) {
+        if (seenIds.has(p.id)) {
+          bookingLog.warn('folio payments: duplicate payment id skipped', {
+            reservationId,
+            folioId,
+            paymentId: p.id,
+          })
+          continue
+        }
+        seenIds.add(p.id)
       }
-      seen.add(dupeKey)
 
       const outflow = OUTFLOW_TYPE.test(p.type ?? '') || amount < 0
       const cents = Math.round(Math.abs(amount) * 100)

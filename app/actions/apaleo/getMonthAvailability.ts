@@ -40,6 +40,12 @@ export async function getMonthAvailability(
 ): Promise<DayAvailability[]> {
   if (!propId || !from || !to) return [];
 
+  // NOTE: an Apaleo failure is RE-THROWN, not swallowed into []. The caller
+  // (useMonthAvailability) needs the rejection to fire its retry; swallowing it
+  // here cached an empty window as "success" so the retry never ran and
+  // sold-out nights silently rendered as available for the whole session
+  // (review finding #3). Unknown dates already default to selectable in the
+  // hook, so a propagated failure degrades safely (no data) AND retries.
   try {
     const res = await Fetch<UnitGroupAvailabilityResponse>(
       `/availability/v1/unit-groups?propertyId=${propId}&from=${from}&to=${to}`,
@@ -60,6 +66,6 @@ export async function getMonthAvailability(
       });
   } catch (error) {
     console.error('getMonthAvailability error:', error instanceof Error ? error.message : 'unknown');
-    return [];
+    throw error;
   }
 }

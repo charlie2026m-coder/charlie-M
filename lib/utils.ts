@@ -44,11 +44,11 @@ export const getMinArrivalDate = (): Date => {
   return berlinToday
 }
 
-// Returns default arrival date string for services (YYYY-MM-DD)
-export const getDefaultArrivalDate = (): string => {
-  if (getBerlinMinutes() >= CUTOFF_MINUTES) return dayjs().add(1, 'day').format('YYYY-MM-DD')
-  return dayjs().format('YYYY-MM-DD')
-}
+// Returns default arrival date string for services (YYYY-MM-DD).
+// Derives the date from BERLIN time (via getMinArrivalDate), not the runtime's
+// local clock: mixing a Berlin-time cutoff with a server-local dayjs() date
+// returned the previous day around Berlin midnight on a UTC server.
+export const getDefaultArrivalDate = (): string => getDate(getMinArrivalDate())!
 
 
 const PIN_AVAILABLE_HOUR = 10

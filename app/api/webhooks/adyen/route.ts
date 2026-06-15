@@ -405,53 +405,75 @@ export async function POST(request: NextRequest) {
         const needsAction = isDisputeEvent ? !disputeResolvedFavorably : !reversalSucceeded
 
         // Match a guest-cancel refund row if this event corresponds to one.
-        // Guest-cancel refunds are partial refunds of a CAPTURED payment, so
-        // Adyen reports them as REFUND / REFUND_FAILED — never CANCELLATION
-        // (an uncaptured reversal). The cancel route sets reference
-        // `${reservationId}::${psp}` (older in-flight rows: plain reservation
-        // id), so recover the reservation id from the prefix.
+        // Guest-cancel refunds are partial refunds of CAPTURED payments, so
+        // Adyen reports REFUND / REFUND_FAILED, then REFUNDED_REVERSED if the
+        // bank bounces an already-settled refund. The cancel route set the
+        // refund reference to `${reservationId}::${psp}` (older in-flight rows:
+        // plain reservation id), so recover the reservation id from the prefix;
+        // for a follow-up event that doesn't echo our reference, fall back to
+        // the reservation we already linked to this psp on the first event.
         let matchedReservationId: string | null = null
+        let refundRow: { amount_cents: number | null; status: string; currency: string | null } | null = null
         const refundCandidateId = (merchantReference ?? '').split('::')[0]
-        if (eventCode === 'REFUND' || eventCode === 'REFUND_FAILED') {
-          const refundOk = eventCode === 'REFUND' && success === 'true'
+        const isRefundLike =
+          eventCode === 'REFUND' || eventCode === 'REFUND_FAILED' || eventCode === 'REFUNDED_REVERSED'
+        if (isRefundLike) {
           try {
-            const { data: refundRow } = refundCandidateId
-              ? await supabase
-                  .from('reservation_refunds')
+            const candidates: string[] = refundCandidateId ? [refundCandidateId] : []
+            // Follow-up events (REFUNDED_REVERSED / REFUND_FAILED) may not echo
+            // our `${id}::psp` merchantReference. Recover the reservation from
+            // the prior payment_reversals row we wrote for the original REFUND,
+            // trying every link Adyen might use — the event's own pspReference,
+            // OR its originalReference matched against either the stored
+            // pspReference or the stored original_reference. (Keying only on the
+            // event's pspReference missed reversals that carry a fresh psp and
+            // link via originalReference — review-fix finding #2.)
+            if (eventCode === 'REFUNDED_REVERSED' || eventCode === 'REFUND_FAILED') {
+              const fallbackLookups: Array<[string, string | null | undefined]> = [
+                ['psp_reference', pspReference],
+                ['psp_reference', notification.originalReference],
+                ['original_reference', notification.originalReference],
+              ]
+              for (const [col, val] of fallbackLookups) {
+                if (!val) continue
+                const { data: prior } = await supabase
+                  .from('payment_reversals')
                   .select('reservation_id')
-                  .eq('reservation_id', refundCandidateId)
+                  .eq(col, val)
                   .maybeSingle()
-              : { data: null }
-            if (refundRow) {
-              matchedReservationId = refundCandidateId
-              if (!refundOk) {
-                // One failed part fails the WHOLE reservation's refund — a
-                // human settles the rest. The success case is finalized after
-                // the reversal row below is recorded (so the settled sum can
-                // include this very event).
-                await supabase
-                  .from('reservation_refunds')
-                  .update({
-                    status: 'failed',
-                    adyen_modification_ref: pspReference,
-                    note: `Adyen ${eventCode} success=${success}`,
-                    updated_at: new Date().toISOString(),
-                  })
-                  .eq('reservation_id', refundCandidateId)
-                  .eq('status', 'requested')
+                if (prior?.reservation_id) {
+                  if (!candidates.includes(prior.reservation_id)) candidates.push(prior.reservation_id)
+                  break
+                }
               }
-            } else if (eventCode === 'REFUND_FAILED') {
-              // A failed refund that matched no refund row is the most
-              // financially sensitive miss — the guest may not have their money
-              // back. payment_reversals.needs_action also flags it, but log it
-              // explicitly so it isn't lost in the work-list.
+            }
+            for (const candId of candidates) {
+              const { data } = await supabase
+                .from('reservation_refunds')
+                .select('reservation_id, amount_cents, status, currency')
+                .eq('reservation_id', candId)
+                .maybeSingle()
+              if (data) {
+                matchedReservationId = candId
+                refundRow = {
+                  amount_cents: data.amount_cents,
+                  status: data.status,
+                  currency: data.currency,
+                }
+                break
+              }
+            }
+            if (!matchedReservationId && eventCode === 'REFUND_FAILED') {
+              // A failed refund matching no row is the most sensitive miss —
+              // the guest may not have their money back. needs_action also
+              // flags it, but log it explicitly.
               adyenLog.warn('webhook: REFUND_FAILED with no matching refund row — verify manually', {
                 merchantReference,
                 pspReference,
               })
             }
           } catch (error: unknown) {
-            adyenLog.error('webhook: reservation_refunds finalize threw', {
+            adyenLog.error('webhook: reservation_refunds match threw', {
               reservationId: refundCandidateId,
               pspReference,
               error: error instanceof Error ? error.message : String(error),
@@ -459,11 +481,51 @@ export async function POST(request: NextRequest) {
           }
         }
 
+        // A failed OR bank-reversed refund fails the WHOLE reservation refund —
+        // a human settles it. (Review finding #2.)
+        //   REFUND_FAILED: a refund ATTEMPT that failed — only meaningful
+        //   before completion, so it flips ONLY a still-'requested' row. Without
+        //   that guard an out-of-order REFUND_FAILED for an abandoned earlier
+        //   modification could clobber a legitimately 'completed' refund.
+        //   REFUNDED_REVERSED: the bank clawed back an already-settled refund —
+        //   it MUST flip even a 'completed' row, so no status guard.
+        if (matchedReservationId && (eventCode === 'REFUND_FAILED' || eventCode === 'REFUNDED_REVERSED')) {
+          try {
+            const failUpdate = supabase
+              .from('reservation_refunds')
+              .update({
+                status: 'failed',
+                adyen_modification_ref: pspReference,
+                note:
+                  eventCode === 'REFUNDED_REVERSED'
+                    ? 'refund reversed by bank (REFUNDED_REVERSED) — money returned to merchant, verify'
+                    : `Adyen ${eventCode} success=${success}`,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('reservation_id', matchedReservationId)
+            if (eventCode === 'REFUND_FAILED') {
+              await failUpdate.eq('status', 'requested')
+            } else {
+              await failUpdate
+            }
+          } catch (error: unknown) {
+            adyenLog.error('webhook: reservation_refunds fail-update threw', {
+              reservationId: matchedReservationId,
+              pspReference,
+              error: error instanceof Error ? error.message : String(error),
+            })
+          }
+        }
+
         // Durable system of record — idempotent on the event's own pspReference.
-        // Insert first; on a duplicate (Adyen redelivers at-least-once) refresh
-        // only the volatile fields and DO NOT overwrite reservation_id: a
-        // redelivery can't re-match the already-finalized refund row, so its
-        // matchedReservationId is null and a blind upsert would wipe the link.
+        // Insert first; on a duplicate (Adyen redelivers at-least-once, or a
+        // later-stage event shares the psp) refresh the volatile fields and DO
+        // NOT overwrite reservation_id: a redelivery can't re-match and a blind
+        // upsert would wipe the link. `reversalRecorded` lets the completion
+        // check below count THIS event in-memory if the write didn't land
+        // (otherwise a transient DB failure strands the row in 'requested'
+        // forever — review finding #1).
+        let reversalRecorded = false
         try {
           const { error: insertErr } = await supabase.from('payment_reversals').insert({
             psp_reference: pspReference,
@@ -477,12 +539,19 @@ export async function POST(request: NextRequest) {
             needs_action: needsAction,
           })
           if (insertErr?.code === '23505') {
+            // The row already exists from a prior delivery — its amount is
+            // ALREADY in the completion SELECT, so treat it as recorded even if
+            // the volatile-field refresh below fails. (Marking it recorded only
+            // on a successful dup-update double-counted the event: once from the
+            // query and once in-memory — review-fix finding #1.)
+            reversalRecorded = true
             const { error: updErr } = await supabase
               .from('payment_reversals')
               .update({
                 event_code: eventCode,
                 success: success === 'true',
                 needs_action: needsAction,
+                note: `latest event: ${eventCode}`,
                 updated_at: new Date().toISOString(),
               })
               .eq('psp_reference', pspReference)
@@ -495,6 +564,8 @@ export async function POST(request: NextRequest) {
               pspReference,
               error: insertErr.message,
             })
+          } else {
+            reversalRecorded = true
           }
         } catch (error: unknown) {
           adyenLog.error('webhook: payment_reversals write threw — event not durably recorded', {
@@ -504,47 +575,58 @@ export async function POST(request: NextRequest) {
           })
         }
 
-        // A multi-psp refund is 'completed' only when EVERY cent of the plan
-        // has a successful REFUND behind it — the first psp arriving must not
-        // flip the row while the rest is still in flight or has failed
-        // (review finding #4). The reversal row above is written first so the
-        // settled sum includes this event; on a redelivery the check simply
-        // re-runs and finds the row already completed.
-        if (eventCode === 'REFUND' && success === 'true' && matchedReservationId) {
+        // A multi-psp refund is 'completed' only when EVERY cent of the plan has
+        // a successful REFUND behind it — the first psp arriving must not flip
+        // the row while the rest is in flight (review finding #4). Count ONLY
+        // refunds WE initiated for this reservation — reference `${id}::${psp}`
+        // (or the legacy bare id) — and only in the row's currency, so an
+        // unrelated dashboard refund that merely carries the reservation id
+        // can't mark it done (review finding #10).
+        if (eventCode === 'REFUND' && success === 'true' && matchedReservationId && refundRow?.status === 'requested') {
           try {
-            const { data: refundRow } = await supabase
-              .from('reservation_refunds')
-              .select('amount_cents, status')
+            const { data: settled } = await supabase
+              .from('payment_reversals')
+              .select('amount_cents, merchant_reference, currency')
               .eq('reservation_id', matchedReservationId)
-              .maybeSingle()
-            if (refundRow?.status === 'requested') {
-              const { data: settled } = await supabase
-                .from('payment_reversals')
-                .select('amount_cents')
-                .eq('reservation_id', matchedReservationId)
-                .eq('event_code', 'REFUND')
-                .eq('success', true)
-              const settledCents = (settled ?? []).reduce(
-                (sum: number, r: { amount_cents: number | null }) => sum + (r.amount_cents ?? 0),
-                0
-              )
-              if (settledCents >= (refundRow.amount_cents ?? 0)) {
-                await supabase
-                  .from('reservation_refunds')
-                  .update({
-                    status: 'completed',
-                    adyen_modification_ref: pspReference,
-                    updated_at: new Date().toISOString(),
-                  })
-                  .eq('reservation_id', matchedReservationId)
-                  .eq('status', 'requested')
-              } else {
-                adyenLog.info('webhook: partial refund settled — waiting for remaining psp(s)', {
-                  reservationId: matchedReservationId,
-                  settledCents,
-                  plannedCents: refundRow.amount_cents,
+              .eq('event_code', 'REFUND')
+              .eq('success', true)
+            const plannedCurrency = refundRow.currency
+            const ours = (settled ?? []).filter((r: { merchant_reference: string | null; currency: string | null }) => {
+              const ref = r.merchant_reference ?? ''
+              const refIsOurs = ref === matchedReservationId || ref.startsWith(`${matchedReservationId}::`)
+              const currencyOk = !plannedCurrency || !r.currency || r.currency === plannedCurrency
+              return refIsOurs && currencyOk
+            })
+            let settledCents = ours.reduce(
+              (sum: number, r: { amount_cents: number | null }) => sum + (r.amount_cents ?? 0),
+              0
+            )
+            // If THIS event's reversal row didn't persist above, it isn't in the
+            // query — count it in-memory so a transient insert failure can't
+            // strand the refund in 'requested' forever (review finding #1).
+            // Apply the SAME currency guard as the query path so a wrong-currency
+            // refund can't slip in through this fallback (review-fix finding #10).
+            if (!reversalRecorded) {
+              const eventCurrency = notification.amount?.currency ?? null
+              const eventCurrencyOk = !plannedCurrency || !eventCurrency || eventCurrency === plannedCurrency
+              if (eventCurrencyOk) settledCents += notification.amount?.value ?? 0
+            }
+            if (settledCents >= (refundRow.amount_cents ?? 0)) {
+              await supabase
+                .from('reservation_refunds')
+                .update({
+                  status: 'completed',
+                  adyen_modification_ref: pspReference,
+                  updated_at: new Date().toISOString(),
                 })
-              }
+                .eq('reservation_id', matchedReservationId)
+                .eq('status', 'requested')
+            } else {
+              adyenLog.info('webhook: partial refund settled — waiting for remaining psp(s)', {
+                reservationId: matchedReservationId,
+                settledCents,
+                plannedCents: refundRow.amount_cents,
+              })
             }
           } catch (error: unknown) {
             adyenLog.error('webhook: refund completion check threw', {
