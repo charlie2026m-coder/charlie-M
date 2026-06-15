@@ -89,7 +89,7 @@ export function DateInput({
             // "bottom" = opens from a sticky bar over the results (/rooms) — make
             // the panel frosted/semi-transparent so the cards behind stay
             // visible; "top" = the landing hero keeps a solid white panel.
-            side === 'bottom' ? "bg-white/85 backdrop-blur-md" : "bg-white",
+            side === 'bottom' ? "bg-white/60 backdrop-blur-md" : "bg-white",
           )}
           align="center"
           side={side}
