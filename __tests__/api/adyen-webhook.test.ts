@@ -411,6 +411,24 @@ describe('guest-cancel refund rows: multi-psp completion', () => {
     expect(refundRow(db)?.status).toBe('requested');
   });
 
+  it('a REFUND with empty/absent currency does not count toward a known-currency plan (#10)', async () => {
+    const db: FakeDb = {
+      reservation_refunds: [{ reservation_id: RES_ID, amount_cents: 20000, status: 'requested', currency: 'EUR' }],
+      payment_reversals: [],
+    };
+    currentFrom = makeFakeFrom(db);
+
+    await POST(
+      makeRequest(makeBody({
+        eventCode: 'REFUND', success: 'true', pspReference: 'MOD-NOCUR',
+        merchantReference: `${RES_ID}::PSP_ROOM`, amount: { value: 20000, currency: '' },
+      }))
+    );
+    // An empty/absent currency must NOT be treated as a wildcard match (the old
+    // `!r.currency` arm did exactly that and let it count).
+    expect(refundRow(db)?.status).toBe('requested');
+  });
+
   // ── review-fix regressions surfaced by the verification workflow ────────────
 
   it('redelivered REFUND whose dup-update fails is counted ONCE, not double (#1 fix)', async () => {
@@ -430,6 +448,42 @@ describe('guest-cancel refund rows: multi-psp completion', () => {
     await POST(makeRequest(refundEvent('PSP_ROOM', 'MOD-ROOM', 27900)));
     // 27900 counted once (from the table) < 30900 → still waiting, NOT completed.
     expect(refundRow(db)?.status).toBe('requested');
+  });
+
+  it('concurrent handler already persisted the psp + this insert fails → counted ONCE (#1 race)', async () => {
+    // A concurrent/earlier handler persisted psp MOD-ROOM; this redelivery's
+    // own insert errors transiently. The in-memory add is gated on the psp NOT
+    // already being in the table, so it is not double-counted.
+    const db: FakeDb = {
+      reservation_refunds: [{ reservation_id: RES_ID, amount_cents: 30900, status: 'requested', currency: 'EUR' }],
+      payment_reversals: [
+        { psp_reference: 'MOD-ROOM', merchant_reference: `${RES_ID}::PSP_ROOM`, reservation_id: RES_ID,
+          event_code: 'REFUND', success: true, amount_cents: 27900, currency: 'EUR', needs_action: false },
+      ],
+      failReversalInsert: true,
+    };
+    currentFrom = makeFakeFrom(db);
+
+    await POST(makeRequest(refundEvent('PSP_ROOM', 'MOD-ROOM', 27900)));
+    expect(refundRow(db)?.status).toBe('requested'); // 27900 once < 30900
+  });
+
+  it('REFUND_FAILED for a FOREIGN (non-ours) reference does not clobber our in-flight refund (#2)', async () => {
+    // A staff dashboard refund tagged with the bare reservation id fails at the
+    // bank. Our healthy `${id}::psp` refund row must stay 'requested'.
+    const db: FakeDb = {
+      reservation_refunds: [{ reservation_id: RES_ID, amount_cents: 20000, status: 'requested', currency: 'EUR' }],
+      payment_reversals: [],
+    };
+    currentFrom = makeFakeFrom(db);
+
+    await POST(
+      makeRequest(makeBody({
+        eventCode: 'REFUND_FAILED', success: 'false', pspReference: 'MOD-FOREIGN',
+        merchantReference: RES_ID, amount: { value: 9999, currency: 'EUR' }, // bare id, not `${id}::psp`
+      }))
+    );
+    expect(refundRow(db)?.status).toBe('requested'); // not flipped to failed
   });
 
   it('REFUND_FAILED does NOT clobber an already-completed refund (#2a fix)', async () => {

@@ -93,6 +93,20 @@ describe('getReservationFolioPayments', () => {
     expect(payments).toHaveLength(2);
   });
 
+  it('falls back to psp|amount|type dedupe for an id-less double-listing (no over-refund)', async () => {
+    // Anomalous: Apaleo omits the row id. Two identical id-less rows must be
+    // collapsed (conservative) so a double-listing cannot double the refund.
+    const idless = (psp: string, amount: number) => ({
+      amount: { amount, currency: 'EUR' },
+      type: 'Card',
+      status: 'Success',
+      externalReference: { pspReference: psp },
+    });
+    wire({ F1: [idless('PSP_ROOM', 150), idless('PSP_ROOM', 150)] });
+    const { payments } = await getReservationFolioPayments('R-1');
+    expect(payments).toHaveLength(1);
+  });
+
   it('ignores rows without a psp or with a zero amount', async () => {
     wire({
       F1: [

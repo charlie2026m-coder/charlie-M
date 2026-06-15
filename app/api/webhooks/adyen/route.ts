@@ -423,23 +423,21 @@ export async function POST(request: NextRequest) {
             // Follow-up events (REFUNDED_REVERSED / REFUND_FAILED) may not echo
             // our `${id}::psp` merchantReference. Recover the reservation from
             // the prior payment_reversals row we wrote for the original REFUND,
-            // trying every link Adyen might use — the event's own pspReference,
-            // OR its originalReference matched against either the stored
-            // pspReference or the stored original_reference. (Keying only on the
-            // event's pspReference missed reversals that carry a fresh psp and
-            // link via originalReference — review-fix finding #2.)
+            // keyed on the event's pspReference OR its originalReference — BUT
+            // only against payment_reversals.psp_reference, which is UNIQUE.
+            // (We deliberately do NOT fall back on original_reference: that is
+            // the shared capture psp — one booking's capture backs N
+            // reservations — so it is non-unique and would both mis-attribute a
+            // reversal to a sibling reservation AND make maybeSingle() return
+            // null over >1 row, silently dropping the match — review-fix #2.)
             if (eventCode === 'REFUNDED_REVERSED' || eventCode === 'REFUND_FAILED') {
-              const fallbackLookups: Array<[string, string | null | undefined]> = [
-                ['psp_reference', pspReference],
-                ['psp_reference', notification.originalReference],
-                ['original_reference', notification.originalReference],
-              ]
-              for (const [col, val] of fallbackLookups) {
-                if (!val) continue
+              const fallbackKeys = [pspReference, notification.originalReference]
+              for (const key of fallbackKeys) {
+                if (!key) continue
                 const { data: prior } = await supabase
                   .from('payment_reversals')
                   .select('reservation_id')
-                  .eq(col, val)
+                  .eq('psp_reference', key)
                   .maybeSingle()
                 if (prior?.reservation_id) {
                   if (!candidates.includes(prior.reservation_id)) candidates.push(prior.reservation_id)
@@ -489,7 +487,19 @@ export async function POST(request: NextRequest) {
         //   modification could clobber a legitimately 'completed' refund.
         //   REFUNDED_REVERSED: the bank clawed back an already-settled refund —
         //   it MUST flip even a 'completed' row, so no status guard.
-        if (matchedReservationId && (eventCode === 'REFUND_FAILED' || eventCode === 'REFUNDED_REVERSED')) {
+        // For REFUND_FAILED, only auto-fail when the failing refund is one WE
+        // initiated — our refunds ALWAYS carry exactly `${id}::${psp}`. We
+        // require that `::` form (not a bare `${id}`, which a staff/dashboard
+        // refund would naturally use): a foreign refund tagged with just the
+        // reservation id that fails at the bank must not flip our healthy
+        // in-flight refund to 'failed' (review-fix #2). REFUNDED_REVERSED is
+        // matched only via our `::` reference or the psp we recorded, so it is
+        // already proven ours and needs no extra check.
+        const failRefIsOurs = (merchantReference ?? '').startsWith(`${matchedReservationId}::`)
+        if (
+          matchedReservationId &&
+          ((eventCode === 'REFUND_FAILED' && failRefIsOurs) || eventCode === 'REFUNDED_REVERSED')
+        ) {
           try {
             const failUpdate = supabase
               .from('reservation_refunds')
@@ -521,11 +531,10 @@ export async function POST(request: NextRequest) {
         // Insert first; on a duplicate (Adyen redelivers at-least-once, or a
         // later-stage event shares the psp) refresh the volatile fields and DO
         // NOT overwrite reservation_id: a redelivery can't re-match and a blind
-        // upsert would wipe the link. `reversalRecorded` lets the completion
-        // check below count THIS event in-memory if the write didn't land
-        // (otherwise a transient DB failure strands the row in 'requested'
-        // forever — review finding #1).
-        let reversalRecorded = false
+        // upsert would wipe the link. Whether or not this write lands, the
+        // completion check below decides what to count by psp_reference (not by
+        // a "did my write succeed" flag), so a transient failure here cannot
+        // double-count or strand the refund (review-fix finding #1).
         try {
           const { error: insertErr } = await supabase.from('payment_reversals').insert({
             psp_reference: pspReference,
@@ -539,12 +548,6 @@ export async function POST(request: NextRequest) {
             needs_action: needsAction,
           })
           if (insertErr?.code === '23505') {
-            // The row already exists from a prior delivery — its amount is
-            // ALREADY in the completion SELECT, so treat it as recorded even if
-            // the volatile-field refresh below fails. (Marking it recorded only
-            // on a successful dup-update double-counted the event: once from the
-            // query and once in-memory — review-fix finding #1.)
-            reversalRecorded = true
             const { error: updErr } = await supabase
               .from('payment_reversals')
               .update({
@@ -564,8 +567,6 @@ export async function POST(request: NextRequest) {
               pspReference,
               error: insertErr.message,
             })
-          } else {
-            reversalRecorded = true
           }
         } catch (error: unknown) {
           adyenLog.error('webhook: payment_reversals write threw — event not durably recorded', {
@@ -586,30 +587,44 @@ export async function POST(request: NextRequest) {
           try {
             const { data: settled } = await supabase
               .from('payment_reversals')
-              .select('amount_cents, merchant_reference, currency')
+              .select('amount_cents, merchant_reference, currency, psp_reference')
               .eq('reservation_id', matchedReservationId)
               .eq('event_code', 'REFUND')
               .eq('success', true)
             const plannedCurrency = refundRow.currency
-            const ours = (settled ?? []).filter((r: { merchant_reference: string | null; currency: string | null }) => {
-              const ref = r.merchant_reference ?? ''
-              const refIsOurs = ref === matchedReservationId || ref.startsWith(`${matchedReservationId}::`)
-              const currencyOk = !plannedCurrency || !r.currency || r.currency === plannedCurrency
+            // Count ONLY refunds WE initiated for this reservation — reference
+            // `${id}::${psp}` (or the legacy bare id) — and ONLY in the row's
+            // currency. A null currency does NOT pass: plannedCurrency is always
+            // set (NOT NULL default), and the sum has no FX conversion, so a
+            // null/foreign-currency amount must never count (review-fix #10).
+            const isOurs = (ref: string | null, currency: string | null): boolean => {
+              const r = ref ?? ''
+              const refIsOurs = r === matchedReservationId || r.startsWith(`${matchedReservationId}::`)
+              const currencyOk = !plannedCurrency || currency === plannedCurrency
               return refIsOurs && currencyOk
-            })
+            }
+            const ours = (settled ?? []).filter(
+              (r: { merchant_reference: string | null; currency: string | null }) =>
+                isOurs(r.merchant_reference, r.currency)
+            )
             let settledCents = ours.reduce(
               (sum: number, r: { amount_cents: number | null }) => sum + (r.amount_cents ?? 0),
               0
             )
-            // If THIS event's reversal row didn't persist above, it isn't in the
-            // query — count it in-memory so a transient insert failure can't
-            // strand the refund in 'requested' forever (review finding #1).
-            // Apply the SAME currency guard as the query path so a wrong-currency
-            // refund can't slip in through this fallback (review-fix finding #10).
-            if (!reversalRecorded) {
-              const eventCurrency = notification.amount?.currency ?? null
-              const eventCurrencyOk = !plannedCurrency || !eventCurrency || eventCurrency === plannedCurrency
-              if (eventCurrencyOk) settledCents += notification.amount?.value ?? 0
+            // Count THIS event in-memory only if its psp is NOT already in the
+            // query — otherwise a redelivery whose insert THREW (so
+            // reversalRecorded is false) but whose row a CONCURRENT handler
+            // already persisted would be summed twice and wrongly complete the
+            // plan (review-fix #1). Keying on psp, not the flag, makes the
+            // in-memory add idempotent regardless of insert outcome/ordering.
+            const thisPspAlreadyCounted = (settled ?? []).some(
+              (r: { psp_reference: string | null }) => r.psp_reference === pspReference
+            )
+            if (
+              !thisPspAlreadyCounted &&
+              isOurs(merchantReference, notification.amount?.currency ?? null)
+            ) {
+              settledCents += notification.amount?.value ?? 0
             }
             if (settledCents >= (refundRow.amount_cents ?? 0)) {
               await supabase

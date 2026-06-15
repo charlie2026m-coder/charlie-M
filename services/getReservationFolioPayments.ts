@@ -21,11 +21,12 @@ import { bookingLog } from '@/lib/logger'
  *   - `Pending` entries are counted in `unsettled` (not summed): money in
  *     flight makes any auto-refund amount untrustworthy — the caller must
  *     route to manual instead of silently dropping them.
- *   - A row literally double-listed (same Apaleo payment `id`) within one
- *     folio is skipped with a warning — a re-delivered capture must not double
- *     the refund. Dedup is keyed on the payment `id` ONLY, never on
- *     psp+amount+type, so two genuinely distinct equal movements on one psp
- *     (e.g. two equal partial captures/refunds) are both kept.
+ *   - A row literally double-listed within one folio is skipped with a warning
+ *     — a re-delivered capture must not double the refund. Dedup is keyed on
+ *     the payment `id` when present (so two genuinely distinct equal movements
+ *     on one psp — e.g. two equal partial captures/refunds — are both kept),
+ *     and falls back to a conservative psp+amount+type key only for an
+ *     anomalous id-less row.
  *
  * NOTE: the summary `/folios?...&expand=payments` does NOT include
  * externalReference; only the dedicated `/folios/{id}/payments` does.
@@ -77,12 +78,16 @@ export async function getReservationFolioPayments(
     const detail = await Fetch<FolioPaymentsResponse>(
       `/finance/v1/folios/${encodeURIComponent(folioId)}/payments`,
     )
-    // Dedupe ONLY on Apaleo's own payment row id, to drop a literally
+    // Dedupe primarily on Apaleo's own payment row id, to drop a literally
     // double-listed row (at-least-once delivery) WITHOUT collapsing two
     // genuinely distinct equal movements on the same psp — e.g. two equal
-    // partial captures, or two equal partial refunds — which a
-    // psp|amount|type key would wrongly merge and mis-compute the refund.
+    // partial captures/refunds — which a psp|amount|type key would wrongly
+    // merge and mis-compute the refund. For a row that arrives WITHOUT an id
+    // (anomalous, but then there's nothing to tell a duplicate from a distinct
+    // movement) fall back to the conservative psp|amount|type key, so an
+    // id-less double-listing can't silently double the refund.
     const seenIds = new Set<string>()
+    const seenComposite = new Set<string>()
 
     for (const p of detail.payments ?? []) {
       const psp = p.externalReference?.pspReference
@@ -105,6 +110,17 @@ export async function getReservationFolioPayments(
           continue
         }
         seenIds.add(p.id)
+      } else {
+        const compositeKey = `${psp}|${amount}|${p.type ?? ''}`
+        if (seenComposite.has(compositeKey)) {
+          bookingLog.warn('folio payments: duplicate id-less row skipped (composite key)', {
+            reservationId,
+            folioId,
+            psp,
+          })
+          continue
+        }
+        seenComposite.add(compositeKey)
       }
 
       const outflow = OUTFLOW_TYPE.test(p.type ?? '') || amount < 0
