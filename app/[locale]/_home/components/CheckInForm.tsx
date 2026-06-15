@@ -184,7 +184,7 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
         <DateInput
           value={dateRange || undefined}
           open={openCalendar}
-          side={isRoomsPage ? 'bottom' : 'top'}
+          frosted={isRoomsPage}
           onOpenChange={(open) => {
             setOpenCalendar(open);
             if (open) {
@@ -258,10 +258,10 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
               classNames={{ months: 'flex flex-col lg:flex-row gap-4' }}
             />
           </div>
-          <div className='h-12 flex items-center justify-between gap-2 border-t font-semibold'>
+          <div className='h-12 flex items-center justify-between gap-2 border-t font-semibold text-mute'>
             <span>{getNights() ?? ''}</span>
             {fromPrice != null && (
-              <span className='text-blue'>{t('priceFromPerNight', { price: Math.round(fromPrice) })}</span>
+              <span className='text-dark-gold'>{t('priceFromPerNight', { price: Math.round(fromPrice) })}</span>
             )}
           </div>
           <div className={cn('grid grid-cols-2 gap-2', isRoomsPage ? '' : 'md:hidden')}>

@@ -23,7 +23,7 @@ export function DateInput({
   className = '',
   inputStyle = '',
   isError = false,
-  side = 'top',
+  frosted = false,
 }: {
   children?: React.ReactNode,
   value?: DateRange | undefined,
@@ -32,11 +32,9 @@ export function DateInput({
   className?: string,
   inputStyle?: string,
   isError?: boolean,
-  // Where the calendar opens relative to the field. Defaults to "top" (the
-  // landing-page form sits low in the hero). On /rooms the form is sticky at
-  // the top of the viewport, so it opens "bottom" — dropping down from the bar
-  // instead of being flipped over the room cards by collision detection.
-  side?: 'top' | 'bottom',
+  // When true the panel is semi-transparent/frosted so content behind it stays
+  // visible (used on /rooms, where the calendar overlays the room cards).
+  frosted?: boolean,
 }) {
   const t = useTranslations();
   const [internalOpen, setInternalOpen] = useState(false)  
@@ -86,14 +84,16 @@ export function DateInput({
           className={cn(
             className,
             "overflow-hidden rounded-[20px] p-2 flex flex-col w-[350px] lg:w-[660px]",
-            // "bottom" = opens from a sticky bar over the results (/rooms) — make
-            // the panel frosted/semi-transparent so the cards behind stay
-            // visible; "top" = the landing hero keeps a solid white panel.
-            side === 'bottom' ? "bg-white/60 backdrop-blur-md" : "bg-white",
+            frosted ? "bg-white/60 backdrop-blur-md" : "bg-white",
           )}
           align="center"
-          side={side}
+          // Always drop down from the field; never flip up (avoidCollisions) so
+          // the calendar is predictable, and track the anchor every frame so it
+          // moves smoothly with the sticky bar while scrolling.
+          side="bottom"
           sideOffset={10}
+          avoidCollisions={false}
+          updatePositionStrategy="always"
           onOpenAutoFocus={(e) => e.preventDefault()}
           onInteractOutside={(e) => {
             const target = e.target as HTMLElement

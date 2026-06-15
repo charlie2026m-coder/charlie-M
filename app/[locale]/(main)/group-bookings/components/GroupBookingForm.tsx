@@ -344,7 +344,6 @@ const GroupBookingForm = ({ locale }: { locale: string }) => {
                         checkinRef.current = undefined
                       }
                     }}
-                    side="bottom"
                     inputStyle="h-12 rounded-full border-gray"
                   >
                     <Calendar
