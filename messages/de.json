@@ -383,7 +383,8 @@
     "bookNow": "Jetzt buchen",
     "loading": "Wird geladen …",
     "booked": "Für diese Daten nicht verfügbar",
-    "nextAvailable": "Frühester Termin"
+    "nextAvailable": "Frühester Termin",
+    "browseHint": "Zimmer mit baldiger Verfügbarkeit und Preisen — wählen Sie oben Ihre Daten, um Ihren Aufenthalt zu prüfen."
   },
   "noRooms": {
     "title": "Keine Übereinstimmungen für Ihre Anfrage, bitte kontaktieren Sie uns direkt",

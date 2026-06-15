@@ -383,7 +383,8 @@
     "bookNow": "Book Now",
     "loading": "Loading...",
     "booked": "Not available for these dates",
-    "nextAvailable": "Next available"
+    "nextAvailable": "Next available",
+    "browseHint": "Rooms with upcoming availability and prices — pick your dates above to check your stay."
   },
   "noRooms": {
     "title": "No matches for your request, please contact us directly",

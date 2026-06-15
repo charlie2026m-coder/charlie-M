@@ -7,6 +7,7 @@ import { getRooms } from '@/app/actions/apaleo/rooms/getRooms'
 import type { Metadata } from 'next'
 import { HOTEL_INFO } from '@/lib/Constants';
 import StickyCheckInFormRooms from './components/StickyCheckInFormRooms'
+import RoomsBrowse from './components/RoomsBrowse'
 import { calculateNights, getServiceAvailabilityById, selectBestRoomOffers } from '@/lib/utils'
 
 export const revalidate = 60
@@ -94,7 +95,19 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 const RoomsPage = async ({ params, searchParams } : Props) => {
   const { locale } = await params;
   const { from, to, adults, children } = await searchParams;
-  
+
+  // No dates chosen yet (e.g. "Explore rooms"): show the rooms that have
+  // availability soon, with prices, instead of an empty fixed-date result —
+  // so visitors see rooms exist before checking their own dates.
+  if (!from || !to) {
+    return (
+      <>
+        <StickyCheckInFormRooms params={{ from, to, adults, children }} />
+        <RoomsBrowse locale={locale} />
+      </>
+    )
+  }
+
   try {
     const adultsCount = adults ? Number(adults) : 1;
     
