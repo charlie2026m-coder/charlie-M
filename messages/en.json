@@ -295,6 +295,8 @@
     "errorEmail": "Please enter a valid email address",
     "errorGuests": "Please enter the number of guests",
     "successToast": "Thanks! Your request has been sent — we'll get back to you shortly.",
+    "successHeading": "Request sent!",
+    "sendAnother": "Send another request",
     "submitting": "Sending…",
     "errorSend": "Sorry, we couldn't send your request. Please message us on WhatsApp or email info@charlie-m.de.",
     "errorRateLimit": "Too many attempts — please try again in a few minutes.",

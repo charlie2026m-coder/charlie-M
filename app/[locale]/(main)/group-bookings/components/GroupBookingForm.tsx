@@ -13,6 +13,7 @@ import {
   FiHash,
   FiMessageSquare,
   FiSend,
+  FiCheck,
 } from 'react-icons/fi'
 import { FaWhatsapp } from 'react-icons/fa'
 
@@ -51,6 +52,7 @@ const GroupBookingForm = ({ locale }: { locale: string }) => {
   const [message, setMessage] = useState('')
   const [consent, setConsent] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [sent, setSent] = useState(false)
   const [openCal, setOpenCal] = useState(false)
   const [errors, setErrors] = useState<{ name?: boolean; email?: boolean; consent?: boolean }>({})
 
@@ -136,8 +138,9 @@ const GroupBookingForm = ({ locale }: { locale: string }) => {
       const data = await res.json().catch(() => ({}))
 
       if (res.ok && data?.ok) {
-        toast.success(t('successToast'))
-        // Clear the form after a successful send.
+        // Swap the form for the animated "done" panel and clear the fields so
+        // "Send another request" starts fresh.
+        setSent(true)
         setName('')
         setEmail('')
         setPhone('')
@@ -185,6 +188,23 @@ const GroupBookingForm = ({ locale }: { locale: string }) => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-start">
           {/* Form card */}
           <div className="lg:col-span-2 bg-white rounded-[30px] shadow-lg p-5 md:p-8">
+            {sent ? (
+              <div className="flex flex-col items-center text-center py-10 md:py-16 gap-4">
+                <div className="relative mb-2 flex items-center justify-center">
+                  <span aria-hidden className="absolute size-20 rounded-full bg-green/40 animate-success-ring" />
+                  <div className="relative size-20 rounded-full bg-green flex items-center justify-center animate-success-pop">
+                    <FiCheck className="size-10 text-white" strokeWidth={3} />
+                  </div>
+                </div>
+                <h2 className="text-2xl font-semibold jakarta text-mute">{t('successHeading')}</h2>
+                <p className="text-dark text-sm md:text-base max-w-md">{t('successToast')}</p>
+                <Button type="button" variant="outline" onClick={() => setSent(false)} className="mt-2 gap-2">
+                  <FiSend className="size-4" />
+                  {t('sendAnother')}
+                </Button>
+              </div>
+            ) : (
+            <>
             {/* Segmented toggle with a sliding active pill */}
             <div className="relative flex w-full sm:w-[440px] rounded-full bg-light-bg border border-gray p-1 mb-6">
               <span
@@ -405,6 +425,8 @@ const GroupBookingForm = ({ locale }: { locale: string }) => {
                 </Button>
               </div>
             </form>
+            </>
+            )}
           </div>
 
           {/* WhatsApp card */}

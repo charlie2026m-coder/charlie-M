@@ -295,6 +295,8 @@
     "errorEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
     "errorGuests": "Bitte geben Sie die Anzahl der Gäste an",
     "successToast": "Danke! Ihre Anfrage wurde gesendet — wir melden uns in Kürze.",
+    "successHeading": "Anfrage gesendet!",
+    "sendAnother": "Weitere Anfrage senden",
     "submitting": "Wird gesendet …",
     "errorSend": "Ihre Anfrage konnte leider nicht gesendet werden. Schreiben Sie uns auf WhatsApp oder per E-Mail an info@charlie-m.de.",
     "errorRateLimit": "Zu viele Versuche — bitte versuchen Sie es in ein paar Minuten erneut.",
