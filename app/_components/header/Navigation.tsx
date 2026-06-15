@@ -23,7 +23,11 @@ const Navigation = ({isWhite = false}: {isWhite?: boolean}) => {
     },
     {
       label: 'FAQ',
-      href: "/#faq" 
+      href: "/#faq"
+    },
+    {
+      label: t('header.group_bookings_link'),
+      href: '/group-bookings'
     }
   ];
 
