@@ -74,14 +74,16 @@ const RoomCard = ({
   };
 
   return (
-    <div className='w-full flex flex-col rounded-[40px] bg-white overflow-hidden shadow-lg h-full'>
+    <div className='w-full flex flex-col rounded-[40px] bg-white overflow-hidden shadow-lg h-auto sm:h-full'>
       <PhotoSlider
         height={260}
         images={item.images}
         roomName={item.name}
         onNavigate={() => router.push(`/${locale}/rooms/${item.unitGroup.id}?${queryString}`)}
       />
-      <div className='flex flex-col p-4 pb-6 h-full'>
+      {/* Mobile: card hugs its content (no equal-height stretch) so the white
+          area isn't padded out with empty space. Desktop keeps equal heights. */}
+      <div className='flex flex-col p-4 pb-5 sm:pb-6 h-auto sm:h-full'>
         <Link href={`/${locale}/rooms/${item.unitGroup.id}?${queryString}`}>
           <h2 className='text-xl font-medium jakarta mb-3 hover:text-blue transition-colors cursor-pointer'>{item.name}</h2>
         </Link>
@@ -93,14 +95,14 @@ const RoomCard = ({
             </div>
           )}
           {item.oneNightPrice > 0 && (
-            <div className='text-mute mb-5 mt-auto'>{translations.perNightFrom}</div>
+            <div className='text-mute mt-4 mb-2 sm:mb-5 sm:mt-auto'>{translations.perNightFrom}</div>
           )}
 
         {item.isBooked
           ? <div className='text-sm font-medium text-gray-400 px-2 py-3'>
               {translations.booked ?? 'Not available for these dates'}
             </div>
-          : <div className={`flex xxs:flex-row flex-col items-center gap-2 md:gap-8 justify-between w-full ${item.oneNightPrice > 0 ? '' : 'mt-auto'}`}>
+          : <div className={`flex xxs:flex-row flex-col items-center gap-2 md:gap-8 justify-between w-full ${item.oneNightPrice > 0 ? '' : 'mt-4 sm:mt-auto'}`}>
               {item.oneNightPrice > 0 && (
                 <Price price={item.oneNightPrice} className='h-[50px] w-full xs:w-auto' />
               )}
