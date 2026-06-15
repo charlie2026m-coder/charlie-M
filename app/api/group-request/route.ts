@@ -10,7 +10,9 @@ import { EMAIL } from '@/lib/Constants'
 //   MAILGUN_API_KEY   — Mailgun private API key
 //   MAILGUN_DOMAIN    — the sending domain verified in Mailgun (e.g. mg.charlie-m.de)
 // Optional:
-//   MAILGUN_REGION=eu — use the EU API host (default is US)
+//   MAILGUN_BASE_URL  — API host, e.g. https://api.eu.mailgun.net (EU). Takes
+//                       precedence; falls back to MAILGUN_REGION, then US host.
+//   MAILGUN_REGION=eu — use the EU API host when MAILGUN_BASE_URL is unset
 //   MAILGUN_FROM      — From header (default: "Charlie M Website <noreply@DOMAIN>")
 
 export const runtime = 'nodejs'
@@ -58,7 +60,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: 'not_configured' }, { status: 503 })
   }
 
-  const apiBase = process.env.MAILGUN_REGION === 'eu' ? 'https://api.eu.mailgun.net' : 'https://api.mailgun.net'
+  const apiBase = (process.env.MAILGUN_BASE_URL?.replace(/\/+$/, ''))
+    || (process.env.MAILGUN_REGION === 'eu' ? 'https://api.eu.mailgun.net' : 'https://api.mailgun.net')
   const fromAddress = process.env.MAILGUN_FROM || `Charlie M Website <noreply@${domain}>`
 
   const isCorporate = body.mode === 'corporate'
