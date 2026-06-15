@@ -336,7 +336,8 @@
     "perNightFrom": "per night from",
     "bookNow": "Book Now",
     "loading": "Loading...",
-    "booked": "Not available for these dates"
+    "booked": "Not available for these dates",
+    "nextAvailable": "Next available"
   },
   "noRooms": {
     "title": "No matches for your request, please contact us directly",

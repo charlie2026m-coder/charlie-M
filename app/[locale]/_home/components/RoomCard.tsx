@@ -9,6 +9,7 @@ import RoomParamsRow from '@/app/_components/ui/RoomParamsRow'
 import { useStore } from '@/store/useStore'
 import { getDate, getPath } from '@/lib/utils'
 import { useState } from 'react'
+import { FiCalendar } from 'react-icons/fi'
 const RoomCard = ({
   item,
   locale,
@@ -21,6 +22,7 @@ const RoomCard = ({
     loading: string
     bookNow: string
     booked?: string
+    nextAvailable?: string
     roomParams: {
       max: string
       kingSize: string
@@ -36,13 +38,35 @@ const RoomCard = ({
   const dateRange = useStore(state => state.dateRange);
   const guests = useStore(state => state.guests);
 
-  // Build query string from Zustand state
-  const queryString = getPath({ 
-    from: dateRange.from ? getDate(dateRange.from) : undefined, 
-    to: dateRange.to ? getDate(dateRange.to) : undefined, 
-    adults: guests.adults.toString(), 
-    children: guests.children.toString() 
+  // Prefer this card's own nearest bookable night (the home showcase computes
+  // it server-side); fall back to any range in the store. Book Now lands on the
+  // room page with those dates prefilled.
+  const fromStr = item.arrival ?? (dateRange.from ? getDate(dateRange.from) : undefined);
+  const toStr = item.departure ?? (dateRange.to ? getDate(dateRange.to) : undefined);
+
+  const queryString = getPath({
+    from: fromStr,
+    to: toStr,
+    adults: guests.adults.toString(),
+    children: guests.children.toString(),
   });
+
+  // Compact, localized nearest-night label, e.g. "16–17 Jun" / "30 Jun – 1 Jul".
+  const nearestLabel = (() => {
+    if (!item.arrival || !item.departure) return null;
+    const fmt = (iso: string, withMonth: boolean) => {
+      const [y, m, d] = iso.split('-').map(Number);
+      const date = new Date(y, m - 1, d);
+      return new Intl.DateTimeFormat(locale === 'de' ? 'de-DE' : 'en-GB', {
+        day: 'numeric',
+        ...(withMonth ? { month: 'short' } : {}),
+      }).format(date);
+    };
+    const sameMonth = item.arrival.slice(0, 7) === item.departure.slice(0, 7);
+    return sameMonth
+      ? `${fmt(item.arrival, false)}–${fmt(item.departure, true)}`
+      : `${fmt(item.arrival, true)} – ${fmt(item.departure, true)}`;
+  })();
 
   const handleBookNow = () => {
     setIsLoading(true);
@@ -62,17 +86,24 @@ const RoomCard = ({
           <h2 className='text-xl font-medium jakarta mb-3 hover:text-blue transition-colors cursor-pointer'>{item.name}</h2>
         </Link>
           <RoomParamsRow attributes={item.attributes } maxPersons={item.maxPersons} size={item.size} translations={translations.roomParams} />
-          <div className='text-mute mb-5 mt-auto'>{translations.perNightFrom}</div>
+          {nearestLabel && (
+            <div className='flex items-center gap-1.5 text-sm text-blue font-medium mt-4'>
+              <FiCalendar className='size-4 shrink-0' />
+              <span>{translations.nextAvailable ?? 'Next available'}: {nearestLabel}</span>
+            </div>
+          )}
+          {item.oneNightPrice > 0 && (
+            <div className='text-mute mb-5 mt-auto'>{translations.perNightFrom}</div>
+          )}
 
         {item.isBooked
           ? <div className='text-sm font-medium text-gray-400 px-2 py-3'>
               {translations.booked ?? 'Not available for these dates'}
             </div>
-          : <div className='flex xxs:flex-row flex-col items-center gap-2 md:gap-8 justify-between w-full'>
-              {item.oneNightPrice > 0
-                ? <Price price={item.oneNightPrice} className='h-[50px] w-full xs:w-auto' />
-                : <div className='text-lg rounded-full w-auto bg-gray-100 font-bold text-gray-300 px-5 py-2 flex items-center justify-center h-[50px]  xs:w-auto'>€ 00.00</div>
-              }
+          : <div className={`flex xxs:flex-row flex-col items-center gap-2 md:gap-8 justify-between w-full ${item.oneNightPrice > 0 ? '' : 'mt-auto'}`}>
+              {item.oneNightPrice > 0 && (
+                <Price price={item.oneNightPrice} className='h-[50px] w-full xs:w-auto' />
+              )}
               <Button
                 onClick={handleBookNow}
                 disabled={isLoading}

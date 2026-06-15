@@ -336,7 +336,8 @@
     "perNightFrom": "pro Nacht ab",
     "bookNow": "Jetzt buchen",
     "loading": "Wird geladen …",
-    "booked": "Für diese Daten nicht verfügbar"
+    "booked": "Für diese Daten nicht verfügbar",
+    "nextAvailable": "Frühester Termin"
   },
   "noRooms": {
     "title": "Keine Übereinstimmungen für Ihre Anfrage, bitte kontaktieren Sie uns direkt",

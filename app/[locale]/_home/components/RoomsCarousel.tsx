@@ -1,6 +1,5 @@
 'use client'
 import * as React from "react"
-import { useState, useEffect } from "react"
 import type { CarouselApi } from '../../../_components/ui/carousel'
 import {
   Carousel,
@@ -10,10 +9,6 @@ import {
 import RoomCard from '@/app/[locale]/_home/components/RoomCard'
 import type { HomeRoomCard } from '@/types/offers'
 import { GoArrowLeft, GoArrowRight } from "react-icons/go"
-import { useQuery } from '@tanstack/react-query'
-import { useStore } from '@/store/useStore'
-import { getDate } from '@/lib/utils'
-import { getPrices } from '@/app/actions/apaleo/rooms/getPrices'
 
 export function RoomsCarousel({
   items,
@@ -27,6 +22,7 @@ export function RoomsCarousel({
     loading: string
     bookNow: string
     booked?: string
+    nextAvailable?: string
     roomParams: {
       max: string
       kingSize: string
@@ -38,46 +34,11 @@ export function RoomsCarousel({
   }
 }) {
   const [api, setApi] = React.useState<CarouselApi>()
-  const dateRange = useStore(state => state.dateRange)
-  const guests = useStore(state => state.guests)
 
-  const from = dateRange.from ? getDate(dateRange.from) : undefined
-  const to = dateRange.to ? getDate(dateRange.to) : undefined
-
-  const [debouncedFrom, setDebouncedFrom] = useState(from)
-  const [debouncedTo, setDebouncedTo] = useState(to)
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedFrom(from)
-      setDebouncedTo(to)
-    }, 600)
-    return () => clearTimeout(timer)
-  }, [from, to])
-
-  const { data: prices } = useQuery({
-    queryKey: ['home-room-prices', debouncedFrom, debouncedTo, guests.adults],
-    queryFn: () => getPrices(debouncedFrom, debouncedTo, guests.adults),
-    staleTime: 1000 * 60 * 5,
-    enabled: !!debouncedFrom && !!debouncedTo,
-  })
-
-  // Merge static room data with live prices. Once prices have loaded, hide
-  // rooms that Apaleo didn't return — they're booked/unavailable for the
-  // chosen dates and there's nothing to show on the home carousel. While
-  // prices are still undefined (no dates selected yet, or query disabled),
-  // show all rooms with their static info.
-  const roomsWithPrices: HomeRoomCard[] = React.useMemo(() => {
-    const merged = items.map(item => {
-      const priceData = prices?.find(p => p.roomId === item.id)
-      return {
-        ...item,
-        oneNightPrice: priceData?.minNightPrice ?? item.oneNightPrice,
-        isBooked: prices ? !priceData : item.isBooked,
-      }
-    })
-    return merged.filter(item => !item.isBooked)
-  }, [items, prices])
+  // Items are computed server-side (RoomsSection): one card per room type at its
+  // nearest bookable night with that night's price. Just guard against any
+  // stragglers marked unavailable.
+  const rooms = items.filter(item => !item.isBooked)
 
   const buttonClassName = "size-18 rounded-full border text-mute border-mute flex items-center justify-center transition-opacity hover:opacity-50"
 
@@ -110,7 +71,7 @@ export function RoomsCarousel({
             }}
           >
             <CarouselContent className="ml-0 pb-8 xl:pb-[90px]">
-              {roomsWithPrices.map((item) => (
+              {rooms.map((item) => (
                 <CarouselItem key={item.id} className="px-2 basis-[80%] md:basis-1/2 xl:basis-1/3 shrink-0">
                   <RoomCard item={item} locale={locale} translations={translations} />
                 </CarouselItem>

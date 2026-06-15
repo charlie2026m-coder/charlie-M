@@ -132,6 +132,10 @@ export interface HomeRoomCard {
   unitGroup: { id: string };
   oneNightPrice: number;
   isBooked: boolean;
+  // Nearest bookable night for this room type (YYYY-MM-DD), shown on the home
+  // showcase and prefilled into the Book Now link. Absent when no date scan ran.
+  arrival?: string;
+  departure?: string;
 }
 
 // Simple room type for displaying room cards (without full Apaleo offer data)
