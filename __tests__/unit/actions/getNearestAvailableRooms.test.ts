@@ -90,4 +90,27 @@ describe('fetchNearestAvailableRooms', () => {
     mockFetch.mockRejectedValueOnce(new Error('Apaleo API error: 503 - {}'));
     expect(await fetchNearestAvailableRooms()).toEqual([]);
   });
+
+  it('on production (VERCEL_ENV=production) hides rooms without a price (bookable-only)', async () => {
+    vi.stubEnv('VERCEL_ENV', 'production');
+    mockFetch.mockResolvedValueOnce({
+      timeSlices: [slice('2026-06-15', { 'CMH-CDR': 5, 'CMH-COR': 4 })],
+    } as never);
+    mockGetPrices.mockResolvedValue([{ roomId: 'CMH-CDR', minNightPrice: 171 }]);
+
+    const rooms = await fetchNearestAvailableRooms();
+    expect(rooms.map((r) => r.roomId)).toEqual(['CMH-CDR']); // COR (price 0) hidden
+    vi.unstubAllEnvs();
+  });
+
+  it('off production (no VERCEL_ENV) keeps unpriced available rooms', async () => {
+    // (test env has no VERCEL_ENV) — both rooms shown.
+    mockFetch.mockResolvedValueOnce({
+      timeSlices: [slice('2026-06-15', { 'CMH-CDR': 5, 'CMH-COR': 4 })],
+    } as never);
+    mockGetPrices.mockResolvedValue([{ roomId: 'CMH-CDR', minNightPrice: 171 }]);
+
+    const rooms = await fetchNearestAvailableRooms();
+    expect(rooms.map((r) => r.roomId).sort()).toEqual(['CMH-CDR', 'CMH-COR']);
+  });
 });

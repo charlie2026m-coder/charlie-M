@@ -90,14 +90,23 @@ export async function fetchNearestAvailableRooms(): Promise<NearestAvailableRoom
   const result: NearestAvailableRoom[] = []
   for (const { date, departure, prices } of priced) {
     for (const groupId of groupsByDate.get(date) ?? []) {
-      // Show every room that has FREE units at its nearest night (the guest's
-      // ask is "free rooms by nearest date"). Attach the price when Apaleo has
-      // a published offer for that night; leave it 0 otherwise (a room type can
-      // have availability but no rate plan on the channel — the card then shows
-      // the date without a "from €X" badge instead of being hidden).
+      // A room has FREE units at its nearest night. Attach the price when
+      // Apaleo has a published offer for that night; leave it 0 otherwise (a
+      // room type can have availability but no rate plan on the channel).
       const minNightPrice = prices.find((p) => p.roomId === groupId)?.minNightPrice ?? 0
       result.push({ roomId: groupId, arrival: date, departure, oneNightPrice: minNightPrice })
     }
+  }
+
+  // On the real production site (charlie-m.de) show ONLY rooms that are
+  // actually bookable — i.e. Apaleo published a price/rate plan — so a card
+  // never leads to a dead end and unpublished/test room types are hidden
+  // automatically. On Vercel previews and local dev, show every free room
+  // (price appears once published) so the feed can be checked end-to-end while
+  // rates are still being set up. (VERCEL_ENV is 'production' only on the
+  // production deployment; 'preview' on branch previews; undefined locally.)
+  if (process.env.VERCEL_ENV === 'production') {
+    return result.filter((r) => r.oneNightPrice > 0)
   }
   return result
 }
