@@ -116,7 +116,7 @@ export function DateInput({
             compact ? "lg:w-[360px] lg:max-w-[360px]" : "lg:w-[660px] lg:max-w-none",
             // Smoother, slightly slower entrance than the default popover.
             "data-[state=open]:duration-300 data-[state=open]:ease-out",
-            frosted ? "bg-white/85 backdrop-blur-md" : "bg-white",
+            frosted ? "bg-white/92 backdrop-blur-md" : "bg-white",
           )}
           data-cal-id={panelId}
           // Desktop: center the panel under the field (don't shift it right).
