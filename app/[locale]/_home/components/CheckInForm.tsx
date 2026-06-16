@@ -279,10 +279,16 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
               selected={dateRange}
               month={visibleMonth}
               onMonthChange={setVisibleMonth}
-              excludeDisabled
+              showOutsideDays={false}
+              fixedWeeks={false}
               modifiers={{ soldOut: isSoldOut }}
               modifiersClassNames={{ soldOut: 'line-through' }}
               onSelect={(_date, triggerDate) => {
+                if (!triggerDate) return;
+                // A sold-out night can't be a CHECK-IN (the prior checkout day is
+                // kept clickable only so it renders selected — never let it start
+                // a new stay).
+                if (!pickingCheckout && isSoldOut(triggerDate)) return;
                 if (!pickingCheckout) {
                   // Клик 1 (или клик когда range уже выбран) — ставим начало
                   checkinRef.current = triggerDate;
@@ -329,7 +335,21 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
                 }
                 if (dateError) setDateError(false);
               }}
-              disabled={[{ before: minArrivalDate }, isSoldOut]}
+              disabled={[
+                { before: minArrivalDate },
+                (date: Date) => {
+                  // Keep the already-chosen checkout looking selected, not greyed.
+                  if (dateRange?.to && date.getTime() === dateRange.to.getTime()) return false
+                  // Picking the CHECKOUT: a sold-out day can still be a valid
+                  // checkout (you leave that morning) — block it only if a NIGHT
+                  // between check-in and it is sold out.
+                  if (pickingCheckout && checkinRef.current && date.getTime() > checkinRef.current.getTime()) {
+                    return rangeHasSoldOutNight(checkinRef.current, date)
+                  }
+                  // Picking the CHECK-IN: a sold-out night can't be a first night.
+                  return isSoldOut(date)
+                },
+              ]}
               classNames={{ months: 'flex flex-col lg:flex-row gap-4' }}
             />
           </div>
