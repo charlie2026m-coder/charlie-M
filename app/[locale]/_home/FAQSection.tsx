@@ -10,6 +10,15 @@ const FAQSection = () => {
   const t = useTranslations('home')
   const [activeTab, setActiveTab] = useState(0)
   const [activeFAQ, setActiveFAQ] = useState<string | null>(null)
+  // On desktop the right-hand questions open on hover (like the left category
+  // list); on touch they stay click-to-toggle.
+  const [isDesktop, setIsDesktop] = useState(false)
+  useEffect(() => {
+    const update = () => setIsDesktop(window.innerWidth >= 1024)
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
 
   const faqPoints = useMemo(() => [
     {
@@ -57,6 +66,7 @@ const FAQSection = () => {
 
   const handleActiveIndexChange = (index: number) => {
     setActiveFAQ(faqPoints[index].title)
+    setActiveTab(0) // open the first question of the newly selected category
   }
   return (
     <div id="faq" className='flex flex-col container px-4 xl:px-[100px] pb-10'>
@@ -80,13 +90,14 @@ const FAQSection = () => {
         <div className='lg:col-span-6 flex flex-col '>
           <div className='flex flex-col gap-5 '>
             {activeFAQ && faqPoints.filter((item) => item.title === activeFAQ)[0]?.items.map((item, index) => (
-              <FAQCard 
-                key={item.title} 
-                index={index} 
-                  active={activeTab === index} 
-                  setActiveTab={setActiveTab} 
-                  question={item.title} 
-                  items={item.p} 
+              <FAQCard
+                key={item.title}
+                index={index}
+                  active={activeTab === index}
+                  setActiveTab={setActiveTab}
+                  question={item.title}
+                  items={item.p}
+                  isDesktop={isDesktop}
                 />
               ))}
           </div>

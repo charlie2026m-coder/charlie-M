@@ -3,9 +3,13 @@ const APALEO_API_URL = 'https://api.apaleo.com';
 
 let cachedToken: string | null = null;
 let tokenExpiry: number = 0;
+// One in-flight refresh shared by all concurrent callers, so a burst of
+// requests (webhook / booking-create) doesn't fire N parallel identity calls
+// when the token is missing or expired.
+let inflightRefresh: Promise<string> | null = null;
 
-// 1. Get access token from Apaleo
-export async function getApaleoAccessToken(): Promise<string> {
+// 1. Get access token from Apaleo (returns the token and its real lifetime)
+export async function getApaleoAccessToken(): Promise<{ accessToken: string; expiresIn: number }> {
   const clientId = process.env.APALEO_CLIENT_ID;
   const clientSecret = process.env.APALEO_CLIENT_SECRET;
 
@@ -29,20 +33,32 @@ export async function getApaleoAccessToken(): Promise<string> {
   }
 
   const data = await response.json();
-  return data.access_token;
+  const expiresIn = typeof data.expires_in === 'number' ? data.expires_in : 3600;
+  return { accessToken: data.access_token, expiresIn };
 }
 
-// 2. Get or refresh token (with cache)
+// 2. Get or refresh token (cached, with concurrent-refresh coalescing)
 export async function getOrRefreshToken(): Promise<string> {
-  const now = Date.now();
-
-  // If token is expired or missing, get new one
-  if (!cachedToken || now >= tokenExpiry) {
-    cachedToken = await getApaleoAccessToken();
-    tokenExpiry = now + (3600 * 1000); // 1 hour
+  if (cachedToken && Date.now() < tokenExpiry) {
+    return cachedToken;
   }
 
-  return cachedToken;
+  if (!inflightRefresh) {
+    inflightRefresh = (async () => {
+      try {
+        const { accessToken, expiresIn } = await getApaleoAccessToken();
+        cachedToken = accessToken;
+        // Honour the server-provided lifetime with a 60s safety buffer, so we
+        // never serve a token that's already dead server-side.
+        tokenExpiry = Date.now() + Math.max(60, expiresIn - 60) * 1000;
+        return accessToken;
+      } finally {
+        inflightRefresh = null;
+      }
+    })();
+  }
+
+  return inflightRefresh;
 }
 
 // 3. Make request to Apaleo API

@@ -2,19 +2,25 @@
 import Amenities from '../../components/Amenities'
 import TextReadMore from '@/app/_components/ui/TextReadMore';
 import RoomParamsRow from '@/app/_components/ui/RoomParamsRow';
+import { Button } from '@/app/_components/ui/button'
 import { RoomOffer } from '@/types/offers'
 import { cn } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
+import { FiCalendar } from 'react-icons/fi'
 
-const RoomContent = ({ 
-  room, 
+const scrollToBooking = () =>
+  document.getElementById('room-booking-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+
+const RoomContent = ({
+  room,
   isRoomInfo = false,
-}: { 
-  room: RoomOffer, 
+}: {
+  room: RoomOffer,
   isRoomInfo?: boolean,
 }) => {
   const t = useTranslations('roomContent')
   const tParams = useTranslations('roomParams')
+  const tCommon = useTranslations()
   return (
     <>
       <div className='flex flex-col-reverse md:flex-row justify-between mb-5 items-start gap-2'>
@@ -34,14 +40,23 @@ const RoomContent = ({
             terrace: tParams('terrace'),
           }}
         />
-        <div className='flex items-center gap-3 ml-auto'>
-        </div>
       </div>
-     
+
       {isRoomInfo &&
-      <> 
-        <Amenities/>
-        <TextReadMore 
+      <>
+        <Amenities
+          action={
+            <Button
+              onClick={scrollToBooking}
+              variant='outline'
+              className='md:hidden h-9 shrink-0 rounded-full px-6 min-w-[150px] text-sm gap-1.5'
+            >
+              <FiCalendar className='size-4' />
+              {tCommon('book_now_btn')}
+            </Button>
+          }
+        />
+        <TextReadMore
           className='mb-5'
           textClassName='text-dark text-base'
           text={room.description} 

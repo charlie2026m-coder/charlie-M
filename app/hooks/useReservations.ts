@@ -2,11 +2,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ReservationFilter } from '@/store/useProfile';
 import { supabase } from '@/lib/supabase';
 
-export function useReservations(page: number, filter: ReservationFilter = 'All') {
+export function useReservations(page: number, filter: ReservationFilter = 'All', pageSize?: number) {
   return useQuery({
-    queryKey: ['reservations', page, filter],
+    queryKey: ['reservations', page, filter, pageSize ?? 'default'],
     queryFn: async () => {
-      const response = await fetch(`/api/reservations?page=${page}&filter=${filter}`);
+      const sizeParam = pageSize ? `&pageSize=${pageSize}` : '';
+      const response = await fetch(`/api/reservations?page=${page}&filter=${filter}${sizeParam}`);
       if (!response.ok) throw new Error('Failed to fetch reservations');
 
       return response.json();

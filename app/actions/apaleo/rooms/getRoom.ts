@@ -63,8 +63,12 @@ async function getRoomInternal(
         dr => dr.unitGroup?.id === room.unitGroup?.id && dr.ratePlan?.id === room.ratePlan?.id
       );
 
-      const cityTax = room.cityTaxes?.[0]?.totalGrossAmount?.amount ?? 0;
-      const cityTaxForTwo = doubleRoom?.cityTaxes?.[0]?.totalGrossAmount?.amount ?? cityTax;
+      // Sum ALL cityTaxes entries (multi-slice stays expose several) so this
+      // matches getRoomPrice / getSingleRoom instead of dropping all but the first.
+      const cityTax = (room.cityTaxes ?? []).reduce((sum, t) => sum + (t?.totalGrossAmount?.amount ?? 0), 0);
+      const cityTaxForTwo = doubleRoom?.cityTaxes && doubleRoom.cityTaxes.length > 0
+        ? doubleRoom.cityTaxes.reduce((sum, t) => sum + (t?.totalGrossAmount?.amount ?? 0), 0)
+        : cityTax;
 
       const roomPrice = Math.round(((room.totalGrossAmount?.amount ?? 0) + cityTax) * 100) / 100;
       const roomPriceForTwo = Math.round(((doubleRoom?.totalGrossAmount?.amount ?? room.totalGrossAmount?.amount ?? 0) + cityTaxForTwo) * 100) / 100;

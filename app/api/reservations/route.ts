@@ -25,6 +25,12 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const page = Number(searchParams.get('page')) || 1;
     const filter = searchParams.get('filter') || 'All';
+    // Client-side search needs all of a guest's own reservations in one go.
+    // Default to the paged size; cap so we never pull an unbounded list.
+    const requestedPageSize = Number(searchParams.get('pageSize'));
+    const pageSize = Number.isFinite(requestedPageSize) && requestedPageSize > 0
+      ? Math.min(requestedPageSize, 50)
+      : PAGE_SIZE;
 
     // Get current user email
     const supabase = await createSupabaseServerClient();
@@ -38,7 +44,7 @@ export async function GET(request: Request) {
     const apaleoParams = new URLSearchParams({
       textSearch: user.email,
       pageNumber: page.toString(),
-      pageSize: PAGE_SIZE.toString(),
+      pageSize: pageSize.toString(),
       sort: 'created:desc',
     });
 

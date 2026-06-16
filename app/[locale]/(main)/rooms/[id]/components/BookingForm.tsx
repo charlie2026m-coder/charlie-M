@@ -5,12 +5,13 @@ import { Guests } from "@/app/_components/ui/guests"
 import { Button } from "@/app/_components/ui/button"
 import { Calendar } from "@/app/_components/ui/calendar"
 import { Spinner } from "@/app/_components/ui/spinner"
-import { useState, useEffect, useMemo, useTransition } from "react"
+import { useState, useEffect, useMemo, useRef, useTransition } from "react"
 import { DateRange } from "react-day-picker"
 import { useRouter } from "@/navigation"
 import { useQuery } from "@tanstack/react-query"
 import { useTranslations } from "next-intl"
 import { BsFillPersonFill } from "react-icons/bs"
+import { FiCalendar } from "react-icons/fi"
 import dayjs from "dayjs"
 
 import { getDate, getPath, getMinArrivalDate, calculateNights, calculateTotalTaxes } from "@/lib/utils"
@@ -19,6 +20,7 @@ import TaxesInfo from "@/app/_components/ui/Taxes"
 import { useStore } from "@/store/useStore"
 import { UrlParams } from "@/types/apaleo"
 import { getRoomPrice } from "@/app/actions/apaleo/rooms/getRoomPrice"
+import { useMonthAvailability, toYmd } from "@/app/hooks/useMonthAvailability"
 import {
   BOOKING_SECTION_ID,
   setScrollToBookingOnNextPage,
@@ -47,18 +49,64 @@ const BookingForm = ({
   const [openCheckIn, setOpenCheckIn] = useState(false)
   const [dateError, setDateError] = useState(false)
   const [isNavigating, startNavigation] = useTransition()
+  // Two-click range selection (parity with the search calendar): click 1 sets
+  // the start, click 2 sets the end — no premature 1-night range on click 1.
+  const [pickingCheckout, setPickingCheckout] = useState(false)
+  const checkinRef = useRef<Date | undefined>(undefined)
+  // Set true when a completed range auto-closes the panel. If late-arriving
+  // availability then reveals a sold-out night (the drop effect below clears the
+  // range), we re-open the panel so the guest sees the strikethrough + error
+  // rather than the dates silently vanishing from a closed field.
+  const justAutoClosedRef = useRef(false)
 
   const [guests, setGuests] = useState({
     adults: parseInt(params?.adults || guestsStore?.adults.toString() || '1'),
     children: parseInt(params?.children || guestsStore?.children.toString() || '0'),
   })
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: dateRangeStore.from || (params.from ? dayjs(params.from).toDate() : undefined),
-    to: dateRangeStore.to || (params.to ? dayjs(params.to).toDate() : undefined),
-  })
+  // URL params (a "Choose Room" card click or a shared link) carry the proposed
+  // dates and are authoritative on entry — they win over the last-used store
+  // range. Require BOTH from+to so a malformed one-sided URL can't splice a URL
+  // arrival onto a stale store checkout. Normalize to the bare YYYY-MM-DD so a
+  // time-bearing value can't render a different day on the server vs the client
+  // (hydration mismatch).
+  const hasUrlRange = Boolean(params.from && params.to)
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(() =>
+    hasUrlRange
+      ? { from: dayjs(params.from!.slice(0, 10)).toDate(), to: dayjs(params.to!.slice(0, 10)).toDate() }
+      : { from: dateRangeStore.from, to: dateRangeStore.to }
+  )
 
-  // Sync dateRange from store (when Availability applies dates)
+  // Real per-night availability for THIS room type (sold-out nights disabled).
+  const [visibleMonth, setVisibleMonth] = useState<Date>(() => dateRange?.from ?? new Date())
+  const availFrom = toYmd(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1))
+  const availTo = toYmd(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 2, 1))
+  const { isSoldOut, rangeHasSoldOutNight } = useMonthAvailability(availFrom, availTo, id)
+
+  // Swipe / drag (or the arrows) to page months, bounded at the earliest month.
+  const swipeStartX = useRef<number | null>(null)
+  const navigateMonth = (dir: 1 | -1) => {
+    setVisibleMonth((prev) => {
+      const next = new Date(prev.getFullYear(), prev.getMonth() + dir, 1)
+      const minMonth = new Date(minArrivalDate.getFullYear(), minArrivalDate.getMonth(), 1)
+      return next < minMonth ? prev : next
+    })
+  }
+
+  // Dates precedence on this page: the URL range (above) is authoritative on
+  // entry, and only store changes that happen AFTER mount (e.g. the on-page
+  // calendar, or an external "apply dates") are adopted into local state. The
+  // store's value AT mount must never override the URL-initialized range — else
+  // the home page's seeded today→tomorrow range would replace the dates a card
+  // linked to. We snapshot the store at mount and diff against it, rather than a
+  // one-shot flag, so this stays correct under React's double-invoked dev
+  // effects and any extra re-render. We also don't write the URL into the store,
+  // so a range the guest typed on the home page survives a round-trip.
+  const initialStoreRange = useRef({ from: dateRangeStore.from, to: dateRangeStore.to })
   useEffect(() => {
+    const changedSinceMount =
+      dateRangeStore.from?.getTime() !== initialStoreRange.current.from?.getTime() ||
+      dateRangeStore.to?.getTime() !== initialStoreRange.current.to?.getTime()
+    if (!changedSinceMount) return
     if (dateRangeStore.from && dateRangeStore.to) {
       setDateRange(prev => {
         if (prev?.from?.getTime() === dateRangeStore.from?.getTime() &&
@@ -69,6 +117,27 @@ const BookingForm = ({
       })
     }
   }, [dateRangeStore.from, dateRangeStore.to])
+
+  // Parity with the search calendar (review #5): a range seeded from the URL or
+  // the persisted store may cross a night that is (now) sold out for THIS room.
+  // The library's excludeDisabled only fires on interactive clicks, so drop
+  // such a stale range once real availability arrives — it must never reach the
+  // /booking step.
+  useEffect(() => {
+    if (!dateRange?.from || !dateRange?.to) return
+    if (!rangeHasSoldOutNight(dateRange.from, dateRange.to)) return
+    setDateRange({ from: undefined, to: undefined })
+    setValue({ from: undefined, to: undefined }, 'dateRange')
+    setDateError(true)
+    // The range had auto-closed the panel but late-arriving availability now
+    // shows a sold-out night — re-open so the guest sees the cleared field +
+    // strikethrough in context. Guarded by the ref so an initial sold-out seed
+    // (URL/store dates) doesn't pop the calendar open unprompted on load.
+    if (justAutoClosedRef.current) {
+      justAutoClosedRef.current = false
+      setOpenCheckIn(true)
+    }
+  }, [dateRange?.from, dateRange?.to, rangeHasSoldOutNight, setValue])
 
   // Sync guests from store (when changed externally)
   useEffect(() => {
@@ -164,8 +233,11 @@ const BookingForm = ({
   const showPlaceholder = isPriceLoading || !room
 
   return (
-    <div className='sticky shadow-xl top-10 flex flex-col bg-white border md:border-none rounded-[20px] px-5 pt-[25px] w-full pb-10'>
-      <h3 className='font-semibold text-2xl text-center mb-3'>{t('title')}</h3>
+    <div id='room-booking-card' className='scroll-mt-24 sticky shadow-xl top-10 flex flex-col bg-white border md:border-none rounded-[20px] px-5 pt-[25px] w-full pb-10'>
+      <h3 className='font-semibold text-2xl text-center mb-3 flex items-center justify-center gap-2'>
+        <FiCalendar className='size-5 text-blue shrink-0' />
+        {t('title')}
+      </h3>
 
       {/* Price row — always rendered, grey when loading/unavailable */}
       <div className={`flex justify-between mb-1 gap-2 ${isUnavailable || !hasEnoughCapacity ? 'opacity-0' : ''}`}>
@@ -193,44 +265,95 @@ const BookingForm = ({
           <DateInput
             value={dateRange || undefined}
             open={openCheckIn}
-            onOpenChange={setOpenCheckIn}
-            className="w-full md:max-w-[350px]"
+            onOpenChange={(open) => {
+              setOpenCheckIn(open)
+              if (open) { setPickingCheckout(false); checkinRef.current = undefined; justAutoClosedRef.current = false }
+            }}
             inputStyle={dateError ? "border-red" : "border-mute"}
             isError={dateError}
+            frosted
+            compact
+            desktopAlign="center"
           >
+            <div
+              className='pb-1 touch-pan-y select-none'
+              onPointerDown={(e) => { swipeStartX.current = e.clientX }}
+              onPointerUp={(e) => {
+                if (swipeStartX.current === null) return
+                const dx = e.clientX - swipeStartX.current
+                swipeStartX.current = null
+                if (Math.abs(dx) < 60) return
+                navigateMonth(dx < 0 ? 1 : -1)
+              }}
+            >
             <Calendar
               required={false}
               mode="range"
               captionLayout="label"
+              numberOfMonths={1}
               selected={dateRange}
-              defaultMonth={dateRange?.from || new Date()}
-              onSelect={(date) => {
-                if (date?.from && !date?.to) {
-                  const nextDay = new Date(date.from)
-                  nextDay.setDate(nextDay.getDate() + 1)
-                  const newRange = { from: date.from, to: nextDay }
-                  setDateRange(newRange)
-                  setValue(newRange, 'dateRange')
-                  setDateError(false)
-                } else if (date?.from && date?.to) {
-                  const isSameDay = date.from.getTime() === date.to.getTime()
-                  if (isSameDay) {
-                    const nextDay = new Date(date.from)
+              month={visibleMonth}
+              onMonthChange={setVisibleMonth}
+              excludeDisabled
+              modifiers={{ soldOut: isSoldOut }}
+              modifiersClassNames={{ soldOut: 'line-through' }}
+              classNames={{ months: 'flex flex-col lg:flex-row gap-4' }}
+              onSelect={(_date, triggerDate) => {
+                if (!triggerDate) return
+                // Two-click selection, identical to the search calendar:
+                // click 1 sets the check-in only (no premature 1-night range);
+                // click 2 sets the check-out (or restarts if before the start).
+                if (!pickingCheckout) {
+                  checkinRef.current = triggerDate
+                  const startOnly = { from: triggerDate, to: undefined }
+                  setDateRange(startOnly)
+                  setValue(startOnly, 'dateRange')
+                  setPickingCheckout(true)
+                } else {
+                  const start = checkinRef.current!
+                  if (triggerDate.getTime() > start.getTime()) {
+                    // A sold-out night inside the span can't be a valid stay —
+                    // treat the click as a fresh check-in instead.
+                    if (rangeHasSoldOutNight(start, triggerDate)) {
+                      checkinRef.current = triggerDate
+                      const startOnly = { from: triggerDate, to: undefined }
+                      setDateRange(startOnly)
+                      setValue(startOnly, 'dateRange')
+                    } else {
+                      const newRange = { from: start, to: triggerDate }
+                      setDateRange(newRange)
+                      setValue(newRange, 'dateRange')
+                      checkinRef.current = undefined
+                      setPickingCheckout(false)
+                      // Range complete → auto-apply by closing the panel (the
+                      // dates are already set; no navigation to booking here).
+                      justAutoClosedRef.current = true
+                      setOpenCheckIn(false)
+                    }
+                  } else if (triggerDate.getTime() === start.getTime()) {
+                    // Same day clicked twice → a single night.
+                    const nextDay = new Date(start)
                     nextDay.setDate(nextDay.getDate() + 1)
-                    const newRange = { from: date.from, to: nextDay }
+                    const newRange = { from: start, to: nextDay }
                     setDateRange(newRange)
                     setValue(newRange, 'dateRange')
+                    checkinRef.current = undefined
+                    setPickingCheckout(false)
+                    justAutoClosedRef.current = true
+                    setOpenCheckIn(false)
                   } else {
-                    setDateRange(date as DateRange)
-                    setValue(date as DateRange, 'dateRange')
+                    // Clicked before the start → move the check-in there.
+                    checkinRef.current = triggerDate
+                    const startOnly = { from: triggerDate, to: undefined }
+                    setDateRange(startOnly)
+                    setValue(startOnly, 'dateRange')
                   }
-                  setDateError(false)
-                } else {
-                  setDateRange(date as DateRange)
                 }
+                setDateError(false)
               }}
-              disabled={{ before: minArrivalDate }}
+              disabled={[{ before: minArrivalDate }, isSoldOut]}
             />
+            </div>
           </DateInput>
           {dateError && (
             <span className='text-red-500 text-sm pl-1'>{t('pleaseSelectDates')}</span>

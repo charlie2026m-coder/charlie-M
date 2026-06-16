@@ -1,0 +1,374 @@
+/*
+ * Verbatim port of the approved design (checkout-design.html).
+ * Adaptations, by agreement: body/:root styles live on .page, bare h1 is
+ * scoped to .card/.dlg, fonts come from the root layout's next/font
+ * variables (no Google Fonts <link>). Everything else is unchanged —
+ * keep it that way so the design doesn't drift.
+ */
+
+.page {
+  --gold: #D3C393;
+  --dgold: #A09060;
+  --brown: #8B7B70;
+  --beige: #F7F5F2;
+  --beige2: #F0EBDF;
+  --bg: #F5F6F7;
+  --card: #fff;
+  --text: #2B2A29;
+  --muted: #8B7B70;
+  --muted2: #555;
+  --wine: #923D4F;
+  --ease: cubic-bezier(.23, 1, .32, 1);
+  font-family: var(--font-inter), system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  gap: 16px;
+}
+
+.demoFlag {
+  background: var(--wine);
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: .02em;
+  padding: 9px 18px;
+  border-radius: 999px;
+  box-shadow: 0 8px 20px -6px rgba(146, 61, 79, .45);
+}
+
+.lang {
+  position: relative;
+  display: inline-flex;
+  background: #fff;
+  border: 1px solid rgba(43, 42, 41, .08);
+  border-radius: 999px;
+  padding: 4px;
+  box-shadow: 0 6px 18px -8px rgba(43, 42, 41, .18);
+}
+
+.langThumb {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  height: calc(100% - 8px);
+  border-radius: 999px;
+  background: var(--gold);
+  box-shadow: 0 3px 10px -2px rgba(160, 144, 96, .55);
+  transition: transform .3s var(--ease);
+}
+
+.lang[data-l="en"] .langThumb {
+  transform: translateX(100%);
+}
+
+.lang button {
+  position: relative;
+  z-index: 1;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--brown);
+  font-weight: 700;
+  font-size: 13px;
+  padding: 7px 0;
+  width: 58px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color .25s ease;
+}
+
+.lang[data-l="de"] button[data-l="de"],
+.lang[data-l="en"] button[data-l="en"] {
+  color: var(--text);
+}
+
+.lang button:active {
+  transform: scale(.95);
+}
+
+.card {
+  position: relative;
+  background: var(--card);
+  width: 100%;
+  max-width: 430px;
+  border-radius: 34px;
+  padding: 38px 28px 30px;
+  border: 1px solid rgba(43, 42, 41, .05);
+  box-shadow: 0 18px 50px -16px rgba(43, 42, 41, .18), 0 6px 16px -10px rgba(43, 42, 41, .12);
+  text-align: center;
+  animation: cardin .55s var(--ease) both;
+}
+
+@keyframes cardin {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.logo {
+  display: inline-block;
+  font-weight: 700;
+  letter-spacing: .18em;
+  color: var(--brown);
+  font-size: 11px;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  font-family: var(--font-plus-jakarta-sans), var(--font-inter), system-ui, sans-serif;
+}
+
+.card h1,
+.dlg h1 {
+  font-family: var(--font-plus-jakarta-sans), var(--font-inter), system-ui, sans-serif;
+  font-size: 27px;
+  font-weight: 800;
+  margin: 6px 0 4px;
+  line-height: 1.18;
+  letter-spacing: -.01em;
+  color: var(--text);
+}
+
+.room {
+  font-size: 14.5px;
+  color: var(--brown);
+  margin: 0 0 18px;
+  font-weight: 600;
+}
+
+.msg {
+  color: var(--muted2);
+  font-size: 15.5px;
+  line-height: 1.6;
+  margin: 0 auto;
+  max-width: 340px;
+}
+
+.fine {
+  color: var(--brown);
+  font-size: 12px;
+  margin-top: 16px;
+  opacity: .9;
+}
+
+.amount {
+  font-weight: 800;
+  color: var(--text);
+}
+
+.go {
+  appearance: none;
+  border: 0;
+  width: 100%;
+  padding: 18px;
+  border-radius: 999px;
+  font-size: 17.5px;
+  font-weight: 700;
+  font-family: var(--font-plus-jakarta-sans), var(--font-inter), system-ui, sans-serif;
+  cursor: pointer;
+  margin-top: 24px;
+  color: var(--text);
+  background: var(--gold);
+  box-shadow: 0 12px 26px -10px rgba(160, 144, 96, .6);
+  transition: background .3s ease, color .3s ease, transform .15s var(--ease), box-shadow .3s ease;
+}
+
+.go:hover {
+  background: var(--dgold);
+  color: #fff;
+  box-shadow: 0 16px 32px -10px rgba(160, 144, 96, .7);
+}
+
+.go:active {
+  transform: scale(.975);
+}
+
+.go:disabled {
+  opacity: .55;
+  box-shadow: none;
+  cursor: default;
+}
+
+.go:disabled:hover {
+  background: var(--gold);
+  color: var(--text);
+}
+
+.badge {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  margin: 6px auto 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.badge.green {
+  background: rgba(160, 144, 96, .16);
+}
+
+.badge.amber {
+  background: var(--beige);
+}
+
+.badge.red {
+  background: rgba(146, 61, 79, .12);
+}
+
+.badge.blue {
+  background: var(--beige);
+}
+
+.badge svg {
+  width: 46px;
+  height: 46px;
+}
+
+.spin {
+  width: 42px;
+  height: 42px;
+  border: 3px solid var(--beige2);
+  border-top-color: var(--dgold);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+  margin: 34px auto;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.scoIn {
+  animation: fadeup .32s var(--ease) both;
+}
+
+@keyframes fadeup {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pop {
+  animation: pop .5s cubic-bezier(.34, 1.56, .64, 1) both;
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(.5);
+    opacity: 0;
+  }
+
+  60% {
+    transform: scale(1.08);
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.draw {
+  stroke-dasharray: 60;
+  stroke-dashoffset: 60;
+  animation: draw .55s .2s ease-out forwards;
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .scoIn,
+  .pop,
+  .draw,
+  .spin,
+  .card {
+    animation: none !important;
+  }
+
+  .draw {
+    stroke-dashoffset: 0;
+  }
+}
+
+.ov {
+  position: fixed;
+  inset: 0;
+  background: rgba(43, 42, 41, .45);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  z-index: 50;
+  animation: ovin .25s ease both;
+}
+
+@keyframes ovin {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.dlg {
+  background: var(--card);
+  width: 100%;
+  max-width: 380px;
+  border-radius: 28px;
+  padding: 30px 26px 22px;
+  text-align: center;
+  box-shadow: 0 24px 60px -16px rgba(43, 42, 41, .42);
+}
+
+.dlg .go {
+  margin-top: 18px;
+}
+
+.ghost {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--brown);
+  font-weight: 700;
+  font-size: 15px;
+  font-family: var(--font-plus-jakarta-sans), var(--font-inter), system-ui, sans-serif;
+  padding: 13px;
+  margin-top: 4px;
+  width: 100%;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color .2s ease;
+}
+
+.ghost:hover {
+  color: var(--text);
+}

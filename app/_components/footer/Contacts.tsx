@@ -66,7 +66,7 @@ const Contacts = async ({ locale }: { locale: string }) => {
           <Link href="/privacy-policy" locale={locale as 'en' | 'de'} className="text-white text-sm pr-4 border-r border-white hover:text-blue transition-colors">{t('privacyPolicy')}</Link>
           <Link href="/terms-and-conditions" locale={locale as 'en' | 'de'} className="text-white text-sm px-4 border-r border-white hover:text-blue transition-colors">{t('termsAndConditions')}</Link>
           <Link href="/imprint" locale={locale as 'en' | 'de'} className="text-white text-sm px-4 border-r border-white hover:text-blue transition-colors">{t('imprint')}</Link>
-          <CookieSettingsButton />
+          <span className="pl-4"><CookieSettingsButton /></span>
         </div>
         <span className="text-white text-sm md:ml-auto">{t('copyright')}</span>
       </div>

@@ -44,11 +44,12 @@ export const getMinArrivalDate = (): Date => {
   return berlinToday
 }
 
-// Returns default arrival date string for services (YYYY-MM-DD)
-export const getDefaultArrivalDate = (): string => {
-  if (getBerlinMinutes() >= CUTOFF_MINUTES) return dayjs().add(1, 'day').format('YYYY-MM-DD')
-  return dayjs().format('YYYY-MM-DD')
-}
+// Returns default arrival date string for services (YYYY-MM-DD).
+// Derives the date from BERLIN time (via getMinArrivalDate), not the runtime's
+// local clock: mixing a Berlin-time cutoff with a server-local dayjs() date
+// returned the previous day around Berlin midnight on a UTC server.
+export const getDefaultArrivalDate = (): string => getDate(getMinArrivalDate())!
+
 
 const PIN_AVAILABLE_HOUR = 10
 
@@ -383,4 +384,51 @@ export const filterReservationsByStatus = (reservations: any[], filter: Reservat
   return reservations.filter((reservation: any) =>
     targetStatus && reservation.status === targetStatus
   )
+}
+
+// Build a searchable text blob for a date: the ISO day plus a few localized
+// formats, so a guest can find a booking by typing "2026-06", "15 Jun",
+// "Juni" or "15.06.2026".
+const reservationDateHaystack = (iso?: string): string => {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return ''
+  const parts = [iso.slice(0, 10)]
+  try {
+    parts.push(d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }))
+    parts.push(d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }))
+    parts.push(d.toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' }))
+    parts.push(d.toLocaleDateString('de-DE'))
+  } catch {
+    // Intl unavailable — ISO day is still searchable.
+  }
+  return parts.join(' ')
+}
+
+// Client-side free-text search across a guest's own reservations. Matches the
+// reservation id, room name, guest/booker name, status and dates. Multiple
+// words are AND-ed (e.g. "checkpoint jun"), so the guest can narrow down.
+export const searchReservations = (reservations: any[], query: string) => {
+  const q = (query || '').trim().toLowerCase()
+  if (!q) return reservations
+  const terms = q.split(/\s+/)
+  return reservations.filter((r: any) => {
+    const haystack = [
+      r?.id,
+      r?.name,
+      r?.unitGroup?.name,
+      r?.unitGroup?.code,
+      r?.primaryGuest?.firstName,
+      r?.primaryGuest?.lastName,
+      r?.booker?.firstName,
+      r?.booker?.lastName,
+      r?.status,
+      reservationDateHaystack(r?.arrival),
+      reservationDateHaystack(r?.departure),
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+    return terms.every((term) => haystack.includes(term))
+  })
 }

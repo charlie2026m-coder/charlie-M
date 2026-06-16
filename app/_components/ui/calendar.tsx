@@ -54,12 +54,12 @@ function Calendar({
         ),
         button_previous: cn(
           buttonVariants({ variant: buttonVariant }),
-          "size-(--cell-size) aria-disabled:opacity-50 p-0 select-none",
+          "size-10 aria-disabled:opacity-50 p-0 select-none",
           defaultClassNames.button_previous
         ),
         button_next: cn(
           buttonVariants({ variant: buttonVariant }),
-          "size-(--cell-size) aria-disabled:opacity-50 p-0 select-none",
+          "size-10 aria-disabled:opacity-50 p-0 select-none",
           defaultClassNames.button_next
         ),
         month_caption: cn(
@@ -101,7 +101,7 @@ function Calendar({
           defaultClassNames.week_number
         ),
         day: cn(
-          "relative w-full h-[40px] p-0 text-center text-[14px] border-1 border-white bg-white text-gray-900 group/day select-none",
+          "relative w-full h-[40px] p-0 text-center text-[14px] border-1 border-white bg-transparent text-gray-900 group/day select-none",
           defaultClassNames.day
         ),
         range_start: cn("bg-accent", defaultClassNames.range_start),
@@ -136,14 +136,14 @@ function Calendar({
         Chevron: ({ className, orientation, ...props }) => {
           if (orientation === "left") {
             return (
-              <ArrowLeftIcon className={cn("size-6", className)} {...props} />
+              <ArrowLeftIcon className={cn("size-7", className)} {...props} />
             )
           }
 
           if (orientation === "right") {
             return (
               <ArrowRightIcon
-                className={cn("size-6", className)}
+                className={cn("size-7", className)}
                 {...props}
               />
             )
@@ -200,7 +200,7 @@ function CalendarDayButton({
       data-range-middle={modifiers.range_middle}
       data-outside={modifiers.outside}
       className={cn(
-        "rounded-none text-[14px] max-h-[40px] bg-white text-gray-900 hover:bg-gray-50 data-[selected-single=true]:bg-blue data-[selected-single=true]:text-white data-[selected-single=true]:rounded-l-[4px] data-[selected-single=true]:!rounded-r-none data-[range-middle=true]:bg-blue data-[range-middle=true]:text-white data-[range-start=true]:bg-blue data-[range-start=true]:text-white data-[range-start=true]:rounded-l-[4px] data-[range-start=true]:!rounded-r-none data-[range-end=true]:bg-blue data-[range-end=true]:text-white data-[range-end=true]:rounded-r-[4px] data-[range-end=true]:!rounded-l-none data-[outside=true]:text-gray-300 data-[outside=true]:pointer-events-none data-[outside=true]:hover:bg-white dark:hover:text-accent-foreground flex aspect-square size-auto w-full min-w-(--cell-size) flex-col gap-1 leading-none font-normal [&>span]:text-xs [&>span]:opacity-70",
+        "rounded-none text-[14px] max-h-[40px] bg-transparent text-gray-900 hover:bg-gray-50 data-[selected-single=true]:bg-blue data-[selected-single=true]:text-white data-[selected-single=true]:rounded-l-[4px] data-[selected-single=true]:!rounded-r-none data-[range-middle=true]:bg-blue data-[range-middle=true]:text-white data-[range-start=true]:bg-blue data-[range-start=true]:text-white data-[range-start=true]:rounded-l-[4px] data-[range-start=true]:!rounded-r-none data-[range-end=true]:bg-blue data-[range-end=true]:text-white data-[range-end=true]:rounded-r-[4px] data-[range-end=true]:!rounded-l-none data-[outside=true]:text-gray-300 data-[outside=true]:pointer-events-none data-[outside=true]:hover:bg-white dark:hover:text-accent-foreground flex aspect-square size-auto w-full min-w-(--cell-size) flex-col gap-1 leading-none font-normal [&>span]:text-xs [&>span]:opacity-70",
         defaultClassNames.day,
         className
       )}

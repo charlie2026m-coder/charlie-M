@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { pendingServicesPayloadSchema } from '@/types/schemas';
 import { bookingLog } from '@/lib/logger';
-import { assertReservationAccess } from '@/lib/assertReservationAccess';
+import { verifyReservationOwnership } from '@/lib/verifyReservationOwnership';
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,13 +28,13 @@ export async function POST(request: NextRequest) {
 
     // Centralized ownership: email match (same trust as the profile listing)
     // OR an explicit `reservations` link (anonymous guests / added bookings).
-    const access = await assertReservationAccess(supabase, user, reservationId);
-    if (!access.ok) {
+    const ownership = await verifyReservationOwnership(supabase, user, reservationId);
+    if (!ownership.ok) {
       bookingLog.error('save-pending: access denied', {
         reservationId,
-        status: access.status,
+        status: ownership.status,
       });
-      return NextResponse.json({ error: access.error }, { status: access.status });
+      return NextResponse.json({ error: ownership.error }, { status: ownership.status });
     }
 
     const { error } = await supabase.from('pending_services').upsert(

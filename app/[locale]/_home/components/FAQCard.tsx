@@ -6,13 +6,15 @@ interface FAQCardProps {
   active: boolean
   setActiveTab: (index: number) => void
   index: number
+  isDesktop?: boolean
 }
 
-const FAQCard = ({ question, items, active, setActiveTab, index }: FAQCardProps) => {
+const FAQCard = ({ question, items, active, setActiveTab, index, isDesktop }: FAQCardProps) => {
   return (
-    <div 
+    <div
       className={`w-full relative border rounded-xl p-4 cursor-pointer transition-all duration-300 ${active && 'bg-light-bg'}`}
       onClick={() => setActiveTab(index)}
+      onMouseEnter={() => { if (isDesktop) setActiveTab(index) }}
     >
       <div className={cn("flex items-start justify-between pr-8", active && 'font-bold')}>
         {question}

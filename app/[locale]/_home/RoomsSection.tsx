@@ -1,17 +1,20 @@
 import { RoomsCarousel } from '@/app/[locale]/_home/components/RoomsCarousel'
-import { getRoomDetails } from '@/app/actions/supabase/rooms/getRoomDetails'
+import { getNearestRoomCards } from '@/app/actions/apaleo/rooms/getNearestRoomCards'
 import ErrorCard from '@/app/[locale]/(main)/rooms/components/ErrorCard'
 import { getTranslations } from 'next-intl/server'
 import Header from '@/app/[locale]/_home/components/Header'
-import type { HomeRoomCard } from '@/types/offers'
 
 const RoomsSection = async ({ locale }: { locale: string }) => {
-  const [t, roomDetails] = await Promise.all([
+  // Availability-driven showcase: one card per room type at its nearest free
+  // night with that night's price (shared with the /rooms browse view).
+  const [t, homeCards] = await Promise.all([
     getTranslations({ locale }),
-    getRoomDetails(),
+    getNearestRoomCards(locale),
   ])
 
-  if (roomDetails.length === 0) {
+  // Apaleo unreachable or genuinely nothing free in the window → show the
+  // graceful fallback rather than an empty carousel.
+  if (homeCards.length === 0) {
     return (
       <div id="rooms" className='w-full flex flex-col pt-15'>
         <Header title={t('home.rooms_title')} />
@@ -21,24 +24,12 @@ const RoomsSection = async ({ locale }: { locale: string }) => {
     )
   }
 
-  // Static cards from Supabase — prices will be fetched client-side by RoomsCarousel
-  const homeCards: HomeRoomCard[] = roomDetails.map(room => ({
-    id: room.id,
-    name: locale === 'de' ? room.title_de : room.title_en,
-    images: room.photos,
-    attributes: room.attributes ?? [],
-    size: room.size,
-    maxPersons: room.max_persons,
-    unitGroup: { id: room.id },
-    oneNightPrice: 0,
-    isBooked: false,
-  }))
-
   const roomCardTranslations = {
     perNightFrom: t('roomCard.perNightFrom'),
     loading: t('roomCard.loading'),
     bookNow: t('roomCard.bookNow'),
     booked: t('roomCard.booked'),
+    nextAvailable: t('roomCard.nextAvailable'),
     roomParams: {
       max: t('roomParams.max'),
       kingSize: t('roomParams.kingSize'),

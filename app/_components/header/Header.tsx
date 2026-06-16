@@ -21,6 +21,13 @@ const Header = ({ locale, isWhite = false }: { locale: string, isWhite?: boolean
   }, [pathname]);
 
   const handleMobileBookNow = () => {
+    // On a room detail page, smooth-scroll to the booking card (was a no-op on
+    // /rooms). Elsewhere, take the guest to the rooms list.
+    const card = typeof document !== 'undefined' && document.getElementById('room-booking-card');
+    if (card) {
+      card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
     if (pathname.startsWith('/rooms')) return;
     setIsNavigating(true);
     router.push('/rooms');

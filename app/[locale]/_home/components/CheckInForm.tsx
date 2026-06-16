@@ -13,6 +13,8 @@ import { usePathname } from '@/navigation';
 import { useStore } from '@/store/useStore';
 import { UrlParams } from '@/types/apaleo';
 import { useTranslations } from 'next-intl';
+import { useMonthAvailability, toYmd } from '@/app/hooks/useMonthAvailability';
+import { getPrices } from '@/app/actions/apaleo/rooms/getPrices';
 
 
 const CheckInForm = ({ className = '', params }: { className?: string, params?: UrlParams }) => {
@@ -26,9 +28,28 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
   const [numberOfMonths, setNumberOfMonths] = useState(1);
   const [pickingCheckout, setPickingCheckout] = useState(false);
   const checkinRef = useRef<Date | undefined>(undefined);
-  const [hasAppliedOnce, setHasAppliedOnce] = useState(
-    () => Boolean(params?.from && params?.to)
-  );
+  const formRef = useRef<HTMLFormElement>(null);
+  const [visibleMonth, setVisibleMonth] = useState<Date>(() => {
+    // Deep-links carry ?from= for a future month — the calendar must open
+    // (and fetch availability for) THAT month, not today's (review #6).
+    const fromParam = params?.from ? new Date(params.from) : undefined;
+    if (fromParam && !isNaN(fromParam.getTime())) return fromParam;
+    // Default to the minimum arrival date (= today, or tomorrow after the 23:30
+    // Berlin cutoff). Using getMinArrivalDate() rather than `new Date()` keeps
+    // the seed date inside the fetched availability window even on the last day
+    // of a month after cutoff, where it rolls into next month (review-fix #4).
+    return dateRange?.from ?? getMinArrivalDate();
+  });
+  const [fromPrice, setFromPrice] = useState<number | null>(null);
+
+  // Real per-night availability for the visible window (current + next month
+  // when two are shown). Sold-out nights become non-selectable.
+  const availFrom = toYmd(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1));
+  const availTo = toYmd(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + numberOfMonths, 1));
+  // The custom two-click onSelect below bypasses the library's excludeDisabled
+  // truncation, so a completed range is re-checked against sold-out nights via
+  // the shared helper (same rule in BookingForm — review #5).
+  const { isSoldOut, dayAvailability, rangeHasSoldOutNight } = useMonthAvailability(availFrom, availTo);
 
   useEffect(() => {
     const update = () => setNumberOfMonths(window.innerWidth >= 1024 ? 2 : 1);
@@ -38,6 +59,36 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
   }, []);
 
   const minArrivalDate = getMinArrivalDate()
+
+  // "from €X / night" for the selected range — the cheapest real offer across
+  // rooms (same source as the rooms list). Null when no offer exists, so we
+  // never show a made-up price.
+  useEffect(() => {
+    if (!dateRange?.from || !dateRange?.to) { setFromPrice(null); return; }
+    const f = getDate(dateRange.from);
+    const t = getDate(dateRange.to);
+    if (!f || !t) { setFromPrice(null); return; }
+    let cancelled = false;
+    getPrices(f, t, guests.adults + guests.children)
+      .then((prices) => {
+        if (cancelled) return;
+        const valid = prices.map((p) => p.minNightPrice).filter((p) => p > 0);
+        setFromPrice(valid.length ? Math.min(...valid) : null);
+      })
+      .catch(() => { if (!cancelled) setFromPrice(null); });
+    return () => { cancelled = true; };
+  }, [dateRange?.from, dateRange?.to, guests.adults, guests.children]);
+
+  // Late-arriving availability (review #14): a range selected before the data
+  // loaded (or restored from URL params) may cross a sold-out night — drop it
+  // as soon as we know, so a stale selection never reaches the search.
+  useEffect(() => {
+    if (!dateRange?.from || !dateRange?.to) return;
+    if (!rangeHasSoldOutNight(dateRange.from, dateRange.to)) return;
+    setValue({ from: undefined, to: undefined }, 'dateRange');
+    checkinRef.current = undefined;
+    setPickingCheckout(false);
+  }, [dateRange?.from, dateRange?.to, rangeHasSoldOutNight, setValue]);
 
   // Handle URL params
   useEffect(() => {
@@ -58,16 +109,25 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
     }
   }, [params, setValue])
 
-  // Set default dates only once on mount if no params and no dateRange
+  // Seed a default today→tomorrow range once — but ONLY after availability
+  // confirms the arrival night is bookable. Seeding a sold-out default made
+  // the date field flicker (seed → the drop-effect below clears it) and fire a
+  // wasted price fetch on every remount of the sticky form (review #4). When
+  // the night is unknown we wait (the effect re-runs as availability loads);
+  // when it's sold out we leave the field empty for the guest to pick.
+  const seededRef = useRef(false);
   useEffect(() => {
-    if (!params && (!dateRange?.from || !dateRange?.to)) {
-      const from = getMinArrivalDate();
-      const to = new Date(from);
-      to.setDate(to.getDate() + 1);
-      setValue({ from, to }, 'dateRange');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    if (seededRef.current) return;
+    if (params || (dateRange?.from && dateRange?.to)) { seededRef.current = true; return; }
+    const from = getMinArrivalDate();
+    const known = dayAvailability(from);
+    if (!known) return; // not loaded yet — re-runs when availability arrives
+    if (!known.available) { seededRef.current = true; return; } // sold out → leave empty
+    const to = new Date(from);
+    to.setDate(to.getDate() + 1);
+    setValue({ from, to }, 'dateRange');
+    seededRef.current = true;
+  }, [params, dateRange?.from, dateRange?.to, dayAvailability, setValue])
 
   const triggerSearch = (rangeOverride?: DateRange, closeCalendar = false) => {
     const r = rangeOverride ?? dateRange;
@@ -86,7 +146,6 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
       children: guests.children.toString(),
     });
     router.push(`/rooms?${queryString}`);
-    setHasAppliedOnce(true);
     if (closeCalendar) setOpenCalendar(false);
   };
 
@@ -96,12 +155,23 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
   };
 
   const handleApply = () => {
-    if (isRoomsPage) {
-      triggerSearch(undefined, true);
-      return;
-    }
-    setOpenCalendar(false);
+    // Apply = run the search and close — on the home form (was a no-op that
+    // only closed) and on /rooms. triggerSearch flags a date error if the
+    // range is incomplete, so the button always gives feedback.
+    triggerSearch(undefined, true);
   };
+
+  // Swipe / drag (or the arrows) to change the visible month. Bounded so it
+  // can't page back before the earliest bookable month.
+  const navigateMonth = (dir: 1 | -1) => {
+    setVisibleMonth((prev) => {
+      const next = new Date(prev.getFullYear(), prev.getMonth() + dir, 1);
+      const min = getMinArrivalDate();
+      const minMonth = new Date(min.getFullYear(), min.getMonth(), 1);
+      return next < minMonth ? prev : next;
+    });
+  };
+  const swipeStartX = useRef<number | null>(null);
 
   const getNights = () => {
     if (!dateRange?.from || !dateRange?.to) return null;
@@ -118,6 +188,7 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
 
   return (
     <form
+      ref={formRef}
       onSubmit={handleSubmit}
       data-checkin-form="original"
       className={cn('flex flex-row pl-3 md:pl-8 gap-2 md:gap-8 w-full max-w-[900px] bg-white p-3 rounded-full items-center', className)}
@@ -126,24 +197,71 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
         <DateInput
           value={dateRange || undefined}
           open={openCalendar}
+          frosted
           onOpenChange={(open) => {
             setOpenCalendar(open);
             if (open) {
               setPickingCheckout(false);
               checkinRef.current = undefined;
               if (dateError) setDateError(false);
+              // Smoothly bring the downward-opening calendar fully into view
+              // (PC + mobile): wait for the panel to mount, then scroll just
+              // enough that its bottom clears the viewport — no jump.
+              requestAnimationFrame(() => requestAnimationFrame(() => {
+                // When the form is pinned in the sticky bar it lives inside a
+                // position:fixed wrapper — the calendar is anchored to the top
+                // of the viewport and window-scrolling won't move it (it would
+                // just jump the page behind it). Only auto-scroll when the form
+                // scrolls with the page (the hero instance).
+                let inFixed = false;
+                for (let p = formRef.current?.parentElement; p && p !== document.body; p = p.parentElement) {
+                  const pos = getComputedStyle(p).position;
+                  if (pos === 'fixed' || pos === 'sticky') { inFixed = true; break; }
+                }
+                if (inFixed) return;
+                const panel = document.querySelector('[data-slot="popover-content"]') as HTMLElement | null;
+                if (!panel) return;
+                // Bring the calendar to a comfortable spot rather than leaving it
+                // jammed at the bottom edge: aim for its bottom ~8% above the
+                // viewport edge, but never push its top above ~88px (so it stays
+                // fully visible and the field doesn't scroll off the top). Only
+                // scrolls down, only when it would actually help.
+                const rect = panel.getBoundingClientRect();
+                const desiredBottom = window.innerHeight * 0.92;
+                let delta = rect.bottom - desiredBottom;
+                if (delta > 0) {
+                  delta = Math.min(delta, rect.top - 88);
+                  if (delta > 4) window.scrollBy({ top: delta, behavior: 'smooth' });
+                }
+              }));
             }
           }}
           isError={dateError}
         >
-          <div className='pb-2'>
+          <div
+            className='pb-2 touch-pan-y select-none'
+            onPointerDown={(e) => { swipeStartX.current = e.clientX }}
+            onPointerUp={(e) => {
+              if (swipeStartX.current === null) return
+              const dx = e.clientX - swipeStartX.current
+              swipeStartX.current = null
+              // A real horizontal drag (not a day tap) pages the months:
+              // drag left → next, drag right → previous.
+              if (Math.abs(dx) < 60) return
+              navigateMonth(dx < 0 ? 1 : -1)
+            }}
+          >
             <Calendar
               required={false}
               mode="range"
               captionLayout="label"
               numberOfMonths={numberOfMonths}
               selected={dateRange}
-              defaultMonth={dateRange?.from ?? new Date()}
+              month={visibleMonth}
+              onMonthChange={setVisibleMonth}
+              excludeDisabled
+              modifiers={{ soldOut: isSoldOut }}
+              modifiersClassNames={{ soldOut: 'line-through' }}
               onSelect={(_date, triggerDate) => {
                 if (!pickingCheckout) {
                   // Клик 1 (или клик когда range уже выбран) — ставим начало
@@ -152,14 +270,36 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
                   setPickingCheckout(true);
                 } else {
                   const start = checkinRef.current!;
-                  if (triggerDate.getTime() >= start.getTime()) {
-                    // Клик после start — завершаем range
-                    const newRange = { from: start, to: triggerDate };
+                  if (triggerDate.getTime() > start.getTime()) {
+                    if (rangeHasSoldOutNight(start, triggerDate)) {
+                      // Внутри диапазона занятая ночь — так бронировать нельзя.
+                      // Начинаем выбор заново с кликнутой даты (review #5).
+                      checkinRef.current = triggerDate;
+                      setValue({ from: triggerDate, to: undefined }, 'dateRange');
+                    } else {
+                      // Клик после start — завершаем range
+                      const newRange = { from: start, to: triggerDate };
+                      setValue(newRange, 'dateRange');
+                      checkinRef.current = undefined;
+                      setPickingCheckout(false);
+                      // На странице /rooms полный диапазон сразу применяется
+                      // (без клика по «Apply») и календарь закрывается, чтобы
+                      // не перекрывать карточки комнат.
+                      if (isRoomsPage) {
+                        triggerSearch(newRange, true);
+                      }
+                    }
+                  } else if (triggerDate.getTime() === start.getTime()) {
+                    // Тот же день — это 0 ночей. Завершаем как 1 ночь (start..start+1),
+                    // чтобы не отправлять на сервер диапазон, который он молча +1.
+                    const nextDay = new Date(start);
+                    nextDay.setDate(nextDay.getDate() + 1);
+                    const newRange = { from: start, to: nextDay };
                     setValue(newRange, 'dateRange');
                     checkinRef.current = undefined;
                     setPickingCheckout(false);
-                    if (isRoomsPage && hasAppliedOnce) {
-                      triggerSearch(newRange, false);
+                    if (isRoomsPage) {
+                      triggerSearch(newRange, true);
                     }
                   } else {
                     // Клик до start — двигаем start, остаёмся в режиме выбора конца
@@ -169,12 +309,15 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
                 }
                 if (dateError) setDateError(false);
               }}
-              disabled={{ before: minArrivalDate }}
+              disabled={[{ before: minArrivalDate }, isSoldOut]}
               classNames={{ months: 'flex flex-col lg:flex-row gap-4' }}
             />
           </div>
-          <div className='h-12 flex items-center border-t font-semibold'>
-            {getNights() ?? ''}
+          <div className='h-12 flex items-center justify-between gap-2 border-t font-semibold text-mute'>
+            <span>{getNights() ?? ''}</span>
+            {fromPrice != null && (
+              <span className='text-dark-gold'>{t('priceFromPerNight', { price: Math.round(fromPrice) })}</span>
+            )}
           </div>
           <div className={cn('grid grid-cols-2 gap-2', isRoomsPage ? '' : 'md:hidden')}>
             <Button onClick={resetForm} className='w-full text-sm md:text-base h-10' variant='outline'>{t('cancel')}</Button>
@@ -183,7 +326,7 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
         </DateInput>
       </label>
       <label className='w-full max-w-2/5 border-l md:border-none'>
-        <Guests setValue={(value) => { setValue(value, 'guests'); setHasAppliedOnce(false); }} value={guests} />
+        <Guests setValue={(value) => { setValue(value, 'guests'); }} value={guests} />
       </label>
       <Button
         className={cn('cursor-pointer size-10 active:scale-95 md:size-15 flex items-center justify-center rounded-full transition-all duration-300 bg-blue hover:bg-blue/80')}

@@ -23,7 +23,11 @@ export default function Navigation() {
     },
     {
       label: 'FAQ',
-      href: "/#faq" 
+      href: "/#faq"
+    },
+    {
+      label: t('header.group_bookings_link'),
+      href: "/group-bookings"
     },
   ]
 

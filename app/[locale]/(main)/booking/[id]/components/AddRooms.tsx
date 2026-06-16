@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import Image from 'next/image'
 import { Guests } from '@/app/_components/ui/guests'
 import { Button } from '@/app/_components/ui/button'
@@ -33,6 +33,11 @@ const AddRooms = ({
     return filledRooms || []
   }, [rooms, filledRooms])
 
+  // Rooms where the guest explicitly unticked the (paid) baby bed. Auto-add
+  // on a new child must respect this, otherwise toggling children off/on
+  // silently re-adds the crib with its price.
+  const cribManuallyRemoved = useRef<Set<string>>(new Set())
+
 
 
   const maxPersons = roomDetails?.maxPersons || 2
@@ -51,6 +56,10 @@ const AddRooms = ({
   
   const toggleCrib = (roomId: string, checked: boolean) => {
     if (!babyBedService) return
+
+    // Track manual unticks so the auto-add in addGuests doesn't undo them.
+    if (checked) cribManuallyRemoved.current.delete(roomId)
+    else cribManuallyRemoved.current.add(roomId)
 
     const updatedRooms = state.map((room) => {
       if (room.id !== roomId) return room
@@ -88,7 +97,7 @@ const AddRooms = ({
         const hasChildrenNow = guests.children > 0
         const isAddingBaby = !hadChildrenBefore && hasChildrenNow
         
-        if (isAddingBaby && isKidsBedAvailable && babyBedService) {
+        if (isAddingBaby && isKidsBedAvailable && babyBedService && !cribManuallyRemoved.current.has(id)) {
           const hasBabyBed = currentExtras.some(e => e.id === 'CMH-BAB')
           
           if (!hasBabyBed) {

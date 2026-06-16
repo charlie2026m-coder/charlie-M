@@ -93,7 +93,7 @@ describe('GET /api/reservations/[id]/full', () => {
   it('getReservationById called AFTER ownership is confirmed', async () => {
     mockCreateClient.mockResolvedValue(makeSupabase({ id: 'u1', email: 'user@test.com' }));
     const callOrder: string[] = [];
-    mockVerify.mockImplementation(async (...args) => {
+    mockVerify.mockImplementation(async () => {
       callOrder.push('verify');
       return { ok: true };
     });

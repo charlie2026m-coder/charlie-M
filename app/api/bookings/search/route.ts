@@ -1,34 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Fetch } from '@/services/Request';
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
+import { lastNameMatches } from '@/lib/matchLastName';
 
-// In-memory rate limiter: 10 requests per IP per 10 minutes
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT_MAX = 10;
-const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
+interface ApaleoBookingNames {
+  booker?: { lastName?: string | null };
+  reservations?: Array<{ primaryGuest?: { lastName?: string | null } }>;
+}
 
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return true;
-  }
-
-  if (entry.count >= RATE_LIMIT_MAX) return false;
-
-  entry.count++;
-  return true;
+// Every last name Apaleo exposes on a booking (booker + each reservation's
+// primary guest) — the payer and the staying guest are often different people.
+function bookingLastNames(booking: ApaleoBookingNames | null | undefined): Array<string | null | undefined> {
+  const reservationGuests = booking?.reservations?.map((r) => r?.primaryGuest?.lastName) ?? [];
+  return [booking?.booker?.lastName, ...reservationGuests];
 }
 
 export async function GET(request: NextRequest) {
   try {
-    const ip =
-      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-      request.headers.get('x-real-ip') ??
-      'unknown';
+    const ip = getClientIp(request);
 
-    if (!checkRateLimit(ip)) {
+    if (!checkRateLimit('bookings-search', ip)) {
       return NextResponse.json(
         { error: 'Too many requests, please try again later' },
         { status: 429 }
@@ -39,31 +30,37 @@ export async function GET(request: NextRequest) {
     const bookingId = searchParams.get('externalCode');
     const lastName = searchParams.get('lastName');
 
+    // Public endpoint by design, but the last name is a required second factor
+    // so a booking can't be looked up by guessing only its code.
     if (!bookingId || !lastName) {
       return NextResponse.json(
-        { error: 'bookingId and lastName are required' },
+        { error: 'externalCode and lastName are required' },
         { status: 400 }
       );
     }
 
     const searchMethods = [
-      // Method 1: Search by Booking.com external code
+      // Method 1: Search by Booking.com external code. Apaleo's textSearch is
+      // FUZZY — it can return a booking whose name merely resembles the input,
+      // so the last name MUST be re-verified locally before anything is
+      // returned (same trust model as search-booking / search-reservation).
       (async () => {
-        const response = await Fetch<any>(
-          `/booking/v1/bookings?externalCode=${bookingId}&textSearch=${lastName}&expand=reservations`
+        const response = await Fetch<{ bookings?: ApaleoBookingNames[] }>(
+          `/booking/v1/bookings?externalCode=${encodeURIComponent(bookingId)}&textSearch=${encodeURIComponent(lastName)}&expand=reservations`
         );
-        if (response.bookings && response.bookings.length > 0) {
-          return response.bookings[0];
-        }
+        const match = (response.bookings ?? []).find((b: ApaleoBookingNames) =>
+          lastNameMatches(lastName, bookingLastNames(b))
+        );
+        if (match) return match;
         throw new Error('Not found');
       })(),
 
       // Method 2: Search by Apaleo booking ID directly
       (async () => {
-        const booking = await Fetch<any>(
-          `/booking/v1/bookings/${bookingId}?expand=reservations`
+        const booking = await Fetch<ApaleoBookingNames>(
+          `/booking/v1/bookings/${encodeURIComponent(bookingId)}?expand=reservations`
         );
-        if (booking.booker?.lastName?.toLowerCase() === lastName.toLowerCase()) {
+        if (lastNameMatches(lastName, bookingLastNames(booking))) {
           return booking;
         }
         throw new Error('LastName mismatch');
@@ -76,7 +73,7 @@ export async function GET(request: NextRequest) {
       booking: foundBooking,
       count: 1,
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'No booking found with provided details' },
       { status: 404 }

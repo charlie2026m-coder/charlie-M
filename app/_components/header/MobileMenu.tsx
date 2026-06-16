@@ -14,6 +14,7 @@ import {
   LogOut,
   Mail,
   MapPin,
+  Users,
   XIcon,
 } from "lucide-react";
 import { AiOutlineUser } from "react-icons/ai";
@@ -97,6 +98,11 @@ const MobileMenu = ({ isWhite = false }: { isWhite?: boolean }) => {
       label: "FAQ",
       href: "/#faq",
       icon: CircleHelp,
+    },
+    {
+      label: t("header.group_bookings_link"),
+      href: "/group-bookings",
+      icon: Users,
     },
     {
       label: t("header.contactUs"),
