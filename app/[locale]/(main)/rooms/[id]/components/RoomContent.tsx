@@ -40,22 +40,21 @@ const RoomContent = ({
             terrace: tParams('terrace'),
           }}
         />
-        <div className='flex items-center justify-end gap-3 ml-auto'>
-          {isRoomInfo && (
+      </div>
+
+      {isRoomInfo &&
+      <>
+        <Amenities
+          action={
             <Button
               onClick={scrollToBooking}
-              className='md:hidden h-9 rounded-full px-4 text-sm gap-1.5 shadow-sm'
+              className='md:hidden h-9 shrink-0 rounded-full px-4 text-sm gap-1.5 shadow-sm'
             >
               <FiCalendar className='size-4' />
               {tCommon('book_now_btn')}
             </Button>
-          )}
-        </div>
-      </div>
-     
-      {isRoomInfo &&
-      <>
-        <Amenities/>
+          }
+        />
         <TextReadMore
           className='mb-5'
           textClassName='text-dark text-base'
