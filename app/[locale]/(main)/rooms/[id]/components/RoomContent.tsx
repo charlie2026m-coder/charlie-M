@@ -48,7 +48,8 @@ const RoomContent = ({
           action={
             <Button
               onClick={scrollToBooking}
-              className='md:hidden h-9 shrink-0 rounded-full px-4 text-sm gap-1.5 shadow-sm'
+              variant='outline'
+              className='md:hidden h-9 shrink-0 rounded-full px-6 min-w-[150px] text-sm gap-1.5'
             >
               <FiCalendar className='size-4' />
               {tCommon('book_now_btn')}
