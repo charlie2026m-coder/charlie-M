@@ -77,10 +77,10 @@ const ContactList = ({ contacts }: ContactListProps) => {
                 onClick={(e) => handleClick(contact.type, href, contact.value, e)}
                 className={cn(
                   "cursor-pointer flex items-center gap-1",
-                  contact.type === 'whatsapp' && "w-fit gap-2 rounded-full border border-white/25 px-3 py-1.5 text-sm text-white hover:border-[#25D366] hover:bg-[#25D366]/10 transition-colors"
+                  contact.type === 'whatsapp' && "w-fit gap-1.5 rounded-full border border-white/25 px-2.5 py-1 text-xs text-white hover:border-[#25D366] hover:bg-[#25D366]/10 transition-colors"
                 )}
               >
-                {contact.type === 'whatsapp' && <FaWhatsapp size={16} className="text-[#25D366]" />}
+                {contact.type === 'whatsapp' && <FaWhatsapp size={14} className="text-[#25D366] shrink-0" />}
                 {contact.label}
               </a>
             </li>

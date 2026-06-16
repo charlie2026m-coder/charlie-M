@@ -4,7 +4,7 @@ import { Input } from "./input"
 import { Popover, PopoverTrigger, PopoverContent } from "./popover"
 import { Button } from "./button"
 import { BsCalendar2 } from "react-icons/bs";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import dayjs from 'dayjs';
 import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
@@ -41,6 +41,17 @@ export function DateInput({
   // Use controlled state if provided, otherwise use internal state
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen
   const setOpen = controlledOnOpenChange || setInternalOpen
+
+  // Center the panel under the field on desktop; on mobile anchor it to the
+  // field's left edge so the viewport-capped width can't run off-screen.
+  const [isDesktop, setIsDesktop] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)')
+    const update = () => setIsDesktop(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
 
   const formattedValue = (value?.from || value?.to) ? `${getValue(value?.from)} - ${getValue(value?.to)}` : ''
 
@@ -90,12 +101,12 @@ export function DateInput({
             "data-[state=open]:duration-300 data-[state=open]:ease-out",
             frosted ? "bg-white/60 backdrop-blur-md" : "bg-white",
           )}
-          // Anchor to the field's LEFT edge (the date field sits on the left of
-          // the search bar) so a viewport-capped width never runs off-screen on
-          // mobile — and force it downward (avoidCollisions=false) so it never
-          // flips up over the content. Track the anchor every frame for smooth
-          // movement with the sticky bar on scroll.
-          align="start"
+          // Desktop: center the panel under the field (don't shift it right).
+          // Mobile: anchor to the field's LEFT edge so the viewport-capped width
+          // never runs off-screen. Always force it downward (avoidCollisions=
+          // false) so it never flips up, and track the anchor every frame for
+          // smooth movement with the sticky bar on scroll.
+          align={isDesktop ? "center" : "start"}
           side="bottom"
           sideOffset={10}
           avoidCollisions={false}

@@ -184,13 +184,24 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
         <DateInput
           value={dateRange || undefined}
           open={openCalendar}
-          frosted={isRoomsPage}
+          frosted
           onOpenChange={(open) => {
             setOpenCalendar(open);
             if (open) {
               setPickingCheckout(false);
               checkinRef.current = undefined;
               if (dateError) setDateError(false);
+              // Smoothly bring the downward-opening calendar fully into view
+              // (PC + mobile): wait for the panel to mount, then scroll just
+              // enough that its bottom clears the viewport — no jump.
+              requestAnimationFrame(() => requestAnimationFrame(() => {
+                const panel = document.querySelector('[data-slot="popover-content"]') as HTMLElement | null;
+                if (!panel) return;
+                const overflowBottom = panel.getBoundingClientRect().bottom - window.innerHeight;
+                if (overflowBottom > 0) {
+                  window.scrollBy({ top: overflowBottom + 16, behavior: 'smooth' });
+                }
+              }));
             }
           }}
           isError={dateError}
