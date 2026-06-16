@@ -25,6 +25,7 @@ export function DateInput({
   isError = false,
   frosted = false,
   desktopAlign = 'center',
+  compact = false,
 }: {
   children?: React.ReactNode,
   value?: DateRange | undefined,
@@ -40,6 +41,10 @@ export function DateInput({
   // form). Use 'end' when the field sits on the right (e.g. the booking card's
   // right column) so the wide panel opens leftward instead of off-screen.
   desktopAlign?: 'start' | 'center' | 'end',
+  // When true the desktop panel stays single-month width (~360px) instead of
+  // the wide two-month 660px. Use it in narrow columns (the room booking card)
+  // so the panel doesn't spill far across the page.
+  compact?: boolean,
 }) {
   const t = useTranslations();
   const [internalOpen, setInternalOpen] = useState(false)  
@@ -100,8 +105,10 @@ export function DateInput({
           className={cn(
             className,
             // Width is capped to the viewport on mobile so the panel can never
-            // run off the screen edge; full 660px (two months) from lg up.
-            "overflow-hidden rounded-[20px] p-2 flex flex-col w-[calc(100vw-3.5rem)] max-w-[340px] lg:w-[660px] lg:max-w-none",
+            // run off the screen edge. From lg up: a single-month ~360px when
+            // `compact` (narrow columns), otherwise the wide 660px two-month.
+            "overflow-hidden rounded-[20px] p-2 flex flex-col w-[calc(100vw-3.5rem)] max-w-[340px]",
+            compact ? "lg:w-[360px] lg:max-w-[360px]" : "lg:w-[660px] lg:max-w-none",
             // Smoother, slightly slower entrance than the default popover.
             "data-[state=open]:duration-300 data-[state=open]:ease-out",
             frosted ? "bg-white/85 backdrop-blur-md" : "bg-white",

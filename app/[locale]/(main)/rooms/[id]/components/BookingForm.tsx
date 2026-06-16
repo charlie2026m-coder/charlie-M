@@ -53,6 +53,11 @@ const BookingForm = ({
   // the start, click 2 sets the end — no premature 1-night range on click 1.
   const [pickingCheckout, setPickingCheckout] = useState(false)
   const checkinRef = useRef<Date | undefined>(undefined)
+  // Set true when a completed range auto-closes the panel. If late-arriving
+  // availability then reveals a sold-out night (the drop effect below clears the
+  // range), we re-open the panel so the guest sees the strikethrough + error
+  // rather than the dates silently vanishing from a closed field.
+  const justAutoClosedRef = useRef(false)
 
   const [guests, setGuests] = useState({
     adults: parseInt(params?.adults || guestsStore?.adults.toString() || '1'),
@@ -76,15 +81,6 @@ const BookingForm = ({
   const availFrom = toYmd(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1))
   const availTo = toYmd(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 2, 1))
   const { isSoldOut, rangeHasSoldOutNight } = useMonthAvailability(availFrom, availTo, id)
-
-  // Two months on desktop, one on mobile — parity with the search calendar.
-  const [numberOfMonths, setNumberOfMonths] = useState(1)
-  useEffect(() => {
-    const update = () => setNumberOfMonths(window.innerWidth >= 1024 ? 2 : 1)
-    update()
-    window.addEventListener('resize', update)
-    return () => window.removeEventListener('resize', update)
-  }, [])
 
   // Swipe / drag (or the arrows) to page months, bounded at the earliest month.
   const swipeStartX = useRef<number | null>(null)
@@ -133,6 +129,14 @@ const BookingForm = ({
     setDateRange({ from: undefined, to: undefined })
     setValue({ from: undefined, to: undefined }, 'dateRange')
     setDateError(true)
+    // The range had auto-closed the panel but late-arriving availability now
+    // shows a sold-out night — re-open so the guest sees the cleared field +
+    // strikethrough in context. Guarded by the ref so an initial sold-out seed
+    // (URL/store dates) doesn't pop the calendar open unprompted on load.
+    if (justAutoClosedRef.current) {
+      justAutoClosedRef.current = false
+      setOpenCheckIn(true)
+    }
   }, [dateRange?.from, dateRange?.to, rangeHasSoldOutNight, setValue])
 
   // Sync guests from store (when changed externally)
@@ -263,12 +267,13 @@ const BookingForm = ({
             open={openCheckIn}
             onOpenChange={(open) => {
               setOpenCheckIn(open)
-              if (open) { setPickingCheckout(false); checkinRef.current = undefined }
+              if (open) { setPickingCheckout(false); checkinRef.current = undefined; justAutoClosedRef.current = false }
             }}
             inputStyle={dateError ? "border-red" : "border-mute"}
             isError={dateError}
             frosted
-            desktopAlign="end"
+            compact
+            desktopAlign="center"
           >
             <div
               className='pb-1 touch-pan-y select-none'
@@ -285,7 +290,7 @@ const BookingForm = ({
               required={false}
               mode="range"
               captionLayout="label"
-              numberOfMonths={numberOfMonths}
+              numberOfMonths={1}
               selected={dateRange}
               month={visibleMonth}
               onMonthChange={setVisibleMonth}
@@ -320,6 +325,10 @@ const BookingForm = ({
                       setValue(newRange, 'dateRange')
                       checkinRef.current = undefined
                       setPickingCheckout(false)
+                      // Range complete → auto-apply by closing the panel (the
+                      // dates are already set; no navigation to booking here).
+                      justAutoClosedRef.current = true
+                      setOpenCheckIn(false)
                     }
                   } else if (triggerDate.getTime() === start.getTime()) {
                     // Same day clicked twice → a single night.
@@ -330,6 +339,8 @@ const BookingForm = ({
                     setValue(newRange, 'dateRange')
                     checkinRef.current = undefined
                     setPickingCheckout(false)
+                    justAutoClosedRef.current = true
+                    setOpenCheckIn(false)
                   } else {
                     // Clicked before the start → move the check-in there.
                     checkinRef.current = triggerDate

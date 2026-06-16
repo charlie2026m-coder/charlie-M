@@ -43,7 +43,7 @@ export function RoomsCarousel({
   // Translucent arrow overlaid on the carousel edges — vertically centered on
   // the card photo (260px tall) so it reads as a hint that the cards swipe.
   const arrowClassName =
-    "absolute top-[130px] -translate-y-1/2 z-20 grid place-items-center size-10 sm:size-12 " +
+    "absolute top-[142px] -translate-y-1/2 z-20 grid place-items-center size-10 sm:size-12 " +
     "rounded-full bg-white/60 backdrop-blur-sm border border-white/70 text-mute shadow-md " +
     "transition hover:bg-white/90 hover:text-dark active:scale-95"
 
@@ -76,7 +76,9 @@ export function RoomsCarousel({
             },
           }}
         >
-          <CarouselContent className="ml-0 pb-8 xl:pb-[90px]">
+          {/* pt-3 gives the cards room to grow on hover (lg:hover:scale) without
+              the carousel viewport (overflow-hidden) clipping their top edge. */}
+          <CarouselContent className="ml-0 pt-3 pb-8 xl:pb-[90px]">
             {rooms.map((item) => (
               <CarouselItem
                 key={item.id}

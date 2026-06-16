@@ -72,7 +72,7 @@ const RoomCard = ({
   };
 
   return (
-    <div className='w-full flex flex-col rounded-[40px] bg-white overflow-hidden shadow-lg h-full'>
+    <div className='w-full flex flex-col rounded-[40px] bg-white overflow-hidden shadow-lg h-full transition-transform duration-300 ease-out lg:hover:scale-[1.02]'>
       <PhotoSlider
         height={260}
         images={room.images}
