@@ -8,12 +8,13 @@ const defaultCenter = {
 };
 
 export default function MapWindow({
-  width = "100%", 
-  height = "400px", 
+  width = "100%",
+  height = "400px",
   center = defaultCenter,
   isFullscreen = true,
-  image = '/images/map-marker.svg'
-}: {width?: string, height?: string, center?: {lat: number, lng: number}, isFullscreen?: boolean, image?: string}) {
+  image = '/images/map-marker.svg',
+  radius = "30px"
+}: {width?: string, height?: string, center?: {lat: number, lng: number}, isFullscreen?: boolean, image?: string, radius?: string}) {
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string,
@@ -38,7 +39,7 @@ export default function MapWindow({
           mapContainerStyle={{
             width: width,
             height: height,
-            borderRadius: "30px"
+            borderRadius: radius
           }}
           center={center}
           zoom={16}
