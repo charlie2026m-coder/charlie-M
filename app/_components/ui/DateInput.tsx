@@ -24,6 +24,7 @@ export function DateInput({
   inputStyle = '',
   isError = false,
   frosted = false,
+  desktopAlign = 'center',
 }: {
   children?: React.ReactNode,
   value?: DateRange | undefined,
@@ -35,6 +36,10 @@ export function DateInput({
   // When true the panel is semi-transparent/frosted so content behind it stays
   // visible (used on /rooms, where the calendar overlays the room cards).
   frosted?: boolean,
+  // Horizontal anchor on desktop. Default 'center' (field on the left of a wide
+  // form). Use 'end' when the field sits on the right (e.g. the booking card's
+  // right column) so the wide panel opens leftward instead of off-screen.
+  desktopAlign?: 'start' | 'center' | 'end',
 }) {
   const t = useTranslations();
   const [internalOpen, setInternalOpen] = useState(false)  
@@ -106,7 +111,7 @@ export function DateInput({
           // never runs off-screen. Always force it downward (avoidCollisions=
           // false) so it never flips up, and track the anchor every frame for
           // smooth movement with the sticky bar on scroll.
-          align={isDesktop ? "center" : "start"}
+          align={isDesktop ? desktopAlign : "start"}
           side="bottom"
           sideOffset={10}
           avoidCollisions={false}

@@ -11,6 +11,7 @@ import { useRouter } from "@/navigation"
 import { useQuery } from "@tanstack/react-query"
 import { useTranslations } from "next-intl"
 import { BsFillPersonFill } from "react-icons/bs"
+import { FiCalendar } from "react-icons/fi"
 import dayjs from "dayjs"
 
 import { getDate, getPath, getMinArrivalDate, calculateNights, calculateTotalTaxes } from "@/lib/utils"
@@ -71,6 +72,25 @@ const BookingForm = ({
   const availFrom = toYmd(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1))
   const availTo = toYmd(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 2, 1))
   const { isSoldOut, rangeHasSoldOutNight } = useMonthAvailability(availFrom, availTo, id)
+
+  // Two months on desktop, one on mobile — parity with the search calendar.
+  const [numberOfMonths, setNumberOfMonths] = useState(1)
+  useEffect(() => {
+    const update = () => setNumberOfMonths(window.innerWidth >= 1024 ? 2 : 1)
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
+
+  // Swipe / drag (or the arrows) to page months, bounded at the earliest month.
+  const swipeStartX = useRef<number | null>(null)
+  const navigateMonth = (dir: 1 | -1) => {
+    setVisibleMonth((prev) => {
+      const next = new Date(prev.getFullYear(), prev.getMonth() + dir, 1)
+      const minMonth = new Date(minArrivalDate.getFullYear(), minArrivalDate.getMonth(), 1)
+      return next < minMonth ? prev : next
+    })
+  }
 
   // Dates precedence on this page: the URL range (above) is authoritative on
   // entry, and only store changes that happen AFTER mount (e.g. the on-page
@@ -205,8 +225,11 @@ const BookingForm = ({
   const showPlaceholder = isPriceLoading || !room
 
   return (
-    <div className='sticky shadow-xl top-10 flex flex-col bg-white border md:border-none rounded-[20px] px-5 pt-[25px] w-full pb-10'>
-      <h3 className='font-semibold text-2xl text-center mb-3'>{t('title')}</h3>
+    <div id='room-booking-card' className='scroll-mt-24 sticky shadow-xl top-10 flex flex-col bg-white border md:border-none rounded-[20px] px-5 pt-[25px] w-full pb-10'>
+      <h3 className='font-semibold text-2xl text-center mb-3 flex items-center justify-center gap-2'>
+        <FiCalendar className='size-5 text-blue shrink-0' />
+        {t('title')}
+      </h3>
 
       {/* Price row — always rendered, grey when loading/unavailable */}
       <div className={`flex justify-between mb-1 gap-2 ${isUnavailable || !hasEnoughCapacity ? 'opacity-0' : ''}`}>
@@ -235,20 +258,34 @@ const BookingForm = ({
             value={dateRange || undefined}
             open={openCheckIn}
             onOpenChange={setOpenCheckIn}
-            className="w-full md:max-w-[350px]"
             inputStyle={dateError ? "border-red" : "border-mute"}
             isError={dateError}
+            frosted
+            desktopAlign="end"
           >
+            <div
+              className='pb-1 touch-pan-y select-none'
+              onPointerDown={(e) => { swipeStartX.current = e.clientX }}
+              onPointerUp={(e) => {
+                if (swipeStartX.current === null) return
+                const dx = e.clientX - swipeStartX.current
+                swipeStartX.current = null
+                if (Math.abs(dx) < 60) return
+                navigateMonth(dx < 0 ? 1 : -1)
+              }}
+            >
             <Calendar
               required={false}
               mode="range"
               captionLayout="label"
+              numberOfMonths={numberOfMonths}
               selected={dateRange}
-              defaultMonth={visibleMonth}
+              month={visibleMonth}
               onMonthChange={setVisibleMonth}
               excludeDisabled
               modifiers={{ soldOut: isSoldOut }}
               modifiersClassNames={{ soldOut: 'line-through' }}
+              classNames={{ months: 'flex flex-col lg:flex-row gap-4' }}
               onSelect={(date) => {
                 if (date?.from && !date?.to) {
                   const nextDay = new Date(date.from)
@@ -276,6 +313,7 @@ const BookingForm = ({
               }}
               disabled={[{ before: minArrivalDate }, isSoldOut]}
             />
+            </div>
           </DateInput>
           {dateError && (
             <span className='text-red-500 text-sm pl-1'>{t('pleaseSelectDates')}</span>
