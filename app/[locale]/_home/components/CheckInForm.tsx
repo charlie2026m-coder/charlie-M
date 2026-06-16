@@ -1,7 +1,7 @@
 'use client';
 import { cn, getDate, getPath, getMinArrivalDate } from '@/lib/utils';
 import { trackSearch } from '@/lib/analytics';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { RiSearchLine } from "react-icons/ri";
 import { DateInput } from '@/app/_components/ui/DateInput';
 import { Guests } from '@/app/_components/ui/guests';
@@ -29,6 +29,9 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
   const [pickingCheckout, setPickingCheckout] = useState(false);
   const checkinRef = useRef<Date | undefined>(undefined);
   const formRef = useRef<HTMLFormElement>(null);
+  // Unique id stamped on THIS form's calendar panel so the scroll-into-view
+  // handler measures its own calendar, not another popover on the page.
+  const panelId = useId();
   const [visibleMonth, setVisibleMonth] = useState<Date>(() => {
     // Deep-links carry ?from= for a future month — the calendar must open
     // (and fetch availability for) THAT month, not today's (review #6).
@@ -204,38 +207,55 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
               setPickingCheckout(false);
               checkinRef.current = undefined;
               if (dateError) setDateError(false);
-              // Smoothly bring the downward-opening calendar fully into view
-              // (PC + mobile): wait for the panel to mount, then scroll just
-              // enough that its bottom clears the viewport — no jump.
-              requestAnimationFrame(() => requestAnimationFrame(() => {
-                // When the form is pinned in the sticky bar it lives inside a
-                // position:fixed wrapper — the calendar is anchored to the top
-                // of the viewport and window-scrolling won't move it (it would
-                // just jump the page behind it). Only auto-scroll when the form
-                // scrolls with the page (the hero instance).
-                let inFixed = false;
-                for (let p = formRef.current?.parentElement; p && p !== document.body; p = p.parentElement) {
-                  const pos = getComputedStyle(p).position;
-                  if (pos === 'fixed' || pos === 'sticky') { inFixed = true; break; }
-                }
-                if (inFixed) return;
-                const panel = document.querySelector('[data-slot="popover-content"]') as HTMLElement | null;
+              // When pinned in the sticky bar the form is inside a position:fixed
+              // ancestor — the calendar is anchored to the viewport top and
+              // window-scrolling won't move it, so don't auto-scroll there.
+              let inFixed = false;
+              for (let p = formRef.current?.parentElement; p && p !== document.body; p = p.parentElement) {
+                const pos = getComputedStyle(p).position;
+                if (pos === 'fixed' || pos === 'sticky') { inFixed = true; break; }
+              }
+              if (inFixed) return;
+              // Bring the downward-opening calendar into view — measured only
+              // AFTER its entrance animation settles (mid-animation the rect is
+              // shrunken/shifted, so the scroll under-fired — the reported bug).
+              // Target THIS form's own panel by data-cal-id so a second popover
+              // on the page can't be measured by mistake.
+              requestAnimationFrame(() => {
+                const panel = document.querySelector(
+                  `[data-slot="popover-content"][data-cal-id="${CSS.escape(panelId)}"]`
+                ) as HTMLElement | null;
                 if (!panel) return;
-                // Bring the calendar to a comfortable spot rather than leaving it
-                // jammed at the bottom edge: aim for its bottom ~8% above the
-                // viewport edge, but never push its top above ~88px (so it stays
-                // fully visible and the field doesn't scroll off the top). Only
-                // scrolls down, only when it would actually help.
-                const rect = panel.getBoundingClientRect();
-                const desiredBottom = window.innerHeight * 0.92;
-                let delta = rect.bottom - desiredBottom;
-                if (delta > 0) {
-                  delta = Math.min(delta, rect.top - 88);
-                  if (delta > 4) window.scrollBy({ top: delta, behavior: 'smooth' });
-                }
-              }));
+                let done = false;
+                let timer: ReturnType<typeof setTimeout> | undefined;
+                const measureAndScroll = () => {
+                  if (done) return;
+                  done = true;
+                  if (timer) clearTimeout(timer);
+                  const rect = panel.getBoundingClientRect();
+                  // Skip if not yet positioned (popper parks it off-screen until
+                  // it resolves) or it opened above the fold.
+                  if (rect.top < 0 || rect.top > window.innerHeight) return;
+                  const desiredBottom = window.innerHeight * 0.92;
+                  let delta = rect.bottom - desiredBottom;
+                  if (delta > 0) {
+                    // Cap the scroll so the form's OWN top can't cross the sticky
+                    // threshold — that swap would hide this just-opened calendar.
+                    const formTop = formRef.current?.getBoundingClientRect().top ?? Infinity;
+                    delta = Math.min(delta, rect.top - 88, formTop - 96);
+                    if (delta > 1) window.scrollBy({ top: delta, behavior: 'smooth' });
+                  }
+                };
+                // Only the panel's own entrance animation should trigger it
+                // (animationend bubbles up from children too).
+                panel.addEventListener('animationend', (e) => {
+                  if (e.target === panel) measureAndScroll();
+                });
+                timer = setTimeout(measureAndScroll, 360); // reduced-motion fallback
+              });
             }
           }}
+          panelId={panelId}
           isError={dateError}
         >
           <div

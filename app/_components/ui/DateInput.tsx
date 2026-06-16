@@ -26,6 +26,7 @@ export function DateInput({
   frosted = false,
   desktopAlign = 'center',
   compact = false,
+  panelId,
 }: {
   children?: React.ReactNode,
   value?: DateRange | undefined,
@@ -45,6 +46,10 @@ export function DateInput({
   // the wide two-month 660px. Use it in narrow columns (the room booking card)
   // so the panel doesn't spill far across the page.
   compact?: boolean,
+  // Stamps `data-cal-id` on the popover panel so a caller with multiple
+  // popovers on the page (e.g. the home page's two search forms) can scroll to
+  // ITS own calendar instead of a global querySelector grabbing the first one.
+  panelId?: string,
 }) {
   const t = useTranslations();
   const [internalOpen, setInternalOpen] = useState(false)  
@@ -113,6 +118,7 @@ export function DateInput({
             "data-[state=open]:duration-300 data-[state=open]:ease-out",
             frosted ? "bg-white/85 backdrop-blur-md" : "bg-white",
           )}
+          data-cal-id={panelId}
           // Desktop: center the panel under the field (don't shift it right).
           // Mobile: anchor to the field's LEFT edge so the viewport-capped width
           // never runs off-screen. Always force it downward (avoidCollisions=
