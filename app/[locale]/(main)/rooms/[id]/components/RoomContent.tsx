@@ -40,19 +40,22 @@ const RoomContent = ({
             terrace: tParams('terrace'),
           }}
         />
-        <div className='flex items-center gap-3 ml-auto'>
+        <div className='flex items-center justify-end gap-3 ml-auto'>
+          {isRoomInfo && (
+            <Button
+              onClick={scrollToBooking}
+              className='md:hidden h-9 rounded-full px-4 text-sm gap-1.5 shadow-sm'
+            >
+              <FiCalendar className='size-4' />
+              {tCommon('book_now_btn')}
+            </Button>
+          )}
         </div>
       </div>
      
       {isRoomInfo &&
       <>
         <Amenities/>
-        {/* Mobile-only CTA next to amenities — jumps to the booking card
-            (which is sticky/visible alongside the content on desktop). */}
-        <Button onClick={scrollToBooking} className='md:hidden w-full gap-2 mb-6'>
-          <FiCalendar className='size-4' />
-          {tCommon('book_now_btn')}
-        </Button>
         <TextReadMore
           className='mb-5'
           textClassName='text-dark text-base'
