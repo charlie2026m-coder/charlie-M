@@ -24,7 +24,17 @@ const LocationSection = () => {
     setActiveItem(index)
   }
 
-  
+  // Swipe / arrow navigation cycles through the "We are here" card (-1) and
+  // every place (0..n-1), wrapping around. Reuses handleMap so the map and the
+  // highlighted list entry stay in sync with the card.
+  const go = (dir: 1 | -1) => {
+    const seqLen = locations.length + 1 // includes the -1 "We are here" card
+    const cur = activeItem + 1
+    const next = (cur + dir + seqLen) % seqLen
+    handleMap(next - 1)
+  }
+
+
   return (
     <div id="location" className='w-full flex flex-col container px-4 xl:px-[100px] pb-10 '>
       <Header title={t('location_title')} />
@@ -53,7 +63,12 @@ const LocationSection = () => {
             ))
           }
         </div>
-        <LocationCard item={activeItem == -1 ? null : locations[activeItem]} index={activeItem} />
+        <LocationCard
+          item={activeItem == -1 ? null : locations[activeItem]}
+          index={activeItem}
+          onPrev={() => go(-1)}
+          onNext={() => go(1)}
+        />
       </div>
     </div>
   )

@@ -1,9 +1,11 @@
 'use client'
+import { useRef } from 'react'
 import { PiMapPinFill } from "react-icons/pi"
 import Image from 'next/image'
 import { FaWalking } from "react-icons/fa";
 import { LiaCarSideSolid } from "react-icons/lia";
 import { LiaBusAltSolid } from "react-icons/lia";
+import { GoArrowLeft, GoArrowRight } from "react-icons/go";
 import { useTranslations } from 'next-intl'
 
 export interface Location {
@@ -17,16 +19,81 @@ export interface Location {
   position: { lat: number, lng: number }
 }
 
+// Translucent arrow overlaid on the card edges, vertically centered on the
+// photo (200px tall on mobile / 400px on desktop) — same hint pattern as the
+// rooms carousel so it reads as "swipe between places".
+const arrowClassName =
+  "absolute top-[100px] md:top-[200px] -translate-y-1/2 z-20 grid place-items-center size-9 md:size-11 " +
+  "rounded-full bg-white/60 backdrop-blur-sm border border-white/70 text-mute shadow-md " +
+  "transition hover:bg-white/90 hover:text-dark active:scale-95"
 
-const LocationCard = ({ item }: { item: Location | null, index: number }) => {
+const LocationCard = ({
+  item,
+  onPrev,
+  onNext,
+}: {
+  item: Location | null
+  index: number
+  onPrev?: () => void
+  onNext?: () => void
+}) => {
+  // Horizontal swipe → previous/next place. A small threshold keeps taps and
+  // vertical scrolls from triggering navigation.
+  const startX = useRef<number | null>(null)
+  const handleTouchStart = (e: React.TouchEvent) => { startX.current = e.touches[0].clientX }
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (startX.current === null) return
+    const dx = e.changedTouches[0].clientX - startX.current
+    startX.current = null
+    if (Math.abs(dx) < 40) return
+    // A real swipe shouldn't also open the underlying Google Maps link.
+    e.preventDefault()
+    if (dx < 0) onNext?.(); else onPrev?.()
+  }
+
+  const hasNav = !!(onPrev || onNext)
+
+  return (
+    <div
+      className='relative flex flex-col gap-5 items-center w-full md:w-1/2 xl:w-1/3 md:min-w-[460px] z-10'
+      onTouchStart={hasNav ? handleTouchStart : undefined}
+      onTouchEnd={hasNav ? handleTouchEnd : undefined}
+    >
+      {item ? <LocationInner item={item} /> : <MainInner />}
+
+      {hasNav && (
+        <>
+          <button
+            type='button'
+            aria-label='Previous place'
+            onClick={(e) => { e.preventDefault(); onPrev?.() }}
+            className={`${arrowClassName} left-1 md:left-2`}
+          >
+            <GoArrowLeft className='size-4 md:size-5' />
+          </button>
+          <button
+            type='button'
+            aria-label='Next place'
+            onClick={(e) => { e.preventDefault(); onNext?.() }}
+            className={`${arrowClassName} right-1 md:right-2`}
+          >
+            <GoArrowRight className='size-4 md:size-5' />
+          </button>
+        </>
+      )}
+    </div>
+  )
+}
+
+export default LocationCard
+
+const LocationInner = ({ item }: { item: Location }) => {
   const t = useTranslations('locationCard')
-  if(!item) return <MainCard />
-  const {  image, distance, walkTime, carTime, busTime, position, title } = item
-
+  const { image, distance, walkTime, carTime, busTime, position, title } = item
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(title)}&query_place_id=${position.lat},${position.lng}`
 
   return (
-    <div className='flex flex-col gap-5 items-center w-full md:w-1/2 xl:w-1/3 md:min-w-[460px] z-10'>
+    <>
       <a
         href={googleMapsUrl}
         target="_blank"
@@ -50,7 +117,7 @@ const LocationCard = ({ item }: { item: Location | null, index: number }) => {
           </div>}
         </div>
       </a>
-      <a 
+      <a
         href={googleMapsUrl}
         target="_blank"
         rel="noopener noreferrer"
@@ -58,20 +125,17 @@ const LocationCard = ({ item }: { item: Location | null, index: number }) => {
       >
         {t('seeOnGoogleMaps')}
       </a>
-    </div>
+    </>
   )
 }
 
-export default LocationCard
-
-
-const MainCard = () => {
+const MainInner = () => {
   const t = useTranslations('locationCard')
   const hotelAddress = "Friedrichstraße 33, 10969 Berlin"
   const googleMapsUrl = 'https://maps.app.goo.gl/f5pcoqnd5V6NTwAw6'
 
   return (
-    <div className='flex flex-col gap-5 items-center w-full md:w-1/2 xl:w-1/3 md:min-w-[460px]'>
+    <>
       <a
         href={googleMapsUrl}
         target="_blank"
@@ -108,7 +172,7 @@ const MainCard = () => {
           </div>
         </div>
       </a>
-      <a 
+      <a
         href={googleMapsUrl}
         target="_blank"
         rel="noopener noreferrer"
@@ -116,6 +180,6 @@ const MainCard = () => {
       >
         {t('seeOnGoogleMaps')}
       </a>
-    </div>
+    </>
   )
 }
