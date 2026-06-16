@@ -16,9 +16,13 @@ const Reservations = () => {
   const { reservationFilter } = useProfileStore()
   const [isGuestMode, setIsGuestMode] = useState(false)
   const [search, setSearch] = useState('')
+  // Opt-in demo data via ?demo=1 (read from the URL after mount to avoid the
+  // useSearchParams Suspense requirement). Never on in normal use.
+  const [demoMode, setDemoMode] = useState(false)
 
   useEffect(() => {
     setIsGuestMode(sessionStorage.getItem('guestMode') === 'true')
+    setDemoMode(new URLSearchParams(window.location.search).get('demo') === '1')
   }, [])
 
   const filteredAddedReservations = filterReservationsByStatus(addedReservations, reservationFilter)
@@ -37,6 +41,9 @@ const Reservations = () => {
         <div className='flex items-center justify-between gap-3 flex-wrap'>
           <div className='flex items-center gap-2 font-semibold text-2xl'>
             {isGuestMode ? t('yourBooking') : title[reservationFilter as keyof typeof title]}
+            {demoMode && (
+              <span className='rounded-full bg-blue/20 text-mute text-xs font-semibold px-2 py-0.5'>Demo</span>
+            )}
           </div>
           {!isGuestMode && (
             <ReservationIdDialog
@@ -62,7 +69,7 @@ const Reservations = () => {
           </div>
         )}
       </div>
-      <ReservationsTable addedReservations={filteredAddedReservations} searchQuery={search} />
+      <ReservationsTable addedReservations={filteredAddedReservations} searchQuery={search} demoMode={demoMode} />
     </div>
   )
 }
