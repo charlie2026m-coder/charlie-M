@@ -164,9 +164,11 @@ const ExtandYourStay = ({
                 color: white !important;
               }
             `}</style>
-            <Calendar 
+            <Calendar
               mode="range"
               captionLayout="label"
+              showOutsideDays={false}
+              fixedWeeks={false}
               selected={extensionRange}
               defaultMonth={arrivalDate}
               onSelect={(date) => {
