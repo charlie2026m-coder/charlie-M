@@ -86,9 +86,9 @@ const RoomCard = ({
           reserved "Next available" row, then the price/action pinned to the
           bottom (mt-auto) — so those elements line up across cards regardless
           of name length or whether a price is shown. */}
-      <div className='flex flex-col p-4 pb-5 sm:pb-6 h-full'>
+      <div className='flex flex-col p-4 pb-4 sm:pb-5 h-full'>
         <Link href={`/${locale}/rooms/${item.unitGroup.id}?${queryString}`}>
-          <h2 className='text-xl font-medium jakarta mb-2 line-clamp-2 min-h-[3.5rem] hover:text-blue transition-colors cursor-pointer'>{item.name}</h2>
+          <h2 className='text-xl font-medium jakarta mb-1.5 line-clamp-2 min-h-[2.75rem] lg:min-h-[3.25rem] hover:text-blue transition-colors cursor-pointer'>{item.name}</h2>
         </Link>
         <RoomParamsRow attributes={item.attributes } maxPersons={item.maxPersons} size={item.size} translations={translations.roomParams} />
         {/* Always reserve this row's height so the line sits at the same place
@@ -102,23 +102,23 @@ const RoomCard = ({
           )}
         </div>
 
-        <div className='mt-auto pt-4'>
+        <div className='mt-auto pt-3'>
           {item.oneNightPrice > 0 && (
-            <div className='text-mute mb-2 sm:mb-3'>{translations.perNightFrom}</div>
+            <div className='text-mute mb-1.5 sm:mb-2'>{translations.perNightFrom}</div>
           )}
           {item.isBooked
             ? <div className='text-sm font-medium text-gray-400 px-2 py-3'>
                 {translations.booked ?? 'Not available for these dates'}
               </div>
-            : <div className='flex xxs:flex-row flex-col items-center gap-2 md:gap-8 justify-between w-full'>
+            : <div className='flex flex-row flex-wrap items-center gap-2 md:gap-8 justify-between w-full'>
                 {item.oneNightPrice > 0 && (
-                  <Price price={item.oneNightPrice} className='h-[50px] w-full xs:w-auto' />
+                  <Price price={item.oneNightPrice} className='h-[50px] w-auto !text-base !px-3 sm:!text-lg sm:!px-5' />
                 )}
                 <Button
                   onClick={handleBookNow}
                   disabled={isLoading}
                   variant='outline'
-                  className='h-[50px] hover:bg-mute hover:text-white active:bg-mute active:text-white'
+                  className='h-[50px] px-3 text-sm sm:px-6 sm:text-base hover:bg-mute hover:text-white active:bg-mute active:text-white'
                 >
                   {isLoading ? translations.loading : translations.bookNow}
                 </Button>
