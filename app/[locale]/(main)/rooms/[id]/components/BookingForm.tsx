@@ -49,6 +49,10 @@ const BookingForm = ({
   const [openCheckIn, setOpenCheckIn] = useState(false)
   const [dateError, setDateError] = useState(false)
   const [isNavigating, startNavigation] = useTransition()
+  // Two-click range selection (parity with the search calendar): click 1 sets
+  // the start, click 2 sets the end — no premature 1-night range on click 1.
+  const [pickingCheckout, setPickingCheckout] = useState(false)
+  const checkinRef = useRef<Date | undefined>(undefined)
 
   const [guests, setGuests] = useState({
     adults: parseInt(params?.adults || guestsStore?.adults.toString() || '1'),
@@ -257,7 +261,10 @@ const BookingForm = ({
           <DateInput
             value={dateRange || undefined}
             open={openCheckIn}
-            onOpenChange={setOpenCheckIn}
+            onOpenChange={(open) => {
+              setOpenCheckIn(open)
+              if (open) { setPickingCheckout(false); checkinRef.current = undefined }
+            }}
             inputStyle={dateError ? "border-red" : "border-mute"}
             isError={dateError}
             frosted
@@ -286,30 +293,52 @@ const BookingForm = ({
               modifiers={{ soldOut: isSoldOut }}
               modifiersClassNames={{ soldOut: 'line-through' }}
               classNames={{ months: 'flex flex-col lg:flex-row gap-4' }}
-              onSelect={(date) => {
-                if (date?.from && !date?.to) {
-                  const nextDay = new Date(date.from)
-                  nextDay.setDate(nextDay.getDate() + 1)
-                  const newRange = { from: date.from, to: nextDay }
-                  setDateRange(newRange)
-                  setValue(newRange, 'dateRange')
-                  setDateError(false)
-                } else if (date?.from && date?.to) {
-                  const isSameDay = date.from.getTime() === date.to.getTime()
-                  if (isSameDay) {
-                    const nextDay = new Date(date.from)
+              onSelect={(_date, triggerDate) => {
+                if (!triggerDate) return
+                // Two-click selection, identical to the search calendar:
+                // click 1 sets the check-in only (no premature 1-night range);
+                // click 2 sets the check-out (or restarts if before the start).
+                if (!pickingCheckout) {
+                  checkinRef.current = triggerDate
+                  const startOnly = { from: triggerDate, to: undefined }
+                  setDateRange(startOnly)
+                  setValue(startOnly, 'dateRange')
+                  setPickingCheckout(true)
+                } else {
+                  const start = checkinRef.current!
+                  if (triggerDate.getTime() > start.getTime()) {
+                    // A sold-out night inside the span can't be a valid stay —
+                    // treat the click as a fresh check-in instead.
+                    if (rangeHasSoldOutNight(start, triggerDate)) {
+                      checkinRef.current = triggerDate
+                      const startOnly = { from: triggerDate, to: undefined }
+                      setDateRange(startOnly)
+                      setValue(startOnly, 'dateRange')
+                    } else {
+                      const newRange = { from: start, to: triggerDate }
+                      setDateRange(newRange)
+                      setValue(newRange, 'dateRange')
+                      checkinRef.current = undefined
+                      setPickingCheckout(false)
+                    }
+                  } else if (triggerDate.getTime() === start.getTime()) {
+                    // Same day clicked twice → a single night.
+                    const nextDay = new Date(start)
                     nextDay.setDate(nextDay.getDate() + 1)
-                    const newRange = { from: date.from, to: nextDay }
+                    const newRange = { from: start, to: nextDay }
                     setDateRange(newRange)
                     setValue(newRange, 'dateRange')
+                    checkinRef.current = undefined
+                    setPickingCheckout(false)
                   } else {
-                    setDateRange(date as DateRange)
-                    setValue(date as DateRange, 'dateRange')
+                    // Clicked before the start → move the check-in there.
+                    checkinRef.current = triggerDate
+                    const startOnly = { from: triggerDate, to: undefined }
+                    setDateRange(startOnly)
+                    setValue(startOnly, 'dateRange')
                   }
-                  setDateError(false)
-                } else {
-                  setDateRange(date as DateRange)
                 }
+                setDateError(false)
               }}
               disabled={[{ before: minArrivalDate }, isSoldOut]}
             />
