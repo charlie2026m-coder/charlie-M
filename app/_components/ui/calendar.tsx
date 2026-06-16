@@ -54,12 +54,12 @@ function Calendar({
         ),
         button_previous: cn(
           buttonVariants({ variant: buttonVariant }),
-          "size-(--cell-size) aria-disabled:opacity-50 p-0 select-none",
+          "size-10 aria-disabled:opacity-50 p-0 select-none",
           defaultClassNames.button_previous
         ),
         button_next: cn(
           buttonVariants({ variant: buttonVariant }),
-          "size-(--cell-size) aria-disabled:opacity-50 p-0 select-none",
+          "size-10 aria-disabled:opacity-50 p-0 select-none",
           defaultClassNames.button_next
         ),
         month_caption: cn(
@@ -136,14 +136,14 @@ function Calendar({
         Chevron: ({ className, orientation, ...props }) => {
           if (orientation === "left") {
             return (
-              <ArrowLeftIcon className={cn("size-6", className)} {...props} />
+              <ArrowLeftIcon className={cn("size-7", className)} {...props} />
             )
           }
 
           if (orientation === "right") {
             return (
               <ArrowRightIcon
-                className={cn("size-6", className)}
+                className={cn("size-7", className)}
                 {...props}
               />
             )

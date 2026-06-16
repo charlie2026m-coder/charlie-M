@@ -155,12 +155,23 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
   };
 
   const handleApply = () => {
-    if (isRoomsPage) {
-      triggerSearch(undefined, true);
-      return;
-    }
-    setOpenCalendar(false);
+    // Apply = run the search and close — on the home form (was a no-op that
+    // only closed) and on /rooms. triggerSearch flags a date error if the
+    // range is incomplete, so the button always gives feedback.
+    triggerSearch(undefined, true);
   };
+
+  // Swipe / drag (or the arrows) to change the visible month. Bounded so it
+  // can't page back before the earliest bookable month.
+  const navigateMonth = (dir: 1 | -1) => {
+    setVisibleMonth((prev) => {
+      const next = new Date(prev.getFullYear(), prev.getMonth() + dir, 1);
+      const min = getMinArrivalDate();
+      const minMonth = new Date(min.getFullYear(), min.getMonth(), 1);
+      return next < minMonth ? prev : next;
+    });
+  };
+  const swipeStartX = useRef<number | null>(null);
 
   const getNights = () => {
     if (!dateRange?.from || !dateRange?.to) return null;
@@ -227,14 +238,26 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
           }}
           isError={dateError}
         >
-          <div className='pb-2'>
+          <div
+            className='pb-2 touch-pan-y select-none'
+            onPointerDown={(e) => { swipeStartX.current = e.clientX }}
+            onPointerUp={(e) => {
+              if (swipeStartX.current === null) return
+              const dx = e.clientX - swipeStartX.current
+              swipeStartX.current = null
+              // A real horizontal drag (not a day tap) pages the months:
+              // drag left → next, drag right → previous.
+              if (Math.abs(dx) < 60) return
+              navigateMonth(dx < 0 ? 1 : -1)
+            }}
+          >
             <Calendar
               required={false}
               mode="range"
               captionLayout="label"
               numberOfMonths={numberOfMonths}
               selected={dateRange}
-              defaultMonth={visibleMonth}
+              month={visibleMonth}
               onMonthChange={setVisibleMonth}
               excludeDisabled
               modifiers={{ soldOut: isSoldOut }}
