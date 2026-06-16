@@ -83,13 +83,19 @@ export function DateInput({
         <PopoverContent
           className={cn(
             className,
-            "overflow-hidden rounded-[20px] p-2 flex flex-col w-[350px] lg:w-[660px]",
+            // Width is capped to the viewport on mobile so the panel can never
+            // run off the screen edge; full 660px (two months) from lg up.
+            "overflow-hidden rounded-[20px] p-2 flex flex-col w-[calc(100vw-3.5rem)] max-w-[340px] lg:w-[660px] lg:max-w-none",
+            // Smoother, slightly slower entrance than the default popover.
+            "data-[state=open]:duration-300 data-[state=open]:ease-out",
             frosted ? "bg-white/60 backdrop-blur-md" : "bg-white",
           )}
-          align="center"
-          // Always drop down from the field; never flip up (avoidCollisions) so
-          // the calendar is predictable, and track the anchor every frame so it
-          // moves smoothly with the sticky bar while scrolling.
+          // Anchor to the field's LEFT edge (the date field sits on the left of
+          // the search bar) so a viewport-capped width never runs off-screen on
+          // mobile — and force it downward (avoidCollisions=false) so it never
+          // flips up over the content. Track the anchor every frame for smooth
+          // movement with the sticky bar on scroll.
+          align="start"
           side="bottom"
           sideOffset={10}
           avoidCollisions={false}

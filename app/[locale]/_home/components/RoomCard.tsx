@@ -93,12 +93,14 @@ const RoomCard = ({
         <RoomParamsRow attributes={item.attributes } maxPersons={item.maxPersons} size={item.size} translations={translations.roomParams} />
         {/* Always reserve this row's height so the line sits at the same place
             on every card, present or not. */}
-        <div className='flex items-center gap-1.5 text-sm text-blue font-medium min-h-[1.5rem]'>
+        {/* Earliest free dates as a clear gold chip — the old faint pale-gold
+            text was hard to read. Row height stays reserved so cards align. */}
+        <div className='min-h-[1.75rem] flex items-center'>
           {nearestLabel && (
-            <>
-              <FiCalendar className='size-4 shrink-0' />
-              <span>{translations.nextAvailable ?? 'Next available'}: {nearestLabel}</span>
-            </>
+            <span className='inline-flex items-center gap-1.5 rounded-full bg-dark-gold/15 px-2.5 py-1 text-xs font-semibold text-dark-gold'>
+              <FiCalendar className='size-3.5 shrink-0' />
+              {translations.nextAvailable ?? 'Next available'}: {nearestLabel}
+            </span>
           )}
         </div>
 
