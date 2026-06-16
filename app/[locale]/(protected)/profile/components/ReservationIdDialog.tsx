@@ -1,13 +1,16 @@
 import { Button } from "@/app/_components/ui/button"
 import { ClientCustomDialog } from "@/app/_components/ui/ClientCustomDialog"
 import { Input } from "@/app/_components/ui/input"
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 import Image from "next/image"
 import { useTranslations } from 'next-intl'
 import { useAddReservation } from '@/app/hooks/useAddReservation'
 import { toast } from 'sonner'
+import { FiHelpCircle } from "react-icons/fi"
+import { FaWhatsapp } from "react-icons/fa"
+import { PHONE_NUMBER } from "@/lib/Constants"
 
-const ReservationIdDialog = () => {
+const ReservationIdDialog = ({ trigger }: { trigger?: ReactNode }) => {
     const t = useTranslations('profile')
     const [isOpen, setIsOpen] = useState(false)
     const [isNotFound, setIsNotFound] = useState(false)
@@ -68,9 +71,11 @@ const ReservationIdDialog = () => {
       open={isOpen}
       setOpen={setIsOpen}
       trigger={
-        <div className='text-brown cursor-pointer hover:text-brown/80 transition-all duration-300 pl-1'>
-          {t('addViaReservationId')}
-        </div>
+        trigger ?? (
+          <div className='text-brown cursor-pointer hover:text-brown/80 transition-all duration-300 pl-1'>
+            {t('addViaReservationId')}
+          </div>
+        )
       }
       content={
         isNotFound
@@ -114,10 +119,38 @@ const Form = ({
   error
 }: { reservationId: string, setReservationId: (reservationId: string) => void, lastName: string, setLastName: (lastName: string) => void, handleSubmit: () => void, close: () => void, isPending: boolean, error: string | null }) => {
   const t = useTranslations('profile')
+  const [showHelp, setShowHelp] = useState(false)
+  const whatsappHref = `https://wa.me/${PHONE_NUMBER.replace(/\D/g, '')}`
 
   return (
     <div className='w-full flex flex-col'>
-      <div className='text-[15px] text-dark inter mb-3'>{t('enterReservationId')}</div>
+      <div className='flex items-center gap-2 mb-3'>
+        <span className='text-[15px] text-dark inter'>{t('enterReservationId')}</span>
+        <button
+          type='button'
+          onClick={() => setShowHelp((v) => !v)}
+          aria-label={t('whereToFindId')}
+          aria-expanded={showHelp}
+          className='text-brown hover:text-brown/70 transition-colors'
+        >
+          <FiHelpCircle className='size-4' />
+        </button>
+      </div>
+      {showHelp && (
+        <div className='mb-4 rounded-2xl bg-light-bg p-3.5 text-sm text-mute'>
+          <p className='font-semibold mb-1 text-dark'>{t('whereToFindIdTitle')}</p>
+          <p className='mb-3 leading-relaxed'>{t('whereToFindIdText')}</p>
+          <a
+            href={whatsappHref}
+            target='_blank'
+            rel='noopener noreferrer'
+            className='inline-flex items-center gap-2 rounded-full border border-[#25D366] px-3 py-1.5 text-sm font-medium text-mute transition-colors hover:bg-[#25D366]/10'
+          >
+            <FaWhatsapp className='size-4 text-[#25D366]' />
+            {t('cantFindIdWhatsapp')}
+          </a>
+        </div>
+      )}
       <Input
         type='text'
         placeholder={`${t('reservationIdPlaceholder')} (e.g. EXAMPLEID-0)`}
