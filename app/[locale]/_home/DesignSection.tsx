@@ -81,11 +81,12 @@ const DesignSection = ({ locale }: { locale: string }) => {
         <div className="flex flex-col gap-5 items-center">
           <div className="relative size-[384px]">
             <Image
+              key={`d1-${activeItem}`}
               src={items[activeItem].image_1}
               alt={items[activeItem].image_title_1}
               width={384}
               height={384}
-              className="size-[384px] object-cover rounded-[40px]"
+              className="size-[384px] object-cover rounded-[40px] animate-in fade-in duration-500 ease-out"
             />
             <button
               type="button"
@@ -102,11 +103,12 @@ const DesignSection = ({ locale }: { locale: string }) => {
         <div className="flex flex-col gap-5 items-center">
           <div className="relative size-[384px]">
             <Image
+              key={`d2-${activeItem}`}
               src={items[activeItem].image_2}
               alt={items[activeItem].image_title_2}
               width={384}
               height={384}
-              className="size-[384px] object-cover rounded-[40px]"
+              className="size-[384px] object-cover rounded-[40px] animate-in fade-in duration-500 ease-out"
             />
             <button
               type="button"

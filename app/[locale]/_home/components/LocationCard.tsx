@@ -55,11 +55,20 @@ const LocationCard = ({
 
   return (
     <div
-      className='relative flex flex-col gap-5 items-center w-full md:w-1/2 xl:w-1/3 md:min-w-[460px] z-10'
+      className='relative flex flex-col gap-5 items-center w-full md:w-1/2 xl:w-1/3 md:min-w-[460px] z-10 touch-pan-y select-none'
       onTouchStart={hasNav ? handleTouchStart : undefined}
       onTouchEnd={hasNav ? handleTouchEnd : undefined}
     >
-      {item ? <LocationInner item={item} /> : <MainInner />}
+      {/* Keyed so each place change replays a soft fade/slide that matches the
+          map's 500ms cross-fade (instead of a hard cut). The key is on the
+          inner div ONLY — the outer wrapper holds the swipe refs/arrows and must
+          not remount. */}
+      <div
+        key={item ? item.title : 'main'}
+        className='w-full animate-in fade-in slide-in-from-bottom-2 duration-500 ease-out'
+      >
+        {item ? <LocationInner item={item} /> : <MainInner />}
+      </div>
 
       {hasNav && (
         <>

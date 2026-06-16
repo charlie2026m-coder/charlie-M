@@ -39,13 +39,16 @@ export default function FAQList({ items, onActiveIndexChange }: FAQListProps) {
       const itemRect = itemRefs.current[0].getBoundingClientRect()
       const containerRect = containerRef.current.getBoundingClientRect()
       const relativeTop = itemRect.top - containerRect.top + itemRect.height / 2
-      
-      setTimeout(() => {
+
+      // Place the chevron on the next frame (after layout) instead of 100ms
+      // later, so it doesn't visibly pop in.
+      const id = requestAnimationFrame(() => {
         setArrowPosition({
           top: relativeTop,
           opacity: 1
         })
-      }, 100)
+      })
+      return () => cancelAnimationFrame(id)
     }
   }, [])
 

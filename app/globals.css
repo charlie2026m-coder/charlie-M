@@ -7,6 +7,19 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Respect the OS "reduce motion" setting — neutralizes the home fades,
+   map cross-fade, chevron moves, accordions and smooth scrolling. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 body {
   overflow-x: hidden;
 }
