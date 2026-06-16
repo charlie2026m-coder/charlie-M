@@ -1,8 +1,20 @@
 'use client'
 import MapWindow from './MapWindow'
 import { PhoneFrame } from '@/app/_components/ui/PhoneFrame'
+import { useEffect, useState } from 'react'
 
 export default function MapLink({ url }: { url: string }) {
+  // The phone is tiny on mobile (~92px wide), so zoom 16 looks far too close.
+  // Zoom out a couple of levels there; keep the closer view on desktop.
+  const [isDesktop, setIsDesktop] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)')
+    const update = () => setIsDesktop(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
+
   return (
     // The slot keeps the OLD map footprint so the footer row height / layout is
     // unchanged. A larger phone is absolutely positioned inside, aligned to the
@@ -20,7 +32,7 @@ export default function MapLink({ url }: { url: string }) {
             it. Matches the slot height below. */}
         <div className="h-[118px] md:h-[186px] w-full" style={{ pointerEvents: 'none' }}>
           {/* radius 0 — the phone screen's own rounded overflow clips the map. */}
-          <MapWindow width="100%" height="100%" isFullscreen={false} radius="0px" />
+          <MapWindow width="100%" height="100%" isFullscreen={false} radius="0px" zoom={isDesktop ? 16 : 14} />
         </div>
       </PhoneFrame>
     </div>
