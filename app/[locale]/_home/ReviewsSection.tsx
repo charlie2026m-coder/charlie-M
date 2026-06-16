@@ -4,7 +4,7 @@ import { Swiper, SwiperSlide } from 'swiper/react'
 import { Autoplay } from 'swiper/modules'
 import 'swiper/css'
 import Image from "next/image"
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import type { CarouselApi } from '@/app/_components/ui/carousel'
 import {
   Carousel,
@@ -24,24 +24,13 @@ const ReviewsSection = ({ reviews }: Props) => {
   const displayItems = reviews && reviews.length > 0 ? reviews : items;
   const t = useTranslations('home')
   const [api, setApi] = useState<CarouselApi>()
-  const [current, setCurrent] = useState(0)
-  const [count, setCount] = useState(0)
 
-  useEffect(() => {
-    if (!api) return
-
-    setCount(api.scrollSnapList().length)
-    setCurrent(api.selectedScrollSnap())
-
-    api.on("select", () => {
-      setCurrent(api.selectedScrollSnap())
-    })
-  }, [api])
-
-  const canScrollPrev = current > 0
-  const canScrollNext = current < count - 1
-
-  const buttonClassName = "size-18 rounded-full border text-mute border-mute flex items-center justify-center transition-opacity hover:opacity-50 disabled:opacity-50 disabled:cursor-not-allowed"
+  // Translucent arrows overlaid on the review card (centered), matching the
+  // rooms carousel — replaces the buttons that used to sit below the carousel.
+  const arrowClassName =
+    "absolute top-1/2 -translate-y-1/2 z-20 grid place-items-center size-10 sm:size-12 " +
+    "rounded-full bg-white/60 backdrop-blur-sm border border-white/70 text-mute shadow-md " +
+    "transition hover:bg-white/90 hover:text-dark active:scale-95"
 
   return (
     <div className='flex flex-col container px-4 xl:px-[100px] pt-0 pb-10 lg:py-20'>
@@ -70,27 +59,22 @@ const ReviewsSection = ({ reviews }: Props) => {
                 ))}
               </CarouselContent>
             </Carousel>
+
+            <button
+              onClick={() => api?.scrollPrev()}
+              className={`${arrowClassName} left-1 sm:left-3`}
+              aria-label="Previous slide"
+            >
+              <GoArrowLeft className="size-5 sm:size-6" />
+            </button>
+            <button
+              onClick={() => api?.scrollNext()}
+              className={`${arrowClassName} right-1 sm:right-3`}
+              aria-label="Next slide"
+            >
+              <GoArrowRight className="size-5 sm:size-6" />
+            </button>
           </div>
-        </div>
-
-        <div className="flex items-center justify-center gap-5 mb-5 md:mb-15">
-          <button
-            onClick={() => api?.scrollPrev()}
-            disabled={!canScrollPrev}
-            className={buttonClassName}
-            aria-label="Previous slide"
-          >
-            <GoArrowLeft className="size-6 text-gray-700" />
-          </button>
-
-          <button
-            onClick={() => api?.scrollNext()}
-            disabled={!canScrollNext}
-            className={buttonClassName}
-            aria-label="Next slide"
-          >
-            <GoArrowRight className="size-6 text-gray-700" />
-          </button>
         </div>
       </div>
 

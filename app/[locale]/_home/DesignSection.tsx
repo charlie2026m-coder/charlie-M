@@ -2,10 +2,16 @@
 import Header from "./components/Header"
 import { useTranslations } from 'next-intl'
 import { GoArrowLeft, GoArrowRight } from "react-icons/go";
-import { Button } from "@/app/_components/ui/button";
 import { useState } from "react";
 import Image from "next/image";
 import DesignSlider from "./components/DesignSlider";
+
+// Translucent arrows overlaid on the image cards (centered on the 384px photo),
+// matching the rooms carousel — replaces the single button at the grid edge.
+const arrowClassName =
+  "absolute top-[192px] -translate-y-1/2 z-20 grid place-items-center size-11 lg:size-12 " +
+  "rounded-full bg-white/60 backdrop-blur-sm border border-white/70 text-mute shadow-md " +
+  "transition hover:bg-white/90 hover:text-dark active:scale-95"
 
 const DesignSection = ({ locale }: { locale: string }) => {
   const t = useTranslations()
@@ -73,33 +79,46 @@ const DesignSection = ({ locale }: { locale: string }) => {
         </div>
 
         <div className="flex flex-col gap-5 items-center">
-          <Image 
-            src={items[activeItem].image_1} 
-            alt={items[activeItem].image_title_1} 
-            width={384} 
-            height={384} 
-            className="size-[384px] object-cover rounded-[40px]"
-          />
+          <div className="relative size-[384px]">
+            <Image
+              src={items[activeItem].image_1}
+              alt={items[activeItem].image_title_1}
+              width={384}
+              height={384}
+              className="size-[384px] object-cover rounded-[40px]"
+            />
+            <button
+              type="button"
+              onClick={handlePrevious}
+              aria-label="Previous"
+              className={`${arrowClassName} left-3`}
+            >
+              <GoArrowLeft className="size-6" />
+            </button>
+          </div>
           <p className="text-center text-mute font-bold text-[25px]">{items[activeItem].image_title_1}</p>
         </div>
 
         <div className="flex flex-col gap-5 items-center">
-          <Image 
-            src={items[activeItem].image_2} 
-            alt={items[activeItem].image_title_2} 
-            width={384} 
-            height={384} 
-            className="size-[384px] object-cover rounded-[40px]"
-          />
+          <div className="relative size-[384px]">
+            <Image
+              src={items[activeItem].image_2}
+              alt={items[activeItem].image_title_2}
+              width={384}
+              height={384}
+              className="size-[384px] object-cover rounded-[40px]"
+            />
+            <button
+              type="button"
+              onClick={handleNext}
+              aria-label="Next"
+              className={`${arrowClassName} right-3`}
+            >
+              <GoArrowRight className="size-6" />
+            </button>
+          </div>
           <p className="text-center text-mute font-bold text-[25px]">{items[activeItem].image_title_2}</p>
         </div>
-        <Button 
-          variant="outline" 
-          className='size-[70px] border-mute text-mute absolute right-4 top-1/2 -translate-y-1/2'
-          onClick={handleNext}
-        >
-          <GoArrowRight className='size-7' />
-        </Button>
       </div>
     </div>
   )
