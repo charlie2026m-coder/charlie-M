@@ -210,9 +210,17 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
                 if (inFixed) return;
                 const panel = document.querySelector('[data-slot="popover-content"]') as HTMLElement | null;
                 if (!panel) return;
-                const overflowBottom = panel.getBoundingClientRect().bottom - window.innerHeight;
-                if (overflowBottom > 0) {
-                  window.scrollBy({ top: overflowBottom + 16, behavior: 'smooth' });
+                // Bring the calendar to a comfortable spot rather than leaving it
+                // jammed at the bottom edge: aim for its bottom ~8% above the
+                // viewport edge, but never push its top above ~88px (so it stays
+                // fully visible and the field doesn't scroll off the top). Only
+                // scrolls down, only when it would actually help.
+                const rect = panel.getBoundingClientRect();
+                const desiredBottom = window.innerHeight * 0.92;
+                let delta = rect.bottom - desiredBottom;
+                if (delta > 0) {
+                  delta = Math.min(delta, rect.top - 88);
+                  if (delta > 4) window.scrollBy({ top: delta, behavior: 'smooth' });
                 }
               }));
             }
