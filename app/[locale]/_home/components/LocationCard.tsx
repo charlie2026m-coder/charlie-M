@@ -23,7 +23,7 @@ export interface Location {
 // photo (200px tall on mobile / 400px on desktop) — same hint pattern as the
 // rooms carousel so it reads as "swipe between places".
 const arrowClassName =
-  "absolute top-[100px] md:top-[200px] -translate-y-1/2 z-20 grid place-items-center size-9 md:size-11 " +
+  "absolute top-[160px] md:top-[200px] -translate-y-1/2 z-20 grid place-items-center size-9 md:size-11 " +
   "rounded-full bg-white/60 backdrop-blur-sm border border-white/70 text-mute shadow-md " +
   "transition hover:bg-white/90 hover:text-dark active:scale-95"
 

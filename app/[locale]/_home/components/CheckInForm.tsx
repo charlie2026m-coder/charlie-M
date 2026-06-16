@@ -28,6 +28,7 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
   const [numberOfMonths, setNumberOfMonths] = useState(1);
   const [pickingCheckout, setPickingCheckout] = useState(false);
   const checkinRef = useRef<Date | undefined>(undefined);
+  const formRef = useRef<HTMLFormElement>(null);
   const [visibleMonth, setVisibleMonth] = useState<Date>(() => {
     // Deep-links carry ?from= for a future month — the calendar must open
     // (and fetch availability for) THAT month, not today's (review #6).
@@ -176,6 +177,7 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
 
   return (
     <form
+      ref={formRef}
       onSubmit={handleSubmit}
       data-checkin-form="original"
       className={cn('flex flex-row pl-3 md:pl-8 gap-2 md:gap-8 w-full max-w-[900px] bg-white p-3 rounded-full items-center', className)}
@@ -195,6 +197,17 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
               // (PC + mobile): wait for the panel to mount, then scroll just
               // enough that its bottom clears the viewport — no jump.
               requestAnimationFrame(() => requestAnimationFrame(() => {
+                // When the form is pinned in the sticky bar it lives inside a
+                // position:fixed wrapper — the calendar is anchored to the top
+                // of the viewport and window-scrolling won't move it (it would
+                // just jump the page behind it). Only auto-scroll when the form
+                // scrolls with the page (the hero instance).
+                let inFixed = false;
+                for (let p = formRef.current?.parentElement; p && p !== document.body; p = p.parentElement) {
+                  const pos = getComputedStyle(p).position;
+                  if (pos === 'fixed' || pos === 'sticky') { inFixed = true; break; }
+                }
+                if (inFixed) return;
                 const panel = document.querySelector('[data-slot="popover-content"]') as HTMLElement | null;
                 if (!panel) return;
                 const overflowBottom = panel.getBoundingClientRect().bottom - window.innerHeight;

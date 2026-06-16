@@ -99,7 +99,7 @@ export function DateInput({
             "overflow-hidden rounded-[20px] p-2 flex flex-col w-[calc(100vw-3.5rem)] max-w-[340px] lg:w-[660px] lg:max-w-none",
             // Smoother, slightly slower entrance than the default popover.
             "data-[state=open]:duration-300 data-[state=open]:ease-out",
-            frosted ? "bg-white/60 backdrop-blur-md" : "bg-white",
+            frosted ? "bg-white/85 backdrop-blur-md" : "bg-white",
           )}
           // Desktop: center the panel under the field (don't shift it right).
           // Mobile: anchor to the field's LEFT edge so the viewport-capped width
