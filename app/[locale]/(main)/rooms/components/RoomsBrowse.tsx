@@ -1,7 +1,7 @@
 import { getTranslations } from 'next-intl/server'
 import { getNearestRoomCards } from '@/app/actions/apaleo/rooms/getNearestRoomCards'
-import RoomCard from '@/app/[locale]/_home/components/RoomCard'
 import NotFoundCard from '../[id]/components/NotFoundCard'
+import RoomsBrowseList from './RoomsBrowseList'
 
 /**
  * Shown on /rooms when the visitor hasn't picked dates yet (e.g. came from the
@@ -36,11 +36,7 @@ const RoomsBrowse = async ({ locale }: { locale: string }) => {
   return (
     <div className="flex flex-col gap-6 mb-[30px]">
       <p className="text-dark text-sm md:text-base">{t('roomCard.browseHint')}</p>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {cards.map((item) => (
-          <RoomCard key={item.id} item={item} locale={locale} translations={translations} />
-        ))}
-      </div>
+      <RoomsBrowseList cards={cards} locale={locale} translations={translations} />
     </div>
   )
 }
