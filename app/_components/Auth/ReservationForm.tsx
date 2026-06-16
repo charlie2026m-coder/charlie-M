@@ -6,6 +6,7 @@ import { useRouter } from '@/navigation';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useProfileStore } from '@/store/useProfile';
+import { ReservationIdHelp } from './ReservationIdHelp';
 
 const ReservationForm = () => {
   const t = useTranslations('login');
@@ -124,6 +125,7 @@ const ReservationForm = () => {
           {isPending ? t('searching') : t('continue')}
         </Button>
       </form>
+      <ReservationIdHelp className="-mt-4 mb-2" />
     </div>
   );
 };

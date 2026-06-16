@@ -44,32 +44,32 @@ describe('ReservationForm (CharlieM)', () => {
   it('renders both inputs and the button', () => {
     render(<ReservationForm />);
     expect(screen.getAllByRole('textbox')).toHaveLength(2);
-    expect(screen.getByRole('button')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'continue' })).toBeInTheDocument();
   });
 
   it('button disabled when empty', () => {
     render(<ReservationForm />);
-    expect(screen.getByRole('button')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'continue' })).toBeDisabled();
   });
 
   it('button disabled when only reservation id is filled', async () => {
     render(<ReservationForm />);
     const [idInput] = screen.getAllByRole('textbox');
     await userEvent.type(idInput, 'RCMH-TEST');
-    expect(screen.getByRole('button')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'continue' })).toBeDisabled();
   });
 
   it('button enabled when both fields have text', async () => {
     render(<ReservationForm />);
     await fillForm('RCMH-TEST');
-    expect(screen.getByRole('button')).not.toBeDisabled();
+    expect(screen.getByRole('button', { name: 'continue' })).not.toBeDisabled();
   });
 
   it('shows error on 404', async () => {
     mockFetchResponse(404, { error: 'Not found' });
     render(<ReservationForm />);
     await fillForm('RCMH-MISSING');
-    await userEvent.click(screen.getByRole('button'));
+    await userEvent.click(screen.getByRole('button', { name: 'continue' }));
     await waitFor(() => expect(screen.getByText('checkBookingIdOrName')).toBeInTheDocument());
   });
 
@@ -78,7 +78,7 @@ describe('ReservationForm (CharlieM)', () => {
     mockFetchResponse(200, data);
     render(<ReservationForm />);
     await fillForm('RCMH-OK');
-    await userEvent.click(screen.getByRole('button'));
+    await userEvent.click(screen.getByRole('button', { name: 'continue' }));
     await waitFor(() => expect(mockSetGuestData).toHaveBeenCalledWith(data));
   });
 
@@ -87,7 +87,7 @@ describe('ReservationForm (CharlieM)', () => {
     mockFetchResponse(200, { id: 'gw-1' });
     render(<ReservationForm />);
     await fillForm('RCMH-ANON');
-    await userEvent.click(screen.getByRole('button'));
+    await userEvent.click(screen.getByRole('button', { name: 'continue' }));
     await waitFor(() => expect(mockSignInAnonymously).toHaveBeenCalled());
   });
 
@@ -95,7 +95,7 @@ describe('ReservationForm (CharlieM)', () => {
     mockFetchResponse(200, { id: 'gw-1' });
     render(<ReservationForm />);
     await fillForm('RCMH-REDIR');
-    await userEvent.click(screen.getByRole('button'));
+    await userEvent.click(screen.getByRole('button', { name: 'continue' }));
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/profile/reservations'));
   });
 });

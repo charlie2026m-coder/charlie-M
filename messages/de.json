@@ -611,7 +611,7 @@
     "showLess": "Weniger anzeigen",
     "showMore": "Mehr anzeigen",
     "reservationNotFoundCheckId": "Reservierung nicht gefunden. Bitte überprüfen Sie die Nummer.",
-    "reservationIdExample": "Beispiel: XXXXX-1 (muss mit -1 enden)",
+    "reservationIdExample": "Beispiel: XXXXX-0 (muss mit -0 enden)",
     "checkBookingId": "Bitte überprüfen Sie die Buchungsnummer",
     "noMatchesFound": "Leider wurden keine Übereinstimmungen gefunden",
     "serverErrorTryAgain": "Serverfehler. Bitte versuchen Sie es erneut.",
@@ -878,7 +878,8 @@
     "helpStep1": "Geben Sie Ihre Reservierungs-ID aus der Buchungsbestätigungs-E-Mail ein (Format: XXXXX-0, z.B. RKAA-1234-0).",
     "helpStep2": "Wir überprüfen Ihre Buchung und rufen Ihre Reservierungsdaten ab.",
     "helpStep3": "Sie werden auf eine sichere Seite weitergeleitet, um Ihren Check-In abzuschließen.",
-    "helpStep4": "Ihr persönlicher PIN-Code ist am Morgen Ihres Anreisetages verfügbar."
+    "helpStep4": "Ihr persönlicher PIN-Code ist am Morgen Ihres Anreisetages verfügbar.",
+    "helpCantFind": "Nicht gefunden? Schreiben Sie uns auf WhatsApp"
   },
   "termsAndConditions": {
     "title": "Allgemeine Geschäftsbedingungen",

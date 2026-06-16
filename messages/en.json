@@ -611,7 +611,7 @@
     "showLess": "Show less",
     "showMore": "Show more",
     "reservationNotFoundCheckId": "Reservation not found. Please check the ID.",
-    "reservationIdExample": "Example: XXXXX-1 (must end with -1)",
+    "reservationIdExample": "Example: XXXXX-0 (must end with -0)",
     "checkBookingId": "Please check the booking ID",
     "noMatchesFound": "Unfortunately, no matches found",
     "serverErrorTryAgain": "Server error. Please try again.",
@@ -878,7 +878,8 @@
     "helpStep1": "Enter your Reservation ID from the booking confirmation email (format: XXXXX-0, e.g. RKAA-1234-0).",
     "helpStep2": "We verify your booking and retrieve your reservation details.",
     "helpStep3": "You will be redirected to a secure page to complete your check-in.",
-    "helpStep4": "Your personal PIN code will be ready on the morning of your arrival day."
+    "helpStep4": "Your personal PIN code will be ready on the morning of your arrival day.",
+    "helpCantFind": "Can't find it? Message us on WhatsApp"
   },
   "termsAndConditions": {
     "title": "Terms and Conditions",
