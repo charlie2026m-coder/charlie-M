@@ -59,9 +59,11 @@ const ChangeDate = ({ arrival, departure }: { arrival: string, departure: string
         sideOffset={10}
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
-        <Calendar 
+        <Calendar
           mode="range"
           captionLayout="label"
+          showOutsideDays={false}
+          fixedWeeks={false}
           selected={dateRange}
           defaultMonth={dateRange?.from || new Date(arrival)}
           onSelect={(date) => {

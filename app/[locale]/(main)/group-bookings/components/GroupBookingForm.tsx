@@ -350,6 +350,8 @@ const GroupBookingForm = ({ locale }: { locale: string }) => {
                       mode="range"
                       numberOfMonths={numberOfMonths}
                       captionLayout="label"
+                      showOutsideDays={false}
+                      fixedWeeks={false}
                       selected={dateRange}
                       defaultMonth={dateRange?.from ?? minDate}
                       onSelect={(_range, triggerDate) => {
