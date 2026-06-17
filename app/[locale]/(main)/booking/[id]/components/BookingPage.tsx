@@ -53,6 +53,61 @@ const BookingPage = ({
 
   useScrollToBookingSection()
 
+  // These effects MUST be declared before the early returns below (Rules of
+  // Hooks) — otherwise a date change that drops mainRoom to null renders fewer
+  // hooks than the previous render and crashes the page. They no-op internally
+  // on the unavailable / no-rate-plan paths.
+  useEffect(() => {
+    if (typeof window === 'undefined') return // Skip SSR
+    if (isUnavailable || !mainRoom) return
+
+    if (!useBookingStore.persist.hasHydrated()) {
+      useBookingStore.persist.rehydrate()
+      return
+    }
+
+    const storedBookingId = useBookingStore.getState().bookingId
+    const storedRooms = useBookingStore.getState().rooms
+
+    const currentBookingId = `${mainRoom.id || mainRoom.ratePlan?.id}-${from}-${to}-${adults}-${children}`
+
+    if (storedBookingId && storedBookingId !== currentBookingId) {
+      if (isExtend && booking?.booker) {
+        const savedBooker = booking.booker
+        clearBooking()
+        setBooking({ booker: savedBooker, reservations: [] })
+        setIsExtend(false)
+      } else {
+        clearBooking()
+      }
+      setRooms(filledRooms as Room[])
+      setBookingId(currentBookingId)
+    } else if (!storedBookingId) {
+      if (!storedRooms || storedRooms.length === 0) {
+        setBookingId(currentBookingId)
+        setRooms(filledRooms as Room[])
+      } else {
+        setBookingId(currentBookingId)
+      }
+    }
+  }, [from, to, adults, children, mainRoom?.id, mainRoom?.ratePlan?.id, isKidsBedAvailable, isUnavailable])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (isUnavailable || !mainRoom) return
+    if (!useBookingStore.persist.hasHydrated()) return
+
+    const currentBookingId = `${mainRoom.id || mainRoom.ratePlan?.id}-${from}-${to}-${adults}-${children}`
+    const storedRoomDetails = useBookingStore.getState().roomDetails
+    const storedBookingId = useBookingStore.getState().bookingId
+
+    if (storedBookingId !== currentBookingId || !storedRoomDetails) {
+      setParams({ from, to, nights })
+      setRoomDetails(mainRoom)
+      setExtras(extras)
+    }
+  }, [from, to, adults, children, mainRoom?.id, mainRoom?.ratePlan?.id, extras, isUnavailable])
+
   // When Apaleo is unavailable, show Supabase content with date picker only
   if (isUnavailable && roomDetail) {
     return (
@@ -76,61 +131,6 @@ const BookingPage = ({
   }
 
   if (!mainRoom) return <div className="p-10 text-center">{tCommon('bookingForm.unavailableForDates')}</div>
-  
-  useEffect(() => {
-    if (typeof window === 'undefined') return // Skip SSR
-    
-    if (!useBookingStore.persist.hasHydrated()) {
-      useBookingStore.persist.rehydrate()
-      return
-    }
-    
-    const storedBookingId = useBookingStore.getState().bookingId
-    const storedRooms = useBookingStore.getState().rooms
-    
-    const currentBookingId = `${mainRoom.id || mainRoom.ratePlan?.id}-${from}-${to}-${adults}-${children}`
-
-    if (storedBookingId && storedBookingId !== currentBookingId) {
-      if (isExtend && booking?.booker) {
-        const savedBooker = booking.booker
-        
-        clearBooking()
-        
-        setBooking({
-          booker: savedBooker,
-          reservations: []
-        })
-        setIsExtend(false)
-      } else {
-        clearBooking()
-      }
-      
-      setRooms(filledRooms as Room[])
-      setBookingId(currentBookingId)
-    } else if (!storedBookingId) {
-      if (!storedRooms || storedRooms.length === 0) {
-        setBookingId(currentBookingId)
-        setRooms(filledRooms as Room[])
-      } else {
-        setBookingId(currentBookingId)
-      }
-    }
-  }, [from, to, adults, children, mainRoom.id, mainRoom.ratePlan?.id, isKidsBedAvailable])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    if (!useBookingStore.persist.hasHydrated()) return
-    
-    const currentBookingId = `${mainRoom.id || mainRoom.ratePlan?.id}-${from}-${to}-${adults}-${children}`
-    const storedRoomDetails = useBookingStore.getState().roomDetails
-    const storedBookingId = useBookingStore.getState().bookingId
-    
-    if (storedBookingId !== currentBookingId || !storedRoomDetails) {
-      setParams({ from, to, nights })
-      setRoomDetails(mainRoom)
-      setExtras(extras)
-    }
-  }, [from, to, adults, children, mainRoom.id, mainRoom.ratePlan?.id, extras])
 
   return (
     <>  

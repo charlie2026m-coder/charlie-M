@@ -1,8 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 import { getOrRefreshToken } from '@/services/Request';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { verifyReservationOwnership } from '@/lib/verifyReservationOwnership';
 
 const APALEO_API_URL = 'https://api.apaleo.com';
+
+function createAdminClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } },
+  );
+}
 const PDF_RETRY_ATTEMPTS = 3;
 const PDF_RETRY_DELAY_MS = 1500;
 
@@ -21,6 +31,24 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // Authorize: don't trust a raw invoiceId. It must belong to a reservation
+    // the user owns. invoice_states maps reservation_id↔invoice_id (written
+    // when the invoice was created); resolve it and verify ownership before
+    // streaming any PDF.
+    const admin = createAdminClient();
+    const { data: state } = await admin
+      .from('invoice_states')
+      .select('reservation_id')
+      .eq('invoice_id', invoiceId)
+      .maybeSingle();
+    if (!state) {
+      return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
+    }
+    const ownership = await verifyReservationOwnership(supabase, user, state.reservation_id);
+    if (!ownership.ok) {
+      return NextResponse.json({ error: ownership.error }, { status: ownership.status });
+    }
+
     const token = await getOrRefreshToken();
 
     for (let attempt = 1; attempt <= PDF_RETRY_ATTEMPTS; attempt++) {

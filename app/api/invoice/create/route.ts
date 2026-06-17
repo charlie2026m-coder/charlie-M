@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { Fetch, getOrRefreshToken } from '@/services/Request';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { verifyReservationInProperty } from '@/services/verifyReservationInProperty';
+import { verifyReservationOwnership } from '@/lib/verifyReservationOwnership';
 import type {
   ApaleoInvoiceListResponse,
   FolioDebitor,
@@ -22,8 +22,9 @@ function createAdminClient() {
 }
 
 export async function POST(request: NextRequest) {
-  // Session is required (registered or anonymous via guest booking-id login),
-  // but reservation ownership is enforced by property match, not by email.
+  // Session is required, and the user must OWN the reservation (email match or
+  // a reservations-table link) — knowing the id is not enough, or any guest
+  // session could close/lock another guest's folio.
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -44,9 +45,9 @@ export async function POST(request: NextRequest) {
 
     const reservationId = folioToReservationId(folioId);
 
-    const verified = await verifyReservationInProperty(reservationId);
-    if (!verified.ok) {
-      return NextResponse.json({ error: verified.error }, { status: verified.status });
+    const ownership = await verifyReservationOwnership(supabase, user, reservationId);
+    if (!ownership.ok) {
+      return NextResponse.json({ error: ownership.error }, { status: ownership.status });
     }
 
     const admin = createAdminClient();

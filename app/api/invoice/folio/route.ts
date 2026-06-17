@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { Fetch, getOrRefreshToken } from '@/services/Request';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { verifyReservationInProperty } from '@/services/verifyReservationInProperty';
+import { verifyReservationOwnership } from '@/lib/verifyReservationOwnership';
 import type { FolioResponse, ApaleoInvoiceListResponse, FolioDebitor } from '@/types/apaleo';
 
 const APALEO_API_URL = 'https://api.apaleo.com';
@@ -30,9 +30,9 @@ export async function GET(request: NextRequest) {
   try {
     const reservationId = folioToReservationId(folioId);
 
-    const verified = await verifyReservationInProperty(reservationId);
-    if (!verified.ok) {
-      return NextResponse.json({ error: verified.error }, { status: verified.status });
+    const ownership = await verifyReservationOwnership(supabase, user, reservationId);
+    if (!ownership.ok) {
+      return NextResponse.json({ error: ownership.error }, { status: ownership.status });
     }
 
     const folioIdQuery = encodeURIComponent(folioId);
@@ -85,9 +85,9 @@ export async function PATCH(request: NextRequest) {
 
     const reservationId = folioToReservationId(folioId);
 
-    const verified = await verifyReservationInProperty(reservationId);
-    if (!verified.ok) {
-      return NextResponse.json({ error: verified.error }, { status: verified.status });
+    const ownership = await verifyReservationOwnership(supabase, user, reservationId);
+    if (!ownership.ok) {
+      return NextResponse.json({ error: ownership.error }, { status: ownership.status });
     }
 
     const admin = createAdminClient();
