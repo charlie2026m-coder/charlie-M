@@ -104,9 +104,14 @@ function Calendar({
           "relative w-full h-[40px] p-0 text-center text-[14px] border-1 border-white bg-transparent text-gray-900 group/day select-none",
           defaultClassNames.day
         ),
-        range_start: cn("bg-blue/35", defaultClassNames.range_start),
-        range_middle: cn("bg-blue/35", defaultClassNames.range_middle),
-        range_end: cn("bg-blue/35", defaultClassNames.range_end),
+        // Range band: translucent gold fill on the cells between check-in and
+        // check-out. !bg beats the day's bg-transparent base (otherwise the
+        // middle shows nothing), !border-0 so the cells touch into a seamless
+        // band, rounded on the two outer ends. The solid gold endpoint circles
+        // are drawn by the DayButton on top.
+        range_start: cn("!bg-dark-gold/25 rounded-l-full !border-0", defaultClassNames.range_start),
+        range_middle: cn("!bg-dark-gold/25 !border-0", defaultClassNames.range_middle),
+        range_end: cn("!bg-dark-gold/25 rounded-r-full !border-0", defaultClassNames.range_end),
         today: cn(
           "bg-accent text-accent-foreground",
           defaultClassNames.today
@@ -200,7 +205,7 @@ function CalendarDayButton({
       data-range-middle={modifiers.range_middle}
       data-outside={modifiers.outside}
       className={cn(
-        "rounded-none text-[14px] max-h-[40px] bg-transparent text-gray-900 hover:bg-gray-50 data-[selected-single=true]:bg-dark-gold data-[selected-single=true]:text-white data-[selected-single=true]:rounded-l-[4px] data-[selected-single=true]:!rounded-r-none data-[range-middle=true]:text-mute data-[range-start=true]:bg-dark-gold data-[range-start=true]:text-white data-[range-start=true]:rounded-l-[4px] data-[range-start=true]:!rounded-r-none data-[range-end=true]:bg-dark-gold data-[range-end=true]:text-white data-[range-end=true]:rounded-r-[4px] data-[range-end=true]:!rounded-l-none data-[outside=true]:text-gray-300 data-[outside=true]:pointer-events-none data-[outside=true]:hover:bg-white dark:hover:text-accent-foreground flex aspect-square size-auto w-full min-w-(--cell-size) flex-col gap-1 leading-none font-normal [&>span]:text-xs [&>span]:opacity-70",
+        "rounded-none text-[14px] max-h-[40px] bg-transparent text-gray-900 hover:bg-gray-50 data-[selected-single=true]:bg-dark-gold data-[selected-single=true]:text-white data-[selected-single=true]:rounded-full data-[range-middle=true]:bg-dark-gold/25 data-[range-middle=true]:text-mute data-[range-start=true]:bg-dark-gold data-[range-start=true]:text-white data-[range-start=true]:rounded-full data-[range-end=true]:bg-dark-gold data-[range-end=true]:text-white data-[range-end=true]:rounded-full data-[outside=true]:text-gray-300 data-[outside=true]:pointer-events-none data-[outside=true]:hover:bg-white dark:hover:text-accent-foreground flex aspect-square size-auto w-full min-w-(--cell-size) flex-col gap-1 leading-none font-normal [&>span]:text-xs [&>span]:opacity-70",
         defaultClassNames.day,
         className
       )}
