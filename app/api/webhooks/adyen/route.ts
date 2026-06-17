@@ -7,6 +7,7 @@ import { adyenLog, bookingLog, apaleoLog } from "@/lib/logger"
 import { reversePayment } from "@/app/actions/adyen/reversePayment"
 import { createPaymentAccount } from "@/services/apaleo/createPaymentAccount"
 import { cancelReservation } from "@/services/apaleo/cancelReservation"
+import { correctPastArrivals } from "@/lib/correctPastArrival"
 import crypto from "crypto"
 
 // Webhook has no user session — must use service_role to bypass RLS
@@ -36,6 +37,13 @@ function verifyHmacSignature(notificationItem: any, hmacKey: string): boolean {
 
     if (!hmacSignature) return false
 
+    // Adyen requires each field be escaped (\ -> \\, : -> \:) BEFORE joining
+    // with ':'. AUTHORISATION refs are colon-free so it verified either way and
+    // hid this, but refund/chargeback refs are `${reservationId}::${psp}` — the
+    // unescaped join produced a different string and silently dropped every
+    // refund-family webhook once HMAC is enabled.
+    const escapeHmac = (v: unknown) =>
+      String(v ?? '').replace(/\\/g, '\\\\').replace(/:/g, '\\:')
     const payload = [
       notificationItem.pspReference,
       notificationItem.originalReference || '',
@@ -45,7 +53,7 @@ function verifyHmacSignature(notificationItem: any, hmacKey: string): boolean {
       notificationItem.amount?.currency,
       notificationItem.eventCode,
       notificationItem.success,
-    ].join(':')
+    ].map(escapeHmac).join(':')
 
     const key = Buffer.from(hmacKey, 'hex')
     const expectedSignature = crypto
@@ -154,6 +162,14 @@ async function createBookingFromPending(
   const booking = {
     ...pendingBooking.booking_payload,
     transactionReference: pspReference,
+  }
+
+  // Apaleo rejects bookings whose arrival is already in the past. The client
+  // create path corrects this; the webhook (the path taken when the guest
+  // closes the tab after paying) must too — otherwise a same-day booking paid
+  // after the check-in hour is rejected and auto-refunded (guest paid, no room).
+  if (Array.isArray(booking.reservations)) {
+    booking.reservations = correctPastArrivals(booking.reservations)
   }
 
   apaleoLog.info('webhook → Apaleo POST /bookings', {
