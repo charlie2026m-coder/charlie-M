@@ -28,6 +28,7 @@ const BookingPage = ({
     adults: string
     children: string
     rooms: RoomOffer[]
+    allOffers: RoomOffer[]
     roomDetail?: RoomDetails
     filledRooms: Room[]
     extras: Service[]
@@ -36,7 +37,7 @@ const BookingPage = ({
     isUnavailable?: boolean
   }
 }) => {
-  const { from, to, adults, children, rooms, roomDetail, filledRooms, extras, isKidsBedAvailable = true, babyBedAvailability, isUnavailable = false } = params
+  const { from, to, adults, children, rooms, allOffers, roomDetail, filledRooms, extras, isKidsBedAvailable = true, babyBedAvailability, isUnavailable = false } = params
   const setRooms = useBookingStore(state => state.setRooms)
   const setRoomDetails = useBookingStore(state => state.setRoomDetails)
   const setParams = useBookingStore(state => state.setParams)
@@ -146,7 +147,7 @@ const BookingPage = ({
           />}
         </div>
         <div className='col-span-1 gap-5 flex flex-col'>
-          <RefundCard rooms={rooms} nights={nights} checkInDate={from} />
+          <RefundCard offers={allOffers} nights={nights} checkInDate={from} />
           <BookingMenu 
             rooms={rooms} 
             params={{ from, to, adults, children }} 

@@ -398,6 +398,11 @@ export async function POST(request: Request) {
     const berlinOffsetMs = getBerlinOffsetMs(now)
 
     const adjustedReservations = booking.reservations.map(reservation => {
+      // Strip the server-only `children` count — it is not an Apaleo reservation
+      // field (Apaleo uses childrenAges) and is only used by payment validation.
+      const apaleoReservation = { ...reservation }
+      delete apaleoReservation.children
+
       const arrivalDateStr = reservation.arrival.slice(0, 10)
       const arrivalCheckinUTC = new Date(`${arrivalDateStr}T${String(HOTEL_CHECKIN_HOUR).padStart(2, '0')}:00:00Z`).getTime() - berlinOffsetMs
       const arrivalCheckin = new Date(arrivalCheckinUTC)
@@ -409,10 +414,10 @@ export async function POST(request: Request) {
           hotelCheckinHour: HOTEL_CHECKIN_HOUR,
           corrected,
         })
-        return { ...reservation, arrival: corrected }
+        return { ...apaleoReservation, arrival: corrected }
       }
 
-      return reservation
+      return apaleoReservation
     })
 
     const bookingPayload = {
@@ -524,6 +529,16 @@ export async function POST(request: Request) {
     // can escape to the outer catch unrolled, no money sits charged without
     // a recorded outcome on the Apaleo side.
     try {
+      // Defensive: folio capture below pairs each Apaleo reservation id with the
+      // request reservation BY INDEX (Apaleo returns ids in request order). If the
+      // counts ever diverge, indexing would capture wrong/undefined amounts — fail
+      // the booking (cleanup + refund) instead of mis-capturing.
+      if (apaleoReservationIds.length !== booking.reservations.length) {
+        throw new Error(
+          `Apaleo returned ${apaleoReservationIds.length} reservation ids for ${booking.reservations.length} reservations`,
+        )
+      }
+
       // Step 3: persist Apaleo IDs; status stays 'processing' until all
       // PAs + captures land.
       await supabaseAdmin

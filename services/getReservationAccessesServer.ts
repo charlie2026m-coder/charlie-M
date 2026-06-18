@@ -83,8 +83,8 @@ export async function getReservationAccessesServer(
     }
 
     const data: GuestwayApiResponse = await response.json();
-    console.log('✅ [Guestway] Full response data:', JSON.stringify(data, null, 2));
-    
+    // NOTE: never log `data` — it contains door PINs / smart-lock codes (PII).
+
     // Check if data is empty
     if (!data.data || data.data.length === 0) {
       console.warn('⚠️ [Guestway] No access data found for confirmation codes:', ids);

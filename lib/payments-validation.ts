@@ -262,7 +262,12 @@ export async function validatePaymentAmount(
           count: 1,
         })),
       } as unknown as RoomExtra
-      extrasTotal += getExtraPrice(asRoomExtra, adults, nights, from, to)
+      // Per-person services (e.g. breakfast, usageType.Person) are priced for
+      // EVERY guest in the room — adults AND children — exactly as the client
+      // does (BookingMenu: room.adults + room.children). Using adults only here
+      // rejected legitimate family + breakfast bookings as an amount mismatch.
+      const serviceGuests = adults + ((reservation as { children?: number }).children ?? 0)
+      extrasTotal += getExtraPrice(asRoomExtra, serviceGuests, nights, from, to)
     }
 
     // Mirror formatReservations: round per reservation, then sum and round

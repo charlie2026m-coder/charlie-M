@@ -323,6 +323,10 @@ export const formatReservations = (
       arrival: arrivalDate,
       departure: departureDate,
       adults: item.adults,
+      // Server-only: lets payment validation price per-person services for the
+      // same guest count the client used (adults + children). Stripped before
+      // the Apaleo POST in bookings/create and the webhook.
+      children: item.children,
       channelCode: 'IBE' as const,
       guaranteeType: 'Prepayment' as const,
       timeSlices,

@@ -19,6 +19,10 @@ export interface Booking {
     arrival: string;
     departure: string;
     adults: number;
+    // Child count for this reservation. Server-only: used by payment validation
+    // to price per-person services (e.g. breakfast) the same way the client does
+    // (adults + children). Stripped before the Apaleo POST — Apaleo uses childrenAges.
+    children?: number;
     childrenAges?: number[], // optional maybe
     channelCode: "IBE",
 

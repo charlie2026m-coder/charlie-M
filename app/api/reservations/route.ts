@@ -83,7 +83,8 @@ export async function GET(request: Request) {
     const reservationIds = formattedReservations.map(r => r.id);
     if (reservationIds.length > 0) {
       const accessDataList = await getReservationAccessesServer(reservationIds);
-      console.log('🔑 Reservation Accesses:', accessDataList);
+      // NOTE: never log accessDataList — it contains door PINs / smart-lock
+      // codes (PII). Logging it leaked guest entry codes in cleartext.
 
       formattedReservations = formattedReservations.map(reservation => {
         const accessInfo = accessDataList.find(item => item.confirmationCode === reservation.id);
