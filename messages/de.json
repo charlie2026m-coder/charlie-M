@@ -329,7 +329,11 @@
     "cancel": "Abbrechen",
     "apply": "Übernehmen",
     "nights": "{count, plural, =1 {# Nacht} other {# Nächte}}",
-    "priceFromPerNight": "ab €{price} / Nacht"
+    "priceFromPerNight": "ab €{price} / Nacht",
+    "soldOutInRange": "Ausgebucht am {date} — bitte andere Daten wählen",
+    "minNights": "Mindestaufenthalt: {count, plural, =1 {# Nacht} other {# Nächte}} ab diesem Datum",
+    "checkingAvailability": "Verfügbarkeit wird geprüft…",
+    "noCheckoutFromDate": "Kein Check-out ab diesem Datum möglich — bitte ein anderes wählen"
   },
   "imprint": {
     "title": "Impressum gemäß § 5 TMG",
