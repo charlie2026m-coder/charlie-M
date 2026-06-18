@@ -52,7 +52,7 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
   // The custom two-click onSelect below bypasses the library's excludeDisabled
   // truncation, so a completed range is re-checked against sold-out nights via
   // the shared helper (same rule in BookingForm — review #5).
-  const { isSoldOut, dayAvailability, rangeHasSoldOutNight } = useMonthAvailability(availFrom, availTo);
+  const { isSoldOut, rangeHasSoldOutNight } = useMonthAvailability(availFrom, availTo);
 
   useEffect(() => {
     const update = () => setNumberOfMonths(window.innerWidth >= 1024 ? 2 : 1);
@@ -112,25 +112,9 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
     }
   }, [params, setValue])
 
-  // Seed a default today→tomorrow range once — but ONLY after availability
-  // confirms the arrival night is bookable. Seeding a sold-out default made
-  // the date field flicker (seed → the drop-effect below clears it) and fire a
-  // wasted price fetch on every remount of the sticky form (review #4). When
-  // the night is unknown we wait (the effect re-runs as availability loads);
-  // when it's sold out we leave the field empty for the guest to pick.
-  const seededRef = useRef(false);
-  useEffect(() => {
-    if (seededRef.current) return;
-    if (params || (dateRange?.from && dateRange?.to)) { seededRef.current = true; return; }
-    const from = getMinArrivalDate();
-    const known = dayAvailability(from);
-    if (!known) return; // not loaded yet — re-runs when availability arrives
-    if (!known.available) { seededRef.current = true; return; } // sold out → leave empty
-    const to = new Date(from);
-    to.setDate(to.getDate() + 1);
-    setValue({ from, to }, 'dateRange');
-    seededRef.current = true;
-  }, [params, dateRange?.from, dateRange?.to, dayAvailability, setValue])
+  // No seeded default range — the calendar opens empty so the guest clearly
+  // picks their own dates. Deep-link ?from/?to and a stored range still populate
+  // it (handled by the effects above).
 
   const triggerSearch = (rangeOverride?: DateRange, closeCalendar = false) => {
     const r = rangeOverride ?? dateRange;
@@ -281,7 +265,17 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
               onMonthChange={setVisibleMonth}
               showOutsideDays={false}
               fixedWeeks={false}
-              modifiers={{ soldOut: isSoldOut }}
+              modifiers={{
+                soldOut: (date: Date) => {
+                  // While picking the CHECKOUT, only strike days whose stay would
+                  // CROSS a sold-out night — a valid checkout (incl. the sold-out
+                  // day itself, you leave that morning) stays normal/selectable.
+                  if (pickingCheckout && checkinRef.current && date.getTime() > checkinRef.current.getTime()) {
+                    return rangeHasSoldOutNight(checkinRef.current, date);
+                  }
+                  return isSoldOut(date);
+                },
+              }}
               modifiersClassNames={{ soldOut: 'line-through' }}
               onSelect={(_date, triggerDate) => {
                 if (!triggerDate) return;

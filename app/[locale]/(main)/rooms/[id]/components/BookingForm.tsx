@@ -296,7 +296,17 @@ const BookingForm = ({
               onMonthChange={setVisibleMonth}
               showOutsideDays={false}
               fixedWeeks={false}
-              modifiers={{ soldOut: isSoldOut }}
+              modifiers={{
+                soldOut: (date: Date) => {
+                  // While picking the CHECKOUT, only strike days whose stay would
+                  // CROSS a sold-out night — a valid checkout (incl. the sold-out
+                  // day itself, you leave that morning) stays normal/selectable.
+                  if (pickingCheckout && checkinRef.current && date.getTime() > checkinRef.current.getTime()) {
+                    return rangeHasSoldOutNight(checkinRef.current, date)
+                  }
+                  return isSoldOut(date)
+                },
+              }}
               modifiersClassNames={{ soldOut: 'line-through' }}
               classNames={{ months: 'flex flex-col lg:flex-row gap-4' }}
               onSelect={(_date, triggerDate) => {
