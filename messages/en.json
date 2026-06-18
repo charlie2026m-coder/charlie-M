@@ -329,7 +329,11 @@
     "cancel": "Cancel",
     "apply": "Apply",
     "nights": "{count, plural, =1 {# night} other {# nights}}",
-    "priceFromPerNight": "from €{price} / night"
+    "priceFromPerNight": "from €{price} / night",
+    "soldOutInRange": "Sold out on {date} — please pick other dates",
+    "minNights": "Minimum stay: {count, plural, =1 {# night} other {# nights}} from this date",
+    "checkingAvailability": "Checking availability…",
+    "noCheckoutFromDate": "No checkout available from this date — please pick another"
   },
   "imprint": {
     "title": "Information pursuant to Section 5 of the German Telemedia Act (TMG)",

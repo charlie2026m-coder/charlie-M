@@ -64,6 +64,91 @@ describe('fetchNearestAvailableRooms', () => {
     expect(rooms.find((r) => r.roomId === 'CMH-CDR')?.oneNightPrice).toBe(171);
   });
 
+  it('advances to the nearest PRICED night, skipping a free-but-priceless earlier night', async () => {
+    // The fix: a night can be free yet have no bookable 1-night offer (rate plan
+    // unpublished / min-stay restriction). The old code priced only the first
+    // free night, got 0, and dropped the room on prod. Now it walks forward to
+    // the nearest night that actually prices and shows THAT date.
+    vi.stubEnv('VERCEL_ENV', 'production');
+    mockFetch.mockResolvedValueOnce({
+      timeSlices: [
+        slice('2026-06-15', { 'CMH-SPK': 3 }), // free tonight but no 1-night offer
+        slice('2026-06-16', { 'CMH-SPK': 3 }), // free AND priced
+      ],
+    } as never);
+    mockGetPrices.mockImplementation(async (from?: string) => {
+      if (from === '2026-06-16') return [{ roomId: 'CMH-SPK', minNightPrice: 140 }];
+      return []; // 2026-06-15 returns no offer
+    });
+
+    const rooms = await fetchNearestAvailableRooms();
+    expect(rooms).toEqual([
+      { roomId: 'CMH-SPK', arrival: '2026-06-16', departure: '2026-06-17', oneNightPrice: 140 },
+    ]);
+    vi.unstubAllEnvs();
+  });
+
+  it('finds a priced night far past the first free nights (no per-room candidate cap)', async () => {
+    // SPK is free every night 06-15..06-30 but only PRICED on 06-27 (the 13th
+    // free night) — earlier nights carry a min-stay restriction. An earlier
+    // implementation only probed each room's first 8 free nights and would have
+    // dropped this genuinely-bookable room on prod. It must now surface at 06-27.
+    vi.stubEnv('VERCEL_ENV', 'production');
+    const slices = [];
+    for (let d = 15; d <= 30; d++) {
+      slices.push(slice(`2026-06-${String(d).padStart(2, '0')}`, { 'CMH-SPK': 2 }));
+    }
+    mockFetch.mockResolvedValueOnce({ timeSlices: slices } as never);
+    mockGetPrices.mockImplementation(async (from?: string) =>
+      from === '2026-06-27' ? [{ roomId: 'CMH-SPK', minNightPrice: 150 }] : [],
+    );
+
+    const rooms = await fetchNearestAvailableRooms();
+    expect(rooms).toEqual([
+      { roomId: 'CMH-SPK', arrival: '2026-06-27', departure: '2026-06-28', oneNightPrice: 150 },
+    ]);
+    vi.unstubAllEnvs();
+  });
+
+  it('retries a failed price probe once before giving up', async () => {
+    mockFetch.mockResolvedValueOnce({
+      timeSlices: [slice('2026-06-15', { 'CMH-CDR': 5 })],
+    } as never);
+    let calls = 0;
+    mockGetPrices.mockImplementation(async () => {
+      calls++;
+      if (calls === 1) throw new Error('Apaleo API error: 429'); // transient
+      return [{ roomId: 'CMH-CDR', minNightPrice: 171 }];
+    });
+
+    const rooms = await fetchNearestAvailableRooms();
+    expect(calls).toBe(2); // first attempt threw, retried once, second succeeded
+    expect(rooms.find((r) => r.roomId === 'CMH-CDR')).toMatchObject({
+      arrival: '2026-06-15',
+      oneNightPrice: 171,
+    });
+  });
+
+  it('a probe that fails twice does not crash and the room falls through to its next priced night', async () => {
+    vi.stubEnv('VERCEL_ENV', 'production');
+    mockFetch.mockResolvedValueOnce({
+      timeSlices: [
+        slice('2026-06-15', { 'CMH-CDR': 5 }), // probe always fails here
+        slice('2026-06-16', { 'CMH-CDR': 5 }), // priced
+      ],
+    } as never);
+    mockGetPrices.mockImplementation(async (from?: string) => {
+      if (from === '2026-06-15') throw new Error('Apaleo API error: 503'); // both attempts fail
+      return [{ roomId: 'CMH-CDR', minNightPrice: 171 }];
+    });
+
+    const rooms = await fetchNearestAvailableRooms();
+    expect(rooms).toEqual([
+      { roomId: 'CMH-CDR', arrival: '2026-06-16', departure: '2026-06-17', oneNightPrice: 171 },
+    ]);
+    vi.unstubAllEnvs();
+  });
+
   it('excludes rooms with zero availability across the whole window', async () => {
     mockFetch.mockResolvedValueOnce({
       timeSlices: [
@@ -83,7 +168,7 @@ describe('fetchNearestAvailableRooms', () => {
     await fetchNearestAvailableRooms();
     // All three share 2026-06-15 → a single getPrices call.
     expect(mockGetPrices).toHaveBeenCalledTimes(1);
-    expect(mockGetPrices).toHaveBeenCalledWith('2026-06-15', '2026-06-16', 1);
+    expect(mockGetPrices).toHaveBeenCalledWith('2026-06-15', '2026-06-16', 1, { throwOnError: true });
   });
 
   it('returns [] when Apaleo availability fails (no crash)', async () => {

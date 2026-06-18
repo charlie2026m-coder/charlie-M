@@ -1,6 +1,6 @@
 'use client'
 import { IoMdImage } from "react-icons/io";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from 'next/image'
 import { Dialog, DialogContent } from "@/app/_components/ui/dialog";
 
@@ -46,6 +46,22 @@ const PhotoGallery = ({ images, roomName }: { images: string[]; roomName?: strin
   const handleNextClick = (e: React.MouseEvent) => {
     e.stopPropagation()
     nextPhoto()
+  }
+
+  // Touch swipe (mobile): a horizontal drag changes the photo — swipe left →
+  // next, swipe right → previous. A tap (tiny delta) is ignored so the
+  // tap-to-advance / arrow controls still work.
+  const touchStartX = useRef<number | null>(null)
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0]?.clientX ?? null
+  }
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return
+    const dx = (e.changedTouches[0]?.clientX ?? touchStartX.current) - touchStartX.current
+    touchStartX.current = null
+    if (Math.abs(dx) < 40) return
+    if (dx < 0) nextPhoto()
+    else prevPhoto()
   }
 
   // Show placeholder if no images
@@ -132,7 +148,7 @@ const PhotoGallery = ({ images, roomName }: { images: string[]; roomName?: strin
           onInteractOutside={(e) => e.preventDefault()}
         >
           <div className='flex items-center justify-center select-none'>
-            <div className='relative'>
+            <div className='relative' onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={images[showImages || 0]}

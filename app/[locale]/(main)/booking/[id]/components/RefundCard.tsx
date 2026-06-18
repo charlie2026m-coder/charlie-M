@@ -20,7 +20,7 @@ dayjs.extend(timezone)
 const EARLY_CHECKIN_ID = 'CMH-ECI'
 const CANCELLATION_HOURS = 48
 
-const RefundCard = ({ rooms, nights, checkInDate }: { rooms: RoomOffer[], nights: number, checkInDate: string }) => {
+const RefundCard = ({ offers, nights, checkInDate }: { offers: RoomOffer[], nights: number, checkInDate: string }) => {
   const t = useTranslations('bookingForm')
   const locale = useLocale()
   const { isRefundable, setIsRefundable, setRoomDetails, rooms: bookedRooms } = useBookingStore()
@@ -45,7 +45,7 @@ const RefundCard = ({ rooms, nights, checkInDate }: { rooms: RoomOffer[], nights
 
   const handleRefundChange = (value: string) => {
     const isRefundable = value === 'true'
-    const mainRoom = resolveRatePlan(rooms, nights, isRefundable)
+    const mainRoom = resolveRatePlan(offers, nights, isRefundable)
     if (!mainRoom) return
     setIsRefundable(isRefundable)
     setRoomDetails(mainRoom)

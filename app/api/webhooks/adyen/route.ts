@@ -154,8 +154,11 @@ async function createBookingFromPending(
       bookingLog.info('webhook: lock taken by another process — skipping', { pspReference })
       return { alreadyProcessing: true }
     }
-    // Non-conflict lock error — proceed anyway so we don't drop a paid booking.
-    bookingLog.error('webhook: lock insert failed — proceeding without lock', { error: lockError })
+    // Non-conflict lock error — fail CLOSED (mirror the client create path) so we
+    // don't race a second booking create. The handler returns 503 and Adyen
+    // retries; by then the lock row exists and the 23505 branch short-circuits.
+    bookingLog.error('webhook: lock insert failed — failing closed for Adyen retry', { error: lockError })
+    return { lockFailed: true }
   }
 
   // 4. Create booking in Apaleo. Spread to avoid mutating the cached payload.
@@ -169,7 +172,13 @@ async function createBookingFromPending(
   // closes the tab after paying) must too — otherwise a same-day booking paid
   // after the check-in hour is rejected and auto-refunded (guest paid, no room).
   if (Array.isArray(booking.reservations)) {
-    booking.reservations = correctPastArrivals(booking.reservations)
+    // Fix past arrivals, then strip the server-only `children` count (used by
+    // payment validation, not an Apaleo reservation field).
+    booking.reservations = correctPastArrivals(booking.reservations).map((r: any) => {
+      const apaleoReservation = { ...r }
+      delete apaleoReservation.children
+      return apaleoReservation
+    })
   }
 
   apaleoLog.info('webhook → Apaleo POST /bookings', {
@@ -268,6 +277,19 @@ async function createBookingFromPending(
     })
     await cleanup()
     return { error: 'Apaleo returned a booking without reservation IDs' }
+  }
+
+  // Folio capture below pairs each Apaleo reservation id with the request
+  // reservation BY INDEX (Apaleo returns ids in request order). If the counts
+  // diverge, indexing would capture wrong/undefined amounts — roll back instead.
+  if (apaleoReservationIds.length !== booking.reservations.length) {
+    bookingLog.error('webhook: Apaleo reservation id count mismatch — rolling back', {
+      apaleoBookingId: apaleoData.id,
+      returned: apaleoReservationIds.length,
+      expected: booking.reservations.length,
+    })
+    await cleanup()
+    return { error: 'Apaleo reservation id count mismatch' }
   }
 
   // Atomic post-booking block: any throw → cleanup + structured error return.
@@ -691,13 +713,22 @@ export async function POST(request: NextRequest) {
       // We only act on successful authorisations; remaining event codes are
       // recorded above (reversals/disputes) or intentionally ignored.
       if (eventCode === 'AUTHORISATION' && success === 'true') {
+        let noPendingBooking = false
         try {
           const result = await createBookingFromPending(merchantReference, pspReference)
+          if ((result as { lockFailed?: boolean }).lockFailed) {
+            adyenLog.error('webhook: booking lock failed — returning 503 so Adyen retries', { reference: merchantReference, pspReference })
+            return new NextResponse('lock failed', { status: 503 })
+          }
           if (result.alreadyExists) { bookingLog.info('webhook: booking already exists', { bookingId: result.bookingId }); continue }
           if (result.alreadyProcessing) { bookingLog.info('webhook: booking already processing'); continue }
           if (result.cleared) { bookingLog.warn('webhook: pending payload cleared — refunded and skipped', { reference: merchantReference, pspReference }); continue }
           if (result.error) { bookingLog.error('webhook: booking failed — already refunded, not attempting services', { reference: merchantReference, error: result.error }); continue }
           else if (result.success) { bookingLog.success('webhook: booking created', { bookingId: result.bookingId }); continue }
+          // Reached here only when there was no pending booking row (noPending).
+          // Could be a genuine late-services payment, or an orphaned authorisation
+          // — distinguished below by whether a pending SERVICES row exists.
+          noPendingBooking = true
         } catch (error: any) {
           bookingLog.error('webhook: booking threw', { reference: merchantReference, error: error.message })
         }
@@ -714,7 +745,29 @@ export async function POST(request: NextRequest) {
         }
         try {
           const result = await bookPendingServices(merchantReference, pspReference, amountCents)
-          if (result.notFound) bookingLog.info('webhook: no pending services', { reference: merchantReference })
+          if (result.notFound) {
+            if (noPendingBooking) {
+              // No pending booking AND no pending service for this authorised
+              // payment → orphaned (e.g. the pending row was cleaned up before the
+              // webhook arrived). Money is captured with nothing to deliver → refund
+              // instead of silently dropping it (guest would otherwise be charged
+              // with no booking and no refund).
+              bookingLog.error('webhook: authorised payment matches no pending booking or service — refunding orphan', {
+                reference: merchantReference,
+                pspReference,
+              })
+              const reversal = await reversePayment(pspReference, { internalReference: merchantReference })
+              if (!reversal.success) {
+                bookingLog.error('webhook: orphan refund failed — manual intervention required', {
+                  reference: merchantReference,
+                  pspReference,
+                  refundError: reversal.error,
+                })
+              }
+            } else {
+              bookingLog.info('webhook: no pending services', { reference: merchantReference })
+            }
+          }
           else if (result.alreadyExists) bookingLog.info('webhook: services already booked', { reference: merchantReference })
           else if (result.alreadyFailed) bookingLog.warn('webhook: services row already failed — duplicate delivery', { reference: merchantReference, pspReference })
           else if (result.alreadyProcessing) bookingLog.info('webhook: services already processing', { reference: merchantReference })

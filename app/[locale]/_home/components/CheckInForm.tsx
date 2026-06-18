@@ -2,23 +2,27 @@
 import { cn, getDate, getPath, getMinArrivalDate } from '@/lib/utils';
 import { trackSearch } from '@/lib/analytics';
 import { useEffect, useId, useRef, useState } from 'react';
-import { RiSearchLine } from "react-icons/ri";
+import { RiSearchLine, RiErrorWarningLine } from "react-icons/ri";
 import { DateInput } from '@/app/_components/ui/DateInput';
 import { Guests } from '@/app/_components/ui/guests';
 import { Calendar } from '@/app/_components/ui/calendar';
 import { DateRange } from 'react-day-picker';
 import { Button } from '@/app/_components/ui/button'
+import { Spinner } from '@/app/_components/ui/spinner';
 import { useRouter } from 'next/navigation';
 import { usePathname } from '@/navigation';
 import { useStore } from '@/store/useStore';
 import { UrlParams } from '@/types/apaleo';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useMonthAvailability, toYmd } from '@/app/hooks/useMonthAvailability';
+import { useBookableCheckouts, prefetchBookableCheckouts } from '@/app/hooks/useBookableCheckouts';
 import { getPrices } from '@/app/actions/apaleo/rooms/getPrices';
 
 
 const CheckInForm = ({ className = '', params }: { className?: string, params?: UrlParams }) => {
   const t = useTranslations('dateInput');
+  const locale = useLocale();
+  const dateFmt = locale === 'de' ? 'de-DE' : 'en-GB';
   const { dateRange, guests, setValue } = useStore();
   const router = useRouter();
   const pathname = usePathname();
@@ -52,7 +56,29 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
   // The custom two-click onSelect below bypasses the library's excludeDisabled
   // truncation, so a completed range is re-checked against sold-out nights via
   // the shared helper (same rule in BookingForm — review #5).
-  const { isSoldOut, dayAvailability, rangeHasSoldOutNight } = useMonthAvailability(availFrom, availTo);
+  const { isSoldOut, rangeHasSoldOutNight, firstSoldOutNight } = useMonthAvailability(availFrom, availTo);
+
+  // A range that crosses a sold-out night (or isn't a sellable stay) can't be
+  // booked — flash a brief, self-dismissing message instead of completing it.
+  const [soldOutMsg, setSoldOutMsg] = useState<string | null>(null);
+  const soldOutTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flashMsg = (text: string) => {
+    setSoldOutMsg(text);
+    if (soldOutTimer.current) clearTimeout(soldOutTimer.current);
+    soldOutTimer.current = setTimeout(() => setSoldOutMsg(null), 4500);
+  };
+  const flashSoldOut = (date: Date) =>
+    flashMsg(t('soldOutInRange', { date: new Intl.DateTimeFormat(dateFmt, { day: 'numeric', month: 'short' }).format(date) }));
+  const flashMinStay = (nights: number) => flashMsg(t('minNights', { count: nights }));
+
+  // Once a check-in is chosen, ask Apaleo which checkouts are actually bookable
+  // (min/max-stay + closed-to-arrival/departure the raw counts can't see) and
+  // light up only those — so a guest can't pick a too-short stay that dead-ends
+  // on "No rooms found". Property-wide (no unit group), probed with the chosen
+  // ADULT count to match getRooms' offer query.
+  const pickingArrival = pickingCheckout ? (dateRange?.from ?? null) : null;
+  const { isValidCheckout, ready: checkoutsReady, minNights, hasAnyCheckout } =
+    useBookableCheckouts(pickingArrival, undefined, guests.adults);
 
   useEffect(() => {
     const update = () => setNumberOfMonths(window.innerWidth >= 1024 ? 2 : 1);
@@ -60,6 +86,21 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
   }, []);
+
+  // Warm the bookable-checkout cache for the upcoming visible arrivals the moment
+  // the calendar opens, so picking a check-in is INSTANT (no per-click round-trip).
+  useEffect(() => {
+    if (!openCalendar) return;
+    const minArrival = getMinArrivalDate();
+    const monthStart = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1);
+    const windowEnd = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + numberOfMonths, 1);
+    const start = monthStart < minArrival ? minArrival : monthStart;
+    const arrivals: Date[] = [];
+    for (let d = new Date(start); arrivals.length < 12 && d < windowEnd; d.setDate(d.getDate() + 1)) {
+      if (!isSoldOut(d)) arrivals.push(new Date(d));
+    }
+    if (arrivals.length) prefetchBookableCheckouts(arrivals, undefined, guests.adults);
+  }, [openCalendar, visibleMonth, numberOfMonths, isSoldOut, guests.adults]);
 
   const minArrivalDate = getMinArrivalDate()
 
@@ -112,25 +153,9 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
     }
   }, [params, setValue])
 
-  // Seed a default today→tomorrow range once — but ONLY after availability
-  // confirms the arrival night is bookable. Seeding a sold-out default made
-  // the date field flicker (seed → the drop-effect below clears it) and fire a
-  // wasted price fetch on every remount of the sticky form (review #4). When
-  // the night is unknown we wait (the effect re-runs as availability loads);
-  // when it's sold out we leave the field empty for the guest to pick.
-  const seededRef = useRef(false);
-  useEffect(() => {
-    if (seededRef.current) return;
-    if (params || (dateRange?.from && dateRange?.to)) { seededRef.current = true; return; }
-    const from = getMinArrivalDate();
-    const known = dayAvailability(from);
-    if (!known) return; // not loaded yet — re-runs when availability arrives
-    if (!known.available) { seededRef.current = true; return; } // sold out → leave empty
-    const to = new Date(from);
-    to.setDate(to.getDate() + 1);
-    setValue({ from, to }, 'dateRange');
-    seededRef.current = true;
-  }, [params, dateRange?.from, dateRange?.to, dayAvailability, setValue])
+  // No seeded default range — the calendar opens empty so the guest clearly
+  // picks their own dates. Deep-link ?from/?to and a stored range still populate
+  // it (handled by the effects above).
 
   const triggerSearch = (rangeOverride?: DateRange, closeCalendar = false) => {
     const r = rangeOverride ?? dateRange;
@@ -207,6 +232,7 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
               setPickingCheckout(false);
               checkinRef.current = undefined;
               if (dateError) setDateError(false);
+              setSoldOutMsg(null);
               // When pinned in the sticky bar the form is inside a position:fixed
               // ancestor — the calendar is anchored to the viewport top and
               // window-scrolling won't move it, so don't auto-scroll there.
@@ -281,7 +307,17 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
               onMonthChange={setVisibleMonth}
               showOutsideDays={false}
               fixedWeeks={false}
-              modifiers={{ soldOut: isSoldOut }}
+              modifiers={{
+                soldOut: (date: Date) => {
+                  // While picking the CHECKOUT, only strike days whose stay would
+                  // CROSS a sold-out night — a valid checkout (incl. the sold-out
+                  // day itself, you leave that morning) stays normal/selectable.
+                  if (pickingCheckout && checkinRef.current && date.getTime() > checkinRef.current.getTime()) {
+                    return rangeHasSoldOutNight(checkinRef.current, date);
+                  }
+                  return isSoldOut(date);
+                },
+              }}
               modifiersClassNames={{ soldOut: 'line-through' }}
               onSelect={(_date, triggerDate) => {
                 if (!triggerDate) return;
@@ -297,29 +333,50 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
                 } else {
                   const start = checkinRef.current!;
                   if (triggerDate.getTime() > start.getTime()) {
-                    if (rangeHasSoldOutNight(start, triggerDate)) {
-                      // Внутри диапазона занятая ночь — так бронировать нельзя.
-                      // Начинаем выбор заново с кликнутой даты (review #5).
+                    // Диапазон через занятую ночь забронировать нельзя — называем
+                    // блокирующую ночь и перезапускаем выбор с кликнутой даты
+                    // (иначе каждый следующий клик читается как выезд для старого
+                    // заезда и снова выдаёт ошибку).
+                    const blocked = firstSoldOutNight(start, triggerDate);
+                    if (blocked) {
+                      flashSoldOut(blocked);
                       checkinRef.current = triggerDate;
                       setValue({ from: triggerDate, to: undefined }, 'dateRange');
-                    } else {
-                      // Клик после start — завершаем range
-                      const newRange = { from: start, to: triggerDate };
-                      setValue(newRange, 'dateRange');
-                      checkinRef.current = undefined;
-                      setPickingCheckout(false);
-                      // На странице /rooms полный диапазон сразу применяется
-                      // (без клика по «Apply») и календарь закрывается, чтобы
-                      // не перекрывать карточки комнат.
-                      if (isRoomsPage) {
-                        triggerSearch(newRange, true);
-                      }
+                      return;
+                    }
+                    // Apaleo не продаёт именно этот выезд (мин/макс срок или
+                    // closed-to-departure). Обычно такие дни уже заблокированы,
+                    // когда checkoutsReady — это страхует короткую гонку загрузки.
+                    if (checkoutsReady && !isValidCheckout(triggerDate)) {
+                      if (minNights) flashMinStay(minNights);
+                      else flashMsg(t('noCheckoutFromDate'));
+                      checkinRef.current = triggerDate;
+                      setValue({ from: triggerDate, to: undefined }, 'dateRange');
+                      return;
+                    }
+                    // Клик после start — завершаем range
+                    const newRange = { from: start, to: triggerDate };
+                    setValue(newRange, 'dateRange');
+                    checkinRef.current = undefined;
+                    setPickingCheckout(false);
+                    setSoldOutMsg(null);
+                    // На странице /rooms полный диапазон сразу применяется
+                    // (без клика по «Apply») и календарь закрывается.
+                    if (isRoomsPage) {
+                      triggerSearch(newRange, true);
                     }
                   } else if (triggerDate.getTime() === start.getTime()) {
                     // Тот же день — это 0 ночей. Завершаем как 1 ночь (start..start+1),
                     // чтобы не отправлять на сервер диапазон, который он молча +1.
                     const nextDay = new Date(start);
                     nextDay.setDate(nextDay.getDate() + 1);
+                    // ...если 1 ночь тут не продаётся (мин. срок) — держим заезд и
+                    // показываем минимум.
+                    if (checkoutsReady && !isValidCheckout(nextDay)) {
+                      if (minNights) flashMinStay(minNights);
+                      else flashMsg(t('noCheckoutFromDate'));
+                      return;
+                    }
                     const newRange = { from: start, to: nextDay };
                     setValue(newRange, 'dateRange');
                     checkinRef.current = undefined;
@@ -335,24 +392,52 @@ const CheckInForm = ({ className = '', params }: { className?: string, params?: 
                 }
                 if (dateError) setDateError(false);
               }}
-              disabled={[
-                { before: minArrivalDate },
-                (date: Date) => {
-                  // Keep the already-chosen checkout looking selected, not greyed.
-                  if (dateRange?.to && date.getTime() === dateRange.to.getTime()) return false
-                  // Picking the CHECKOUT: a sold-out day can still be a valid
-                  // checkout (you leave that morning) — block it only if a NIGHT
-                  // between check-in and it is sold out.
-                  if (pickingCheckout && checkinRef.current && date.getTime() > checkinRef.current.getTime()) {
-                    return rangeHasSoldOutNight(checkinRef.current, date)
-                  }
-                  // Picking the CHECK-IN: a sold-out night can't be a first night.
-                  return isSoldOut(date)
-                },
-              ]}
+              disabled={
+                pickingCheckout && checkinRef.current
+                  ? [
+                      { before: minArrivalDate },
+                      (date: Date) => {
+                        const ci = checkinRef.current!
+                        // Keep the already-chosen checkout looking selected.
+                        if (dateRange?.to && date.getTime() === dateRange.to.getTime()) return false
+                        // Up to the check-in: normal sold-out rule (re-picking arrival).
+                        if (date.getTime() <= ci.getTime()) return isSoldOut(date)
+                        // After the check-in: once offers loaded, enable ONLY bookable
+                        // checkouts (min/max-stay + closed-to-departure). Until then,
+                        // fall back to the instant physical rule.
+                        return checkoutsReady ? !isValidCheckout(date) : rangeHasSoldOutNight(ci, date)
+                      },
+                    ]
+                  : [{ before: minArrivalDate }, isSoldOut]
+              }
               classNames={{ months: 'flex flex-col lg:flex-row gap-4' }}
             />
           </div>
+          {soldOutMsg && (
+            <div role="status" className='animate-in fade-in slide-in-from-top-1 duration-300 mt-1 flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-[13px] text-red-600'>
+              <RiErrorWarningLine className='size-4 shrink-0' />
+              <span>{soldOutMsg}</span>
+            </div>
+          )}
+          {!soldOutMsg && pickingCheckout && pickingArrival && !checkoutsReady && (
+            <div role="status" className='animate-in fade-in slide-in-from-top-1 duration-300 mt-1 flex items-center gap-2 rounded-lg bg-mute/5 px-3 py-2 text-[13px] text-mute/60'>
+              <Spinner className='size-4 shrink-0' />
+              <span>{t('checkingAvailability')}</span>
+            </div>
+          )}
+          {!soldOutMsg && pickingCheckout && checkoutsReady && (
+            !hasAnyCheckout ? (
+              <div role="status" className='animate-in fade-in slide-in-from-top-1 duration-300 mt-1 flex items-center gap-2 rounded-lg bg-mute/5 px-3 py-2 text-[13px] text-mute/80'>
+                <RiErrorWarningLine className='size-4 shrink-0' />
+                <span>{t('noCheckoutFromDate')}</span>
+              </div>
+            ) : minNights && minNights > 1 ? (
+              <div role="status" className='animate-in fade-in slide-in-from-top-1 duration-300 mt-1 flex items-center gap-2 rounded-lg bg-mute/5 px-3 py-2 text-[13px] text-mute/80'>
+                <RiErrorWarningLine className='size-4 shrink-0' />
+                <span>{t('minNights', { count: minNights })}</span>
+              </div>
+            ) : null
+          )}
           <div className='h-12 flex items-center justify-between gap-2 border-t font-semibold text-mute'>
             <span>{getNights() ?? ''}</span>
             {fromPrice != null && (

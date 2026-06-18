@@ -16,6 +16,7 @@ export async function getPrices(
   from?: string,
   to?: string,
   guests: number = 1,
+  opts?: { throwOnError?: boolean },
 ): Promise<RoomPrice[]> {
   if (!propId) return [];
   if (!from || !to) return [];
@@ -52,6 +53,10 @@ export async function getPrices(
     });
   } catch (error) {
     console.error('getPrices error:', error);
+    // Callers that need to tell a transient Apaleo failure apart from a
+    // legitimately empty result (e.g. to retry) opt in via throwOnError;
+    // everyone else keeps the historical fail-soft [] behavior.
+    if (opts?.throwOnError) throw error;
     return [];
   }
 }

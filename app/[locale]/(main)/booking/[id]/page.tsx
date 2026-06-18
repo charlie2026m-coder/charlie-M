@@ -37,6 +37,10 @@ const Booking = async ({ params, searchParams }: IParams) => {
   const hasApaleoError = 'error' in apaleoResult
   const nights = calculateNights(from, to)
   const rooms = hasApaleoError ? [] : selectBestRoomOffers(apaleoResult, nights)
+  // Full offer list (both non-refundable AND FLEX rate plans). selectBestRoomOffers
+  // keeps only the NR offer, so the refundable toggle (RefundCard) needs the raw
+  // list to find a FLEX plan to switch to — otherwise the toggle silently no-ops.
+  const allOffers = hasApaleoError ? [] : apaleoResult
   const isUnavailable = rooms.length === 0
 
   const isKidsBedAvailable = roomDetail.attributes?.includes('kids') || false
@@ -59,6 +63,7 @@ const Booking = async ({ params, searchParams }: IParams) => {
       <BookingPage
         params={{
           rooms,
+          allOffers,
           roomDetail: isUnavailable ? roomDetail : undefined,
           extras: filteredExtras,
           from,

@@ -64,7 +64,10 @@ export default function PaymentForm({
 
         const configuration = {
           clientKey: process.env.NEXT_PUBLIC_ADYEN_CLIENT_KEY!,
-          environment: "test" as const,
+          // Must follow the same go-live toggle as the booking form and the
+          // server client (lib/adyen.ts); hardcoding 'test' here broke the
+          // add-services payment once Adyen was flipped live.
+          environment: (process.env.NEXT_PUBLIC_ADYEN_ENVIRONMENT === 'live' ? 'live' : 'test') as 'live' | 'test',
           paymentMethodsResponse: paymentMethodsResponse,
           locale: 'en-US',
           countryCode: 'DE',

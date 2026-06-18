@@ -99,5 +99,17 @@ export function useMonthAvailability(
     [isSoldOut],
   );
 
-  return { availability, isSoldOut, dayAvailability, rangeHasSoldOutNight };
+  /** The first sold-out NIGHT in [from, to), or null — used to name the night
+   *  that blocks a range in the calendar's "pick other dates" message. */
+  const firstSoldOutNight = useCallback(
+    (from: Date, to: Date): Date | null => {
+      for (const night = new Date(from); night < to; night.setDate(night.getDate() + 1)) {
+        if (isSoldOut(night)) return new Date(night);
+      }
+      return null;
+    },
+    [isSoldOut],
+  );
+
+  return { availability, isSoldOut, dayAvailability, rangeHasSoldOutNight, firstSoldOutNight };
 }

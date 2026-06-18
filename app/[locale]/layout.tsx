@@ -60,7 +60,9 @@ export default async function LocaleLayout({
     <NextIntlClientProvider key={locale} messages={messages} locale={locale}>
       <ReactQueryProvider>
         <ScrollSync />
-        <DevelopmentBanner />
+        {/* Dev/test posture banner — shown until Adyen is flipped live, so it
+            can never linger on the real money-taking site (single toggle). */}
+        {process.env.NEXT_PUBLIC_ADYEN_ENVIRONMENT !== 'live' && <DevelopmentBanner />}
         <Discount />
 
         <ConditionalStickyHeader locale={locale} />
