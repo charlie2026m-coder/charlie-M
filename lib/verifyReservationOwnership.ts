@@ -69,9 +69,16 @@ export async function verifyReservationOwnership(
     }
 
     if (userEmail) {
+      // Match every email Apaleo ties to the reservation — primary guest,
+      // booker, AND additional guests. The profile list filters reservations by
+      // the user's email via Apaleo textSearch, which indexes additional guests
+      // too; so anything shown in the profile must also pass here. Checking only
+      // primaryGuest/booker 403'd legit additional-guest bookers (empty strings
+      // from missing emails never match the non-empty userEmail).
       const reservationEmails = [
         normalizeEmail(reservation.primaryGuest?.email),
         normalizeEmail(reservation.booker?.email),
+        ...(reservation.additionalGuests ?? []).map((g) => normalizeEmail(g.email)),
       ];
       if (reservationEmails.includes(userEmail)) {
         return { ok: true };
