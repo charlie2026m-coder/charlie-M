@@ -8,9 +8,9 @@ import { toast } from 'sonner';
 import { useProfileStore } from '@/store/useProfile';
 import { ReservationIdHelp } from './ReservationIdHelp';
 
-const ReservationForm = () => {
+const ReservationForm = ({ initialReservationId = '' }: { initialReservationId?: string }) => {
   const t = useTranslations('login');
-  const [reservationId, setReservationId] = useState('');
+  const [reservationId, setReservationId] = useState(initialReservationId);
   const [lastName, setLastName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
