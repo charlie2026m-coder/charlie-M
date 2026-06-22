@@ -35,9 +35,9 @@ const ExtraCard = ({ item, rooms, nights }: { item: Service, rooms: Room[], nigh
         </div>
       </div>
 
-      <div className='flex flex-col'>
-        <h3 className='inter font-semibold'>{item.name}</h3>
-        <div className='text-green font-bold'>+ €{item.price.toFixed(2)}</div>
+      <div className='flex flex-col min-w-0'>
+        <h3 className='inter font-semibold break-words'>{item.name}</h3>
+        <div className='text-green font-bold whitespace-nowrap'>+ €{item.price.toFixed(2)}</div>
       </div>
 
       {!isSoldOut && (

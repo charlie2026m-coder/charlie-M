@@ -20,6 +20,7 @@ import {
   computeServicesTotalCents,
   buildApaleoServicePayloads,
   isCleaningService,
+  isStayExtensionService,
   UnknownServiceError,
   type ExtrasPriceLine,
   type ApaleoBookServicePayload,
@@ -340,6 +341,8 @@ export type ServicesValidationResult =
 interface ReservationValidationData {
   arrival: string
   departure: string
+  arrivalTime: string   // "HH:mm" local — to detect an already-applied ECI (13:00)
+  departureTime: string // "HH:mm" local — to detect an already-applied LCO (13:00)
   nights: number
   existingCleaningDates: Set<string>
 }
@@ -403,6 +406,8 @@ async function fetchReservationForValidation(
 
   const arrival = res.arrival.slice(0, 10)
   const departure = res.departure.slice(0, 10)
+  const arrivalTime = res.arrival.match(/T(\d{2}:\d{2})/)?.[1] ?? ''
+  const departureTime = res.departure.match(/T(\d{2}:\d{2})/)?.[1] ?? ''
   const nights = dayjs(departure).diff(dayjs(arrival), 'day')
   if (nights < 1) {
     priceLog.error('reservation has non-positive nights — refusing', {
@@ -423,7 +428,7 @@ async function fetchReservationForValidation(
 
   return {
     kind: 'ok',
-    data: { arrival, departure, nights, existingCleaningDates },
+    data: { arrival, departure, arrivalTime, departureTime, nights, existingCleaningDates },
   }
 }
 
@@ -495,6 +500,30 @@ export async function validateServicesPayment(
       lastRetryableReason,
     })
     return { status: 'unavailable', reason: 'reservation fetch failed' }
+  }
+
+  // Idempotency guard for stay extensions (LCO/ECI). They are applied as a
+  // reservation amend (the time becomes 13:00), NOT a folio service — so a
+  // second purchase wouldn't be hidden by reservation.services and would amend
+  // to an unchanged time, i.e. pay-then-refund. Refuse here so make-payment
+  // returns 503 BEFORE any Adyen authorization (and the webhook re-validation
+  // catches an auth that somehow slipped through, refunding it).
+  for (const service of services) {
+    const ext = isStayExtensionService(service.serviceId)
+    if (ext === 'late' && reservation.departureTime === '13:00') {
+      priceLog.error('services validation: late check-out already applied — refusing', {
+        reference,
+        reservationId: row.reservation_id,
+      })
+      return { status: 'unavailable', reason: 'late check-out already applied' }
+    }
+    if (ext === 'early' && reservation.arrivalTime === '13:00') {
+      priceLog.error('services validation: early check-in already applied — refusing', {
+        reference,
+        reservationId: row.reservation_id,
+      })
+      return { status: 'unavailable', reason: 'early check-in already applied' }
+    }
   }
 
   let catalog: Awaited<ReturnType<typeof getApaleoExtras>>

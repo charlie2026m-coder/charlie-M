@@ -18,7 +18,14 @@ const ReservationPage = async ({ params }: { params: Promise<{ id: string; local
   // Convert ISO date strings to YYYY-MM-DD format
   const arrivalDate = dayjs(reservation.arrival).format('YYYY-MM-DD');
   const departureDate = dayjs(reservation.departure).format('YYYY-MM-DD');
-  
+
+  // Already-applied Late Check-Out / Early Check-In: the amend moved the
+  // reservation's wall-clock time to 13:00. Read it straight from the ISO string
+  // (NOT via dayjs, which would shift the +02:00 Berlin time into UTC on the
+  // server) so we can hide a card the guest can no longer re-buy.
+  const lcoApplied = reservation.departure.match(/T(\d{2}:\d{2})/)?.[1] === '13:00';
+  const eciApplied = reservation.arrival.match(/T(\d{2}:\d{2})/)?.[1] === '13:00';
+
   // Check if reservation is active and not in the past
   const isActive = reservation?.status === bookingStatuses.Confirmed || reservation?.status === bookingStatuses.InHouse;
   const isNotPast = dayjs(departureDate).isAfter(dayjs(), 'day') || dayjs(departureDate).isSame(dayjs(), 'day');
@@ -55,7 +62,7 @@ const ReservationPage = async ({ params }: { params: Promise<{ id: string; local
           primaryGuest={reservation.primaryGuest}
         />
         {canAddExtras && extras.length > 0 && (
-          <AddExtras 
+          <AddExtras
             extras={extras}
             existingServices={reservation.services}
             adults={reservation.adults}
@@ -63,6 +70,8 @@ const ReservationPage = async ({ params }: { params: Promise<{ id: string; local
             isBabyBedAvailable={reservation.attributes?.includes('kids')}
             arrival={arrivalDate}
             departure={departureDate}
+            lcoApplied={lcoApplied}
+            eciApplied={eciApplied}
           />
         )}
         

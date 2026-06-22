@@ -22,15 +22,19 @@ const AddExtras = ({
   nights,
   isBabyBedAvailable,
   arrival,
-  departure
-}: { 
+  departure,
+  lcoApplied,
+  eciApplied
+}: {
   extras: Service[],
   existingServices?: any[],
   adults: number,
   nights: number,
   isBabyBedAvailable?: boolean,
   arrival?: string,
-  departure?: string
+  departure?: string,
+  lcoApplied?: boolean,
+  eciApplied?: boolean
 }) => {
   const t = useTranslations('profile')
   const setAvailableExtras = useAddExtrasStore(state => state.setAvailableExtras)
@@ -47,12 +51,16 @@ const AddExtras = ({
 
   const availableExtras = extras.filter(extra => {
     if (extra.id === 'CMH-ECI') {
+      // Already applied (arrival already 13:00) → can't re-buy; hide it so the
+      // guest doesn't pay-then-refund on a no-op amend.
+      if (eciApplied) return false
       if (!arrival) return false
       const deadline = dayjs.tz(`${arrival} ${EARLY_CHECKIN_DEADLINE_HOUR}:00`, 'Europe/Berlin')
       if (!dayjs().tz('Europe/Berlin').isBefore(deadline)) return false
     }
-    
+
     if (extra.id === 'CMH-LCO') {
+      if (lcoApplied) return false
       if (!departure) return false
       const deadline = dayjs.tz(`${departure} ${LATE_CHECKOUT_DEADLINE_HOUR}:00`, 'Europe/Berlin')
       if (!dayjs().tz('Europe/Berlin').isBefore(deadline)) return false

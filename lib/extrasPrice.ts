@@ -42,6 +42,19 @@ export function isBabyBedService(serviceId: string): boolean {
   return serviceId === 'CMH-BAB'
 }
 
+// Late Check-Out (CMH-LCO) and Early Check-In (CMH-ECI) are NOT booked as
+// folio services. Apaleo's "Departure"/"Arrival" mode services bind to the
+// last/first night and can't be added once that night has passed (the guest
+// deciding on departure morning) — the old book-service flow charged then
+// refunded. Instead these are applied as a reservation AMEND (change the
+// checkout/checkin TIME) plus a folio fee line. This predicate routes them to
+// that path. Returns 'late' for LCO, 'early' for ECI, null otherwise.
+export function isStayExtensionService(serviceId: string): 'late' | 'early' | null {
+  if (serviceId === 'CMH-LCO') return 'late'
+  if (serviceId === 'CMH-ECI') return 'early'
+  return null
+}
+
 // A daily Person/Room service is charged `count × nights`, so it must be
 // booked on every night. Shared between the price computation and the Apaleo
 // payload builder so "how many units" can never diverge from "what we book".
@@ -71,7 +84,12 @@ export function computeServicesTotalCents(
 
     let units = 0
 
-    if (isBabyBedService(service.serviceId)) {
+    if (isStayExtensionService(service.serviceId)) {
+      // LCO/ECI = a single reservation amend (one time change), never per-person
+      // or per-night, regardless of `count`/`dates` or the catalog pricingUnit.
+      // Pinned to 1 so the validated total, folio fee, and UI always agree.
+      units = 1
+    } else if (isBabyBedService(service.serviceId)) {
       // UI sums baby bed as price × nights regardless of `count`. Mirrored
       // so the server doesn't reject the same total the UI displays. If/when
       // the UI starts respecting count, update both call sites together.
@@ -111,6 +129,10 @@ export interface ApaleoBookServicePayload {
   serviceId: string
   count?: number
   dates?: ApaleoServiceDate[]
+  // Stay-extension (LCO/ECI) ONLY: the fee to post as a folio charge alongside
+  // the reservation amend. Never sent to the book-service endpoint (those
+  // payloads route to the amend flow), so it can't reach a regular service.
+  amount?: { amount: number; currency: string }
 }
 
 export interface BuildPayloadContext {
@@ -141,6 +163,18 @@ export function buildApaleoServicePayloads(
 
     const currency = cat.currency || 'EUR'
     const isCleaning = isCleaningService(service.serviceId, cat.name)
+
+    // Stay extension (LCO/ECI): not a folio service — booked via reservation
+    // amend. One reservation amend = one fee, pinned to count 1 (matching
+    // computeServicesTotalCents) so the posted folio charge always equals the
+    // validated subtotal regardless of count/dates/guest count.
+    if (isStayExtensionService(service.serviceId)) {
+      return [{
+        serviceId: service.serviceId,
+        count: 1,
+        amount: { amount: cat.price, currency },
+      }]
+    }
 
     // Already per-date (cleaning / limited). For cleaning, drop dates already
     // on the Apaleo folio — the validator excludes them from the charge (using

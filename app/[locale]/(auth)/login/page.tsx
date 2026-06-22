@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useForm } from 'react-hook-form';
 import { useLogin } from '@/app/hooks/useAuth';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,14 +13,19 @@ import { Link } from '@/navigation';
 import CustomCard from '@/app/_components/ui/CustomCard';
 import { useTranslations } from 'next-intl';
 import Header from '@/app/_components/header/Header';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 
-export default function LoginPage() {
+function LoginPageInner() {
   const t = useTranslations('login');
   const params = useParams();
   const locale = params.locale as string;
+  // Deep link from the confirmation email: /login?reservationId=XXX opens the
+  // reservation-ID login pre-filled (the guest still types their last name —
+  // the second factor is NOT in the URL, so a leaked link discloses nothing).
+  const searchParams = useSearchParams();
+  const prefillReservationId = searchParams.get('reservationId')?.trim() ?? '';
   const [loginError, setLoginError] = useState<string | null>(null);
-  const [showReservationForm, setShowReservationForm] = useState(false);
+  const [showReservationForm, setShowReservationForm] = useState(Boolean(prefillReservationId));
   const loginMutation = useLogin();
   
   const {
@@ -78,7 +83,7 @@ export default function LoginPage() {
               {t('backToLogin')}
             </button>
           </div>
-          <ReservationForm />
+          <ReservationForm initialReservationId={prefillReservationId} />
         </CustomCard>
       </div>
       </>
@@ -142,6 +147,16 @@ export default function LoginPage() {
       </CustomCard>
     </div>
     </>
+  );
+}
+
+// useSearchParams() (the email deep-link prefill) forces a client-side bailout,
+// which Next requires to sit inside a Suspense boundary on this page.
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageInner />
+    </Suspense>
   );
 }
 
