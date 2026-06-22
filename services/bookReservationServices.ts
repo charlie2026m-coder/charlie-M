@@ -1,5 +1,12 @@
 import { Fetch } from '@/services/Request'
 import { folioLog } from '@/lib/logger'
+import { isStayExtensionService } from '@/lib/extrasPrice'
+import {
+  loadReservationForAmend,
+  bookStayExtension,
+  reverseStayExtension,
+} from '@/services/apaleo/amendStayTime'
+import type { AppliedStayExtension } from '@/services/apaleo/amendStayTime'
 
 interface ServiceDate {
   serviceDate: string
@@ -309,10 +316,51 @@ export async function bookReservationServicesLegacy(
   pspReference?: string,
   expectedAmountCents?: number,
 ) {
-  const results = []
+  // Late Check-Out / Early Check-In are NOT folio services — they're applied as
+  // a reservation amend (change the checkout/checkin time) plus a folio fee.
+  // Everything else books via the normal book-service endpoint.
+  const amendPayloads = services.filter(s => isStayExtensionService(s.serviceId))
+  const regularPayloads = services.filter(s => !isStayExtensionService(s.serviceId))
 
-  folioLog.info('booking services (legacy)', { reservationId, count: services.length })
-  for (const service of services) {
+  const results: { serviceId: string; success: boolean; error?: string }[] = []
+  const appliedAmends: AppliedStayExtension[] = []
+
+  folioLog.info('booking services (legacy)', {
+    reservationId,
+    count: services.length,
+    amendCount: amendPayloads.length,
+    regularCount: regularPayloads.length,
+  })
+
+  // 1. Stay extensions (LCO/ECI) via reservation amend + folio fee.
+  if (amendPayloads.length > 0) {
+    const ctx = await loadReservationForAmend(reservationId)
+    if (!ctx) {
+      for (const p of amendPayloads) {
+        results.push({ serviceId: p.serviceId, success: false, error: 'reservation not found for stay extension' })
+      }
+    } else {
+      for (const p of amendPayloads) {
+        const outcome = await bookStayExtension(reservationId, p, ctx)
+        if (outcome.success && outcome.applied) appliedAmends.push(outcome.applied)
+        results.push({ serviceId: p.serviceId, success: outcome.success, error: outcome.error })
+      }
+    }
+  }
+
+  // Any extension failed → reverse the ones that applied and stop before
+  // booking regular services or capturing against a partially-extended stay.
+  if (results.some(r => !r.success)) {
+    for (const a of appliedAmends) await reverseStayExtension(a)
+    for (const r of results) r.success = false
+    return {
+      services: results,
+      payment: pspReference ? { success: false as const, error: 'stay extension unavailable' } : null,
+    }
+  }
+
+  // 2. Regular folio services via book-service.
+  for (const service of regularPayloads) {
     try {
       await bookReservationService(reservationId, service)
       results.push({ serviceId: service.serviceId, success: true })
@@ -325,16 +373,37 @@ export async function bookReservationServicesLegacy(
     }
   }
 
+  // A regular-service failure must also undo any applied extension, else the
+  // guest keeps a free LCO/ECI once the caller refunds. (The caller separately
+  // deletes the successfully-booked regular services.)
+  if (results.some(r => !r.success)) {
+    for (const a of appliedAmends) await reverseStayExtension(a)
+    for (const r of results) {
+      if (isStayExtensionService(r.serviceId)) r.success = false
+    }
+    return { services: results, payment: null }
+  }
+
   // No payment requested — caller handles the rest.
   if (!pspReference) {
     return { services: results, payment: null }
   }
 
+  // 3. Capture the validated total from the dedicated Adyen authorization.
   const paymentResult = await payServicesFolioByAuthorization({
     reservationId,
     pspReference,
     expectedChargeCents: expectedAmountCents ?? 0,
   })
+
+  // Capture failed → reverse extensions here: the caller's rollback only knows
+  // how to DELETE book-service entries, which can't undo an amend.
+  if (!paymentResult.success) {
+    for (const a of appliedAmends) await reverseStayExtension(a)
+    for (const r of results) {
+      if (isStayExtensionService(r.serviceId)) r.success = false
+    }
+  }
 
   return { services: results, payment: paymentResult }
 }

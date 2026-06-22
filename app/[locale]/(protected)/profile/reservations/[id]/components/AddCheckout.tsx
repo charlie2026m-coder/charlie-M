@@ -14,6 +14,7 @@ import { ButtonIcon } from "@/app/_components/ui/ButtonIcon";
 import { useAddExtrasStore } from "@/store/useAddExtras";
 import dayjs from "dayjs";
 import { cn } from "@/lib/utils";
+import { isStayExtensionService } from "@/lib/extrasPrice";
 import { useTranslations } from 'next-intl';
   
 const AddCheckoutExtra = ({ extra, adults, nights, existingCount = 0 }: { extra: Service, adults: number, nights: number, existingCount?: number }) => {
@@ -57,7 +58,12 @@ const AddCheckoutExtra = ({ extra, adults, nights, existingCount = 0 }: { extra:
   
   const getMaxLimit = () => {
     if (availableCount <= 0) return 0;
-    
+
+    // LCO/ECI are a single reservation amend (one time change) — cap at 1
+    // regardless of the catalog pricingUnit, so a 2-guest stay can't be charged
+    // the fee twice for one late check-out.
+    if (isStayExtensionService(extra.id)) return Math.min(1, availableCount);
+
     if (pricingUnit === 'Room') {
       return Math.min(1, availableCount);
     }
