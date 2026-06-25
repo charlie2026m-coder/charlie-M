@@ -13,7 +13,10 @@ import type { HomeRoomCard } from '@/types/offers'
  * /rooms browse view (when no dates are chosen yet), so a visitor immediately
  * sees that rooms exist + prices instead of an empty fixed-date result.
  */
-export async function getNearestRoomCards(locale: string): Promise<HomeRoomCard[]> {
+export async function getNearestRoomCards(
+  locale: string,
+  opts?: { onePerType?: boolean },
+): Promise<HomeRoomCard[]> {
   const [roomDetails, nearest] = await Promise.all([
     getRoomDetails(),
     getNearestAvailableRooms(),
@@ -22,7 +25,14 @@ export async function getNearestRoomCards(locale: string): Promise<HomeRoomCard[
   const supaById = new Map(roomDetails.map((r) => [r.id, r]))
   const contentById = new Map(roomsDetails.map((r) => [r.id, r]))
 
-  return nearest
+  // The home "Choose Room" carousel shows each studio at several upcoming dates
+  // (multiple windows per type). The /rooms catalogue wants ONE card per type —
+  // collapse to each studio's nearest window (the round-robin feed lists it first).
+  const source = opts?.onePerType
+    ? nearest.filter((n, i) => nearest.findIndex((m) => m.roomId === n.roomId) === i)
+    : nearest
+
+  return source
     .map((n): HomeRoomCard | null => {
       const s = supaById.get(n.roomId)
       const c = contentById.get(n.roomId)

@@ -9,6 +9,13 @@ const propId = process.env.APALEO_PROPERTY_ID
 // How far ahead to scan for the nearest bookable night per room type.
 const SEARCH_WINDOW_DAYS = 60
 
+// The showcase shows each studio at its nearest bookable night, then — as the
+// visitor scrolls — the SAME studio at its next available nights. Cap how many
+// date-windows per studio and how far apart they must be so scrolling reveals
+// genuinely different dates instead of the same night repeated.
+const WINDOWS_PER_TYPE = 3
+const NEXT_WINDOW_GAP_DAYS = 7
+
 interface UnitGroupAvailabilityResponse {
   timeSlices?: Array<{
     from?: string
@@ -124,30 +131,45 @@ export async function fetchNearestAvailableRooms(): Promise<NearestAvailableRoom
   }
   await Promise.all(Array.from({ length: Math.min(PROBE_CONCURRENCY, probeDates.length) }, worker))
 
-  // For each room type: the nearest probed night that has a real bookable price
-  // (> 0), skipping priceless-but-free nights. Rooms with no priced night in the
-  // probe window get their nearest free night at price 0 as a dev/preview-only
-  // fallback (see the env branch below).
-  const priced: NearestAvailableRoom[] = []
+  // This room type's bookable 1-night price on a probed date (0 = not bookable:
+  // priceless free night, rate plan unpublished, or a min-stay restriction).
+  const priceFor = (groupId: string, date: string) =>
+    pricesByDate.get(date)?.find((p) => p.roomId === groupId)?.minNightPrice ?? 0
+
+  // For each room type build up to WINDOWS_PER_TYPE date-windows: its NEAREST
+  // priced night, then the next priced night at least NEXT_WINDOW_GAP_DAYS later,
+  // and so on — skipping priceless-but-free nights so a card never dead-ends on
+  // Book Now. Rooms with no priced night get a single price-0 fallback card
+  // (dev/preview only, see the env branch below).
+  const windowsByGroup = new Map<string, NearestAvailableRoom[]>()
   const unpriced: NearestAvailableRoom[] = []
+  let maxWindows = 0
   for (const [groupId, nights] of availableNightsByGroup) {
-    let pricedNight: NearestAvailableRoom | null = null
+    const windows: NearestAvailableRoom[] = []
+    let prevDate: string | null = null
     for (const date of nights) {
-      const prices = pricesByDate.get(date)
-      if (!prices) continue // defensive — every free night is probed above
-      const minNightPrice = prices.find((p) => p.roomId === groupId)?.minNightPrice ?? 0
-      if (minNightPrice > 0) {
-        pricedNight = {
-          roomId: groupId,
-          arrival: date,
-          departure: dayjs(date).add(1, 'day').format('YYYY-MM-DD'),
-          oneNightPrice: minNightPrice,
-        }
-        break // nearest priced night for this room type
+      if (windows.length >= WINDOWS_PER_TYPE) break
+      // Enforce the minimum gap from the previous window so scrolling reveals
+      // genuinely different dates, not the same week repeated.
+      if (
+        prevDate &&
+        date < dayjs(prevDate).add(NEXT_WINDOW_GAP_DAYS, 'day').format('YYYY-MM-DD')
+      ) {
+        continue
       }
+      const price = priceFor(groupId, date)
+      if (price <= 0) continue // skip priceless / min-stay nights
+      windows.push({
+        roomId: groupId,
+        arrival: date,
+        departure: dayjs(date).add(1, 'day').format('YYYY-MM-DD'),
+        oneNightPrice: price,
+      })
+      prevDate = date
     }
-    if (pricedNight) {
-      priced.push(pricedNight)
+    if (windows.length) {
+      windowsByGroup.set(groupId, windows)
+      if (windows.length > maxWindows) maxWindows = windows.length
     } else {
       const firstNight = nights[0]
       unpriced.push({
@@ -159,24 +181,31 @@ export async function fetchNearestAvailableRooms(): Promise<NearestAvailableRoom
     }
   }
 
-  // Order the carousel by how soon each card is bookable (its shown arrival),
-  // not by Apaleo's room-type response order.
-  priced.sort((a, b) => a.arrival.localeCompare(b.arrival))
+  // Order studios by their nearest (window-1) date so the opening screen stays
+  // sorted by soonest, then interleave round-robin by window rank: every studio's
+  // nearest date first, then every studio's 2nd date, etc. So the first cards are
+  // one-per-studio at the soonest date (unchanged) and scrolling walks the SAME
+  // studios forward in time instead of looping the identical few.
+  const orderedGroups = [...windowsByGroup.values()].sort((a, b) =>
+    a[0].arrival.localeCompare(b[0].arrival),
+  )
+  const priced: NearestAvailableRoom[] = []
+  for (let rank = 0; rank < maxWindows; rank++) {
+    for (const windows of orderedGroups) {
+      if (windows[rank]) priced.push(windows[rank])
+    }
+  }
 
-  // On the real production site (charlie-m.de) show ONLY rooms that are
-  // actually bookable — i.e. a published 1-night price exists — so a card never
-  // leads to a dead end and unpublished/test room types are hidden
-  // automatically. On Vercel previews and local dev, also surface free rooms
-  // that have no priced night yet (at price 0) so the feed can be checked
-  // end-to-end while rates are still being set up. (VERCEL_ENV is 'production'
-  // only on the production deployment; 'preview' on branch previews; undefined
-  // locally.)
+  // On the real production site (charlie-m.de) show ONLY rooms that are actually
+  // bookable — a published 1-night price exists — so a card never leads to a dead
+  // end and unpublished/test room types are hidden automatically. On Vercel
+  // previews and local dev, also surface free rooms with no priced night yet (at
+  // price 0) so the feed can be checked end-to-end while rates are still being set
+  // up. (VERCEL_ENV is 'production' only on the production deployment.)
   if (process.env.VERCEL_ENV === 'production') {
     return priced
   }
-  // Dev/preview: interleave the unpriced (price-0) rooms by nearest date too, so
-  // a free-soon-but-unpriced room shows near the front during pre-launch checks
-  // rather than being pushed to the end.
+  // Dev/preview: interleave the unpriced (price-0) rooms by nearest date too.
   return [...priced, ...unpriced].sort((a, b) => a.arrival.localeCompare(b.arrival))
 }
 

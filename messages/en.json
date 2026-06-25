@@ -1436,7 +1436,9 @@
     "acceptAll": "Accept All",
     "rejectAll": "Reject All",
     "savePreferences": "Save",
-    "cookieSettings": "Cookie Settings"
+    "cookieSettings": "Cookie Settings",
+    "mapNotice": "When you load the interactive map, Google sets cookies on your device and transfers your data to the USA. By clicking, you agree to this use and to Google's privacy policy. Further information can be found in our Privacy Policy.",
+    "mapLoad": "Load map"
   }
 }
 

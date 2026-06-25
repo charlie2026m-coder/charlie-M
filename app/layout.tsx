@@ -4,11 +4,10 @@ import "./globals.css";
 import Script from "next/script";
 import { HOTEL_INFO } from "@/lib/Constants";
 import { NavigationEvents } from "@/app/_components/NavigationEvents";
+import { GoogleAnalytics } from "@/app/_components/CookieConsent/GoogleAnalytics";
+import { COOKIEBOT_CBID } from "@/lib/cookiebot";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://charlie-m.de";
-const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
-const ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
-const primaryTagId = GA_ID ?? ADS_ID;
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -108,6 +107,17 @@ export default async function RootLayout({ children, params }: Props) {
   return (
     <html lang={locale}>
       <head>
+        {/* Cookiebot CMP — MUST be the first script so consent is resolved before
+            any tracker can run. Manual blocking mode (no data-blockingmode="auto"):
+            GA/Ads and Google Maps are gated in-app (GoogleAnalytics, MapWindow)
+            keyed off Cookiebot consent, so nothing third-party loads before opt-in
+            and Cookiebot never rewrites our functional/payment scripts. */}
+        <Script
+          id="Cookiebot"
+          src="https://consent.cookiebot.com/uc.js"
+          data-cbid={COOKIEBOT_CBID}
+          strategy="beforeInteractive"
+        />
         <link rel="prefetch" href="/rooms" />
         <link rel="prefetch" href="/de/rooms" />
       </head>
@@ -115,39 +125,9 @@ export default async function RootLayout({ children, params }: Props) {
         {/* JSON-LD for Google */}
         <Script id="hotel-schema" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(hotelSchema) }} />
 
-        {/* Consent Mode v2 — set defaults before gtag.js loads */}
-        {primaryTagId && (
-          <Script id="consent-init" strategy="beforeInteractive">{`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('consent', 'default', {
-              analytics_storage: 'denied',
-              ad_storage: 'denied',
-              ad_user_data: 'denied',
-              ad_personalization: 'denied',
-              wait_for_update: 500
-            });
-          `}</Script>
-        )}
-
-        {/* Google tag (gtag.js) */}
-        {primaryTagId && (
-          <Script
-            src={`https://www.googletagmanager.com/gtag/js?id=${primaryTagId}`}
-            strategy="afterInteractive"
-          />
-        )}
-        {primaryTagId && (
-          <Script id="gtag-init" strategy="afterInteractive">{`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            ${GA_ID ? `gtag('config', '${GA_ID}', { send_page_view: false });` : ''}
-            ${ADS_ID ? `gtag('config', '${ADS_ID}');` : ''}
-          `}</Script>
-        )}
-
         {children}
+        {/* GA/Ads load only after Cookiebot consent (Consent Mode v2 in sync). */}
+        <GoogleAnalytics />
         <NavigationEvents />
       </body>
     </html>
