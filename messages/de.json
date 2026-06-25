@@ -1437,7 +1437,9 @@
     "acceptAll": "Alle akzeptieren",
     "rejectAll": "Alle ablehnen",
     "savePreferences": "Speichern",
-    "cookieSettings": "Cookie-Einstellungen"
+    "cookieSettings": "Cookie-Einstellungen",
+    "mapNotice": "Beim Laden der interaktiven Karte setzt Google Cookies auf Ihrem Gerät und übermittelt Ihre Daten in die USA. Mit dem Klick stimmen Sie dieser Verwendung und den Datenschutzhinweisen von Google zu. Weitere Hinweise finden Sie in unserer Datenschutzerklärung.",
+    "mapLoad": "Karte laden"
   }
 }
 
