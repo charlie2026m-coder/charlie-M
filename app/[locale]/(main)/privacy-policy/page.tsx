@@ -3,6 +3,7 @@ import Content from "./components/Content";
 import type { Metadata } from 'next';
 import Header from "@/app/_components/header/Header";
 import { getTranslations } from 'next-intl/server';
+import { CookieDeclaration } from "@/app/_components/CookieConsent/CookieDeclaration";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -75,6 +76,9 @@ export default async function PrivacyPolicy({ params }: Props) {
           <h1 className='text-3xl text-mute md:text-6xl font-bold jakarta'>{t('title')}</h1>
         </div>
       <Content />
+      <div className="w-full mt-12">
+        <CookieDeclaration />
+      </div>
     </section>
     </>
   )
