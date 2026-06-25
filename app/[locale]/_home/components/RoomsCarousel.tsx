@@ -81,7 +81,7 @@ export function RoomsCarousel({
           <CarouselContent className="ml-0 pt-3 pb-8 xl:pb-[90px]">
             {rooms.map((item) => (
               <CarouselItem
-                key={item.id}
+                key={`${item.id}-${item.arrival ?? ''}`}
                 className="px-2 basis-[74%] sm:basis-[56%] md:basis-[44%] lg:basis-1/3 shrink-0"
               >
                 <RoomCard item={item} locale={locale} translations={translations} />
