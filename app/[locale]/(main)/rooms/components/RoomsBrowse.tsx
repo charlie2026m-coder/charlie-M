@@ -12,7 +12,7 @@ import RoomsBrowseList from './RoomsBrowseList'
 const RoomsBrowse = async ({ locale }: { locale: string }) => {
   const [t, cards] = await Promise.all([
     getTranslations({ locale }),
-    getNearestRoomCards(locale),
+    getNearestRoomCards(locale, { onePerType: true }),
   ])
 
   if (cards.length === 0) return <NotFoundCard />
