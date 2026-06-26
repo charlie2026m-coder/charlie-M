@@ -24,6 +24,6 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     // Match all pathnames EXCEPT admin, api, auth/callback, checkout and system files
-    '/((?!admin|api|auth/callback|checkout|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!admin|api|auth/callback|checkout|\\.well-known|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

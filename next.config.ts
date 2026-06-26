@@ -15,6 +15,17 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async headers() {
+    return [
+      {
+        // Apple Pay web domain verification file must be served as plain text.
+        source: '/.well-known/apple-developer-merchantid-domain-association',
+        headers: [
+          { key: 'Content-Type', value: 'text/plain' },
+        ],
+      },
+    ];
+  },
 };
 
 export default withNextIntl(nextConfig);
