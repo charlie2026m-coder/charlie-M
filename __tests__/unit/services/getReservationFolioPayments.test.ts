@@ -39,8 +39,8 @@ describe('getReservationFolioPayments', () => {
     wire({ F1: [pay('PSP_ROOM', 150), pay('PSP_SVC', 30)] });
     const { payments, unsettled } = await getReservationFolioPayments('R-1');
     expect(payments).toEqual([
-      expect.objectContaining({ pspReference: 'PSP_ROOM', amountCents: 15000 }),
-      expect.objectContaining({ pspReference: 'PSP_SVC', amountCents: 3000 }),
+      expect.objectContaining({ pspReference: 'PSP_ROOM', amountCents: 15000, folioId: 'F1', paymentId: expect.any(String) }),
+      expect.objectContaining({ pspReference: 'PSP_SVC', amountCents: 3000, folioId: 'F1', paymentId: expect.any(String) }),
     ]);
     expect(unsettled).toBe(0);
   });
@@ -105,6 +105,7 @@ describe('getReservationFolioPayments', () => {
     wire({ F1: [idless('PSP_ROOM', 150), idless('PSP_ROOM', 150)] });
     const { payments } = await getReservationFolioPayments('R-1');
     expect(payments).toHaveLength(1);
+    expect(payments[0].paymentId).toBeNull(); // id-less row → null payment id
   });
 
   it('ignores rows without a psp or with a zero amount', async () => {

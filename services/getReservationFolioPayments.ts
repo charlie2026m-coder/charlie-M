@@ -14,7 +14,7 @@ import { bookingLog } from '@/lib/logger'
  * share). Refunding has to walk these per-payment, not lump everything onto the
  * room psp — Adyen rejects a refund larger than what a single psp captured.
  *
- * Money-safety rules (review findings #10–#12):
+ * Money-safety rules:
  *   - Refund/reversal-typed or negative entries are emitted with a NEGATIVE
  *     amount so the per-psp NET shrinks — an already-refunded payment can't be
  *     refunded again just because the original capture row is still listed.
@@ -39,6 +39,10 @@ export interface FolioPayment {
   currency: string
   type: string
   status: string
+  /** The Apaleo folio this payment sits on (needed to post a refund back). */
+  folioId: string
+  /** Apaleo's own payment row id (null only for anomalous id-less rows). */
+  paymentId: string | null
 }
 
 export interface FolioPaymentsResult {
@@ -132,6 +136,8 @@ export async function getReservationFolioPayments(
         currency: p.amount?.currency ?? 'EUR',
         type: p.type ?? '',
         status: p.status ?? '',
+        folioId,
+        paymentId: p.id ?? null,
       })
     }
   }

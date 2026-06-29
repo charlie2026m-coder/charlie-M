@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { verifyReservationInProperty } from '@/services/verifyReservationInProperty'
 import { cancelReservation } from '@/services/apaleo/cancelReservation'
-import { refundCapturedReservationPayment } from '@/services/refundReservationPayment'
+import { refundFolioPayment, getFolioRefundsByPayment } from '@/services/apaleo/refundFolioPayment'
 import { getReservationFolioPayments, type FolioPayment } from '@/services/getReservationFolioPayments'
 import { bookingLog } from '@/lib/logger'
 import { bookingStatuses } from '@/types/types'
@@ -31,30 +31,32 @@ function createAdminClient() {
 }
 
 /**
- * Cancel a single reservation and refund the guest, paying back EACH captured
- * payment on its own Adyen pspReference.
+ * Cancel a single reservation and refund the guest by refunding EACH captured
+ * folio payment THROUGH Apaleo.
  *
- * Why per-payment: a reservation can be backed by more than one Adyen payment —
- * the room at booking time (one psp) and any services the guest added later
- * (a separate psp). Apaleo's folio is the source of truth: every payment sits
- * there with its own pspReference and the amount on THIS reservation's folio.
- * Refunding the whole gross against the single room psp (the old behaviour)
- * exceeds what that psp captured once a separate services payment exists, so
- * Adyen rejects the entire refund and the guest is left to a manual process.
+ * Why through Apaleo (not Adyen directly): Apaleo's payment account is connected
+ * to Adyen, so POST /finance/v1/folios/{folioId}/payments/{paymentId}/refunds
+ * BOTH executes the refund in Adyen AND records it on the folio. It is therefore
+ * the single source of truth — refunding in Adyen ourselves *as well* would
+ * re-run the refund and double-pay the guest (verified: Apaleo returns a refund
+ * that fails "Already fully refunded" when the psp was already refunded in Adyen).
  *
- * The cancellation penalty (Apaleo's policy verdict) applies to the ROOM
- * payment only — "the room is the room, breakfast is breakfast": services are
- * a separate purchase and are refunded in full on cancellation.
+ * Why per-payment: a reservation can be backed by more than one capture — the
+ * room at booking time (one psp) and any services added later (a separate psp).
+ * Apaleo's folio holds each as a payment with its own id + pspReference and the
+ * amount on THIS reservation's folio; we refund each payment for its planned
+ * amount.
  *
- * Each Adyen refund is asynchronous — this returns 'requested' and the webhook
- * finalizes the row. Every refund carries reference `${reservationId}::${psp}`
- * so the webhook can attribute each per-psp outcome; the row flips to
- * 'completed' only when the SUM of successful refunds covers the planned
- * amount (a multi-psp refund must not look done after its first psp), and any
- * REFUND_FAILED flips it to 'failed' for manual follow-up. Every reversal is
- * also recorded in payment_reversals by its own psp.
+ * The cancellation penalty (Apaleo's policy verdict) applies to the ROOM payment
+ * only — services are refunded in full on cancellation.
  *
- * Idempotency: a UNIQUE row in reservation_refunds(reservation_id) is the lock.
+ * Each Apaleo refund is asynchronous (Pending → settles via Adyen). This returns
+ * 'requested'; the truth lives on the Apaleo folio. 'failed' (+ a note) flags
+ * any payment Apaleo rejected for a human to settle.
+ *
+ * Idempotency: a UNIQUE row in reservation_refunds(reservation_id) is the lock;
+ * a re-run also can't double-refund because Apaleo rejects an already-refunded
+ * payment.
  */
 export async function cancelAndRefundReservation(
   reservationId: string,
@@ -71,7 +73,7 @@ export async function cancelAndRefundReservation(
   // Already cancelled — possibly through ANOTHER path (staff in Apaleo/Adyen,
   // an older flow without a refund row). The folio still lists the original
   // captures, so auto-refunding here would pay the guest twice. Report what
-  // our flow knows; anything else is a manual case. (Review finding #3.)
+  // our flow knows; anything else is a manual case.
   if (reservation.status === bookingStatuses.Canceled) {
     const { data: existing } = await supabase
       .from('reservation_refunds')
@@ -98,7 +100,7 @@ export async function cancelAndRefundReservation(
     // manual-review row so it lands in the reservation_refunds work-list
     // (status='failed') instead of living only in a transient log — a human
     // must check whether a refund is still owed. Swallow 23505 in case a row
-    // was created concurrently. (Review finding #8.)
+    // was created concurrently.
     const { error: insertErr } = await supabase.from('reservation_refunds').insert({
       reservation_id: reservationId,
       psp_reference: null,
@@ -124,16 +126,24 @@ export async function cancelAndRefundReservation(
     }
   }
 
-  // Apaleo's cancellation-policy verdict: 0 before the free-cancellation
-  // deadline, the penalty after, the full amount for non-refundable rates.
-  // A missing fee (not a legitimate 0), or a fee in a different currency than
-  // the captured total, means we cannot trust the verdict — fall through to
-  // manual rather than guess against real money.
+  // Apaleo's cancellation policy: `cancellationFee.fee` is the penalty that
+  // becomes due AT `cancellationFee.dueDateTime` (the free-cancellation
+  // deadline) — it is NOT already 0 before that moment. So while we are still
+  // inside the free window (now < dueDateTime) the ACTUAL fee is 0 and the guest
+  // is owed a FULL refund; only at/after the deadline does the penalty apply.
+  // (The earlier code applied fee.amount unconditionally, so guests who
+  // cancelled during the free window were wrongly refunded €0 — verified on
+  // live FLEX reservations whose fee.amount is non-zero before their deadline.)
+  // A missing fee, a fee in a different currency than the captured total, falls
+  // through to manual rather than guessing against real money.
   const feeAmount = reservation.cancellationFee?.fee?.amount
   const feeCurrency = reservation.cancellationFee?.fee?.currency
+  const dueDateTime = reservation.cancellationFee?.dueDateTime
+  const dueMs = dueDateTime ? Date.parse(dueDateTime) : NaN
+  const withinFreeWindow = Number.isFinite(dueMs) && Date.now() < dueMs
   const feeKnown =
     typeof feeAmount === 'number' && Number.isFinite(feeAmount) && feeCurrency === currency
-  const feeCents = feeKnown ? Math.round(feeAmount * 100) : 0
+  const feeCents = feeKnown && !withinFreeWindow ? Math.round(feeAmount * 100) : 0
 
   // The room/booking psp — used to apply the penalty to the room only. One
   // booking row (one pspReference) holds an array of reservation ids.
@@ -160,34 +170,112 @@ export async function cancelAndRefundReservation(
     })
   }
 
-  // NET captured cents per psp (a psp can appear on more than one folio;
-  // refunds already on the folio arrive as negative lines and subtract).
+  // NET of the folio /payments per psp: positive captures plus any negative
+  // reversal/chargeback lines (refunds do NOT live here — they are on
+  // /folios/{id}/refunds — so this is gross captures net of bank reversals only).
   const capturedByPsp = new Map<string, number>()
   for (const p of folioPayments) {
     capturedByPsp.set(p.pspReference, (capturedByPsp.get(p.pspReference) ?? 0) + p.amountCents)
   }
 
-  // Build the refund plan: penalty off the room psp, services psps in full.
-  // Clamped at 0 — a psp whose net is already non-positive gets nothing.
-  const plan = [...capturedByPsp.entries()].map(([psp, capturedCents]) => {
+  // How much is ALREADY refunded per folio payment (Pending + Success only). Read
+  // BEFORE the plan so the target reflects what's still owed, and reused as the
+  // per-payment remaining cap so we never over-refund and never re-refund on a
+  // retry. Read-only, before the lock; a read failure routes to manual.
+  const folioIds = [...new Set(folioPayments.filter((p) => p.amountCents > 0).map((p) => p.folioId))]
+  let refundedByPayment = new Map<string, number>()
+  let refundsReadOk = true
+  if (folioIds.length > 0) {
+    try {
+      refundedByPayment = await getFolioRefundsByPayment(folioIds)
+    } catch (err) {
+      refundsReadOk = false
+      bookingLog.error('cancel: failed to read existing folio refunds — routing to manual', {
+        reservationId,
+        error: err instanceof Error ? err.message : String(err),
+      })
+    }
+  }
+
+  // Already-refunded cents per psp (sum of its capture payments' prior refunds).
+  const refundedByPsp = new Map<string, number>()
+  for (const p of folioPayments) {
+    if (p.amountCents <= 0 || !p.paymentId) continue
+    const r = refundedByPayment.get(p.paymentId) ?? 0
+    if (r > 0) refundedByPsp.set(p.pspReference, (refundedByPsp.get(p.pspReference) ?? 0) + r)
+  }
+
+  // Refund target per psp = what's STILL owed: net payments − already-refunded,
+  // minus the cancellation penalty on the room psp only (services in full).
+  // Clamped at 0 — a psp already settled gets nothing. Separately track any psp
+  // where prior refunds EXCEED the entitlement (guest was already over-refunded):
+  // this flow can't claw it back, but it must be surfaced, not silently swallowed.
+  let priorOverRefundCents = 0
+  const plan = [...capturedByPsp.entries()].map(([psp, netPaymentsCents]) => {
     const isRoom = roomPsp != null && psp === roomPsp
-    const refundCents = Math.max(0, isRoom ? capturedCents - feeCents : capturedCents)
-    return { psp, capturedCents, refundCents, isRoom }
+    const entitlementCents = Math.max(0, isRoom ? netPaymentsCents - feeCents : netPaymentsCents)
+    const refundedForPsp = refundedByPsp.get(psp) ?? 0
+    if (refundedForPsp > entitlementCents) priorOverRefundCents += refundedForPsp - entitlementCents
+    const refundCents = Math.max(0, entitlementCents - refundedForPsp)
+    return { psp, refundCents, isRoom }
   })
   const totalRefundCents = plan.reduce((sum, p) => sum + p.refundCents, 0)
 
-  // We can auto-refund only when the policy verdict is trustworthy AND we can
-  // map the room payment (to charge the penalty against it) AND no payment is
-  // still in flight (a Pending capture makes every computed amount a guess).
-  // Anything else (OTA/bank-transfer with no card psp, missing booking link,
-  // folio read failure) cancels the reservation but routes the refund to
-  // manual.
+  // A negative /payments line (reversal/chargeback/payout) has an unverified
+  // cardholder-direction semantic — netting it could under-refund. And a capture
+  // in a non-reservation currency would be refunded in the wrong currency. Either
+  // → route to manual rather than auto-net against real money.
+  const hasNegativeLine = folioPayments.some((p) => p.amountCents < 0)
+  const currencyMismatch = folioPayments.some((p) => p.amountCents > 0 && p.currency !== currency)
+
+  // Refundable capture payments (positive, with an Apaleo payment id) and their
+  // REMAINING balance (capture − already-refunded), grouped per psp.
+  const capturesByPsp = new Map<
+    string,
+    Array<{ folioId: string; paymentId: string; remainingCents: number }>
+  >()
+  for (const p of folioPayments) {
+    if (p.amountCents <= 0 || !p.paymentId) continue
+    const remainingCents = Math.max(0, p.amountCents - (refundedByPayment.get(p.paymentId) ?? 0))
+    if (remainingCents <= 0) continue
+    const arr = capturesByPsp.get(p.pspReference) ?? []
+    arr.push({ folioId: p.folioId, paymentId: p.paymentId, remainingCents })
+    capturesByPsp.set(p.pspReference, arr)
+  }
+
+  // Distribute each psp's target across its captures, capped at each payment's
+  // remaining balance. `coverable` is false if any psp's target can't be fully
+  // met by id-bearing captures with remaining balance (id-less capture, or a
+  // prior refund already consumed the balance) → route to manual up front.
+  const execution: Array<{ folioId: string; paymentId: string; amountCents: number; isRoom: boolean }> = []
+  let coverable = true
+  for (const line of plan) {
+    if (line.refundCents <= 0) continue
+    let need = line.refundCents
+    for (const cap of capturesByPsp.get(line.psp) ?? []) {
+      if (need <= 0) break
+      const amountCents = Math.min(need, cap.remainingCents)
+      if (amountCents <= 0) continue
+      execution.push({ folioId: cap.folioId, paymentId: cap.paymentId, amountCents, isRoom: line.isRoom })
+      need -= amountCents
+    }
+    if (need > 0) coverable = false
+  }
+
+  // We can auto-refund only when the policy verdict is trustworthy, the room
+  // payment is mapped (to charge the penalty), no payment is in flight, existing
+  // refunds were readable, and every psp's target is fully coverable by
+  // refundable captures. Anything else cancels but routes the refund to manual.
   const canAutoRefund =
     feeKnown &&
     roomPsp != null &&
     capturedByPsp.size > 0 &&
     capturedByPsp.has(roomPsp) &&
-    unsettledPayments === 0
+    unsettledPayments === 0 &&
+    refundsReadOk &&
+    !hasNegativeLine &&
+    !currencyMismatch &&
+    coverable
 
   // Acquire the idempotency lock. Initial status 'requested'; refined below.
   const { error: lockError } = await supabase.from('reservation_refunds').insert({
@@ -243,7 +331,20 @@ export async function cancelAndRefundReservation(
           error: cancelResult.error,
         })
       } else {
-        bookingLog.error('cancel: Apaleo cancel failed and recheck failed — lock kept for manual review', {
+        // Cancel call failed AND we couldn't verify the reservation state. Keep
+        // the lock (a racing retry must not double-act) but flip it to 'failed'
+        // with a note, so it surfaces in the work-list instead of masquerading as
+        // a healthy 'requested'/handled row on a later retry.
+        await supabase
+          .from('reservation_refunds')
+          .update({
+            status: 'failed',
+            note: `cancel uncertain — verify in Apaleo, then cancel/refund manually (${cancelResult.error || 'cancel + recheck both failed'})`.slice(0, 500),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('reservation_id', reservationId)
+          .eq('status', 'requested')
+        bookingLog.error('cancel: Apaleo cancel failed and recheck failed — lock kept, marked failed for manual review', {
           reservationId,
           error: cancelResult.error,
         })
@@ -257,7 +358,12 @@ export async function cancelAndRefundReservation(
 
   // CAS from the 'requested' lock state — the webhook is the single winner: if a
   // REFUND notification already flipped the row, these writes become no-ops.
-  const markRow = async (fields: { status?: RefundStatus; adyen_modification_ref?: string; note?: string }) => {
+  const markRow = async (fields: {
+    status?: RefundStatus
+    adyen_modification_ref?: string
+    note?: string
+    amount_cents?: number
+  }) => {
     const { error } = await supabase
       .from('reservation_refunds')
       .update({ ...fields, updated_at: new Date().toISOString() })
@@ -283,58 +389,111 @@ export async function cancelAndRefundReservation(
           ? 'no captured card payments on folio'
           : !capturedByPsp.has(roomPsp)
             ? 'room payment not found on folio'
-            : 'pending (unsettled) payments on folio'
+            : unsettledPayments !== 0
+              ? 'pending (unsettled) payments on folio'
+              : !refundsReadOk
+                ? 'could not read existing folio refunds'
+                : hasNegativeLine
+                  ? 'reversal/chargeback line on folio — review before refunding'
+                  : currencyMismatch
+                    ? 'capture currency differs from reservation currency'
+                    : 'refundable balance below computed refund (prior partial refund or id-less capture)'
     await markRow({ status: 'failed', note: `${reason} — manual refund review` })
     bookingLog.error('cancel: cancelled but refund needs manual review', { reservationId, reason })
     return { ok: true, cancelled: true, refund: { amountCents: totalRefundCents, currency, status: 'failed', manual: true } }
   }
 
   if (totalRefundCents <= 0) {
+    if (priorOverRefundCents > 0) {
+      // Nothing more to refund, but prior refunds already exceeded what the guest
+      // was entitled to — a possible over-payment this flow cannot claw back. Mark
+      // completed (no action) but flag loudly for finance.
+      bookingLog.error('cancel: prior refunds EXCEED entitlement — possible over-payment, review', {
+        reservationId,
+        overByCents: priorOverRefundCents,
+        currency,
+      })
+      await markRow({
+        status: 'completed',
+        note: `no refund due; prior refunds EXCEED entitlement by ${(priorOverRefundCents / 100).toFixed(2)} ${currency} — review for over-payment`,
+      })
+      return { ok: true, cancelled: true, refund: { amountCents: 0, currency, status: 'completed' } }
+    }
     await markRow({ status: 'completed', note: 'no refundable amount (cancellation fee covers paid total)' })
     bookingLog.info('cancel: nothing to refund', { reservationId })
     return { ok: true, cancelled: true, refund: { amountCents: 0, currency, status: 'completed' } }
   }
 
-  // Refund each payment on its own psp. The penalty is already baked into the
-  // room line's refundCents.
-  const toRefund = plan.filter((p) => p.refundCents > 0)
+  // Refund THROUGH Apaleo: posting a refund on a folio payment makes Apaleo
+  // execute it via the connected Adyen payment account AND record it on the folio
+  // — ONE source of truth, no double. We must NOT also refund in Adyen directly
+  // (that re-runs the refund and double-pays the guest). `execution` is the
+  // pre-computed plan (penalty already baked into the room amount, each line
+  // capped at its payment's remaining balance, so Apaleo never has to clamp).
+  const refundIds: string[] = []
+  let refundedCents = 0
+  let unverified = 0 // accepted by Apaleo but returned no id (can't be tracked)
   const failures: string[] = []
-  let roomModificationRef: string | undefined
 
-  for (const line of toRefund) {
-    // Per-psp reference: the webhook attributes each REFUND/REFUND_FAILED to
-    // this reservation AND knows which payment it was (review finding #4).
-    const result = await refundCapturedReservationPayment(
-      line.psp,
-      line.refundCents,
+  for (const line of execution) {
+    const result = await refundFolioPayment({
+      folioId: line.folioId,
+      paymentId: line.paymentId,
+      amountCents: line.amountCents,
       currency,
-      `${reservationId}::${line.psp}`
-    )
+    })
     if (!result.success) {
-      failures.push(line.psp)
-      bookingLog.error('cancel: refund rejected for a payment', {
+      failures.push(`${line.paymentId}: ${result.error ?? 'rejected'}`)
+      bookingLog.error('cancel: Apaleo folio refund rejected', {
         reservationId,
-        psp: line.psp,
+        folioId: line.folioId,
+        paymentId: line.paymentId,
         isRoom: line.isRoom,
-        refundCents: line.refundCents,
+        amountCents: line.amountCents,
         error: result.error,
       })
-    } else if (line.isRoom) {
-      roomModificationRef = result.modificationRef
+    } else {
+      refundedCents += line.amountCents
+      if (result.refundId) refundIds.push(result.refundId)
+      else unverified++
     }
   }
 
+  // A refund Apaleo accepted but returned no id can't be confirmed by the
+  // reconcile job. Park a sentinel in the ref so the row can NEVER auto-complete
+  // on the trackable ids alone — the reconcile job will time it out to 'failed'
+  // (manual folio check) instead of silently reporting a full refund.
+  const refundRefParts = [...refundIds]
+  if (unverified > 0) refundRefParts.push('NEEDS_FOLIO_CHECK')
+  const refundRef = refundRefParts.join(',') || undefined
+
   if (failures.length > 0) {
-    // At least one payment didn't refund. Accepted refunds still finalize via
-    // their own REFUND webhook (recorded in payment_reversals); the 'failed'
-    // status flags the reservation for a human to settle the rest.
-    await markRow({ status: 'failed', note: `partial refund failure on psp(s): ${failures.join(', ')}` })
-    return { ok: true, cancelled: true, refund: { amountCents: totalRefundCents, currency, status: 'failed', manual: true } }
+    // Some payments refunded, some didn't. Apaleo already executed the accepted
+    // ones via Adyen (visible on the folio) — record exactly what went out and the
+    // REMAINING owed, so a human settles only the rest and never re-refunds the
+    // succeeded slices.
+    const owed = Math.max(0, totalRefundCents - refundedCents)
+    const refundedNote =
+      refundedCents > 0
+        ? ` Already refunded ${(refundedCents / 100).toFixed(2)} ${currency} (refundIds: ${refundIds.join(', ')}) — do NOT refund those again.`
+        : ''
+    await markRow({
+      status: 'failed',
+      amount_cents: owed,
+      adyen_modification_ref: refundRef,
+      note: `Apaleo refund failure(s): ${failures.join('; ')}.${refundedNote}`.slice(0, 500),
+    })
+    return { ok: true, cancelled: true, refund: { amountCents: owed, currency, status: 'failed', manual: true } }
   }
 
-  // All accepted by Adyen — final outcome arrives via the REFUND webhook(s).
-  // Record the room modification ref WITHOUT rewriting status (the webhook may
-  // already have flipped it).
-  await markRow({ adyen_modification_ref: roomModificationRef })
+  // All accepted by Apaleo — it executes each via Adyen and records it on the
+  // folio (settles asynchronously). Store EVERY refund id so the reconcile job
+  // can confirm each settled (or surface a downstream Adyen failure).
+  await markRow({
+    adyen_modification_ref: refundRef,
+    ...(unverified > 0
+      ? { note: `${unverified} refund(s) accepted without an id — verify on folio (reconcile will time out to manual)` }
+      : {}),
+  })
   return { ok: true, cancelled: true, refund: { amountCents: totalRefundCents, currency, status: 'requested' } }
 }
