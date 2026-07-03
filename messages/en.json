@@ -640,6 +640,7 @@
     "roomInfo": "Room info",
     "bookAgain": "Book Again",
     "viewInvoice": "View Invoice",
+    "invoiceCancelled": "Invoice cancelled",
     "invoiceDownloaded": "Invoice downloaded successfully",
     "invoiceDownloadFailed": "Failed to download the invoice. Please try again or contact support if the issue persists.",
     "invoiceFinalActionWarning": "After generating, billing data cannot be changed. Please review carefully.",
