@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Fetch, getOrRefreshToken } from '@/services/Request';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { verifyReservationOwnership } from '@/lib/verifyReservationOwnership';
+import { resolveActiveInvoice } from '@/lib/invoiceStatus';
 import type { FolioResponse, ApaleoInvoiceListResponse, FolioDebitor } from '@/types/apaleo';
 
 const APALEO_API_URL = 'https://api.apaleo.com';
@@ -48,10 +49,20 @@ export async function GET(request: NextRequest) {
         .maybeSingle(),
     ]);
 
+    const invoices = invoiceList.invoices ?? [];
+    // The single invoice the guest should actually get: the latest non-voided
+    // document. After a cancellation the stored invoice_states id points at the
+    // now-cancelled Initial — `activeInvoiceId` is the correction (or null when
+    // fully cancelled), so the cabinet stops serving the stale invoice.
+    const { active, cancelled } = resolveActiveInvoice(invoices);
+
     return NextResponse.json({
       folio,
-      invoices: invoiceList.invoices ?? [],
-      hasInvoice: (invoiceList.count ?? 0) > 0,
+      invoices,
+      hasInvoice: invoices.length > 0,
+      activeInvoiceId: active?.id ?? null,
+      activeLanguage: active?.languageCode ?? null,
+      cancelled,
       state: stateResult.data
         ? {
             invoiceId: stateResult.data.invoice_id,

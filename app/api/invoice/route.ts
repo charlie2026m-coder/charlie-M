@@ -1,18 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { getOrRefreshToken } from '@/services/Request';
+import { Fetch, getOrRefreshToken } from '@/services/Request';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { verifyReservationOwnership } from '@/lib/verifyReservationOwnership';
 
 const APALEO_API_URL = 'https://api.apaleo.com';
-
-function createAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } },
-  );
-}
 const PDF_RETRY_ATTEMPTS = 3;
 const PDF_RETRY_DELAY_MS = 1500;
 
@@ -30,25 +21,35 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'invoiceId is required' }, { status: 400 });
   }
 
+  // Ownership: resolve the invoice to its reservation via Apaleo, then enforce
+  // per-user access. A bare client-supplied invoiceId is never trusted — this
+  // closes the cross-guest invoice-PDF IDOR. Resolving via Apaleo (not
+  // invoice_states) is deliberate: staff-issued Correction invoices for an owned
+  // reservation must be downloadable too, and those have no invoice_states row.
+  let invoiceReservationId: string | undefined;
+  let invoiceProperty: string | undefined;
   try {
-    // Authorize: don't trust a raw invoiceId. It must belong to a reservation
-    // the user owns. invoice_states maps reservation_id↔invoice_id (written
-    // when the invoice was created); resolve it and verify ownership before
-    // streaming any PDF.
-    const admin = createAdminClient();
-    const { data: state } = await admin
-      .from('invoice_states')
-      .select('reservation_id')
-      .eq('invoice_id', invoiceId)
-      .maybeSingle();
-    if (!state) {
-      return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
-    }
-    const ownership = await verifyReservationOwnership(supabase, user, state.reservation_id);
-    if (!ownership.ok) {
-      return NextResponse.json({ error: ownership.error }, { status: ownership.status });
-    }
+    const inv = await Fetch<{ folioId?: string; propertyId?: string }>(
+      `/finance/v1/invoices/${encodeURIComponent(invoiceId)}`,
+    );
+    invoiceProperty = inv?.propertyId;
+    // The single-invoice resource carries `folioId` (e.g. CMH-1-1) but NOT
+    // reservationId — derive the reservation by stripping the folio suffix.
+    invoiceReservationId = inv?.folioId ? inv.folioId.replace(/-\d+$/, '') : undefined;
+  } catch {
+    return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
+  }
+  // Guard the shared Apaleo account (CMH ↔ Motz19): the invoice must belong to
+  // THIS property and to a reservation the caller owns.
+  if (!invoiceReservationId || invoiceProperty !== process.env.APALEO_PROPERTY_ID) {
+    return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
+  }
+  const ownership = await verifyReservationOwnership(supabase, user, invoiceReservationId);
+  if (!ownership.ok) {
+    return NextResponse.json({ error: ownership.error }, { status: ownership.status });
+  }
 
+  try {
     const token = await getOrRefreshToken();
 
     for (let attempt = 1; attempt <= PDF_RETRY_ATTEMPTS; attempt++) {

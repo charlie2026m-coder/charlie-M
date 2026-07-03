@@ -640,6 +640,7 @@
     "roomInfo": "Zimmerinfo",
     "bookAgain": "Erneut buchen",
     "viewInvoice": "Rechnung anzeigen",
+    "invoiceCancelled": "Rechnung storniert",
     "invoiceDownloaded": "Rechnung erfolgreich heruntergeladen",
     "invoiceDownloadFailed": "Die Rechnung konnte nicht heruntergeladen werden. Bitte versuchen Sie es erneut oder kontaktieren Sie den Support.",
     "invoiceFinalActionWarning": "Nach der Generierung können die Rechnungsdaten nicht mehr geändert werden. Bitte sorgfältig prüfen.",

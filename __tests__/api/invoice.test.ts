@@ -16,7 +16,7 @@ vi.mock('@/lib/verifyReservationOwnership', () => ({
   verifyReservationOwnership: vi.fn().mockResolvedValue({ ok: true }),
 }));
 
-// Admin client used to resolve invoice_states (invoice_id -> reservation_id).
+// Admin client used by the folio route to resolve invoice_states.
 // `invoiceStateRow` is mutable so each test can simulate "row found" / "no row".
 let invoiceStateRow: { data: unknown; error: unknown } = { data: null, error: null };
 vi.mock('@supabase/supabase-js', () => ({
@@ -33,11 +33,13 @@ vi.mock('@supabase/supabase-js', () => ({
 }));
 
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { Fetch } from '@/services/Request';
 import { verifyReservationOwnership } from '@/lib/verifyReservationOwnership';
 import { GET as invoiceGET } from '@/app/api/invoice/route';
 import { GET as folioGET } from '@/app/api/invoice/folio/route';
 
 const mockCreateClient = vi.mocked(createSupabaseServerClient);
+const mockFetch = vi.mocked(Fetch);
 const mockVerify = vi.mocked(verifyReservationOwnership);
 
 function makeSupabase(user: object | null) {
@@ -50,9 +52,14 @@ beforeEach(() => {
   vi.clearAllMocks();
   invoiceStateRow = { data: null, error: null };
   mockVerify.mockResolvedValue({ ok: true } as never);
+  // Guard compares the invoice's Apaleo property against this env var.
+  process.env.APALEO_PROPERTY_ID = 'CMH';
 });
 
 // ── GET /api/invoice (PDF download) ──────────────────────────────────────────
+// Ownership is resolved via Apaleo (invoice → folioId → reservationId), NOT via
+// invoice_states, so staff-issued Correction invoices (which have no
+// invoice_states row) are still downloadable by the owner.
 
 describe('GET /api/invoice — PDF download (CharlieM)', () => {
   it('returns 401 when no session', async () => {
@@ -67,21 +74,48 @@ describe('GET /api/invoice — PDF download (CharlieM)', () => {
     expect(res.status).toBe(400);
   });
 
-  it('returns 404 for an invoiceId with no invoice_states row (unknown / not app-created)', async () => {
+  it('returns 404 when the invoice is unknown to Apaleo', async () => {
     mockCreateClient.mockResolvedValue(makeSupabase({ id: 'u1' }));
-    invoiceStateRow = { data: null, error: null };
+    mockFetch.mockRejectedValue(new Error('404 not found'));
     const res = await invoiceGET(new NextRequest('http://localhost/api/invoice?invoiceId=INV-OTHER'));
+    expect(res.status).toBe(404);
+    expect(mockVerify).not.toHaveBeenCalled();
+  });
+
+  it('returns 404 when the invoice belongs to a different Apaleo property', async () => {
+    mockCreateClient.mockResolvedValue(makeSupabase({ id: 'u1' }));
+    mockFetch.mockResolvedValue({ folioId: 'MOT-1-1', propertyId: 'MOT' } as never);
+    const res = await invoiceGET(new NextRequest('http://localhost/api/invoice?invoiceId=INV-OTHERPROP'));
     expect(res.status).toBe(404);
     expect(mockVerify).not.toHaveBeenCalled();
   });
 
   it('returns 403 (IDOR blocked) when the invoice resolves to a reservation the user does not own', async () => {
     mockCreateClient.mockResolvedValue(makeSupabase({ id: 'attacker' }));
-    invoiceStateRow = { data: { reservation_id: 'RCMH-VICTIM' }, error: null };
+    mockFetch.mockResolvedValue({ folioId: 'CMH-VICTIM-1', propertyId: 'CMH' } as never);
     mockVerify.mockResolvedValue({ ok: false, status: 403, error: 'Not owned' } as never);
     const res = await invoiceGET(new NextRequest('http://localhost/api/invoice?invoiceId=INV-VICTIM'));
     expect(res.status).toBe(403);
-    expect(mockVerify).toHaveBeenCalledWith(expect.anything(), { id: 'attacker' }, 'RCMH-VICTIM');
+    // folioId `CMH-VICTIM-1` → strip the folio suffix → reservation `CMH-VICTIM`.
+    expect(mockVerify).toHaveBeenCalledWith(expect.anything(), { id: 'attacker' }, 'CMH-VICTIM');
+  });
+
+  it('streams a Correction invoice with NO invoice_states row (ownership via Apaleo folio)', async () => {
+    mockCreateClient.mockResolvedValue(makeSupabase({ id: 'owner' }));
+    // A correction PDF has its own invoiceId but shares the reservation's folio.
+    mockFetch.mockResolvedValue({ folioId: 'CMH-RES-1', propertyId: 'CMH' } as never);
+    mockVerify.mockResolvedValue({ ok: true } as never);
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      blob: async () => new Blob(['%PDF-1.4']),
+      text: async () => '',
+    }) as unknown as typeof fetch;
+
+    const res = await invoiceGET(new NextRequest('http://localhost/api/invoice?invoiceId=CMH-CORRECTION-99'));
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toBe('application/pdf');
+    expect(mockVerify).toHaveBeenCalledWith(expect.anything(), { id: 'owner' }, 'CMH-RES');
   });
 });
 

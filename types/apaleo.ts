@@ -450,9 +450,17 @@ export interface FolioResponse {
   balance: Money;
 }
 
+export type ApaleoInvoiceType = 'Initial' | 'Cancellation' | 'Correction';
+
 export interface ApaleoInvoiceItem {
   id: string;
   languageCode: string;
+  // Apaleo's Stornorechnung model: an Initial invoice is voided by a
+  // Cancellation (negative) and replaced by a Correction (positive re-issue).
+  type?: ApaleoInvoiceType;
+  number?: string;
+  status?: string;
+  created?: string;
 }
 
 export interface ApaleoInvoiceListResponse {
