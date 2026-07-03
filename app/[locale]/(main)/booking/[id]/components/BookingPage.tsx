@@ -1,5 +1,6 @@
 'use client'
 import { useEffect } from "react";
+import { useParams } from "next/navigation";
 import PhotoGallery from "@/app/[locale]/(main)/rooms/[id]/components/PhotoGallery"
 import RoomContent from "@/app/[locale]/(main)/rooms/[id]/components/RoomContent"
 import ExtrasSection from "./ExtrasSection"
@@ -51,6 +52,7 @@ const BookingPage = ({
   const nights = calculateNights(from as string, to as string)
   const mainRoom = resolveRatePlan(rooms, nights, false)
   const tCommon = useTranslations()
+  const { id: roomTypeId } = useParams() as { id: string }
 
   useScrollToBookingSection()
 
@@ -120,7 +122,7 @@ const BookingPage = ({
           </div>
           <div className='col-span-1 gap-5 flex flex-col'>
             <div className='flex flex-col bg-white rounded-[20px] py-5 px-3 border'>
-              <ChangeDate arrival={from} departure={to} />
+              <ChangeDate id={roomTypeId} arrival={from} departure={to} />
               <p className='my-8 text-center text-gray-500 text-sm px-2'>
                 {tCommon('bookingForm.unavailableForDates')}
               </p>
