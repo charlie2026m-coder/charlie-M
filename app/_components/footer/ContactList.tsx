@@ -92,9 +92,12 @@ const ContactList = ({ contacts }: ContactListProps) => {
           const href = getContactHref(contact.type, contact.value);
           
           return (
-            <li 
+            <li
               key={index}
-              className={cn("", index === 0 && "font-bold text-blue")}
+              // Align the plain lines' text under the WhatsApp button's LABEL.
+              // The pill offsets its label by px-3 (12) + icon (16) + gap-2 (8) =
+              // 36px = pl-9, so all four labels share one clean left edge (desktop).
+              className={cn("", index === 0 && "font-bold text-blue", contact.type !== 'whatsapp' && "md:pl-9")}
             >
               <a
                 href={href}

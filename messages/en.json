@@ -470,6 +470,35 @@
     "cribUnavailable": "No crib available for selected dates",
     "cribVisibleInExtras": "Shown in extras and total price"
   },
+  "gallery": {
+    "location": "Location",
+    "viewOnMap": "View on map"
+  },
+  "goodToKnow": {
+    "title": "Good to know",
+    "contactless": {
+      "title": "Contactless self check-in",
+      "text": "No reception — you get a personal PIN on the morning of arrival to open the building and your room."
+    },
+    "checkin": {
+      "title": "Check-in & check-out",
+      "text": "Check-in from {checkin}, check-out by {checkout}. Early check-in and late check-out available."
+    },
+    "laundry": {
+      "title": "Laundry on-site",
+      "text": "Modern washers & dryers are available in the building (extra cost) — handy for longer stays."
+    },
+    "pets": {
+      "title": "Pet-friendly",
+      "text": "Bring your pet along — a one-time pet fee per stay applies. Please add them to your booking."
+    }
+  },
+  "roomReviews": {
+    "title": "What guests say",
+    "count": "{count} reviews",
+    "seeAllOnGoogle": "See all reviews on Google",
+    "source": "Reviews sourced from Google."
+  },
   "bookingForm": {
     "title": "BOOK",
     "pleaseSelectDates": "Please select dates",

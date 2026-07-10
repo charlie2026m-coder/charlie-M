@@ -89,6 +89,29 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
+// Berlin-local date / clock (the hotel's frame; the server runs in UTC). Used
+// for the same-day ECI sale deadline — dayjs() would give UTC and be 1-2h off.
+function berlinToday(): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Berlin',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date())
+}
+
+function berlinNowHHmm(): string {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Berlin',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(new Date())
+  const hh = parts.find(p => p.type === 'hour')?.value ?? '00'
+  const mm = parts.find(p => p.type === 'minute')?.value ?? '00'
+  return `${hh}:${mm}`
+}
+
 async function fetchOfferWithRetry(
   unitGroupId: string,
   from: string,
@@ -517,12 +540,27 @@ export async function validateServicesPayment(
       })
       return { status: 'unavailable', reason: 'late check-out already applied' }
     }
-    if (ext === 'early' && reservation.arrivalTime === '13:00') {
+    // ECI is "already applied" whenever arrival is EARLIER than the 15:00
+    // default — nothing left to sell. Not a strict `=== '13:00'`: the
+    // Room-Ready webhook moves arrivals to 13:00+ (e.g. 13:47) when the room
+    // is cleaned early; an exact match would miss that and charge the guest
+    // for nothing (live Adyen). Zero-padded HH:mm ⇒ lexical `<` works.
+    if (ext === 'early' && reservation.arrivalTime !== '' && reservation.arrivalTime < '15:00') {
       priceLog.error('services validation: early check-in already applied — refusing', {
         reference,
         reservationId: row.reservation_id,
       })
       return { status: 'unavailable', reason: 'early check-in already applied' }
+    }
+    // Same-day sale deadline: past 13:00 Berlin on the arrival day the ECI
+    // product can no longer deliver anything (it moves arrival to 13:00, which
+    // is already in the past) — refuse BEFORE any Adyen authorization.
+    if (ext === 'early' && reservation.arrival === berlinToday() && berlinNowHHmm() >= '13:00') {
+      priceLog.error('services validation: early check-in past 13:00 on arrival day — refusing', {
+        reference,
+        reservationId: row.reservation_id,
+      })
+      return { status: 'unavailable', reason: 'early check-in no longer available today' }
     }
   }
 

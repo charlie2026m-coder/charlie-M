@@ -470,6 +470,35 @@
     "cribUnavailable": "Kein Babybett für die gewählten Daten verfügbar",
     "cribVisibleInExtras": "Wird in Extras und im Gesamtpreis angezeigt"
   },
+  "gallery": {
+    "location": "Lage",
+    "viewOnMap": "Auf Karte ansehen"
+  },
+  "goodToKnow": {
+    "title": "Gut zu wissen",
+    "contactless": {
+      "title": "Kontaktloser Self-Check-in",
+      "text": "Keine Rezeption — am Anreisemorgen erhalten Sie einen persönlichen PIN für den Eingang und Ihr Zimmer."
+    },
+    "checkin": {
+      "title": "Check-in & Check-out",
+      "text": "Check-in ab {checkin} Uhr, Check-out bis {checkout} Uhr. Früher Check-in und später Check-out möglich."
+    },
+    "laundry": {
+      "title": "Wäsche im Haus",
+      "text": "Moderne Waschmaschinen & Trockner stehen im Haus zur Verfügung (gegen Gebühr) — praktisch für längere Aufenthalte."
+    },
+    "pets": {
+      "title": "Haustierfreundlich",
+      "text": "Bringen Sie Ihr Haustier mit — eine einmalige Haustiergebühr pro Aufenthalt fällt an. Bitte fügen Sie es vorab zur Buchung hinzu."
+    }
+  },
+  "roomReviews": {
+    "title": "Das sagen Gäste",
+    "count": "{count} Bewertungen",
+    "seeAllOnGoogle": "Alle Bewertungen auf Google",
+    "source": "Bewertungen von Google."
+  },
   "bookingForm": {
     "title": "BUCHEN",
     "pleaseSelectDates": "Bitte wählen Sie Daten aus",
