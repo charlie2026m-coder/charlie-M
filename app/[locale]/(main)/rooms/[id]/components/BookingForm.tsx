@@ -61,6 +61,21 @@ const BookingForm = ({
   // rather than the dates silently vanishing from a closed field.
   const justAutoClosedRef = useRef(false)
 
+  // Mobile sticky footer CTA — shown once the in-card Book button scrolls out
+  // of view (on mobile the booking card sits far below the room content).
+  const mainBookRef = useRef<HTMLDivElement>(null)
+  const [showSticky, setShowSticky] = useState(false)
+  useEffect(() => {
+    const el = mainBookRef.current
+    if (!el) return
+    const obs = new IntersectionObserver(
+      ([entry]) => setShowSticky(!entry.isIntersecting),
+      { rootMargin: '0px 0px -80px 0px' },
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+
   const [guests, setGuests] = useState({
     adults: parseInt(params?.adults || guestsStore?.adults.toString() || '1'),
     children: parseInt(params?.children || guestsStore?.children.toString() || '0'),
@@ -271,7 +286,16 @@ const BookingForm = ({
 
   const showPlaceholder = isPriceLoading || !room
 
+  const onStickyBook = () => {
+    // Always take the guest UP to the booking card so they can review/select
+    // dates + guests there — the real submit is the main Book button in the
+    // card. Open the date picker when no dates are chosen yet.
+    document.getElementById('room-booking-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    if (!fromStr || !toStr) setOpenCheckIn(true)
+  }
+
   return (
+    <>
     <div id='room-booking-card' className='scroll-mt-24 sticky shadow-xl top-10 flex flex-col bg-white border md:border-none rounded-[20px] px-5 pt-[25px] w-full pb-10'>
       <h3 className='font-semibold text-2xl text-center mb-3 flex items-center justify-center gap-2'>
         <FiCalendar className='size-5 text-blue shrink-0' />
@@ -285,6 +309,12 @@ const BookingForm = ({
           {showPlaceholder ? '€ 00.00' : `€${currentPrice.toFixed(2)}`}
         </div>
       </div>
+      {/* Nightly-rate breakdown — light line under the total. */}
+      {!showPlaceholder && !isUnavailable && hasEnoughCapacity && nights > 0 && (
+        <div className='text-sm text-dark tabular-nums'>
+          €{totalNightlyRate.toFixed(2)} × {nights} {n}
+        </div>
+      )}
 
       {/* Info row — fixed height to prevent layout jump */}
       <div className='flex items-center gap-1 my-4 mb-10 h-6'>
@@ -495,19 +525,48 @@ const BookingForm = ({
           className='mb-4'
         />
       )}
-      <Button
-        className='w-full'
-        onClick={handleBookNow}
-        disabled={isNavigating || isUnavailable || !hasEnoughCapacity}
-      >
-        {isNavigating ? (
-          <span className='flex items-center gap-2'>
-            <Spinner className='size-4' />
-            {tCommon('loading')}
-          </span>
-        ) : tCommon('book_now_btn')}
+      <div ref={mainBookRef}>
+        <Button
+          className='w-full'
+          onClick={handleBookNow}
+          disabled={isNavigating || isUnavailable || !hasEnoughCapacity}
+        >
+          {isNavigating ? (
+            <span className='flex items-center gap-2'>
+              <Spinner className='size-4' />
+              {tCommon('loading')}
+            </span>
+          ) : tCommon('book_now_btn')}
+        </Button>
+      </div>
+    </div>
+
+    {/* Mobile sticky footer CTA — appears once the in-card Book button has
+        scrolled out of view; brings the guest back up to the booking card. */}
+    <div
+      className={`md:hidden fixed inset-x-0 bottom-0 z-40 flex items-center gap-3 border-t bg-white/95 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur shadow-[0_-4px_16px_rgba(0,0,0,0.06)] transition-transform duration-300 ease-out ${showSticky ? 'translate-y-0' : 'translate-y-full pointer-events-none'}`}
+    >
+      <div className='flex min-w-0 flex-col'>
+        {isUnavailable || !hasEnoughCapacity || !fromStr || !toStr ? (
+          <span className='text-sm font-medium text-mute'>{t('title')}</span>
+        ) : showPlaceholder ? (
+          <div className='flex flex-col gap-1.5' aria-hidden='true'>
+            <div className='h-5 w-20 rounded bg-gray-200 animate-pulse' />
+            <div className='h-3 w-28 rounded bg-gray-100 animate-pulse' />
+          </div>
+        ) : (
+          <>
+            <span className='text-lg font-[900] leading-none text-green tabular-nums'>€{currentPrice.toFixed(2)}</span>
+            <span className='truncate text-[11px] text-dark'>{priceText}</span>
+          </>
+        )}
+      </div>
+      <Button className='ml-auto shrink-0 gap-2 px-6' onClick={onStickyBook}>
+        <FiCalendar className='size-4' />
+        {tCommon('book_now_btn')}
       </Button>
     </div>
+    </>
   )
 }
 

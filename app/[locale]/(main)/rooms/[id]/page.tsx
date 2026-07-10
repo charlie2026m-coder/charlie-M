@@ -4,6 +4,8 @@ import RoomContent from './components/RoomContent'
 import { getRoomDetails, getRoomById } from '@/app/actions/supabase/rooms/getRoomDetails'
 import RoomErrorCard from './components/RoomErrorCard'
 import { RoomViewTracker } from './components/RoomViewTracker'
+import RoomReviews from './components/RoomReviews'
+import GoodToKnow from './components/GoodToKnow'
 import type { Metadata } from 'next'
 interface IParams {
   params: Promise<{ id: string; locale: string }>
@@ -134,6 +136,9 @@ const RoomPage = async ({ params, searchParams }: IParams) => {
             />
           </div>
         </div>
+
+        <GoodToKnow />
+        <RoomReviews />
       </div>
     )
   } catch (error) {

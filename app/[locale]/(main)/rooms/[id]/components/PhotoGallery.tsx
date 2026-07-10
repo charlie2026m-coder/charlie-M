@@ -1,13 +1,22 @@
 'use client'
 import { IoMdImage } from "react-icons/io";
+import { FiMapPin } from "react-icons/fi";
 import { useState, useEffect, useCallback, useRef } from "react";
 import Image from 'next/image'
 import { Dialog, DialogContent } from "@/app/_components/ui/dialog";
-
 import { IoChevronBack, IoChevronForward } from "react-icons/io5";
+import { useTranslations } from 'next-intl'
+import { HOTEL_INFO } from '@/lib/Constants'
 
 const PhotoGallery = ({ images, roomName }: { images: string[]; roomName?: string }) => {
   const [showImages, setShowImages] = useState<null | number>(null);
+  const t = useTranslations('gallery')
+  // Query the place by NAME + ADDRESS (not raw lat/lng) so both the embedded map
+  // and the "View on map" link resolve to the actual property — a bare
+  // coordinate opens an unnamed point ("add a missing place").
+  const mapQuery = encodeURIComponent(
+    `${HOTEL_INFO.name}, ${HOTEL_INFO.address.streetAddress}, ${HOTEL_INFO.address.postalCode} ${HOTEL_INFO.address.addressLocality}`,
+  )
 
   // Check if there are no images
   const hasImages = images && images.length > 0
@@ -51,17 +60,31 @@ const PhotoGallery = ({ images, roomName }: { images: string[]; roomName?: strin
   // Touch swipe (mobile): a horizontal drag changes the photo — swipe left →
   // next, swipe right → previous. A tap (tiny delta) is ignored so the
   // tap-to-advance / arrow controls still work.
-  const touchStartX = useRef<number | null>(null)
+  const dragStartX = useRef<number | null>(null)
+  const dragDelta = useRef(0)
+  const swiped = useRef(false)
+  const [dragX, setDragX] = useState(0)
+  const [dragging, setDragging] = useState(false)
   const onTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0]?.clientX ?? null
+    dragStartX.current = e.touches[0]?.clientX ?? null
+    dragDelta.current = 0
+    swiped.current = false
+    setDragging(true)
   }
-  const onTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX.current === null) return
-    const dx = (e.changedTouches[0]?.clientX ?? touchStartX.current) - touchStartX.current
-    touchStartX.current = null
-    if (Math.abs(dx) < 40) return
-    if (dx < 0) nextPhoto()
-    else prevPhoto()
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (dragStartX.current === null) return
+    const dx = (e.touches[0]?.clientX ?? dragStartX.current) - dragStartX.current
+    dragDelta.current = dx
+    setDragX(dx)
+    if (Math.abs(dx) > 10) swiped.current = true
+  }
+  const onTouchEnd = () => {
+    const dx = dragDelta.current
+    dragStartX.current = null
+    setDragging(false)
+    setDragX(0)
+    if (dx <= -60) nextPhoto()
+    else if (dx >= 60) prevPhoto()
   }
 
   // Show placeholder if no images
@@ -98,9 +121,7 @@ const PhotoGallery = ({ images, roomName }: { images: string[]; roomName?: strin
         </div>
       </div>
 
-      {/* Right side - changes based on photo count */}
       <div className='lg:col-span-1 relative h-full'>
-        {/* 2-4 photos: photos in a row */}
         {(images.length >= 2 && images.length <= 4) && (
           <div className='flex flex-row gap-4 h-full max-h-[260px] md:max-h-[360px] lg:max-h-[460px]'>
             {images.slice(1, 4).map((image, index) => (
@@ -118,21 +139,39 @@ const PhotoGallery = ({ images, roomName }: { images: string[]; roomName?: strin
           </div>
         )}
 
-        {/* 5+ photos: standard grid 2x2 */}
         {images.length >= 5 && (
           <div className='grid grid-cols-2 gap-4 h-full max-h-[260px] md:max-h-[360px] lg:max-h-[460px]'>
-            {images.slice(1, 5).map((image, index) => (
+            {images.slice(1, 4).map((image, index) => (
               <div key={index} className='col-span-1 group rounded-[30px] overflow-hidden'>
-                <Image 
-                  onClick={() => setShowImages(index + 1)} 
-                  src={image} 
-                  alt={roomName ? `${roomName} - view ${index + 2}` : `Hotel room view ${index + 2}`} 
-                  width={300} 
-                  height={222} 
-                  className='w-full h-[126px] md:h-[222px] object-cover transition-transform duration-500 ease-out cursor-pointer group-hover:scale-110' 
+                <Image
+                  onClick={() => setShowImages(index + 1)}
+                  src={image}
+                  alt={roomName ? `${roomName} - view ${index + 2}` : `Hotel room view ${index + 2}`}
+                  width={300}
+                  height={222}
+                  className='w-full h-[126px] md:h-[222px] object-cover transition-transform duration-500 ease-out cursor-pointer group-hover:scale-110'
                 />
               </div>
             ))}
+            {/* Bottom-right tile = mini-map with the hotel pin. Replaces a photo
+                (which stays viewable in the lightbox). Keyless Google embed. */}
+            <div className='col-span-1 relative rounded-[30px] overflow-hidden bg-light2'>
+              <iframe
+                title={t('location')}
+                src={`https://www.google.com/maps?q=${mapQuery}&z=16&output=embed`}
+                className='w-full h-[126px] md:h-[222px] border-0'
+                loading='lazy'
+                referrerPolicy='no-referrer-when-downgrade'
+              />
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${mapQuery}`}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='absolute bottom-3 right-3 flex items-center gap-1 rounded-full bg-white/95 px-3 py-1 text-xs font-medium text-blue shadow-sm hover:bg-white transition-colors'
+              >
+                <FiMapPin className='size-3.5' /> {t('viewOnMap')}
+              </a>
+            </div>
           </div>
         )}
       </div>
@@ -143,28 +182,45 @@ const PhotoGallery = ({ images, roomName }: { images: string[]; roomName?: strin
         }}
       >
         <DialogContent
-          className='p-0 !rounded-none w-fit max-w-[95vw] md:max-w-[90vw] overflow-hidden [&>button]:text-white [&>button]:z-10 [&>button]:top-2 [&>button]:right-2'
+          className='p-0 !rounded-none w-[95vw] md:w-[90vw] max-w-[1400px] h-[85vh] max-h-[85vh] overflow-hidden border-0 bg-transparent shadow-none [&>button]:text-white [&>button]:z-20 [&>button]:top-2 [&>button]:right-2'
           onPointerDownOutside={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}
         >
-          <div className='flex items-center justify-center select-none'>
-            <div className='relative' onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={images[showImages || 0]}
-                alt={roomName ? `${roomName} - view ${(showImages || 0) + 1}` : `Hotel room view ${(showImages || 0) + 1}`}
-                className='w-auto h-auto max-w-[95vw] md:max-w-[90vw] max-h-[80vh] block cursor-pointer'
-                onClick={nextPhoto}
-              />
-              <div onClick={handlePrevClick} className='absolute left-0 top-0 bottom-0 w-10 md:w-16 flex items-center justify-center cursor-pointer bg-gradient-to-l from-transparent to-black/40'>
-                <IoChevronBack className='size-10 md:size-16 text-white drop-shadow-lg' />
-              </div>
-              <div onClick={handleNextClick} className='absolute right-0 top-0 bottom-0 w-10 md:w-16 flex items-center justify-center cursor-pointer bg-gradient-to-r from-transparent to-black/40'>
-                <IoChevronForward className='size-10 md:size-16 text-white drop-shadow-lg' />
-              </div>
-              <div className='absolute bottom-3 left-1/2 -translate-x-1/2 text-white text-sm font-medium bg-black/40 px-3 py-1 rounded-full whitespace-nowrap'>
-                {(showImages || 0) + 1} / {images.length}
-              </div>
+          {/* Fixed-size frame so the modal + arrows never resize when photos have
+              different aspect ratios; the image just fits inside (object-contain). */}
+          <div
+            className='relative flex h-full w-full items-center justify-center select-none touch-pan-y overflow-hidden'
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={images[showImages || 0]}
+              alt={roomName ? `${roomName} - view ${(showImages || 0) + 1}` : `Hotel room view ${(showImages || 0) + 1}`}
+              draggable={false}
+              style={{ transform: `translateX(${dragX}px)`, transition: dragging ? 'none' : 'transform 200ms ease' }}
+              className='max-h-full max-w-full w-auto h-auto object-contain block cursor-pointer'
+              onClick={() => { if (!swiped.current) nextPhoto() }}
+            />
+            <button
+              type='button'
+              aria-label='Previous photo'
+              onClick={handlePrevClick}
+              className='absolute left-1 md:left-3 top-1/2 -translate-y-1/2 z-10 grid place-items-center size-11 md:size-14 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors'
+            >
+              <IoChevronBack className='size-6 md:size-8' />
+            </button>
+            <button
+              type='button'
+              aria-label='Next photo'
+              onClick={handleNextClick}
+              className='absolute right-1 md:right-3 top-1/2 -translate-y-1/2 z-10 grid place-items-center size-11 md:size-14 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors'
+            >
+              <IoChevronForward className='size-6 md:size-8' />
+            </button>
+            <div className='absolute bottom-3 left-1/2 -translate-x-1/2 z-10 text-white text-sm font-medium bg-black/50 px-3 py-1 rounded-full whitespace-nowrap'>
+              {(showImages || 0) + 1} / {images.length}
             </div>
           </div>
         </DialogContent>
