@@ -69,7 +69,16 @@ export interface StayAmendOffer {
   arrival: string;
   departure: string;
   availableUnits: number;
-  timeSlices: Array<{ ratePlan: { id: string }; from: string; to: string }>;
+  // totalGrossAmount is optional: the amend payload doesn't need it, but the
+  // room-ready price-invariance guard compares per-slice grosses (the amend
+  // re-prices from the rate plan, so a drifted rate would silently change what
+  // the guest owes — see openRoomEarly).
+  timeSlices: Array<{
+    ratePlan: { id: string };
+    from: string;
+    to: string;
+    totalGrossAmount?: { amount?: number; currency?: string };
+  }>;
 }
 
 interface OffersEnvelope {
@@ -205,6 +214,7 @@ interface AmendTimeSlice {
   ratePlanId: string;
   from: string;
   to: string;
+  grossAmount?: number; // slice totalGrossAmount.amount (room-ready price guard)
 }
 
 export interface ReservationAmendContext {
@@ -214,6 +224,7 @@ export interface ReservationAmendContext {
   childrenAges: number[];
   unitId?: string;       // assigned unit, when Apaleo has one
   timeSlices: AmendTimeSlice[]; // original slices, to restore the time on rollback
+  status?: string;       // Apaleo reservation status (Confirmed / InHouse / …)
 }
 
 export interface AppliedStayExtension {
@@ -263,10 +274,17 @@ export async function loadReservationForAmend(
       departure: string;
       adults: number;
       childrenAges?: number[];
+      status?: string;
       unit?: { id?: string };
       property?: { id?: string };
       ratePlan?: { id?: string };
-      timeSlices?: Array<{ ratePlanId?: string; ratePlan?: { id?: string }; from?: string; to?: string }>;
+      timeSlices?: Array<{
+        ratePlanId?: string;
+        ratePlan?: { id?: string };
+        from?: string;
+        to?: string;
+        totalGrossAmount?: { amount?: number };
+      }>;
     }>(`/booking/v1/reservations/${reservationId}?expand=unit,timeSlices`);
     // The single-reservation endpoint ignores propertyIds — guard against a
     // cross-hotel reservation on the shared Apaleo account.
@@ -276,6 +294,7 @@ export async function loadReservationForAmend(
       ratePlanId: ts.ratePlanId ?? ts.ratePlan?.id ?? fallbackRatePlan,
       from: ts.from ?? res.arrival,
       to: ts.to ?? res.departure,
+      grossAmount: ts.totalGrossAmount?.amount,
     }));
     // A reservation always has at least one slice; fall back to a single slice
     // on the top-level rate plan so the amend payload is never empty.
@@ -289,6 +308,7 @@ export async function loadReservationForAmend(
       childrenAges: res.childrenAges ?? [],
       unitId: res.unit?.id,
       timeSlices,
+      status: res.status,
     };
   } catch (err) {
     apaleoLog.warn('stay-extension: reservation read failed', {
@@ -307,9 +327,11 @@ export async function loadReservationForAmend(
  * block any of the 125 rooms, so when no unit is assigned we DO NOT block here
  * and rely on the amend offer's own availability instead.
  *
- * FAIL-OPEN: any error returns false (allow). This guard can never reject a
- * legitimate sale — at worst it does nothing and the amend offer is the only
- * gate. Detection is by clock time: a counterpart reservation "took ECI" if it
+ * FAIL-OPEN by default: any error returns false (allow). This guard can never
+ * reject a legitimate sale — at worst it does nothing and the amend offer is
+ * the only gate. The room-ready DOOR path passes failClosed=true instead: it
+ * grants physical access, so an unverifiable conflict must block, not allow.
+ * Detection is by clock time: a counterpart reservation "took ECI" if it
  * arrives before 15:00; "took LCO" if it departs after 11:00 (exactly how these
  * extensions present once applied via amend).
  */
@@ -317,6 +339,7 @@ export async function hasOppositeExtensionConflict(
   reservationId: string,
   kind: 'late' | 'early',
   ctx: ReservationAmendContext,
+  opts: { failClosed?: boolean } = {},
 ): Promise<boolean> {
   try {
     if (!propId || !ctx.unitId) return false;
@@ -350,12 +373,15 @@ export async function hasOppositeExtensionConflict(
     }
     return false;
   } catch (err) {
-    apaleoLog.warn('stay-extension: conflict guard errored — allowing (fail-open)', {
-      reservationId,
-      kind,
-      error: err instanceof Error ? err.message : String(err),
-    });
-    return false;
+    apaleoLog.warn(
+      `stay-extension: conflict guard errored — ${opts.failClosed ? 'BLOCKING (fail-closed)' : 'allowing (fail-open)'}`,
+      {
+        reservationId,
+        kind,
+        error: err instanceof Error ? err.message : String(err),
+      },
+    );
+    return opts.failClosed === true;
   }
 }
 
@@ -366,9 +392,15 @@ function stayExtensionAlreadyApplied(
   kind: 'late' | 'early',
   ctx: { arrival: string; departure: string },
 ): boolean {
-  return kind === 'late'
-    ? hhmmOf(ctx.departure) === LATE_CHECKOUT_HHMM
-    : hhmmOf(ctx.arrival) === EARLY_CHECKIN_HHMM;
+  if (kind === 'late') return hhmmOf(ctx.departure) === LATE_CHECKOUT_HHMM;
+  // ECI counts as applied whenever arrival is already EARLIER than the 15:00
+  // default — there is nothing left to sell. Not a strict `=== 13:00`: the
+  // Room-Ready webhook (openRoomEarly) moves arrivals to 13:00+ (e.g. 13:47)
+  // when the room is cleaned early, and an exact match would let that guest
+  // pay for an ECI that gives them nothing (charge-then-refund on live Adyen).
+  // Zero-padded HH:mm ⇒ lexical `<` is chronological.
+  const arr = hhmmOf(ctx.arrival);
+  return arr !== '' && arr < DEFAULT_CHECKIN_HHMM;
 }
 
 /**
@@ -523,4 +555,221 @@ export async function reverseStayExtension(applied: AppliedStayExtension): Promi
       error: err instanceof Error ? err.message : String(err),
     });
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Room-Ready early door opening.
+//
+// When housekeeping marks a room clean, the Guestway "Room Ready" automation
+// messages TODAY'S arriving guest ("your room is ready early") at
+// max(13:00, clean-time) and, via webhook (app/api/guestway/room-ready), calls
+// this to open the door at that same moment: we amend the reservation's Apaleo
+// ARRIVAL to now and Guestway re-syncs the smart-lock code from the check-in
+// time. That lever is PROVEN on prod — the paid ECI amends arrival 15:00→13:00
+// and the code follows to 13:00 — and this function never sets a time below
+// 13:00, so it stays inside verified territory. Guestway's own Open API is
+// read-only for locks (no extend-access endpoint; checked against its Swagger),
+// so the Apaleo arrival amend is the only lever there is.
+//
+// It applies to EVERY reservation arriving today (per the owner's spec — not
+// only paid-ECI guests), charges NOTHING, and only ever moves the arrival
+// EARLIER on the arrival day itself. A paid-ECI guest (already at 13:00) is a
+// no-op: max(13:00, now) can never beat 13:00.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Never grant access before this local time — the business floor. Coincides
+// with the paid-ECI arrival time, which is exactly why the lock re-sync at (or
+// after) this time is proven behaviour.
+const ROOM_READY_FLOOR_HHMM = EARLY_CHECKIN_HHMM; // '13:00'
+// Headroom added to "now" so the amended arrival is never in the past by the
+// time Apaleo evaluates it (berlinNow truncates to the minute and the offer +
+// amend round-trips take seconds).
+const ROOM_READY_HEADROOM_MIN = 3;
+// Unit conditions that count as ready for the guest.
+const ROOM_READY_OK_CONDITIONS = new Set(['Clean', 'CleanToInspect']);
+
+export type RoomReadyOutcome =
+  | { status: 'moved'; from: string; to: string }
+  | { status: 'skipped'; reason: string }
+  | { status: 'error'; reason: string };
+
+/** Berlin-local "now" as { date: "YYYY-MM-DD", hhmm: "HH:mm" }. */
+function berlinNow(): { date: string; hhmm: string } {
+  const now = new Date();
+  const date = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Berlin',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(now); // "YYYY-MM-DD"
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Berlin',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(now);
+  const hh = parts.find((p) => p.type === 'hour')?.value ?? '00';
+  const mm = parts.find((p) => p.type === 'minute')?.value ?? '00';
+  return { date, hhmm: `${hh}:${mm}` };
+}
+
+/** hhmm + n minutes, or null when it would cross midnight (nothing meaningful
+ *  to do that late — the only-earlier check would kill it anyway). */
+function addMinutes(hhmm: string, n: number): string | null {
+  const m = hhmm.match(/^(\d{2}):(\d{2})$/);
+  if (!m) return null;
+  const total = Number(m[1]) * 60 + Number(m[2]) + n;
+  if (total >= 24 * 60) return null;
+  const hh = String(Math.floor(total / 60)).padStart(2, '0');
+  const mm = String(total % 60).padStart(2, '0');
+  return `${hh}:${mm}`;
+}
+
+/** Fail-closed belt: the assigned unit must actually be ready (clean/inspect,
+ *  not occupied) before we open its door. Any read failure blocks. */
+async function unitIsReady(unitId: string): Promise<boolean> {
+  try {
+    const unit = await Fetch<{ status?: { isOccupied?: boolean; condition?: string } }>(
+      `/inventory/v1/units/${unitId}`,
+    );
+    const condition = unit?.status?.condition ?? '';
+    const occupied = unit?.status?.isOccupied === true;
+    return !occupied && ROOM_READY_OK_CONDITIONS.has(condition);
+  } catch (err) {
+    apaleoLog.warn('room-ready: unit status read failed — BLOCKING (fail-closed)', {
+      unitId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return false;
+  }
+}
+
+/** Cents-precision sum of slice grosses; null when any slice lacks a price OR
+ *  the list is empty (nothing to verify ⇒ caller must fail closed — a bare 0
+ *  could otherwise satisfy a 0===0 price-invariance check and bypass the guard). */
+function sumSliceGrossCents(slices: Array<{ grossAmount?: number }>): number | null {
+  if (slices.length === 0) return null;
+  let cents = 0;
+  for (const s of slices) {
+    if (typeof s.grossAmount !== 'number') return null;
+    cents += Math.round(s.grossAmount * 100);
+  }
+  return cents;
+}
+
+/**
+ * Move TODAY'S arriving reservation's Apaleo arrival to max(13:00, now+3min)
+ * so the smart-lock code re-syncs and the door opens when the room is ready.
+ * Heavily gated (see each guard) because it grants physical access and the
+ * amend re-prices from the rate plan: it only proceeds when the unit is
+ * verifiably ready, no counterpart late-checkout occupies it, and the offer's
+ * per-slice prices EXACTLY match the reservation's current ones. Idempotent,
+ * never throws, charges nothing.
+ */
+export async function openRoomEarly(reservationId: string): Promise<RoomReadyOutcome> {
+  if (!propId || !reservationId) return { status: 'skipped', reason: 'not-configured' };
+
+  // Reads arrival/adults/timeSlices/status AND guards property === CMH (the
+  // single-reservation endpoint ignores propertyIds on the shared account).
+  const ctx = await loadReservationForAmend(reservationId);
+  if (!ctx) return { status: 'skipped', reason: 'not-found-or-other-property' };
+
+  // Allowlist, not blocklist: only a Confirmed reservation gets its door
+  // opened. Tentative isn't a committed stay; InHouse is already inside;
+  // Canceled/NoShow/CheckedOut must obviously never gain access; and any
+  // future Apaleo status stays safe by default.
+  if (ctx.status !== 'Confirmed') {
+    return { status: 'skipped', reason: `status-${ctx.status ?? 'unknown'}` };
+  }
+
+  const now = berlinNow();
+  const arrivalDate = ctx.arrival.slice(0, 10); // Berlin local date (ISO carries the offset)
+
+  // Only the actual arrival day. A room cleaned the day before must never open
+  // the door in advance (the 13:00-anchored trigger guarantees this upstream;
+  // this is the server-side belt).
+  if (arrivalDate !== now.date) return { status: 'skipped', reason: 'not-arriving-today' };
+
+  const arrHHmm = hhmmOf(ctx.arrival);
+  if (!arrHHmm) return { status: 'skipped', reason: 'no-arrival-time' };
+
+  // Target = max(floor, now + headroom): never below 13:00, never in the past
+  // when Apaleo evaluates it. Zero-padded HH:mm ⇒ lexical compare works.
+  const nowPlus = addMinutes(now.hhmm, ROOM_READY_HEADROOM_MIN);
+  if (!nowPlus) return { status: 'skipped', reason: 'too-late-in-day' };
+  const target = nowPlus > ROOM_READY_FLOOR_HHMM ? nowPlus : ROOM_READY_FLOOR_HHMM;
+
+  // Only ever move EARLIER. This single check safely covers every case:
+  //  - paid-ECI guest (arrival 13:00): target ≥ 13:00 ⇒ skip — never push a
+  //    paid early check-in LATER;
+  //  - already moved by a previous fire: target ≥ that arrival ⇒ no-op;
+  //  - regular 15:00 guest after ~15:00: target ≥ 15:00 ⇒ nothing to gain.
+  if (target >= arrHHmm) return { status: 'skipped', reason: 'nothing-earlier-to-gain' };
+
+  // Physical-readiness belt (fail-closed): a specific unit must be assigned,
+  // actually clean and NOT occupied. Without an assigned unit there is no door
+  // to open; a dirty/occupied unit must never open regardless of what the
+  // triggering automation believed.
+  if (!ctx.unitId) return { status: 'skipped', reason: 'no-unit-assigned' };
+  if (!(await unitIsReady(ctx.unitId))) {
+    return { status: 'skipped', reason: 'unit-not-ready' };
+  }
+
+  // Counterpart late-checkout belt (fail-closed here — physical access): if
+  // the same unit's departing guest holds a late checkout today, don't hand
+  // the arriving guest a code while they may still be inside.
+  if (await hasOppositeExtensionConflict(reservationId, 'early', ctx, { failClosed: true })) {
+    return { status: 'skipped', reason: 'opposite-extension-conflict' };
+  }
+
+  const newArrival = withLocalTime(ctx.arrival, target);
+
+  // Availability probe (read-only). null ⇒ no offer for the earlier window
+  // (e.g. the unit is still blocked) ⇒ fail-safe skip, door stays as-is.
+  const offer = await getStayAmendOffer(reservationId, { arrival: newArrival });
+  if (!offer) {
+    apaleoLog.warn('room-ready: no amend offer for earlier arrival — skipping', {
+      reservationId,
+      newArrival,
+    });
+    return { status: 'skipped', reason: 'no-offer' };
+  }
+
+  // PRICE-INVARIANCE guard (fail-closed): the amend re-prices every time slice
+  // from the rate plan's CURRENT price (verified against the live API — see
+  // the header of this file). For the paid ECI that risk is accepted per
+  // explicit purchase; here the amend is automated fleet-wide, so a drifted
+  // rate would silently change what an already-paid guest owes (live Adyen).
+  // Proceed ONLY when the offer's slice prices exactly equal the current ones.
+  const currentCents = sumSliceGrossCents(ctx.timeSlices);
+  const offeredCents = sumSliceGrossCents(
+    offer.timeSlices.map((ts) => ({ grossAmount: ts.totalGrossAmount?.amount })),
+  );
+  if (currentCents === null || offeredCents === null || currentCents !== offeredCents) {
+    apaleoLog.warn('room-ready: price would change (or is unverifiable) — skipping', {
+      reservationId,
+      newArrival,
+      currentCents,
+      offeredCents,
+    });
+    return { status: 'skipped', reason: 'price-drift' };
+  }
+
+  try {
+    await applyStayAmend(reservationId, offer, ctx.adults, ctx.childrenAges);
+  } catch (err) {
+    apaleoLog.error('room-ready: amend failed', {
+      reservationId,
+      newArrival,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return { status: 'error', reason: err instanceof Error ? err.message : String(err) };
+  }
+
+  apaleoLog.success('room-ready: arrival moved earlier — Guestway re-syncs the lock from the new time', {
+    reservationId,
+    from: ctx.arrival,
+    to: newArrival,
+  });
+  return { status: 'moved', from: ctx.arrival, to: newArrival };
 }

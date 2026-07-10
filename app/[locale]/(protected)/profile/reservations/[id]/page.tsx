@@ -23,8 +23,14 @@ const ReservationPage = async ({ params }: { params: Promise<{ id: string; local
   // reservation's wall-clock time to 13:00. Read it straight from the ISO string
   // (NOT via dayjs, which would shift the +02:00 Berlin time into UTC on the
   // server) so we can hide a card the guest can no longer re-buy.
+  // ECI uses `< '15:00'` (not `=== '13:00'`): the Room-Ready webhook moves
+  // arrivals to 13:00+ (e.g. 13:47) when the room is cleaned early — an exact
+  // match would re-show the buyable ECI card to a guest who already has an
+  // earlier arrival. Departure is never moved, so LCO stays an exact match.
+  // Zero-padded HH:mm ⇒ lexical `<` is chronological.
   const lcoApplied = reservation.departure.match(/T(\d{2}:\d{2})/)?.[1] === '13:00';
-  const eciApplied = reservation.arrival.match(/T(\d{2}:\d{2})/)?.[1] === '13:00';
+  const eciArrivalTime = reservation.arrival.match(/T(\d{2}:\d{2})/)?.[1] ?? '';
+  const eciApplied = eciArrivalTime !== '' && eciArrivalTime < '15:00';
 
   // Check if reservation is active and not in the past
   const isActive = reservation?.status === bookingStatuses.Confirmed || reservation?.status === bookingStatuses.InHouse;
