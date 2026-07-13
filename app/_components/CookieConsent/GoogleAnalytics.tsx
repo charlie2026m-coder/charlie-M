@@ -21,8 +21,13 @@ export const GoogleAnalytics = () => {
     const ensureGtagStub = () => {
       window.dataLayer = window.dataLayer || []
       if (!window.gtag) {
-        window.gtag = function gtag(...args: unknown[]) {
-          window.dataLayer!.push(args)
+        window.gtag = function gtag() {
+          // gtag.js requires the native `arguments` object here — pushing a real
+          // Array (e.g. via rest params) makes gtag treat every command as a GTM
+          // event and silently drop it, so GA4 collects nothing. Do NOT "fix" to
+          // rest params. Matches the canonical Google snippet (and Motz19).
+          // eslint-disable-next-line prefer-rest-params
+          window.dataLayer!.push(arguments)
         }
         window.gtag('consent', 'default', {
           ad_storage: 'denied',

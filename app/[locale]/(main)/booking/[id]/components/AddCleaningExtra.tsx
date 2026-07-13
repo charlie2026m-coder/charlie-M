@@ -15,6 +15,7 @@ import { useBookingStore } from "@/store/useBookingStore";
 import dayjs from "dayjs";
 import { Room, RoomExtra } from "@/types/types";
 import { useTranslations } from "next-intl";
+import { trackSelectExtra } from "@/lib/analytics";
 
 const AddCleaningExtra = ({ extra, rooms }: { extra: Service, rooms: Room[] }) => {
   const t = useTranslations('bookingForm');
@@ -75,9 +76,11 @@ const AddCleaningExtra = ({ extra, rooms }: { extra: Service, rooms: Room[] }) =
       
       if (selectedDates.length > 0) {
         // Calculate totalPrice for this room's cleaning services
-        const totalPrice = selectedDates.reduce((sum, date) => 
+        const totalPrice = selectedDates.reduce((sum, date) =>
           sum + (date.count * extra.price), 0);
-        
+        // GA4 select_extra — mid-stay cleaning upsell confirmed.
+        trackSelectExtra({ name: extra.name, price: Math.round(totalPrice * 100) / 100 });
+
         const roomExtra: RoomExtra = {
           ...extra,
           selectedDates,

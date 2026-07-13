@@ -1,6 +1,7 @@
 import { getSingleRoom } from '@/services/getSingleRoom'
 import { sortGuestsByRooms, getServiceAvailabilityById, selectBestRoomOffers, calculateNights } from '@/lib/utils'
 import BookingPage from './components/BookingPage'
+import BookingViewTracker from './components/BookingViewTracker'
 import { getApaleoExtras } from '@/app/actions/apaleo/services/getExtras'
 import { getRoomDetails } from '@/app/actions/supabase/rooms/getRoomDetails'
 import ErrorCard from '@/app/[locale]/(main)/rooms/components/ErrorCard'
@@ -57,8 +58,18 @@ const Booking = async ({ params, searchParams }: IParams) => {
     mainRoom?.maxPersons ?? roomDetail.max_persons
   )
 
+  // GA4 add_to_cart: guest clicked "Book Now" and reached the booking step.
+  // Value = this room's full-stay total for the chosen occupancy (offer price
+  // already spans the whole date range).
+  const addToCartValue = Number(adults) >= 2 && mainRoom?.priceForTwo
+    ? mainRoom.priceForTwo
+    : mainRoom?.price ?? 0
+
   return (
     <>
+      {!isUnavailable && mainRoom && (
+        <BookingViewTracker value={addToCartValue} roomName={mainRoom.name} />
+      )}
       <Steps currentStep={1} />
       <BookingPage
         params={{

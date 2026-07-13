@@ -28,6 +28,7 @@ import { GroupGuests, type GuestCounts } from './GroupGuests'
 import { Link } from '@/navigation'
 import { cn, getMinArrivalDate } from '@/lib/utils'
 import { EMAIL, PHONE_NUMBER } from '@/lib/Constants'
+import { trackGenerateLead, trackContact } from '@/lib/analytics'
 
 type Mode = 'group' | 'corporate'
 
@@ -138,6 +139,8 @@ const GroupBookingForm = ({ locale }: { locale: string }) => {
       const data = await res.json().catch(() => ({}))
 
       if (res.ok && data?.ok) {
+        // GA4 generate_lead — a group/corporate enquiry was submitted.
+        trackGenerateLead({ type: mode })
         // Swap the form for the animated "done" panel and clear the fields so
         // "Send another request" starts fresh.
         setSent(true)
@@ -437,7 +440,7 @@ const GroupBookingForm = ({ locale }: { locale: string }) => {
             </div>
             <h2 className="text-xl font-semibold jakarta text-mute mb-2">{t('whatsappTitle')}</h2>
             <p className="text-dark text-sm mb-5">{t('whatsappText')}</p>
-            <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="w-full">
+            <a href={whatsappHref} target="_blank" rel="noopener noreferrer" onClick={() => trackContact({ method: 'whatsapp' })} className="w-full">
               <Button
                 type="button"
                 className="w-full gap-2 bg-[#25D366] text-white hover:bg-[#1da851] hover:text-white"
@@ -448,6 +451,7 @@ const GroupBookingForm = ({ locale }: { locale: string }) => {
             </a>
             <a
               href={`mailto:${EMAIL}`}
+              onClick={() => trackContact({ method: 'email' })}
               className="mt-4 text-sm text-dark hover:text-blue transition-colors break-all"
             >
               {EMAIL}

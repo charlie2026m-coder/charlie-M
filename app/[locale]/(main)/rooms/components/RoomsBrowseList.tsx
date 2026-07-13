@@ -5,6 +5,7 @@ import RoomCard from '@/app/[locale]/_home/components/RoomCard'
 import { HomeRoomCard } from '@/types/offers'
 import Filters from './Filters'
 import NoRooms from './NoRooms'
+import { trackViewItemList, whenGtagReady } from '@/lib/analytics'
 
 type RoomCardTranslations = React.ComponentProps<typeof RoomCard>['translations']
 
@@ -34,6 +35,11 @@ const RoomsBrowseList = ({
     resetRoomsFilters()
     setValue(true, 'priceFilter')
   }, [resetRoomsFilters, setValue])
+
+  // GA4 view_item_list — the browse listing (no dates) was shown.
+  useEffect(() => whenGtagReady(() => trackViewItemList({
+    items: cards.map((c) => ({ item_id: c.id, item_name: c.name })),
+  })), [cards])
 
   const filtered = useMemo(() => {
     const list = [...cards].sort((a, b) => {

@@ -10,6 +10,7 @@ import { useStore } from '@/store/useStore'
 
 import RoomParamsRow from '@/app/_components/ui/RoomParamsRow'
 import Price from '@/app/_components/ui/price'
+import { trackSelectItem } from '@/lib/analytics'
 
 const RoomCard = ({ 
   params,
@@ -67,7 +68,11 @@ const RoomCard = ({
   
   const roomDetailId = room.unitGroup.id;
 
+  // GA4 select_item — this card was chosen from the dated list.
+  const fireSelect = () => trackSelectItem({ roomId: roomDetailId, roomName: room.name });
+
   const handleBookNow = () => {
+    fireSelect();
     router.push(`/rooms/${roomDetailId}?${queryString}`);
   };
 
@@ -77,10 +82,10 @@ const RoomCard = ({
         height={260}
         images={room.images}
         roomName={room.name}
-        onNavigate={() => router.push(`/rooms/${roomDetailId}?${queryString}`)}
+        onNavigate={() => { fireSelect(); router.push(`/rooms/${roomDetailId}?${queryString}`) }}
       />
       <div className='flex flex-col p-4 pb-6 h-full'>
-        <Link href={`/rooms/${roomDetailId}?${queryString}`}>
+        <Link href={`/rooms/${roomDetailId}?${queryString}`} onClick={fireSelect}>
           <h2 className='text-xl font-medium jakarta mb-3 hover:text-blue transition-colors cursor-pointer'>{roomsNeeded > 1 ? `${roomsNeeded} X ` : ''}{room.name}</h2>
         </Link>
         <RoomParamsRow 

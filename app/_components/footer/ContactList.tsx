@@ -2,6 +2,7 @@
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { FaWhatsapp } from 'react-icons/fa';
+import { trackContact } from "@/lib/analytics";
 
 interface Contact {
   type: string;
@@ -33,7 +34,11 @@ const ContactList = ({ contacts }: ContactListProps) => {
   const handleClick = async (type: string, href: string, value: string, e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
+    // GA4 contact — direct-booking / support intent (WhatsApp, phone, email, map).
+    trackContact({ method: type });
+
+
     if (type === "whatsapp" || type === "location") {
       window.open(href, '_blank');
     } else if (type === "email") {

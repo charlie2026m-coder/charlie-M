@@ -1,9 +1,21 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useTranslations } from 'next-intl';
+import { useBookingStore } from '@/store/useBookingStore';
+import { trackPaymentFailed, whenGtagReady } from '@/lib/analytics';
 
 export default function PaymentDeclined({ onRetry }: { onRetry: () => void }) {
   const t = useTranslations('payment');
+
+  // GA4: payment declined — a lost sale. Can render after a 3DS redirect
+  // (fresh load), so wait for gtag.
+  useEffect(() => whenGtagReady(() => trackPaymentFailed({
+    reason: 'declined',
+    value: useBookingStore.getState().booking?.totalAmount,
+    roomName: useBookingStore.getState().roomDetails?.name,
+  })), []);
+
   return (
     <div className="col-span-1 xl:col-span-2 flex flex-col h-full">
       <div className="bg-white p-8 h-full flex items-center justify-center">

@@ -15,7 +15,8 @@ import { useBookingStore } from "@/store/useBookingStore";
 import dayjs from "dayjs";
 import { Room, RoomExtra } from "@/types/types";
 import { useTranslations } from "next-intl";
-  
+import { trackSelectExtra } from "@/lib/analytics";
+
 const AddCheckoutExtra = ({ extra, rooms }: { extra: Service, rooms: Room[]}) => {
   const t = useTranslations('bookingForm');
   const [isOpen, setIsOpen] = useState(false);
@@ -58,6 +59,8 @@ const AddCheckoutExtra = ({ extra, rooms }: { extra: Service, rooms: Room[]}) =>
 
   const add = (roomId: string) => {
     if (roomCounts[roomId] >= maxLimit || isLimitReached()) return;
+    // GA4 select_extra — guest added this checkout service (upsell interest).
+    trackSelectExtra({ name: extra.name, price: extra.price });
     setRoomCounts(prev => ({ ...prev, [roomId]: 1 }));
   };
 

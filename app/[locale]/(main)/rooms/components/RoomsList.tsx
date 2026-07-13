@@ -6,6 +6,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { useStore } from '@/store/useStore'
 import { RoomOffer } from '@/types/offers'
 import NoRooms from './NoRooms'
+import { trackViewItemList, whenGtagReady } from '@/lib/analytics'
 
 const RoomsList = ({ 
   rooms, 
@@ -27,6 +28,11 @@ const RoomsList = ({
   useEffect(() => {
     resetRoomsFilters()
   }, [resetRoomsFilters])
+
+  // GA4 view_item_list — the dated availability listing was shown.
+  useEffect(() => whenGtagReady(() => trackViewItemList({
+    items: rooms.map((r) => ({ item_id: r.id, item_name: r.name })),
+  })), [rooms])
   // Adjust rooms per page based on screen size
   useEffect(() => {
     const handleResize = () => {

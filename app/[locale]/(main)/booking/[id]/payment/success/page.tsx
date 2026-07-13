@@ -8,7 +8,7 @@ import { useRouter } from '@/navigation'
 import { useSearchParams } from 'next/navigation'
 import { MdCheckCircle } from 'react-icons/md'
 import { useTranslations } from 'next-intl'
-import { trackPurchase } from '@/lib/analytics'
+import { trackPurchase, whenGtagReady } from '@/lib/analytics'
 import { calculateNights } from '@/lib/utils'
 
 const SuccessPage = () => {
@@ -24,7 +24,6 @@ const SuccessPage = () => {
 
   useEffect(() => {
     if (tracked.current || !booking) return;
-    tracked.current = true;
 
     const arrival = booking.reservations?.[0]?.arrival ?? '';
     const departure = booking.reservations?.[0]?.departure ?? '';
@@ -32,15 +31,21 @@ const SuccessPage = () => {
     const checkoutDate = departure.split('T')[0];
     const numberOfNights = checkinDate && checkoutDate ? calculateNights(checkinDate, checkoutDate) : 0;
 
-    trackPurchase({
-      transactionId: transactionReference ?? reservationId ?? 'unknown',
-      value: booking.totalAmount ?? 0,
-      roomName: roomDetails?.name ?? '',
-      checkinDate,
-      checkoutDate,
-      numberOfNights,
-      numberOfRooms: booking.reservations?.length ?? 1,
-      propertyId: process.env.NEXT_PUBLIC_APALEO_PROPERTY_ID,
+    // Adyen often redirects back here (3DS) as a fresh page load, so gtag may
+    // not be ready at mount — wait for it, else the conversion is dropped.
+    return whenGtagReady(() => {
+      if (tracked.current) return;
+      tracked.current = true;
+      trackPurchase({
+        transactionId: transactionReference ?? reservationId ?? 'unknown',
+        value: booking.totalAmount ?? 0,
+        roomName: roomDetails?.name ?? '',
+        checkinDate,
+        checkoutDate,
+        numberOfNights,
+        numberOfRooms: booking.reservations?.length ?? 1,
+        propertyId: process.env.NEXT_PUBLIC_APALEO_PROPERTY_ID,
+      });
     });
   }, [booking, roomDetails, transactionReference, reservationId]);
 

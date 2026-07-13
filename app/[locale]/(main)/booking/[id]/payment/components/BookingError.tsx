@@ -1,10 +1,20 @@
+'use client'
+import { useEffect } from "react";
 import { FiArrowLeft } from "react-icons/fi";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/navigation";
+import { trackPaymentFailed, whenGtagReady } from "@/lib/analytics";
 
 export default function BookingError({ roomUnavailable = false }: { roomUnavailable?: boolean }) {
   const t = useTranslations('payment')
   const router = useRouter()
+
+  // GA4: booking failed at the final step — a lost sale. Can render
+  // post-redirect, so wait for gtag.
+  useEffect(() => whenGtagReady(() => trackPaymentFailed({
+    reason: roomUnavailable ? 'room_unavailable' : 'server_error',
+  })), [roomUnavailable])
+
   return (
     <div className="col-span-1 xl:col-span-2 flex flex-col h-full ">
     <div className="bg-white p-8 h-full flex items-center justify-center">

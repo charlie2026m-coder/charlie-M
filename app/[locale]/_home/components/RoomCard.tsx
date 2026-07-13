@@ -10,6 +10,7 @@ import { useStore } from '@/store/useStore'
 import { getDate, getPath } from '@/lib/utils'
 import { useState } from 'react'
 import { FiCalendar } from 'react-icons/fi'
+import { trackSelectItem } from '@/lib/analytics'
 const RoomCard = ({
   item,
   locale,
@@ -68,7 +69,11 @@ const RoomCard = ({
       : `${fmt(item.arrival, true)} – ${fmt(item.departure, true)}`;
   })();
 
+  // GA4 select_item — this card was chosen from a list (any of its nav paths).
+  const fireSelect = () => trackSelectItem({ roomId: item.unitGroup.id, roomName: item.name });
+
   const handleBookNow = () => {
+    fireSelect();
     setIsLoading(true);
     router.push(`/${locale}/rooms/${item.unitGroup.id}?${queryString}`);
   };
@@ -79,7 +84,7 @@ const RoomCard = ({
         height={260}
         images={item.images}
         roomName={item.name}
-        onNavigate={() => router.push(`/${locale}/rooms/${item.unitGroup.id}?${queryString}`)}
+        onNavigate={() => { fireSelect(); router.push(`/${locale}/rooms/${item.unitGroup.id}?${queryString}`) }}
       />
       {/* All cards are equal height (h-full fills the carousel row). The rows
           below follow a fixed vertical pattern — clamped 2-line name, a
@@ -87,7 +92,7 @@ const RoomCard = ({
           bottom (mt-auto) — so those elements line up across cards regardless
           of name length or whether a price is shown. */}
       <div className='flex flex-col p-4 pb-4 sm:pb-5 h-full'>
-        <Link href={`/${locale}/rooms/${item.unitGroup.id}?${queryString}`}>
+        <Link href={`/${locale}/rooms/${item.unitGroup.id}?${queryString}`} onClick={fireSelect}>
           <h2 className='text-xl font-medium jakarta mb-1.5 line-clamp-2 min-h-[2.75rem] lg:min-h-[3.25rem] hover:text-blue transition-colors cursor-pointer'>{item.name}</h2>
         </Link>
         <RoomParamsRow attributes={item.attributes } maxPersons={item.maxPersons} size={item.size} translations={translations.roomParams} />

@@ -14,6 +14,7 @@ import { ButtonIcon } from "@/app/_components/ui/ButtonIcon";
 import { useBookingStore } from "@/store/useBookingStore";
 import { Room, RoomExtra } from "@/types/types";
 import { useTranslations } from "next-intl";
+import { trackSelectExtra } from "@/lib/analytics";
 
 const AddUnlimitedExtra = ({ extra, rooms, nights, isParking = false }: { extra: Service, rooms: Room[], nights: number, isParking?: boolean }) => {
   const t = useTranslations('bookingForm');
@@ -58,6 +59,8 @@ const AddUnlimitedExtra = ({ extra, rooms, nights, isParking = false }: { extra:
   const add = (roomId: string, maxLimit: number) => {
     const currentCount = roomCounts[roomId] || 0;
     if (currentCount >= maxLimit) return;
+    // GA4 select_extra — upsell added (parking / daily service).
+    trackSelectExtra({ name: extra.name, price: extra.price });
     setRoomCounts(prev => ({ ...prev, [roomId]: currentCount + 1 }));
   };
 

@@ -12,6 +12,7 @@ import { signInWithOAuth } from '@/app/actions/supabase/auth/signInWithOAuth';
 import { changePassword } from '@/app/actions/supabase/auth/changePassword';
 import { setPassword } from '@/app/actions/supabase/auth/setPassword';
 import { LoginCredentials, RegisterCredentials } from '@/types/auth';
+import { trackLogin, trackSignUp } from '@/lib/analytics';
 
 // Login mutation
 export const useLogin = () => {
@@ -29,6 +30,7 @@ export const useLogin = () => {
       toast.loading('Logging in...', { id: 'login' });
     },
     onSuccess: () => {
+      trackLogin({ method: 'password' });
       toast.success('Login successful!', { id: 'login' });
       sessionStorage.removeItem('guestMode');
       sessionStorage.removeItem('guestData');
@@ -57,6 +59,7 @@ export const useRegister = () => {
       toast.loading('Creating your account...', { id: 'register' });
     },
     onSuccess: (result) => {
+      trackSignUp({ method: 'password' });
       if (result.requiresEmailConfirmation) {
         toast.dismiss('register');
       } else {

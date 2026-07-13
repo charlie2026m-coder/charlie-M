@@ -11,6 +11,7 @@ import { FiArrowLeft } from "react-icons/fi";
 import { useTranslations } from "next-intl";
 import BookingError from "./BookingError";
 import PaymentDeclined from "./PaymentDeclined";
+import { trackAddPaymentInfo } from "@/lib/analytics";
 
 export default function PaymentForm({ amount }: { amount: number }) {
   const t = useTranslations('payment');
@@ -75,6 +76,11 @@ export default function PaymentForm({ amount }: { amount: number }) {
 
           onSubmit: async (state: any, _: any, actions: any) => {
             try {
+              // GA4 add_payment_info — guest submitted their card.
+              trackAddPaymentInfo({
+                value: amount,
+                roomName: useBookingStore.getState().roomDetails?.name ?? 'Room',
+              });
               const reference = crypto.randomUUID();
               setPaymentReference(reference);
 
