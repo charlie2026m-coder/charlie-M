@@ -120,20 +120,35 @@ const SummaryCard = () => {
                   {collapseBreakfastExtrasForDisplay(room.extras, locale).map(extra => {
                     const serviceName = extra.name;
                     let displayText = serviceName;
-                    
+
                     if (extra.selectedDates && extra.selectedDates.length > 0) {
                       const totalCount = extra.selectedDates.reduce((sum, date) => sum + date.count, 0);
                       displayText = `${serviceName} (x${totalCount})`;
                     } else if (extra.count && extra.count > 1) {
                       displayText = `${serviceName} (x${extra.count})`;
                     }
-                    
+
+                    // Per-night breakdown for whole-stay services (breakfast,
+                    // parking). Shown only when it reconstructs the line total
+                    // exactly, so it never contradicts the price shown.
+                    const guestMul = extra.pricingUnit === 'Person' ? room.adults + room.children : 1;
+                    const unitPrice = extra.price ?? 0;
+                    const perNightTotal = Math.round(unitPrice * guestMul * nights * 100) / 100;
+                    const showBreakdown = extra.pricingType === 'Daily' && nights > 0 && Math.abs(perNightTotal - (extra.totalPrice || 0)) < 0.01;
+                    const nightWord = nights === 1 ? tBooking('night') : tBooking('nights');
+                    const breakdownText = guestMul > 1
+                      ? `€${unitPrice.toFixed(2)} × ${guestMul} ${tBooking('guests')} × ${nights} ${nightWord}`
+                      : `€${unitPrice.toFixed(2)} × ${nights} ${nightWord}`;
+
                     return (
                       <div key={extra.id} className='flex items-center gap-2 inter text-sm text-dark'>
-                        <div className='truncate overflow-hidden whitespace-nowrap'>
-                          {displayText}
+                        <div className='min-w-0 flex-1 flex flex-col'>
+                          <span className='truncate overflow-hidden whitespace-nowrap'>{displayText}</span>
+                          {showBreakdown && (
+                            <span className='text-xs text-gray-400 whitespace-nowrap'>{breakdownText}</span>
+                          )}
                         </div>
-                        <span className='text-bale font-semibold ml-auto'>€ {(extra.totalPrice || 0).toFixed(2)}</span>
+                        <span className='text-bale font-semibold'>€ {(extra.totalPrice || 0).toFixed(2)}</span>
                       </div>
                     )
                   })}
