@@ -57,20 +57,27 @@ const InfoCard = ({ card }: { card: { id: number, title: string, image: string }
         </div>
         <h4 className='font-semibold text-center'>{title}</h4>
       </div>
+      {/* The dialog frame must NOT scroll itself: shadcn's ✕ is absolutely
+          positioned inside DialogContent, so with overflow-y-auto on it the
+          button scrolled away with the content and phones were left with no
+          way to close. Scroll lives on an inner div; ✕ stays pinned. 85dvh
+          (not 90vh): static vh ignores the iOS URL bar and clipped the bottom. */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className='rounded-lg px-2 md:px-10 xl:px-25 w-[95%] md:w-4/5 max-w-[900px] max-h-[90vh] md:max-h-[85vh] overflow-y-auto top-[5%] md:top-[50%] translate-y-0 md:translate-y-[-50%]'>
-          <DialogHeader>
-            <DialogTitle className='text-2xl font-[500] text-mute inter text-center'>{card.title}</DialogTitle>
-            <CardContent 
-              images={images} 
-              description={content.description} 
-              card1={content.card1} 
-              card2={content.card2} 
-              id={id}
-            />
-          </DialogHeader>
+        <DialogContent className='flex flex-col overflow-hidden p-0 rounded-lg w-[95%] md:w-4/5 max-w-[900px] max-h-[85dvh] top-[5%] md:top-[50%] translate-y-0 md:translate-y-[-50%]'>
+          <div className='min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 md:px-10 xl:px-25 pt-6 pb-[calc(env(safe-area-inset-bottom,0px)+24px)]'>
+            <DialogHeader>
+              <DialogTitle className='text-2xl font-[500] text-mute inter text-center'>{card.title}</DialogTitle>
+              <CardContent
+                images={images}
+                description={content.description}
+                card1={content.card1}
+                card2={content.card2}
+                id={id}
+              />
+            </DialogHeader>
+          </div>
         </DialogContent>
-      </Dialog> 
+      </Dialog>
     </>
   )
 }
