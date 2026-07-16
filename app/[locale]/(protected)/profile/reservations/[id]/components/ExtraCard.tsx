@@ -12,7 +12,7 @@ import { useParams } from 'next/navigation';
 import { getExtraImage, getExtraImages } from '@/lib/getExtraImage';
 import CustomImageSlider from '@/app/_components/ui/CustomImageSlider';
 
-const ExtraCard = ({ item, adults, nights, existingCount = 0, existingDates = [], existingDatesWithCount = [], arrival, departure }: { item: Service, adults: number, nights: number, existingCount?: number, existingDates?: string[], existingDatesWithCount?: any[], arrival?: string, departure?: string }) => {
+const ExtraCard = ({ item, adults, nights, existingCount = 0, existingDates = [], existingDatesWithCount = [], arrival, departure, bundleServices }: { item: Service, adults: number, nights: number, existingCount?: number, existingDates?: string[], existingDatesWithCount?: any[], arrival?: string, departure?: string, bundleServices?: Service[] }) => {
   const t = useTranslations('profile');
   const params = useParams();
   const locale = params.locale as 'en' | 'de';
@@ -67,8 +67,8 @@ const ExtraCard = ({ item, adults, nights, existingCount = 0, existingDates = []
           ? <AddCheckoutExtra extra={item} adults={adults} nights={nights} existingCount={existingCount} /> 
           : isCleaning
             ? <AddCleaningExtra extra={item} existingDatesWithCount={existingDatesWithCount} arrival={arrival} departure={departure} />
-            : isUnlimited 
-              ? <AddUnlimitedExtra extra={item} adults={adults} nights={nights} existingCount={existingCount} /> 
+            : isUnlimited
+              ? <AddUnlimitedExtra extra={item} adults={adults} nights={nights} existingCount={existingCount} bundleServices={bundleServices} />
               : <AddLimitedExtra extra={item} adults={adults} nights={nights} existingCount={existingCount} existingDates={existingDates} />
         }
       </div>}

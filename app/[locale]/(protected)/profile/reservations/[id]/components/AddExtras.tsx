@@ -3,7 +3,8 @@ import ExtraCard from "./ExtraCard"
 import { Service } from "@/types/apaleo"
 import { useAddExtrasStore } from '@/store/useAddExtras'
 import { useEffect } from 'react'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
+import { isBreakfastBeverage, isBreakfastFood, makeBreakfastDisplayService } from '@/lib/breakfastBundle'
 import { shouldShowCleaningService } from '@/utils/cleaningAvailability'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
@@ -37,19 +38,25 @@ const AddExtras = ({
   eciApplied?: boolean
 }) => {
   const t = useTranslations('profile')
+  const locale = useLocale()
   const setAvailableExtras = useAddExtrasStore(state => state.setAvailableExtras)
-  
+
   useEffect(() => {
+    // Store the RAW catalog (both breakfast halves) so pricing/booking can find
+    // each id; only the standalone beverage CARD is hidden below.
     setAvailableExtras(extras)
   }, [extras, setAvailableExtras])
-  
+
   if (!extras || extras.length === 0) {
     return null;
   }
 
   const existingServiceIds = existingServices?.map(s => s.service.id) || [];
+  const breakfastBeverage = extras.find(e => isBreakfastBeverage(e.id));
 
   const availableExtras = extras.filter(extra => {
+    // Beverage half is folded into the single Breakfast card — never shown alone.
+    if (isBreakfastBeverage(extra.id)) return false;
     if (extra.id === 'CMH-ECI') {
       // Already applied (arrival already 13:00) → can't re-buy; hide it so the
       // guest doesn't pay-then-refund on a no-op amend.
@@ -171,15 +178,20 @@ const AddExtras = ({
         {availableExtras.map((extra) => {
           const existingService = existingServices?.find(s => s.service.id === extra.id);
           const existingDates = existingService?.dates || [];
-          const maxExistingCount = existingDates.length > 0 
+          const maxExistingCount = existingDates.length > 0
             ? Math.max(...existingDates.map((d: any) => d.count || 0))
             : 0;
           const existingDateStrings = existingDates.map((d: any) => d.serviceDate);
-          
+
+          // Breakfast is shown as one "Breakfast" card that books both VAT halves.
+          const isBreakfast = isBreakfastFood(extra.id) && !!breakfastBeverage;
+          const item = isBreakfast ? makeBreakfastDisplayService(extra, breakfastBeverage!, locale) : extra;
+          const bundleServices = isBreakfast ? [extra, breakfastBeverage!] : undefined;
+
           return (
-            <ExtraCard 
-              key={extra.id} 
-              item={extra}
+            <ExtraCard
+              key={extra.id}
+              item={item}
               adults={adults}
               nights={nights}
               existingCount={maxExistingCount}
@@ -187,6 +199,7 @@ const AddExtras = ({
               existingDatesWithCount={existingDates}
               arrival={arrival}
               departure={departure}
+              bundleServices={bundleServices}
             />
           );
         })}

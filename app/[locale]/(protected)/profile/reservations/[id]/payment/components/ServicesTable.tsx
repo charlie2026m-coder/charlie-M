@@ -1,10 +1,12 @@
 'use client'
 import { useAddExtrasStore } from '@/store/useAddExtras'
 import Price from '@/app/_components/ui/price'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
+import { isBreakfastBeverage, isBreakfastFood, breakfastBundleLabel } from '@/lib/breakfastBundle'
 
 const ServicesTable = () => {
   const t = useTranslations('payment')
+  const locale = useLocale()
   const selectedServices = useAddExtrasStore(state => state.services)
   const nights = useAddExtrasStore(state => state.nights)
   const availableExtras = useAddExtrasStore(state => state.availableExtras)
@@ -57,10 +59,13 @@ const ServicesTable = () => {
         <span className='font-semibold mb-4 text-[15px]'>{t('services')}</span>
         
         {selectedServices.map((service, index) => {
+          // Beverage half is merged into the Breakfast line below — no own row.
+          if (isBreakfastBeverage(service.serviceId)) return null
+
           let count = 0
           let servicePrice = 0
           let shouldDisplay = true
-          
+
           const isBabyBed = service.serviceId === 'CMH-BAB'
           
           if (isBabyBed) {
@@ -106,10 +111,27 @@ const ServicesTable = () => {
           }
           if (!shouldDisplay) return null
 
+          // Breakfast: fold the beverage half's price into this single line and
+          // show a clean label instead of the raw service code.
+          let displayLabel = `${service.serviceId} (x${count})`
+          if (isBreakfastFood(service.serviceId)) {
+            const beverage = selectedServices.find(s => isBreakfastBeverage(s.serviceId))
+            if (beverage?.count !== undefined && beverage?.price !== undefined) {
+              const bevDetails = availableExtras.find(s => s.id === beverage.serviceId)
+              const bevDaily = bevDetails?.pricingType === 'Daily'
+              const bevPersonRoom = bevDetails?.pricingUnit === 'Person' || bevDetails?.pricingUnit === 'Room'
+              const bevPrice = bevDaily && bevPersonRoom
+                ? beverage.count * beverage.price * nights
+                : beverage.count * beverage.price
+              servicePrice = Math.round((servicePrice + bevPrice) * 100) / 100
+            }
+            displayLabel = `${breakfastBundleLabel(locale)} (x${count})`
+          }
+
           return (
             <div key={`service-${service.serviceId}-${index}`} className='flex items-center gap-2 inter text-sm text-dark mb-2'>
               <div className='truncate overflow-hidden whitespace-nowrap flex items-center'>
-                {service.serviceId} (x{count})
+                {displayLabel}
               </div>
               <span className='text-bale font-semibold ml-auto'>€ {servicePrice.toFixed(2)}</span>
             </div>

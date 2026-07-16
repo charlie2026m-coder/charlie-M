@@ -10,7 +10,8 @@ import AddRooms from './AddRooms';
 import Price from "@/app/_components/ui/price";
 import { useParams } from 'next/navigation';
 import { useRouter } from '@/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
+import { collapseBreakfastExtrasForDisplay, isBreakfastPart, BREAKFAST_FOOD_ID, BREAKFAST_BEVERAGE_ID } from '@/lib/breakfastBundle';
 import { Spinner } from '@/app/_components/ui/spinner';
 import TaxesInfo from '@/app/_components/ui/Taxes';
 import { useState } from 'react';
@@ -32,6 +33,7 @@ const BookingMenu = ({
 }) => {
   const t = useTranslations('bookingForm')
   const tCommon = useTranslations()
+  const locale = useLocale()
   const router = useRouter()
   const urlParams = useParams()
   const { from, to } = params
@@ -48,7 +50,10 @@ const BookingMenu = ({
   const removeRoomExtra = (roomId: string, extraId: string) => {
     const room = rooms.find(r => r.id === roomId)
     if (!room) return
-    editRoom(roomId, { ...room, extras: room.extras?.filter(e => e.id !== extraId) || [] })
+    // Breakfast is shown as one line but stored as two services — removing it
+    // must drop both halves, otherwise an orphaned VAT half stays in the cart.
+    const idsToRemove = isBreakfastPart(extraId) ? [BREAKFAST_FOOD_ID, BREAKFAST_BEVERAGE_ID] : [extraId]
+    editRoom(roomId, { ...room, extras: room.extras?.filter(e => !idsToRemove.includes(e.id)) || [] })
   }
 
   console.log('🛏️ Booking menu rooms:', rooms)
@@ -140,7 +145,7 @@ const BookingMenu = ({
                   {updatedRooms.length > 1 && (
                     <span className=' mt-2'>{t('room')} {index + 1}</span>
                   )}
-                  {room.extras.map(extra => {
+                  {collapseBreakfastExtrasForDisplay(room.extras, locale).map(extra => {
                     const serviceName = extra.name;
                     let displayText = serviceName;
                     

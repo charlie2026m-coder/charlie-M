@@ -16,6 +16,7 @@ const STATUSES: Record<string, usageType> = {
   ADCLN: usageType.Room,
   BAB: usageType.Room,
   BRKF: usageType.Person,
+  BRKFG: usageType.Person,
   ECI: usageType.Once,
   LCO: usageType.Once,
   PET: usageType.Room,

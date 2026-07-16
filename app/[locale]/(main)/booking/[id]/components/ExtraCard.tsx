@@ -8,7 +8,7 @@ import { Room } from '@/types/types'
 import { useTranslations } from 'next-intl'
 import { getExtraImage } from '@/lib/getExtraImage'
 
-const ExtraCard = ({ item, rooms, nights }: { item: Service, rooms: Room[], nights: number }) => {
+const ExtraCard = ({ item, rooms, nights, bundleServices }: { item: Service, rooms: Room[], nights: number, bundleServices?: Service[] }) => {
   const t = useTranslations('bookingForm')
   const isSoldOut = item.isSoldOut;
   const isCheckout = item.id === 'CMH-LCO' || item.id === 'CMH-ECI';
@@ -46,7 +46,7 @@ const ExtraCard = ({ item, rooms, nights }: { item: Service, rooms: Room[], nigh
             ? <AddCheckoutExtra extra={item} rooms={rooms} />
             : isCleaning
               ? <AddCleaningExtra extra={item} rooms={rooms} />
-              : <AddUnlimitedExtra extra={item} rooms={rooms} nights={nights} isParking={isParking} />
+              : <AddUnlimitedExtra extra={item} rooms={rooms} nights={nights} isParking={isParking} bundleServices={bundleServices} />
           }
         </div>
       )}

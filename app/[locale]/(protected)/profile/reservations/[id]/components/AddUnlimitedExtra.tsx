@@ -13,13 +13,18 @@ import { Service } from "@/types/apaleo";
 import { ButtonIcon } from "@/app/_components/ui/ButtonIcon";
 import { useAddExtrasStore } from "@/store/useAddExtras";
 
-const AddUnlimitedExtra = ({ extra, adults, nights, existingCount = 0 }: { extra: Service, adults: number, nights: number, existingCount?: number }) => {
+const AddUnlimitedExtra = ({ extra, adults, nights, existingCount = 0, bundleServices }: { extra: Service, adults: number, nights: number, existingCount?: number, bundleServices?: Service[] }) => {
   const [isOpen, setIsOpen] = useState(false);
   const services = useAddExtrasStore(state => state.services);
   const addService = useAddExtrasStore(state => state.addService);
   const removeService = useAddExtrasStore(state => state.removeService);
-  
-  const savedService = services.find(s => s.serviceId === extra.id);
+
+  // Breakfast bundle: book the real per-VAT services (food 7% + beverage 19%)
+  // from `bundleServices`; `extra` is only the merged display card. Everything
+  // else keeps its single-service path via the `[extra]` fallback.
+  const bundle = bundleServices && bundleServices.length > 0 ? bundleServices : null;
+  const servicesToWrite = bundle ?? [extra];
+  const savedService = services.find(s => s.serviceId === servicesToWrite[0].id);
   const [count, setCount] = useState(savedService?.count || 0);
   
   const mode = extra.availability?.mode;
@@ -63,24 +68,27 @@ const AddUnlimitedExtra = ({ extra, adults, nights, existingCount = 0 }: { extra
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (open) {
-      const savedService = services.find(s => s.serviceId === extra.id);
+      const savedService = services.find(s => s.serviceId === servicesToWrite[0].id);
       setCount(savedService?.count || 0);
     }
   };
 
   const handleConfirm = () => {
     if (count === 0) {
-      removeService(extra.id);
+      // Remove every service this card owns (both breakfast halves when bundled).
+      servicesToWrite.forEach(svc => removeService(svc.id));
       setIsOpen(false);
       return;
     }
 
-    addService({
-      serviceId: extra.id,
+    // One store entry per real service, each with its OWN catalog price, so the
+    // folio and payment keep the food/beverage VAT split.
+    servicesToWrite.forEach(svc => addService({
+      serviceId: svc.id,
       count: count,
-      price: extra.price,
-    });
-    
+      price: svc.price,
+    }));
+
     setIsOpen(false);
   };
 

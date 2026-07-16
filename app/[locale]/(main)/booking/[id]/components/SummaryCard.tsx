@@ -9,6 +9,7 @@ import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import TaxesInfo from '@/app/_components/ui/Taxes';
 import { calculateTotalTaxes } from '@/lib/utils';
+import { collapseBreakfastExtrasForDisplay } from '@/lib/breakfastBundle';
 
 const SummaryCard = () => {
   const t = useTranslations('summary')
@@ -116,7 +117,7 @@ const SummaryCard = () => {
                   {updatedRooms.length > 1 && (
                     <span className='text-xs font-semibold text-green mt-2'>{tBooking('room')} {index + 1}</span>
                   )}
-                  {room.extras.map(extra => {
+                  {collapseBreakfastExtrasForDisplay(room.extras, locale).map(extra => {
                     const serviceName = extra.name;
                     let displayText = serviceName;
                     

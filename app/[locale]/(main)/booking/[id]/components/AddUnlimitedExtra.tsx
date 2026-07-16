@@ -16,21 +16,28 @@ import { Room, RoomExtra } from "@/types/types";
 import { useTranslations } from "next-intl";
 import { trackSelectExtra } from "@/lib/analytics";
 
-const AddUnlimitedExtra = ({ extra, rooms, nights, isParking = false }: { extra: Service, rooms: Room[], nights: number, isParking?: boolean }) => {
+const AddUnlimitedExtra = ({ extra, rooms, nights, isParking = false, bundleServices }: { extra: Service, rooms: Room[], nights: number, isParking?: boolean, bundleServices?: Service[] }) => {
   const t = useTranslations('bookingForm');
   const [isOpen, setIsOpen] = useState(false);
   const editRoom = useBookingStore(state => state.editRoom);
-  
+
   const mode = extra.availability?.mode;
   const pricingUnit = extra.pricingUnit;
-  
+
+  // Breakfast bundle: `extra` is the display card (summed price, "Breakfast"),
+  // while the real per-VAT services are booked from `bundleServices`. Falling
+  // back to `[extra]` keeps every other service on the existing single path.
+  const bundle = bundleServices && bundleServices.length > 0 ? bundleServices : null;
+  const servicesToWrite = bundle ?? [extra];
+  const savedId = servicesToWrite[0].id;
+
   const getMaxLimitPerRoom = (targetRoom: Room) => {
     if (pricingUnit === 'Person') return targetRoom.adults + targetRoom.children;
     return 1;
   };
 
   const getSavedCount = (targetRoom: Room) => {
-    const roomExtra = targetRoom.extras?.find(e => e.id === extra.id);
+    const roomExtra = targetRoom.extras?.find(e => e.id === savedId);
     return roomExtra?.count || 0;
   };
 
@@ -82,29 +89,27 @@ const AddUnlimitedExtra = ({ extra, rooms, nights, isParking = false }: { extra:
   };
 
   const handleConfirm = () => {
+    const writeIds = servicesToWrite.map(s => s.id);
     rooms.forEach((room) => {
       const count = roomCounts[room.id] || 0;
-      
+
       const currentExtras = room.extras || [];
-      const filteredExtras = currentExtras.filter(e => e.id !== extra.id);
-      
+      const filteredExtras = currentExtras.filter(e => !writeIds.includes(e.id));
+
       if (count > 0) {
-        let totalPrice = 0;
-        
-        if (mode === 'Daily') {
-          totalPrice = Math.round(extra.price * count * nights * 100) / 100;
-        } else {
-          totalPrice = Math.round(extra.price * count * 100) / 100;
-        }
-        
-        const roomExtra: RoomExtra = {
-          ...extra,
-          count: count,
-          totalPrice: totalPrice,
-        };
+        // One RoomExtra per real service so each carries its OWN catalog price
+        // (breakfast: food 7% + beverage 19%). The summary and payment
+        // validation re-price each id independently, so the split is preserved.
+        const newExtras: RoomExtra[] = servicesToWrite.map(svc => ({
+          ...svc,
+          count,
+          totalPrice: mode === 'Daily'
+            ? Math.round(svc.price * count * nights * 100) / 100
+            : Math.round(svc.price * count * 100) / 100,
+        }));
         editRoom(room.id, {
           ...room,
-          extras: [...filteredExtras, roomExtra],
+          extras: [...filteredExtras, ...newExtras],
         });
       } else {
         editRoom(room.id, {
@@ -113,7 +118,7 @@ const AddUnlimitedExtra = ({ extra, rooms, nights, isParking = false }: { extra:
         });
       }
     });
-    
+
     setIsOpen(false);
   };
 
