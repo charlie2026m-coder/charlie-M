@@ -135,6 +135,18 @@ const PhotoGallery = ({ images, roomName }: { images: string[]; roomName?: strin
     return () => { stop(); clearInterval(iv); window.removeEventListener('resize', measureClose) }
   }, [showImages, measureSoon, measureClose])
 
+  // The filmstrip is desktop-only. Gate it by MOUNT, not CSS: `hidden` still
+  // downloads every thumb — and with images.unoptimized each thumb is the
+  // full-size original, so phones paid ~all photos for a strip they never see.
+  const [isMdUp, setIsMdUp] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)')
+    const update = () => setIsMdUp(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
+
   // Desktop filmstrip: click a thumb to jump straight to that photo with a
   // quick dip-fade; the active thumb stays centered in the strip.
   const [fading, setFading] = useState(false)
@@ -295,20 +307,21 @@ const PhotoGallery = ({ images, roomName }: { images: string[]; roomName?: strin
               className='max-h-full max-w-full w-auto h-auto object-contain block cursor-pointer'
               onClick={() => { if (!swiped.current) nextPhoto() }}
             />
-            {/* Desktop close — sits ON the photo's top-right corner (measured),
-                gliding along as photos of different ratios come and go. Mobile
-                keeps the built-in frame-corner close. */}
-            {closePos && (
-              <button
-                type='button'
-                aria-label='Close'
-                onClick={() => setShowImages(null)}
-                style={{ top: closePos.top, left: closePos.left }}
-                className='absolute z-20 hidden md:grid place-items-center size-10 rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70 transition-[top,left,background-color] duration-300 ease-out'
-              >
-                <IoClose className='size-6' />
-              </button>
-            )}
+            {/* Desktop close — sits ON the photo's top-right corner once
+                measured, gliding along as photos of different ratios come and
+                go. Until a photo loads and measures (or if it 404s and never
+                does), fall back to the frame's top-right corner so the dialog
+                ALWAYS has a clickable close (outside-click is disabled and the
+                built-in X is hidden on md+). Mobile keeps the built-in close. */}
+            <button
+              type='button'
+              aria-label='Close'
+              onClick={() => setShowImages(null)}
+              style={closePos ? { top: closePos.top, left: closePos.left } : { top: 8, right: 8 }}
+              className='absolute z-20 hidden md:grid place-items-center size-10 rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70 transition-[top,left,background-color] duration-300 ease-out'
+            >
+              <IoClose className='size-6' />
+            </button>
             <button
               type='button'
               aria-label='Previous photo'
@@ -332,7 +345,9 @@ const PhotoGallery = ({ images, roomName }: { images: string[]; roomName?: strin
 
           {/* Desktop filmstrip — every photo at a glance; click to jump straight
               to it. Active thumb pops (ring + scale), inactive ones sit dimmed;
-              the strip auto-centers on the active photo. */}
+              the strip auto-centers on the active photo. Mounted only on md+
+              so phones don't download full-size thumbs for a hidden strip. */}
+          {isMdUp && (
           <div className='hidden md:block w-full shrink-0 pt-3'>
             <div
               className='mx-auto flex w-fit max-w-full gap-2.5 overflow-x-auto px-2 py-1.5'
@@ -367,6 +382,7 @@ const PhotoGallery = ({ images, roomName }: { images: string[]; roomName?: strin
               ))}
             </div>
           </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

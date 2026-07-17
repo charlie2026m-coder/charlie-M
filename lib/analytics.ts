@@ -114,19 +114,38 @@ export function trackPurchase({
 }
 
 // gtag.js is injected asynchronously ONLY after Cookiebot consent resolves,
-// which can be AFTER a tracker component mounts. Firing before then is a silent
-// no-op (window.gtag is undefined), so mount-time events get lost. Run `cb`
-// once gtag is ready — polls up to ~8s, returns a cleanup fn. If the visitor
-// declines statistics consent, gtag never appears and cb never runs.
+// which can happen AFTER a tracker component mounts — and after ANY amount of
+// time (a first-time visitor can read the banner for minutes). The old
+// 40 × 200ms poll silently dropped every mount event once the guest took
+// longer than ~8s to accept. Now: immediate check + a CookiebotOnAccept
+// listener (the consent handler defines window.gtag synchronously) + a slow
+// safety poll (500ms, up to 10 min) as a race net. Returns a cleanup fn.
 export function whenGtagReady(cb: () => void): () => void {
-  let tries = 0;
+  let done = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
-  const tick = () => {
-    if (typeof window !== 'undefined' && typeof window.gtag === 'function') cb();
-    else if (tries++ < 40) timer = setTimeout(tick, 200);
+  let tries = 0;
+  const cleanup = () => {
+    clearTimeout(timer);
+    if (typeof window !== 'undefined') window.removeEventListener('CookiebotOnAccept', onConsent);
   };
-  tick();
-  return () => clearTimeout(timer);
+  const fire = () => {
+    if (done) return;
+    if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+      done = true;
+      cleanup();
+      cb();
+    }
+  };
+  const onConsent = () => { setTimeout(fire, 0); };
+  fire();
+  if (done) return () => {};
+  window.addEventListener('CookiebotOnAccept', onConsent);
+  const tick = () => {
+    fire();
+    if (!done && tries++ < 1200) timer = setTimeout(tick, 500);
+  };
+  timer = setTimeout(tick, 200);
+  return cleanup;
 }
 
 // Guest clicked "Book Now" and reached the booking step (/booking/[id]) — the

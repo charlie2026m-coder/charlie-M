@@ -537,7 +537,9 @@
     "selectAllAvailable": "Select All Available",
     "selectDates": "Select dates",
     "chooseQuantityPerDay": "Choose quantity per day",
-    "unavailableForDates": "This room is not available for the selected dates. Please choose different dates."
+    "unavailableForDates": "This room is not available for the selected dates. Please choose different dates.",
+    "priceError": "We couldn't load the price. Please check your connection.",
+    "priceRetry": "Try again"
   },
   "payment": {
     "guestDetails": "Guest Details",

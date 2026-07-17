@@ -58,7 +58,7 @@ const PaymentPage = () => {
         s.dates?.filter(d => d.isExisting === true).map(d => d.serviceDate) ?? [],
       ),
   )
-  const { totalCents } = computeServicesTotalCents(
+  const { totalCents, breakdown } = computeServicesTotalCents(
     knownServices,
     availableExtras,
     { nights },
@@ -79,7 +79,9 @@ const PaymentPage = () => {
           />
         </div>
         <div className='lg:col-span-1'>
-          <ServicesTable />
+          {/* Summary renders from the SAME breakdown that produced the charged
+              amount — one source of truth, no drift. */}
+          <ServicesTable lines={breakdown} totalAmount={totalCents / 100} />
         </div>
       </div>
     </div>

@@ -27,6 +27,9 @@ const ReservationPage = async ({ params }: { params: Promise<{ id: string; local
   // arrivals to 13:00+ (e.g. 13:47) when the room is cleaned early — an exact
   // match would re-show the buyable ECI card to a guest who already has an
   // earlier arrival. Departure is never moved, so LCO stays an exact match.
+  // Deliberate side effect: a MANUAL staff amend below 15:00 (e.g. courtesy
+  // 14:00 in Apaleo) also counts as granted — the arrival time IS when the
+  // door opens (Guestway syncs the PIN to it), so there is nothing to sell.
   // Zero-padded HH:mm ⇒ lexical `<` is chronological.
   const lcoApplied = reservation.departure.match(/T(\d{2}:\d{2})/)?.[1] === '13:00';
   const eciArrivalTime = reservation.arrival.match(/T(\d{2}:\d{2})/)?.[1] ?? '';

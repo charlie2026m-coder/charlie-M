@@ -537,7 +537,9 @@
     "selectAllAvailable": "Alle auswählen",
     "selectDates": "Daten",
     "chooseQuantityPerDay": "Menge pro Tag wählen",
-    "unavailableForDates": "Dieses Zimmer ist für die ausgewählten Daten nicht verfügbar. Bitte wählen Sie andere Daten."
+    "unavailableForDates": "Dieses Zimmer ist für die ausgewählten Daten nicht verfügbar. Bitte wählen Sie andere Daten.",
+    "priceError": "Der Preis konnte nicht geladen werden. Bitte Verbindung prüfen.",
+    "priceRetry": "Erneut versuchen"
   },
   "payment": {
     "guestDetails": "Angaben zum Gast",

@@ -364,6 +364,12 @@ export type ServicesValidationResult =
 interface ReservationValidationData {
   arrival: string
   departure: string
+  // Extras window for an in-house guest: services apply from TODAY (Berlin),
+  // not from the original arrival — mirrors the cabinet client
+  // (profile/reservations/[id]/page.tsx extrasStartDate/nights). The true
+  // arrival stays above for the ECI/LCO guards.
+  extrasStart: string
+  extrasNights: number
   arrivalTime: string   // "HH:mm" local — to detect an already-applied ECI (13:00)
   departureTime: string // "HH:mm" local — to detect an already-applied LCO (13:00)
   nights: number
@@ -441,6 +447,16 @@ async function fetchReservationForValidation(
     return { kind: 'not-found', reason: 'non-positive nights' }
   }
 
+  // In-house guests buy extras for the REMAINING nights only — the client
+  // prices with nights from max(today, arrival) (page.tsx), so the validator
+  // must use the same window or every mid-stay daily-service purchase is
+  // rejected as a mismatch after the guest already entered their card.
+  // YYYY-MM-DD strings compare lexically; departure-day purchases count as 1.
+  const today = berlinToday()
+  const extrasStart = today > arrival ? today : arrival
+  const extrasNightsDiff = dayjs(departure).diff(dayjs(extrasStart), 'day')
+  const extrasNights = extrasNightsDiff <= 0 ? 1 : extrasNightsDiff
+
   const existingCleaningDates = new Set<string>()
   for (const paid of res.services ?? []) {
     if (!isCleaningService(paid.service.id, paid.service.name)) continue
@@ -451,7 +467,7 @@ async function fetchReservationForValidation(
 
   return {
     kind: 'ok',
-    data: { arrival, departure, arrivalTime, departureTime, nights, existingCleaningDates },
+    data: { arrival, departure, extrasStart, extrasNights, arrivalTime, departureTime, nights, existingCleaningDates },
   }
 }
 
@@ -582,7 +598,9 @@ export async function validateServicesPayment(
     result = computeServicesTotalCents(
       services,
       catalog,
-      { nights: reservation.nights },
+      // Remaining-nights window — matches what the cabinet client displayed
+      // and charged (see extrasStart/extrasNights above).
+      { nights: reservation.extrasNights },
       reservation.existingCleaningDates,
     )
   } catch (err) {
@@ -619,11 +637,12 @@ export async function validateServicesPayment(
   }
 
   // Build the Apaleo payloads from the SAME services + catalog + nights the
-  // amount was just validated against. nightDates spans arrival .. departure-1
-  // (exactly `reservation.nights` dates) so daily services book on every night
-  // and the folio total equals expectedCents.
-  const nightDates = Array.from({ length: reservation.nights }, (_, i) =>
-    dayjs(reservation.arrival).add(i, 'day').format('YYYY-MM-DD'),
+  // amount was just validated against. nightDates spans extrasStart ..
+  // departure-1 (exactly `extrasNights` dates) so daily services book on every
+  // REMAINING night — never on nights already slept — and the folio total
+  // equals expectedCents.
+  const nightDates = Array.from({ length: reservation.extrasNights }, (_, i) =>
+    dayjs(reservation.extrasStart).add(i, 'day').format('YYYY-MM-DD'),
   )
   const apaleoServices = buildApaleoServicePayloads(
     services,
