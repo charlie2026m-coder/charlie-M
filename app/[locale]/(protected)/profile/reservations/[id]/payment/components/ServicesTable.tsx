@@ -23,7 +23,8 @@ const ServicesTable = () => {
       const isCleaning = service.serviceId === 'CMH-CLN' || serviceDetails?.name?.toLowerCase().includes('clean')
       
       if (isBabyBed && serviceDetails) {
-        total += serviceDetails.price * nights
+        // One-time fee for the whole stay (matches the booking flow + validator).
+        total += serviceDetails.price
       } else if (service.count !== undefined && service.price !== undefined) {
         if (serviceDetails) {
           const isDaily = serviceDetails.pricingType === 'Daily'
@@ -72,7 +73,8 @@ const ServicesTable = () => {
             const serviceDetails = availableExtras.find(s => s.id === service.serviceId)
             if (serviceDetails) {
               count = 1
-              servicePrice = Math.round(serviceDetails.price * nights * 100) / 100
+              // One-time fee for the whole stay.
+              servicePrice = Math.round(serviceDetails.price * 100) / 100
             }
           } else if (service.count !== undefined && service.price !== undefined) {
             const serviceDetails = availableExtras.find(s => s.id === service.serviceId)

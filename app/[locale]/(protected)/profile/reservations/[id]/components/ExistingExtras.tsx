@@ -29,7 +29,8 @@ const ExistingExtras = ({
       const isBabyBed = selectedService.serviceId === 'CMH-BAB'
       
       if (isBabyBed && serviceDetails) {
-        total += serviceDetails.price * nights
+        // One-time fee for the whole stay (matches the booking flow).
+        total += serviceDetails.price
       } else if (selectedService.count !== undefined && selectedService.price !== undefined) {
         if (serviceDetails) {
           const isDaily = serviceDetails.pricingType === 'Daily'
@@ -131,7 +132,8 @@ const ExistingExtras = ({
           const isBabyBed = selectedService.serviceId === 'CMH-BAB'
           
           if (isBabyBed) {
-            price = Math.round(serviceDetails.price * nights * 100) / 100
+            // One-time fee for the whole stay.
+            price = serviceDetails.price
             quantityText = '1'
           } else if (selectedService.count !== undefined && selectedService.price !== undefined) {
             const isPerson = serviceDetails.pricingUnit === 'Person'

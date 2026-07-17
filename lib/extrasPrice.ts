@@ -35,9 +35,10 @@ export function isCleaningService(
   return catalogName?.toLowerCase().includes('clean') ?? false
 }
 
-// Baby bed (CMH-BAB) is priced per night regardless of `count` — UI and
-// validator both treat it as `nights` units. Kept as a named predicate so
-// pricing and the Apaleo payload builder classify it identically.
+// Baby bed (CMH-BAB) is a ONE-TIME fee for the whole stay (the cot stays in
+// the room; the guest pays once) — matching the booking flow, where BAB is an
+// Arrival-mode service charged once. Kept as a named predicate so pricing and
+// the Apaleo payload builder classify it identically.
 export function isBabyBedService(serviceId: string): boolean {
   return serviceId === 'CMH-BAB'
 }
@@ -90,10 +91,10 @@ export function computeServicesTotalCents(
       // Pinned to 1 so the validated total, folio fee, and UI always agree.
       units = 1
     } else if (isBabyBedService(service.serviceId)) {
-      // UI sums baby bed as price × nights regardless of `count`. Mirrored
-      // so the server doesn't reject the same total the UI displays. If/when
-      // the UI starts respecting count, update both call sites together.
-      units = ctx.nights
+      // One-time fee for the whole stay (matches the booking flow) — the old
+      // per-night pricing charged cabinet guests nights × price while the
+      // booking flow (BAB = Arrival mode) charged the same cot once.
+      units = 1
     } else if (service.count != null) {
       units = isDailyMultiplied(cat)
         ? service.count * ctx.nights
@@ -199,15 +200,16 @@ export function buildApaleoServicePayloads(
       }]
     }
 
-    // Baby bed: one bed per night across the whole stay.
+    // Baby bed: one-time fee — book a single unit on the first night so the
+    // folio carries exactly one price line (matches the validator's units=1).
     if (isBabyBedService(service.serviceId)) {
       return [{
         serviceId: service.serviceId,
-        dates: ctx.nightDates.map(serviceDate => ({
-          serviceDate,
+        dates: [{
+          serviceDate: ctx.nightDates[0],
           count: 1,
           amount: { amount: cat.price, currency },
-        })),
+        }],
       }]
     }
 

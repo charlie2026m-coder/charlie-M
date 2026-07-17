@@ -81,8 +81,8 @@ const AddCheckoutExtra = ({ extra, adults, nights, existingCount = 0 }: { extra:
 
   const getTotalPrice = () => {
     if (isBabyBed) {
-      const allTimeSlices = extra.timeSlices?.slice(0, -1) || [];
-      return extra.price * count * allTimeSlices.length;
+      // One-time fee for the whole stay (matches the booking flow + validator).
+      return extra.price * count;
     }
     if (isParking) {
       return extra.price * count * nights;
