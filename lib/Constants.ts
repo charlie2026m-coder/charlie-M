@@ -4,6 +4,7 @@
 export const DOUBLE_OCCUPANCY_SURCHARGE_PER_NIGHT = 9;
 
 export const PHONE_NUMBER = "+5 077 6764 8570"
+export const WHATSAPP_NUMBER = "+5 077 6764 8570"
 export const EMAIL = "info@charlie-m.de"
 
 

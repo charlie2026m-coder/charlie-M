@@ -254,3 +254,13 @@ main {
 .animate-success-ring {
   animation: successRing 0.8s ease-out forwards;
 }
+
+/* Inline links/emphasis inside the /welcome check-in step descriptions */
+.welcome-step-desc strong {
+  text-decoration: underline;
+  color: inherit;
+}
+.welcome-step-desc a {
+  color: var(--color-dark-gold);
+  text-decoration: underline;
+}

@@ -1469,6 +1469,63 @@
     "cookieSettings": "Cookie Settings",
     "mapNotice": "When you load the interactive map, Google sets cookies on your device and transfers your data to the USA. By clicking, you agree to this use and to Google's privacy policy. Further information can be found in our Privacy Policy.",
     "mapLoad": "Load map"
+  },
+  "welcomePage": {
+    "hero": {
+      "badge": "Online Check-In Required for Entry",
+      "title": "To access the building, you must complete your online check-in first.",
+      "subtitle": "After completing check-in, you will receive your personal door PIN.",
+      "cta": "Complete online check-in"
+    },
+    "intro": {
+      "title": "Welcome to Charlie M",
+      "description1": "Our property uses a digital access system.",
+      "description2": "For security reasons, every guest must complete online check-in before entering the building.",
+      "description3": "The process only takes a few minutes.",
+      "bookNow": "Book Now"
+    },
+    "howItWorks": {
+      "title": "How It Works",
+      "cta": "Complete online check-in",
+      "step1": {
+        "title": "Go to our website and click \"Check In\"",
+        "description": "Visit <strong><a href=\"https://www.charlie-m.de\" target=\"_blank\">www.charlie-m.de</a></strong>.<br/> On the top right of the homepage, click the \"Check In\" button in the menu."
+      },
+      "step2": {
+        "title": "Log in with your Reservation ID",
+        "description": "Enter your Reservation ID to access your booking."
+      },
+      "step3": {
+        "title": "Complete the online check-in",
+        "description": "Fill in your guest details and take a photo of a valid government-issued ID (passport, ID card, driver's license, residence permit).<br/> This step is required for legal registration and security purposes."
+      },
+      "step4": {
+        "title": "Receive your personal PIN",
+        "description": "Once check-in is completed, your door PIN will be generated and sent to you."
+      },
+      "step5": {
+        "title": "Enter the building",
+        "description": "Use your PIN on the keypad at: <strong>main entrance</strong>, any <strong>intermediate doors</strong> and your <strong>room door</strong>."
+      }
+    },
+    "roomDirections": {
+      "title": "Finding Your Room",
+      "intro": "Your personal PIN opens every door on the way to your room.",
+      "cardTitle": "From the entrance to your room",
+      "afterMainEntrance": "After entering the main entrance:",
+      "enterMainEntrance": "Open the main entrance with your PIN",
+      "goToYourFloor": "Take the lift or stairs to your floor",
+      "enterPinCorridor": "Enter your PIN again to access the corridor",
+      "followSignage": "Follow the hotel signage to your room",
+      "note": "Detailed directions to your specific room follow after check-in and are signposted throughout the building."
+    },
+    "needHelp": {
+      "title": "Need Help?",
+      "description": "If you are unable to complete the online check-in or did not receive your PIN, please contact us:",
+      "phone": "+5 077 6764 8570",
+      "whatsapp": "WhatsApp Support",
+      "email": "info@charlie-m.de",
+      "footer": "Our team is available to assist you."
+    }
   }
 }
-

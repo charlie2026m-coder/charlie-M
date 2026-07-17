@@ -1470,6 +1470,63 @@
     "cookieSettings": "Cookie-Einstellungen",
     "mapNotice": "Beim Laden der interaktiven Karte setzt Google Cookies auf Ihrem Gerät und übermittelt Ihre Daten in die USA. Mit dem Klick stimmen Sie dieser Verwendung und den Datenschutzhinweisen von Google zu. Weitere Hinweise finden Sie in unserer Datenschutzerklärung.",
     "mapLoad": "Karte laden"
+  },
+  "welcomePage": {
+    "hero": {
+      "badge": "Online-Check-in für den Eingang erforderlich",
+      "title": "Um das Gebäude betreten zu dürfen, müssen Sie zuerst Ihren Online-Check-in abschließen.",
+      "subtitle": "Nach dem Check-in erhalten Sie Ihre persönliche Tür-PIN.",
+      "cta": "Online-Check-in abschließen"
+    },
+    "intro": {
+      "title": "Willkommen im Charlie M",
+      "description1": "Unsere Unterkunft nutzt ein digitales Zugangssystem.",
+      "description2": "Aus Sicherheitsgründen muss jeder Gast vor dem Betreten des Gebäudes den Online-Check-in abschließen.",
+      "description3": "Der Vorgang dauert nur wenige Minuten.",
+      "bookNow": "Jetzt buchen"
+    },
+    "howItWorks": {
+      "title": "So funktioniert es",
+      "cta": "Online-Check-in abschließen",
+      "step1": {
+        "title": "Besuchen Sie unsere Website und klicken Sie auf \"Check-In\"",
+        "description": "Besuchen Sie <strong><a href=\"https://www.charlie-m.de\" target=\"_blank\">www.charlie-m.de</a></strong>.<br/> Oben rechts auf der Startseite klicken Sie auf die Schaltfläche \"Check-In\" im Menü."
+      },
+      "step2": {
+        "title": "Melden Sie sich mit Ihrer Reservierungs-ID an",
+        "description": "Geben Sie Ihre Reservierungs-ID ein, um auf Ihre Buchung zuzugreifen."
+      },
+      "step3": {
+        "title": "Schließen Sie den Online-Check-in ab",
+        "description": "Geben Sie Ihre Gastdaten ein und machen Sie ein Foto eines gültigen amtlichen Ausweisdokuments (Reisepass, Personalausweis, Führerschein oder Aufenthaltstitel). Dieser Schritt ist für die gesetzliche Registrierung und aus Sicherheitsgründen erforderlich."
+      },
+      "step4": {
+        "title": "Erhalten Sie Ihre persönliche PIN",
+        "description": "Nach Abschluss des Check-ins wird Ihre Tür-PIN generiert und Ihnen zugesendet."
+      },
+      "step5": {
+        "title": "Betreten Sie das Gebäude",
+        "description": "Verwenden Sie Ihre PIN an der Tastatur am: <strong>Haupteingang</strong>, an allen <strong>Zwischentüren</strong> und an Ihrer <strong>Zimmertür</strong>."
+      }
+    },
+    "roomDirections": {
+      "title": "So finden Sie Ihr Zimmer",
+      "intro": "Ihre persönliche PIN öffnet jede Tür auf dem Weg zu Ihrem Zimmer.",
+      "cardTitle": "Vom Eingang zu Ihrem Zimmer",
+      "afterMainEntrance": "Nach dem Betreten des Haupteingangs:",
+      "enterMainEntrance": "Öffnen Sie den Haupteingang mit Ihrer PIN",
+      "goToYourFloor": "Nehmen Sie den Aufzug oder die Treppe zu Ihrer Etage",
+      "enterPinCorridor": "PIN erneut eingeben, um den Korridor zu betreten",
+      "followSignage": "Folgen Sie der Hotelbeschilderung zu Ihrem Zimmer",
+      "note": "Die genaue Wegbeschreibung zu Ihrem Zimmer erhalten Sie nach dem Check-in; im Gebäude ist alles ausgeschildert."
+    },
+    "needHelp": {
+      "title": "Brauchen Sie Hilfe?",
+      "description": "Wenn Sie den Online-Check-in nicht abschließen konnten oder Ihre PIN nicht erhalten haben, kontaktieren Sie uns bitte:",
+      "phone": "+5 077 6764 8570",
+      "whatsapp": "WhatsApp-Support",
+      "email": "info@charlie-m.de",
+      "footer": "Unser Team steht Ihnen gerne zur Verfügung."
+    }
   }
 }
-
