@@ -1,6 +1,5 @@
 import { getTranslations } from "next-intl/server";
 import Image from "next/image";
-import Line from "../../../_components/footer/Line";
 import { PHONE_NUMBER, WHATSAPP_NUMBER } from "@/lib/Constants";
 
 export const NeedHelp = async ({ locale }: { locale: string }) => {
@@ -94,8 +93,6 @@ export const NeedHelp = async ({ locale }: { locale: string }) => {
           />
         </div>
       </div>
-
-      <Line />
     </footer>
   );
 };
