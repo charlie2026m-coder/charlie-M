@@ -4,9 +4,10 @@ import { FiMapPin } from "react-icons/fi";
 import { useState, useEffect, useCallback, useRef } from "react";
 import Image from 'next/image'
 import { Dialog, DialogContent } from "@/app/_components/ui/dialog";
-import { IoChevronBack, IoChevronForward } from "react-icons/io5";
+import { IoChevronBack, IoChevronForward, IoClose } from "react-icons/io5";
 import { useTranslations } from 'next-intl'
 import { HOTEL_INFO } from '@/lib/Constants'
+import { cn } from "@/lib/utils";
 
 const PhotoGallery = ({ images, roomName }: { images: string[]; roomName?: string }) => {
   const [showImages, setShowImages] = useState<null | number>(null);
@@ -86,6 +87,90 @@ const PhotoGallery = ({ images, roomName }: { images: string[]; roomName?: strin
     if (dx <= -60) nextPhoto()
     else if (dx >= 60) prevPhoto()
   }
+
+  // Desktop close button — anchored to the PHOTO's corner, not the frame's.
+  // The photo is object-contain inside a fixed frame, so its rendered box
+  // varies per aspect ratio; the frame-corner X ends up floating far away in
+  // the dark for most photos. Measure the visible photo rect and glide the X
+  // to each photo's top-right corner.
+  const stageRef = useRef<HTMLDivElement>(null)
+  const imgRef = useRef<HTMLImageElement>(null)
+  const [closePos, setClosePos] = useState<{ top: number; left: number } | null>(null)
+  const measureClose = useCallback(() => {
+    const stage = stageRef.current
+    const img = imgRef.current
+    if (!stage || !img || !img.complete || img.naturalWidth === 0) return
+    const s = stage.getBoundingClientRect()
+    const r = img.getBoundingClientRect()
+    // 10px inset inside the photo; 40px = button size.
+    const top = r.top - s.top + 10
+    const left = r.right - s.left - 10 - 40
+    // Bail out on sub-pixel jitter so the interval loop below doesn't re-render.
+    setClosePos((prev) =>
+      prev && Math.abs(prev.top - top) < 0.5 && Math.abs(prev.left - left) < 0.5
+        ? prev
+        : { top, left },
+    )
+  }, [])
+  // A single measure lands mid Radix open-animation (rects are in flight) —
+  // sample a few times until layout settles. Timeout-based, not rAF: frames
+  // can be throttled (hidden/embedded tabs) while timers still run.
+  const measureSoon = useCallback(() => {
+    const ids = [0, 80, 180, 320, 550].map((ms) => window.setTimeout(measureClose, ms))
+    return () => ids.forEach((id) => clearTimeout(id))
+  }, [measureClose])
+  useEffect(() => {
+    if (showImages === null) {
+      // Deferred (not a synchronous setState in the effect body) — clears the
+      // pinned-close position once the lightbox is closed.
+      const id = requestAnimationFrame(() => setClosePos(null))
+      return () => cancelAnimationFrame(id)
+    }
+    const stop = measureSoon()
+    // Cheap safety net while the lightbox is open: re-check the photo box every
+    // 500ms so ANY layout shift (mobile URL bar, zoom, slow image swap) re-pins
+    // the X — the bail-out in measureClose makes no-change ticks free.
+    const iv = window.setInterval(measureClose, 500)
+    window.addEventListener('resize', measureClose)
+    return () => { stop(); clearInterval(iv); window.removeEventListener('resize', measureClose) }
+  }, [showImages, measureSoon, measureClose])
+
+  // Desktop filmstrip: click a thumb to jump straight to that photo with a
+  // quick dip-fade; the active thumb stays centered in the strip.
+  const [fading, setFading] = useState(false)
+  const thumbRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const wasOpen = useRef(false)
+  const jumpTo = (i: number) => {
+    if (showImages === null || i === showImages || fading) return
+    setFading(true)
+    window.setTimeout(() => {
+      // Guard against the dialog being closed mid-fade — don't reopen it.
+      setShowImages((prev) => (prev === null ? null : i))
+      // Timer (not rAF): frames can be throttled while timers still run.
+      window.setTimeout(() => setFading(false), 30)
+    }, 160)
+  }
+  // Desktop hover-preview: sweeping the cursor across the strip scrubs the
+  // main photo live (all URLs are already warm from the thumbs, so the swap is
+  // instant). Click stays for touch/keyboard.
+  const stripHover = useRef(false)
+  const hoverTo = (i: number) => {
+    if (fading || showImages === null || i === showImages) return
+    setShowImages(i)
+  }
+  useEffect(() => {
+    if (showImages === null) { wasOpen.current = false; return }
+    const behavior: ScrollBehavior = wasOpen.current ? 'smooth' : 'auto'
+    wasOpen.current = true
+    // Don't auto-center while the cursor is on the strip — the scroll would
+    // shift the thumbs under the pointer and re-trigger hover in a loop.
+    if (stripHover.current) return
+    thumbRefs.current[showImages]?.scrollIntoView({
+      behavior,
+      inline: 'center',
+      block: 'nearest',
+    })
+  }, [showImages])
 
   // Show placeholder if no images
   if (!hasImages) {
@@ -182,27 +267,48 @@ const PhotoGallery = ({ images, roomName }: { images: string[]; roomName?: strin
         }}
       >
         <DialogContent
-          className='p-0 !rounded-none w-[95vw] md:w-[90vw] max-w-[1400px] h-[85vh] max-h-[85vh] overflow-hidden border-0 bg-transparent shadow-none [&>button]:text-white [&>button]:z-20 [&>button]:top-2 [&>button]:right-2'
+          className='p-0 !rounded-none w-[95vw] md:w-[90vw] max-w-[1400px] h-[85vh] max-h-[85vh] overflow-hidden border-0 bg-transparent shadow-none flex flex-col gap-0 [&>button]:text-white [&>button]:z-20 [&>button]:top-2 [&>button]:right-2 [&>button]:md:hidden'
           onPointerDownOutside={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}
         >
           {/* Fixed-size frame so the modal + arrows never resize when photos have
               different aspect ratios; the image just fits inside (object-contain). */}
           <div
-            className='relative flex h-full w-full items-center justify-center select-none touch-pan-y overflow-hidden'
+            ref={stageRef}
+            className='relative flex min-h-0 flex-1 w-full items-center justify-center select-none touch-pan-y overflow-hidden'
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
+              ref={imgRef}
               src={images[showImages || 0]}
               alt={roomName ? `${roomName} - view ${(showImages || 0) + 1}` : `Hotel room view ${(showImages || 0) + 1}`}
               draggable={false}
-              style={{ transform: `translateX(${dragX}px)`, transition: dragging ? 'none' : 'transform 200ms ease' }}
+              onLoad={() => measureSoon()}
+              style={{
+                transform: `translateX(${dragX}px)`,
+                opacity: fading ? 0 : 1,
+                transition: dragging ? 'none' : 'transform 200ms ease, opacity 160ms ease',
+              }}
               className='max-h-full max-w-full w-auto h-auto object-contain block cursor-pointer'
               onClick={() => { if (!swiped.current) nextPhoto() }}
             />
+            {/* Desktop close — sits ON the photo's top-right corner (measured),
+                gliding along as photos of different ratios come and go. Mobile
+                keeps the built-in frame-corner close. */}
+            {closePos && (
+              <button
+                type='button'
+                aria-label='Close'
+                onClick={() => setShowImages(null)}
+                style={{ top: closePos.top, left: closePos.left }}
+                className='absolute z-20 hidden md:grid place-items-center size-10 rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70 transition-[top,left,background-color] duration-300 ease-out'
+              >
+                <IoClose className='size-6' />
+              </button>
+            )}
             <button
               type='button'
               aria-label='Previous photo'
@@ -219,8 +325,46 @@ const PhotoGallery = ({ images, roomName }: { images: string[]; roomName?: strin
             >
               <IoChevronForward className='size-6 md:size-8' />
             </button>
-            <div className='absolute bottom-3 left-1/2 -translate-x-1/2 z-10 text-white text-sm font-medium bg-black/50 px-3 py-1 rounded-full whitespace-nowrap'>
+            <div className='md:hidden absolute bottom-3 left-1/2 -translate-x-1/2 z-10 text-white text-sm font-medium bg-black/50 px-3 py-1 rounded-full whitespace-nowrap'>
               {(showImages || 0) + 1} / {images.length}
+            </div>
+          </div>
+
+          {/* Desktop filmstrip — every photo at a glance; click to jump straight
+              to it. Active thumb pops (ring + scale), inactive ones sit dimmed;
+              the strip auto-centers on the active photo. */}
+          <div className='hidden md:block w-full shrink-0 pt-3'>
+            <div
+              className='mx-auto flex w-fit max-w-full gap-2.5 overflow-x-auto px-2 py-1.5'
+              style={{ scrollbarWidth: 'none' }}
+              onMouseEnter={() => { stripHover.current = true }}
+              onMouseLeave={() => {
+                stripHover.current = false
+                // Cursor left the strip — now it's safe to center the active thumb.
+                if (showImages !== null) {
+                  thumbRefs.current[showImages]?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+                }
+              }}
+            >
+              {images.map((image, i) => (
+                <button
+                  key={i}
+                  ref={(el) => { thumbRefs.current[i] = el }}
+                  type='button'
+                  aria-label={`Photo ${i + 1} / ${images.length}`}
+                  aria-current={showImages === i}
+                  onMouseEnter={() => hoverTo(i)}
+                  onClick={() => jumpTo(i)}
+                  className={cn(
+                    'relative h-12 w-[72px] lg:h-14 lg:w-20 shrink-0 overflow-hidden rounded-xl transition-all duration-300 ease-out',
+                    showImages === i
+                      ? 'opacity-100 ring-2 ring-white scale-110'
+                      : 'opacity-45 ring-1 ring-white/15 hover:opacity-90 hover:scale-[1.04]',
+                  )}
+                >
+                  <Image src={image} alt='' fill sizes='80px' className='object-cover' />
+                </button>
+              ))}
             </div>
           </div>
         </DialogContent>
