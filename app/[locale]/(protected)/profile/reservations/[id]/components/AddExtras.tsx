@@ -174,7 +174,7 @@ const AddExtras = ({
       <div className='flex items-center gap-2  pb-2 mb-5 text-lg font-semibold w-full'>
         {t('upgradeYourStay')}
       </div>
-      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 lg:gap-6 gap-y-3 lg:gap-y-10 mb-5'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 lg:gap-6 lg:gap-y-10 mb-5'>
         {availableExtras.map((extra) => {
           const existingService = existingServices?.find(s => s.service.id === extra.id);
           const existingDates = existingService?.dates || [];

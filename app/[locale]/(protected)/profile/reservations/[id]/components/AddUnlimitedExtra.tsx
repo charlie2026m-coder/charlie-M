@@ -1,5 +1,4 @@
 'use client'
-import { FaPlus } from "react-icons/fa6";
 import {
   Dialog,
   DialogContent,
@@ -12,8 +11,12 @@ import { useState } from "react";
 import { Service } from "@/types/apaleo";
 import { ButtonIcon } from "@/app/_components/ui/ButtonIcon";
 import { useAddExtrasStore } from "@/store/useAddExtras";
+import { useTranslations } from "next-intl";
+import Image from "next/image";
+import { getExtraImage } from "@/lib/getExtraImage";
 
 const AddUnlimitedExtra = ({ extra, adults, nights, existingCount = 0, bundleServices }: { extra: Service, adults: number, nights: number, existingCount?: number, bundleServices?: Service[] }) => {
+  const t = useTranslations('profile');
   const [isOpen, setIsOpen] = useState(false);
   const services = useAddExtrasStore(state => state.services);
   const addService = useAddExtrasStore(state => state.addService);
@@ -95,9 +98,9 @@ const AddUnlimitedExtra = ({ extra, adults, nights, existingCount = 0, bundleSer
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <div className='absolute flex top-2.5 right-2.5 items-center justify-center rounded transition-all duration-300 cursor-pointer size-10 shadow-lg bg-blue border-blue text-white'>
-          <FaPlus className='size-6' />
-        </div>
+        <button className='w-full h-[35px] border border-dark-gold text-dark-gold rounded-[7px] px-2.5 text-center cursor-pointer hover:bg-light-bg transition-colors text-[17px] font-[550]'>
+          +{t('add')}
+        </button>
       </DialogTrigger>
       <DialogContent className="rounded-xl max-w-[600px] max-h-[80vh] w-full overflow-y-auto">
         <DialogHeader>
@@ -105,6 +108,10 @@ const AddUnlimitedExtra = ({ extra, adults, nights, existingCount = 0, bundleSer
             Add {extra.name} (€{extra.price})
           </DialogTitle>
         </DialogHeader>
+        {/* Service photo (desktop) — ties the dialog to the card the guest clicked */}
+        <div className="hidden sm:block relative w-full h-[150px] shrink-0 rounded-xl overflow-hidden">
+          <Image src={getExtraImage(extra.id, extra.name, extra.imageUrl)} alt={extra.name} fill className="object-cover" />
+        </div>
 
         <div className='py-2.5 border-b border-t flex items-center justify-between'>
           <div className='flex flex-col text-lg font-semibold '>

@@ -1,5 +1,4 @@
 'use client'
-import { FaPlus } from "react-icons/fa6";
 import {
   Dialog,
   DialogContent,
@@ -16,6 +15,8 @@ import dayjs from "dayjs";
 import { cn } from "@/lib/utils";
 import { isStayExtensionService } from "@/lib/extrasPrice";
 import { useTranslations } from 'next-intl';
+import Image from "next/image";
+import { getExtraImage } from "@/lib/getExtraImage";
   
 const AddCheckoutExtra = ({ extra, adults, nights, existingCount = 0 }: { extra: Service, adults: number, nights: number, existingCount?: number }) => {
   const t = useTranslations('profile');
@@ -133,9 +134,9 @@ const AddCheckoutExtra = ({ extra, adults, nights, existingCount = 0 }: { extra:
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <div className='absolute flex top-2.5 right-2.5 items-center justify-center rounded transition-all duration-300 cursor-pointer size-10 shadow-lg bg-blue border-blue text-white'>
-          <FaPlus className='size-6' />
-        </div>
+        <button className='w-full h-[35px] border border-dark-gold text-dark-gold rounded-[7px] px-2.5 text-center cursor-pointer hover:bg-light-bg transition-colors text-[17px] font-[550]'>
+          +{t('add')}
+        </button>
       </DialogTrigger>
       <DialogContent className="rounded-xl max-w-[600px] max-h-[80vh] w-full overflow-y-auto">
         <DialogHeader>
@@ -143,7 +144,10 @@ const AddCheckoutExtra = ({ extra, adults, nights, existingCount = 0 }: { extra:
             {t('addExtra', { name: `${extra.name} (€${extra.price})` })}
           </DialogTitle>
         </DialogHeader>
-
+        {/* Service photo (desktop) — ties the dialog to the card the guest clicked */}
+        <div className="hidden sm:block relative w-full h-[150px] shrink-0 rounded-xl overflow-hidden">
+          <Image src={getExtraImage(extra.id, extra.name, extra.imageUrl)} alt={extra.name} fill className="object-cover" />
+        </div>
 
         <div className='flex flex-col gap-5  pb-5 border-t pt-10'>
           <div className='flex items-center justify-between gap-2 overflow-hidden'>

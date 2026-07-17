@@ -1,5 +1,4 @@
 'use client'
-import { FaPlus } from "react-icons/fa6";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +14,8 @@ import { useAddExtrasStore } from "@/store/useAddExtras";
 import dayjs from "dayjs";
 import { useTranslations } from 'next-intl';
 import { createCleaningDatesArray, CleaningDateItem } from '@/utils/cleaningAvailability';
+import Image from "next/image";
+import { getExtraImage } from "@/lib/getExtraImage";
 
 const AddCleaningExtra = ({ extra, existingDatesWithCount = [], arrival, departure }: { extra: Service, existingDatesWithCount?: any[], arrival?: string, departure?: string }) => {
   const t = useTranslations('profile');
@@ -155,9 +156,9 @@ const AddCleaningExtra = ({ extra, existingDatesWithCount = [], arrival, departu
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <div className='absolute flex top-2.5 right-2.5 items-center justify-center rounded transition-all duration-300 cursor-pointer size-10 shadow-lg bg-blue border-blue text-white'>
-          <FaPlus className='size-6' />
-        </div>
+        <button className='w-full h-[35px] border border-dark-gold text-dark-gold rounded-[7px] px-2.5 text-center cursor-pointer hover:bg-light-bg transition-colors text-[17px] font-[550]'>
+          +{t('add')}
+        </button>
       </DialogTrigger>
       <DialogContent className="rounded-xl max-w-[600px] max-h-[80vh] w-full overflow-hidden flex flex-col">
         <DialogHeader>
@@ -165,6 +166,10 @@ const AddCleaningExtra = ({ extra, existingDatesWithCount = [], arrival, departu
             {t('addExtra', { name: extra.name })} (€{extra.price})
           </DialogTitle>
         </DialogHeader>
+        {/* Service photo (desktop) — ties the dialog to the card the guest clicked */}
+        <div className="hidden sm:block relative w-full h-[150px] shrink-0 rounded-xl overflow-hidden">
+          <Image src={getExtraImage(extra.id, extra.name, extra.imageUrl)} alt={extra.name} fill className="object-cover" />
+        </div>
 
         <div className='py-2.5 border-b border-t flex items-center gap-4 min-w-0'>
           <div className='text-lg font-semibold truncate min-w-0 flex-1'>{t('selectDates')}</div>
