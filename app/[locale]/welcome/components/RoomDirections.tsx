@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import Image from "next/image";
 import { ImageLightbox } from "./ImageLightbox";
+import { Reveal } from "./Reveal";
 
 // NOTE: placeholder / generic directions. Charlie M's building-specific
 // wayfinding (floors, room-number ranges, corridor photos) still needs real
@@ -34,19 +35,21 @@ export const RoomDirections = async ({ locale }: { locale: string }) => {
   }));
 
   return (
-    <section className="container px-[25px] lg:px-[100px] py-5 lg:py-[70px]">
-      <h2 className="text-dark text-[24px] lg:text-[50px] font-medium text-center mb-3 lg:mb-4">
-        {t("roomDirections.title")}
-      </h2>
-      <p className="text-[#6e6e6e] text-[16px] lg:text-[20px] text-center mb-5 lg:mb-[63px] max-w-2xl mx-auto">
-        {t("roomDirections.intro")}
-      </p>
+    <section className="container px-[25px] lg:px-[100px] py-8 lg:py-[70px]">
+      <Reveal>
+        <h2 className="text-dark text-[24px] lg:text-[50px] font-medium text-center mb-3 lg:mb-4">
+          {t("roomDirections.title")}
+        </h2>
+        <p className="text-[#6e6e6e] text-[16px] lg:text-[20px] text-center mb-6 lg:mb-[63px] max-w-2xl mx-auto text-balance">
+          {t("roomDirections.intro")}
+        </p>
+      </Reveal>
 
-      <div className="flex justify-center">
-        <div className="bg-white rounded-[10px] lg:rounded-[20px] overflow-hidden shadow-[0px_5px_20px_0px_rgba(0,0,0,0.2)] w-full lg:max-w-[505px] flex flex-col">
+      <Reveal className="flex justify-center">
+        <div className="bg-white rounded-[10px] lg:rounded-[20px] overflow-hidden shadow-[0px_5px_20px_0px_rgba(0,0,0,0.14)] w-full lg:max-w-[505px] flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-[0px_16px_40px_0px_rgba(0,0,0,0.18)]">
           <ImageLightbox src="/images/room-ex-2.webp" alt={t("roomDirections.title")} />
 
-          <div className="flex flex-col gap-[13px] lg:gap-[15px] px-[18px] lg:px-[25px] py-[13px] lg:py-5">
+          <div className="flex flex-col gap-[13px] lg:gap-[15px] px-[18px] lg:px-[25px] py-[16px] lg:py-6">
             <div>
               <h3 className="text-dark-gold text-[25px] lg:text-[26px] font-bold leading-snug">
                 {t("roomDirections.cardTitle")}
@@ -54,10 +57,10 @@ export const RoomDirections = async ({ locale }: { locale: string }) => {
               <p className="text-[#6e6e6e] text-[16px]">{t("roomDirections.afterMainEntrance")}</p>
             </div>
 
-            <div className="flex flex-col gap-[11px] lg:gap-[5px]">
+            <div className="flex flex-col gap-[13px] lg:gap-3">
               {steps.map((step, i) => (
                 <div key={i} className="flex items-center gap-4">
-                  <div className="shrink-0 size-[30px] lg:size-[38px] flex items-center justify-center">
+                  <div className="shrink-0 size-[36px] lg:size-[42px] flex items-center justify-center rounded-full bg-light-bg">
                     {step.icon}
                   </div>
                   <span className="text-dark text-[17px] lg:text-[18px] font-medium">
@@ -72,7 +75,7 @@ export const RoomDirections = async ({ locale }: { locale: string }) => {
             </p>
           </div>
         </div>
-      </div>
+      </Reveal>
     </section>
   );
 };
