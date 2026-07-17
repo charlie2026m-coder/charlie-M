@@ -21,6 +21,7 @@ interface StoreState {
   bedSizeFilter: BedSizeFilter;
   roomTypeFilter: RoomTypeFilter;
   childBedFilter: boolean;
+  browseSorted: boolean;
 
   setValue: (
     value:string |number | DateRange | Guests | MainFilter | BedSizeFilter | RoomTypeFilter | boolean ,
@@ -35,9 +36,13 @@ const initialRoomsFilters = {
   priceFilter: false,
   roomTypeFilter: undefined,
   childBedFilter: false,
+  // Browse (no-dates) view only: false = keep the server's round-robin "waves"
+  // order (every studio's nearest date, then next window, …). Flips true once
+  // the guest actively picks a price sort. Ignored by the dated RoomsList.
+  browseSorted: false,
 } satisfies Pick<
   StoreState,
-  'filter' | 'bedSizeFilter' | 'priceFilter' | 'roomTypeFilter' | 'childBedFilter'
+  'filter' | 'bedSizeFilter' | 'priceFilter' | 'roomTypeFilter' | 'childBedFilter' | 'browseSorted'
 >;
 
 export const useStore = create<StoreState>((set) => ({

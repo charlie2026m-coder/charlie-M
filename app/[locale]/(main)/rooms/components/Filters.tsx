@@ -100,7 +100,7 @@ const Filters = ({ showBabyBed = true }: { showBabyBed?: boolean }) => {
         type='button'
         aria-label={t('price')}
         aria-pressed={priceFilter}
-        onClick={() => setValue(!priceFilter, 'priceFilter')}
+        onClick={() => { setValue(!priceFilter, 'priceFilter'); setValue(true, 'browseSorted') }}
         className='md:ml-auto flex gap-2 cursor-pointer items-center border rounded-lg px-3 py-1 transition-all hover:border-blue'
       >
         {priceFilter

@@ -6,13 +6,17 @@ import RoomsBrowseList from './RoomsBrowseList'
 /**
  * Shown on /rooms when the visitor hasn't picked dates yet (e.g. came from the
  * "Explore rooms" button). Instead of an empty fixed today→tomorrow result, it
- * lists each room at its nearest free night with the price — so the visitor
+ * lists rooms across their upcoming free nights with prices — so the visitor
  * sees rooms exist and can then check their own dates with the form above.
  */
 const RoomsBrowse = async ({ locale }: { locale: string }) => {
   const [t, cards] = await Promise.all([
     getTranslations({ locale }),
-    getNearestRoomCards(locale, { onePerType: true }),
+    // Full round-robin "waves" feed (NOT collapsed to one-per-type): every
+    // studio at its nearest free night, then every studio at its next window, …
+    // so the catalogue reads as a lively feed of upcoming dates instead of just
+    // one static card per type.
+    getNearestRoomCards(locale),
   ])
 
   if (cards.length === 0) return <NotFoundCard />
