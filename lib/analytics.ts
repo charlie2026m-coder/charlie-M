@@ -121,28 +121,45 @@ export function trackPurchase({
 // listener (the consent handler defines window.gtag synchronously) + a slow
 // safety poll (500ms, up to 10 min) as a race net. Returns a cleanup fn.
 export function whenGtagReady(cb: () => void): () => void {
+  if (typeof window === 'undefined') return () => {};
   let done = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
+  let consentTimer: ReturnType<typeof setTimeout> | undefined;
   let tries = 0;
   const cleanup = () => {
+    // done=true here too: a fire() queued by the consent listener must NOT
+    // run after the caller's effect cleanup (stale-closure events for
+    // screens the guest already left).
+    done = true;
     clearTimeout(timer);
-    if (typeof window !== 'undefined') window.removeEventListener('CookiebotOnAccept', onConsent);
+    clearTimeout(consentTimer);
+    window.removeEventListener('CookiebotOnAccept', onConsent);
+    window.removeEventListener('CookiebotOnConsentReady', onConsent);
   };
   const fire = () => {
     if (done) return;
-    if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
-      done = true;
+    // Require BOTH the gtag function AND granted statistics consent: the
+    // decline path also defines the stub, and firing into its dataLayer
+    // would buffer stale events that flush (mis-timed) if the guest later
+    // flips consent in the footer settings.
+    const consent = (window as unknown as { Cookiebot?: { consent?: { statistics?: boolean } } }).Cookiebot?.consent;
+    if (typeof window.gtag === 'function' && consent?.statistics === true) {
       cleanup();
       cb();
     }
   };
-  const onConsent = () => { setTimeout(fire, 0); };
+  const onConsent = () => { consentTimer = setTimeout(fire, 0); };
   fire();
   if (done) return () => {};
+  // Accept covers the click; ConsentReady covers returning visitors whose
+  // stored consent resolves without a banner interaction.
   window.addEventListener('CookiebotOnAccept', onConsent);
+  window.addEventListener('CookiebotOnConsentReady', onConsent);
+  // Short race net only (~30s) — the events above are the primary signal, so
+  // ad-blocked/CMP-less sessions no longer churn timers for 10 minutes.
   const tick = () => {
     fire();
-    if (!done && tries++ < 1200) timer = setTimeout(tick, 500);
+    if (!done && tries++ < 60) timer = setTimeout(tick, 500);
   };
   timer = setTimeout(tick, 200);
   return cleanup;

@@ -18,9 +18,14 @@ const ServicesTable = ({ lines, totalAmount }: { lines: ExtrasPriceLine[]; total
 
   if (lines.length === 0) return null
 
-  const beverageCents = lines
-    .filter(l => isBreakfastBeverage(l.serviceId))
-    .reduce((sum, l) => sum + l.subtotalCents, 0)
+  // Fold the beverage half into the food line ONLY when a food line exists —
+  // a lone beverage half (stale store state) must keep its own visible row,
+  // otherwise its cents sit inside Total with no line item (a charged amount
+  // must never be invisible on a payment page).
+  const hasFoodLine = lines.some(l => isBreakfastFood(l.serviceId) && l.units > 0)
+  const beverageCents = hasFoodLine
+    ? lines.filter(l => isBreakfastBeverage(l.serviceId)).reduce((sum, l) => sum + l.subtotalCents, 0)
+    : 0
 
   return (
     <div className='flex flex-col bg-white rounded-[20px] py-5 px-3 border self-start'>
@@ -31,8 +36,9 @@ const ServicesTable = ({ lines, totalAmount }: { lines: ExtrasPriceLine[]; total
 
         {lines.map((line, index) => {
           if (line.units === 0) return null
-          // Beverage half is merged into the Breakfast line below — no own row.
-          if (isBreakfastBeverage(line.serviceId)) return null
+          // Beverage half is merged into the Breakfast line — but ONLY when a
+          // food line exists to carry it; a lone half keeps its own row.
+          if (isBreakfastBeverage(line.serviceId) && hasFoodLine) return null
           const isFood = isBreakfastFood(line.serviceId)
           const subtotalCents = line.subtotalCents + (isFood ? beverageCents : 0)
           const name = isFood

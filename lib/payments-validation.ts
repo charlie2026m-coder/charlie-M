@@ -370,6 +370,11 @@ interface ReservationValidationData {
   // arrival stays above for the ECI/LCO guards.
   extrasStart: string
   extrasNights: number
+  // True when no stay night remains from today (departure-day / post-stay):
+  // night-based services must be refused — extrasNights is floored to 1 for
+  // the LCO math, so nightDates would otherwise book the departure date, a
+  // date OUTSIDE the stay, and Apaleo rejects it AFTER the charge.
+  extrasWindowEnded: boolean
   arrivalTime: string   // "HH:mm" local — to detect an already-applied ECI (13:00)
   departureTime: string // "HH:mm" local — to detect an already-applied LCO (13:00)
   nights: number
@@ -456,6 +461,7 @@ async function fetchReservationForValidation(
   const extrasStart = today > arrival ? today : arrival
   const extrasNightsDiff = dayjs(departure).diff(dayjs(extrasStart), 'day')
   const extrasNights = extrasNightsDiff <= 0 ? 1 : extrasNightsDiff
+  const extrasWindowEnded = extrasNightsDiff <= 0
 
   const existingCleaningDates = new Set<string>()
   for (const paid of res.services ?? []) {
@@ -467,7 +473,7 @@ async function fetchReservationForValidation(
 
   return {
     kind: 'ok',
-    data: { arrival, departure, extrasStart, extrasNights, arrivalTime, departureTime, nights, existingCleaningDates },
+    data: { arrival, departure, extrasStart, extrasNights, extrasWindowEnded, arrivalTime, departureTime, nights, existingCleaningDates },
   }
 }
 
@@ -478,7 +484,14 @@ async function fetchReservationForValidation(
 export async function validateServicesPayment(
   reference: string | undefined,
   clientAmountCents: number,
+  // 'auth' = pre-authorization (make-payment): all guards apply.
+  // 'webhook' = post-authorization re-validation: time-of-day deadlines are
+  // SKIPPED — a purchase that was legal at auth (12:55) must not be refunded
+  // because the webhook landed minutes later (13:03). State-based guards
+  // (already-applied, amounts) still apply in both phases.
+  opts: { phase?: 'auth' | 'webhook' } = {},
 ): Promise<ServicesValidationResult> {
+  const phase = opts.phase ?? 'auth'
   if (!reference) {
     return { status: 'unavailable', reason: 'no-reference' }
   }
@@ -570,13 +583,31 @@ export async function validateServicesPayment(
     }
     // Same-day sale deadline: past 13:00 Berlin on the arrival day the ECI
     // product can no longer deliver anything (it moves arrival to 13:00, which
-    // is already in the past) — refuse BEFORE any Adyen authorization.
-    if (ext === 'early' && reservation.arrival === berlinToday() && berlinNowHHmm() >= '13:00') {
+    // is already in the past) — refuse BEFORE any Adyen authorization. Auth
+    // phase ONLY: re-checking it in the webhook would refund a legitimate
+    // 12:55 purchase whose webhook landed at 13:03.
+    if (phase === 'auth' && ext === 'early' && reservation.arrival === berlinToday() && berlinNowHHmm() >= '13:00') {
       priceLog.error('services validation: early check-in past 13:00 on arrival day — refusing', {
         reference,
         reservationId: row.reservation_id,
       })
       return { status: 'unavailable', reason: 'early check-in no longer available today' }
+    }
+  }
+
+  // Departure-day / post-stay: no stay night remains, so any night-based
+  // service would be booked on the departure date — OUTSIDE the stay — and
+  // Apaleo rejects it AFTER the charge (charge-then-refund). Stay extensions
+  // (LCO/ECI) are the only sellable services here: a single amend,
+  // night-independent, legitimately bought on departure morning.
+  if (reservation.extrasWindowEnded) {
+    const nightBased = services.find(s => !isStayExtensionService(s.serviceId))
+    if (nightBased) {
+      priceLog.error('services validation: stay window ended — refusing night-based service', {
+        reference,
+        serviceId: nightBased.serviceId,
+      })
+      return { status: 'unavailable', reason: 'stay window ended' }
     }
   }
 

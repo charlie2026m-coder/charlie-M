@@ -210,7 +210,7 @@ export async function bookPendingServices(
   // `unavailable` and refund.
   let validation: Awaited<ReturnType<typeof validateServicesPayment>>
   try {
-    validation = await validateServicesPayment(reference, amountCents)
+    validation = await validateServicesPayment(reference, amountCents, { phase: 'webhook' })
   } catch (err: unknown) {
     priceLog.error('services: re-validation threw — refunding', {
       reference,

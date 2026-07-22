@@ -6,6 +6,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { FiTrash2 } from 'react-icons/fi'
 import { isBabyBedService, isCleaningService } from '@/lib/extrasPrice'
+import { isBreakfastPart, isBreakfastFood, isBreakfastBeverage, breakfastBundleLabel, BREAKFAST_FOOD_ID, BREAKFAST_BEVERAGE_ID } from '@/lib/breakfastBundle'
 const ExistingExtras = ({ 
   services, 
   nights,
@@ -33,9 +34,34 @@ const ExistingExtras = ({
     quantityText: string
     price: number
   }
+  // Breakfast is TWO store services (food 7% + beverages 19%) that must act
+  // as ONE bundle: a single summary row, one price, one trash (removing a
+  // single half would charge/book half a breakfast — VAT split broken).
+  const selectedBreakfastFood = selectedServices.find(s => isBreakfastFood(s.serviceId))
+  const selectedBreakfastBeverage = selectedServices.find(s => isBreakfastBeverage(s.serviceId))
+
   const newServiceRows: SummaryRow[] = selectedServices.flatMap(selectedService => {
     const serviceDetails = availableExtras.find(s => s.id === selectedService.serviceId)
     if (!serviceDetails) return []
+
+    // Breakfast: fold both halves into one row keyed on the FOOD half; the
+    // beverage half never renders its own row. A lone beverage half (stale
+    // store state) still renders via the generic branches below so a charged
+    // amount is never invisible.
+    if (isBreakfastFood(selectedService.serviceId) || (isBreakfastBeverage(selectedService.serviceId) && selectedBreakfastFood)) {
+      if (isBreakfastBeverage(selectedService.serviceId)) return [] // folded into the food row
+      const priceForHalf = (svc: typeof selectedService | undefined) => {
+        if (!svc || svc.count === undefined || svc.price === undefined) return 0
+        const det = availableExtras.find(s => s.id === svc.serviceId)
+        const multiplied = det?.pricingType === 'Daily' && (det?.pricingUnit === 'Person' || det?.pricingUnit === 'Room')
+        return svc.price * svc.count * (multiplied ? nights : 1)
+      }
+      const bundlePrice = Math.round((priceForHalf(selectedService) + priceForHalf(selectedBreakfastBeverage)) * 100) / 100
+      const quantityText = selectedService.count !== undefined
+        ? `${selectedService.count} × ${nights} ${t('nights')}`
+        : '1'
+      return [{ serviceId: selectedService.serviceId, name: breakfastBundleLabel(locale), quantityText, price: bundlePrice }]
+    }
 
     if (isBabyBedService(selectedService.serviceId)) {
       // One-time fee for the whole stay (matches the booking flow + validator).
@@ -55,10 +81,11 @@ const ExistingExtras = ({
     }
 
     if (selectedService.dates) {
-      const eligible = isCleaningService(selectedService.serviceId, serviceDetails.name)
+      const isCleaning = isCleaningService(selectedService.serviceId, serviceDetails.name)
+      const eligible = isCleaning
         ? selectedService.dates.filter((d: any) => d.isExisting === false)
         : selectedService.dates
-      const totalCount = isCleaningService(selectedService.serviceId, serviceDetails.name)
+      const totalCount = isCleaning
         ? eligible.length
         : eligible.reduce((sum, d) => sum + (d.count || 1), 0)
       if (totalCount === 0) return []
@@ -70,7 +97,10 @@ const ExistingExtras = ({
   })
 
   const newServicesTotal = Math.round(newServiceRows.reduce((sum, r) => sum + r.price, 0) * 100) / 100
-  const hasNewServices = selectedServices.length > 0
+  // Gate on the DERIVED rows, not the raw selection: a selection that
+  // collapses to zero rows (e.g. cleaning with only already-paid dates) must
+  // not show an empty €0.00 summary with a live Pay Now button.
+  const hasNewServices = newServiceRows.length > 0
   const hasExistingServices = services && services.length > 0
 
   if (!hasExistingServices && !hasNewServices) {
@@ -85,7 +115,7 @@ const ExistingExtras = ({
         {hasExistingServices && services.map((serviceItem: any, index: number) => {
           const { service, totalAmount, dates } = serviceItem
           const isCleaning = service.id === 'CMH-CLN' || service.name?.toLowerCase().includes('clean')
-          const isBabyBed = service.id === 'CMH-BAB'
+          const isBabyBed = isBabyBedService(service.id)
           const isCheckout = service.id === 'CMH-LCO' || service.id === 'CMH-ECI'
           const mode = service.availability?.mode
           
@@ -132,11 +162,20 @@ const ExistingExtras = ({
             </span>
             <span className='flex items-center gap-1 shrink-0'>
               <span className='font-semibold'>€{row.price.toFixed(2)}</span>
-              {/* Selected-but-unpaid → removable right from the summary. */}
+              {/* Selected-but-unpaid → removable right from the summary.
+                  Breakfast removes BOTH halves atomically — a guest must
+                  never end up with half a breakfast selected. */}
               <button
                 type='button'
                 aria-label={`Remove ${row.name}`}
-                onClick={() => removeService(row.serviceId)}
+                onClick={() => {
+                  if (isBreakfastPart(row.serviceId)) {
+                    removeService(BREAKFAST_FOOD_ID)
+                    removeService(BREAKFAST_BEVERAGE_ID)
+                  } else {
+                    removeService(row.serviceId)
+                  }
+                }}
                 className='grid place-items-center size-7 rounded-lg text-dark/45 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer'
               >
                 <FiTrash2 className='size-4' />

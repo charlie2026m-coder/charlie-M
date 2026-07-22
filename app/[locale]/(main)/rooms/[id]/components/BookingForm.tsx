@@ -217,7 +217,7 @@ const BookingForm = ({
     return () => clearTimeout(timer)
   }, [fromStr, toStr])
 
-  const { data, isLoading: isPriceLoading, isError: isPriceError, refetch: refetchPrice } = useQuery({
+  const { data, isLoading: isPriceLoading, isError: isPriceError, isFetching: isPriceFetching, refetch: refetchPrice } = useQuery({
     queryKey: ['room-price', id, debouncedFrom, debouncedTo, guests.adults],
     queryFn: () => getRoomPrice(id, debouncedFrom, debouncedTo, maxPersons),
     enabled: !!debouncedFrom && !!debouncedTo,
@@ -318,9 +318,11 @@ const BookingForm = ({
 
       {/* Info row — fixed height to prevent layout jump */}
       <div className='flex items-center gap-1 my-4 mb-10 h-6'>
-        {isPriceError ? (
+        {isPriceError && !isPriceFetching ? (
           // Price fetch failed (network / server) — without this branch the
           // grey €00.00 placeholder sat there forever with Book Now enabled.
+          // While a RETRY is in flight (isFetching), fall through to the
+          // normal placeholder so the button visibly did something.
           <span className='flex items-center gap-2 text-sm text-gray-500'>
             {t('priceError')}
             <button type='button' onClick={() => refetchPrice()} className='text-green underline underline-offset-2 hover:text-green/80'>

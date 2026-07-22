@@ -177,6 +177,23 @@ export function buildApaleoServicePayloads(
       }]
     }
 
+    // Baby bed FIRST — before the dates passthrough — mirroring the
+    // validator's branch order (computeServicesTotalCents checks BAB before
+    // dates). A tampered payload of {serviceId: BAB, dates: [...]} would
+    // otherwise be PRICED as one unit but BOOKED via the dates passthrough —
+    // charged ≠ booked, the desync this module prevents.
+    // One-time fee: a single unit on the first night, one folio price line.
+    if (isBabyBedService(service.serviceId)) {
+      return [{
+        serviceId: service.serviceId,
+        dates: [{
+          serviceDate: ctx.nightDates[0],
+          count: 1,
+          amount: { amount: cat.price, currency },
+        }],
+      }]
+    }
+
     // Already per-date (cleaning / limited). For cleaning, drop dates already
     // on the Apaleo folio — the validator excludes them from the charge (using
     // the same Apaleo-derived set, NOT the client `isExisting` flag), so
@@ -197,19 +214,6 @@ export function buildApaleoServicePayloads(
           // be tampered to write a wrong amount onto the hotel's folio.
           amount: { amount: cat.price * (d.count ?? 1), currency },
         })),
-      }]
-    }
-
-    // Baby bed: one-time fee — book a single unit on the first night so the
-    // folio carries exactly one price line (matches the validator's units=1).
-    if (isBabyBedService(service.serviceId)) {
-      return [{
-        serviceId: service.serviceId,
-        dates: [{
-          serviceDate: ctx.nightDates[0],
-          count: 1,
-          amount: { amount: cat.price, currency },
-        }],
       }]
     }
 

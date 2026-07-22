@@ -5,6 +5,7 @@ import { useAddExtrasStore } from '@/store/useAddExtras'
 import { useEffect } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { isBreakfastBeverage, isBreakfastFood, makeBreakfastDisplayService } from '@/lib/breakfastBundle'
+import { isStayExtensionService } from '@/lib/extrasPrice'
 import { shouldShowCleaningService } from '@/utils/cleaningAvailability'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
@@ -25,7 +26,8 @@ const AddExtras = ({
   arrival,
   departure,
   lcoApplied,
-  eciApplied
+  eciApplied,
+  stayWindowEnded
 }: {
   extras: Service[],
   existingServices?: any[],
@@ -35,7 +37,10 @@ const AddExtras = ({
   arrival?: string,
   departure?: string,
   lcoApplied?: boolean,
-  eciApplied?: boolean
+  eciApplied?: boolean,
+  // Departure-day: only stay extensions (LCO/ECI) are sellable — night-based
+  // services would book the departure date, which Apaleo rejects post-charge.
+  stayWindowEnded?: boolean
 }) => {
   const t = useTranslations('profile')
   const locale = useLocale()
@@ -55,6 +60,10 @@ const AddExtras = ({
   const breakfastBeverage = extras.find(e => isBreakfastBeverage(e.id));
 
   const availableExtras = extras.filter(extra => {
+    // Departure-day: hide every night-based card — only LCO/ECI (single
+    // amend, night-independent) can still be delivered. The validator refuses
+    // night-based services in this window anyway; hiding keeps the UI honest.
+    if (stayWindowEnded && !isStayExtensionService(extra.id)) return false;
     // Beverage half is folded into the single Breakfast card — never shown alone.
     if (isBreakfastBeverage(extra.id)) return false;
     if (extra.id === 'CMH-ECI') {

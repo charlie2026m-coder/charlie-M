@@ -27,7 +27,7 @@ const getBerlinMinutes = () => {
 }
 
 // Returns Berlin's current date as local midnight Date (timezone-safe for non-European clients)
-const getBerlinToday = (): Date => {
+export const getBerlinToday = (): Date => {
   const berlinDateStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(new Date())
   const [year, month, day] = berlinDateStr.split('-').map(Number)
   return new Date(year, month - 1, day)

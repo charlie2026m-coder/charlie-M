@@ -7,6 +7,7 @@ import { getApaleoExtras } from '@/app/actions/apaleo/services/getExtras';
 import { bookingStatuses } from "@/types/types";
 import ErrorCard from "@/app/[locale]/(main)/rooms/components/ErrorCard";
 import dayjs from "dayjs";
+import { getBerlinToday, getDate } from "@/lib/utils";
 import Contacts from "./components/Contacts";
 import ExtandYourStay from "./components/ExtandYourStay";
 import { Suspense } from 'react';
@@ -35,19 +36,27 @@ const ReservationPage = async ({ params }: { params: Promise<{ id: string; local
   const eciArrivalTime = reservation.arrival.match(/T(\d{2}:\d{2})/)?.[1] ?? '';
   const eciApplied = eciArrivalTime !== '' && eciArrivalTime < '15:00';
 
+  // "Today" must be BERLIN's date, not the server's (UTC on Vercel): between
+  // 00:00 and 02:00 Berlin the UTC date is still yesterday, which made this
+  // page price one more remaining night than the validator (berlinToday) —
+  // a guaranteed PriceChanged rejection after card entry, nightly.
+  const today = getDate(getBerlinToday())!;
+
   // Check if reservation is active and not in the past
   const isActive = reservation?.status === bookingStatuses.Confirmed || reservation?.status === bookingStatuses.InHouse;
-  const isNotPast = dayjs(departureDate).isAfter(dayjs(), 'day') || dayjs(departureDate).isSame(dayjs(), 'day');
+  const isNotPast = dayjs(departureDate).isAfter(today, 'day') || dayjs(departureDate).isSame(today, 'day');
   const canAddExtras = isActive && isNotPast;
-  
-  const today = dayjs().format('YYYY-MM-DD');
+
   const extrasStartDate = dayjs(arrivalDate).isBefore(today, 'day') || dayjs(arrivalDate).isSame(today, 'day')
     ? today
     : arrivalDate;
-  
 
   const nightsDiff = dayjs(departureDate).startOf('day').diff(dayjs(extrasStartDate).startOf('day'), 'day');
   const nights = nightsDiff === 0 ? 1 : nightsDiff;
+  // Departure-day: no stay night remains — only LCO/ECI (night-independent
+  // amends) are sellable; night-based cards are hidden (the validator refuses
+  // them anyway — this keeps the UI honest).
+  const stayWindowEnded = nightsDiff <= 0;
   
   // Only fetch extras if reservation is active and not past
   const extras = canAddExtras ? await getApaleoExtras(extrasStartDate, departureDate, locale) : [];
@@ -81,6 +90,7 @@ const ReservationPage = async ({ params }: { params: Promise<{ id: string; local
             departure={departureDate}
             lcoApplied={lcoApplied}
             eciApplied={eciApplied}
+            stayWindowEnded={stayWindowEnded}
           />
         )}
         
