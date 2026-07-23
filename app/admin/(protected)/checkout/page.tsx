@@ -15,6 +15,13 @@ import { QrPrintDialog } from '@/app/_components/admin/checkout/QrPrintDialog'
 import { AuditLogTable } from '@/app/_components/admin/checkout/AuditLogTable'
 import { BulkZipButton } from '@/app/_components/admin/checkout/BulkZipButton'
 
+// API download links (plain <a>, same pattern as BulkZipButton — these are
+// file responses, not page navigations, so next/link doesn't apply).
+const INFO_QR = '/api/admin/info-qr'
+const infoQrPreview = `${INFO_QR}?fmt=svg&logo=1`
+const infoQrSvg = `${INFO_QR}?fmt=svg&logo=1&download=1`
+const infoQrPng = `${INFO_QR}?fmt=png&download=1`
+
 // Auth: enforced server-side by app/admin/(protected)/layout.tsx.
 export default function AdminCheckoutPage() {
   const { data: items = [], isLoading } = useSelfCheckoutList()
@@ -78,6 +85,34 @@ export default function AdminCheckoutPage() {
       </div>
 
       <div className="max-w-[1200px] mx-auto px-4 py-4 space-y-8">
+        {/* Room-agnostic QR for the public /information page — one code works
+            for every room (no token), so it sits above the per-room grid. */}
+        <div className="flex items-center gap-4 border border-gray-200 rounded-xl p-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={infoQrPreview}
+            alt="QR code for the /information page"
+            className="size-28 shrink-0 border border-gray-100 rounded-lg"
+          />
+          <div className="min-w-0 flex-1">
+            <h2 className="font-bold text-black">Information page QR</h2>
+            <p className="text-xs text-gray-500 mt-0.5 break-all">
+              One code for all rooms — opens the public in-room guide at /information (no token, no login).
+            </p>
+            <div className="flex gap-2 mt-2">
+              <Button asChild variant="outline" size="sm" className="h-8">
+                <a href={infoQrSvg}>Download SVG</a>
+              </Button>
+              <Button asChild variant="outline" size="sm" className="h-8">
+                <a href={infoQrPng}>Download PNG</a>
+              </Button>
+              <Button asChild variant="outline" size="sm" className="h-8">
+                <a href="/information" target="_blank" rel="noopener noreferrer">Open page</a>
+              </Button>
+            </div>
+          </div>
+        </div>
+
         {isLoading ? (
           <div className="py-16 text-center text-sm text-gray-500">Loading QR codes…</div>
         ) : (
