@@ -755,6 +755,25 @@
       "8": "Room Refresh",
       "9": "Garbage disposal"
     },
+    "informationIntro": {
+      "title": "In-Room Information",
+      "subtitle": "Everything about your stay — how things work, where to find them, and who to ask."
+    },
+    "informationGroups": {
+      "inRoom": "In your room",
+      "inBuilding": "In the building"
+    },
+    "informationSubtitles": {
+      "1": "Work-friendly space in the building",
+      "2": "Store bags before check-in or after check-out",
+      "3": "Essentials & extras, any time",
+      "4": "Self-service washer & dryer",
+      "5": "How to use it",
+      "6": "Network name & password",
+      "7": "Left something behind?",
+      "8": "Mid-stay cleaning on request",
+      "9": "Where your trash goes"
+    },
     "infoContent": {
       "1": {
         "description": [

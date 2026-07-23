@@ -755,6 +755,25 @@
       "8": "Zimmerreinigung",
       "9": "Müllentsorgung"
     },
+    "informationIntro": {
+      "title": "Informationen zum Aufenthalt",
+      "subtitle": "Alles zu Ihrem Aufenthalt – wie alles funktioniert, wo Sie es finden und wen Sie fragen können."
+    },
+    "informationGroups": {
+      "inRoom": "In Ihrem Zimmer",
+      "inBuilding": "Im Gebäude"
+    },
+    "informationSubtitles": {
+      "1": "Arbeitsfreundlicher Bereich im Haus",
+      "2": "Gepäck vor dem Check-in oder nach dem Check-out verstauen",
+      "3": "Essentials & Extras – jederzeit",
+      "4": "Waschmaschine & Trockner zur Selbstbedienung",
+      "5": "So funktioniert sie",
+      "6": "Netzwerkname & Passwort",
+      "7": "Etwas liegen gelassen?",
+      "8": "Zwischenreinigung auf Anfrage",
+      "9": "Wohin mit dem Müll"
+    },
     "infoContent": {
       "1": {
         "description": [
