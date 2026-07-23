@@ -1548,5 +1548,42 @@
       "email": "info@charlie-m.de",
       "footer": "Our team is available to assist you."
     }
+  },
+  "heatingCooling": {
+    "badge": "In-Room Climate",
+    "title": "Heating & Cooling",
+    "subtitle": "How to set the temperature in your room — quick to adjust, a few minutes to feel.",
+    "steps": {
+      "1": {
+        "title": "Find the thermostat in your room",
+        "description": "The climate control panel is mounted on the wall of your studio."
+      },
+      "2": {
+        "title": "Set your preferred temperature",
+        "description": "Use the controls to raise or lower the target temperature to your comfort."
+      },
+      "3": {
+        "title": "Give it a few minutes",
+        "description": "The room adjusts gradually — allow 10–15 minutes to feel the difference."
+      },
+      "4": {
+        "title": "Keep windows closed",
+        "description": "While heating or cooling is running, closed windows help the room reach and hold your temperature."
+      }
+    },
+    "summer": {
+      "title": "In summer",
+      "description": "Lower the target temperature to cool the room. Tilting a window for fresh air is fine — just close it again so the cooling can keep up."
+    },
+    "winter": {
+      "title": "In winter",
+      "description": "Raise the target temperature to heat the room. Short burst ventilation (a few minutes with the window wide open) refreshes the air without cooling the walls."
+    },
+    "eco": "Small ask from us: when you head out for the day, dial the temperature back a little — it saves energy and the room returns to your comfort in minutes.",
+    "help": {
+      "title": "Not getting warm or cool enough?",
+      "description": "If the room does not reach a comfortable temperature, contact us — we are happy to help.",
+      "whatsapp": "WhatsApp Support"
+    }
   }
 }

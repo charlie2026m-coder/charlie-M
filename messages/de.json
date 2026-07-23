@@ -1549,5 +1549,42 @@
       "email": "info@charlie-m.de",
       "footer": "Unser Team steht Ihnen gerne zur Verfügung."
     }
+  },
+  "heatingCooling": {
+    "badge": "Raumklima",
+    "title": "Heizen & Kühlen",
+    "subtitle": "So stellen Sie die Temperatur in Ihrem Zimmer ein – schnell geregelt, in wenigen Minuten spürbar.",
+    "steps": {
+      "1": {
+        "title": "Thermostat im Zimmer finden",
+        "description": "Das Bedienfeld für das Raumklima befindet sich an der Wand Ihres Studios."
+      },
+      "2": {
+        "title": "Wunschtemperatur einstellen",
+        "description": "Stellen Sie die Zieltemperatur über die Bedienelemente höher oder niedriger ein."
+      },
+      "3": {
+        "title": "Ein paar Minuten warten",
+        "description": "Der Raum passt sich schrittweise an – nach 10–15 Minuten spüren Sie den Unterschied."
+      },
+      "4": {
+        "title": "Fenster geschlossen halten",
+        "description": "Während geheizt oder gekühlt wird, helfen geschlossene Fenster, die Wunschtemperatur zu erreichen und zu halten."
+      }
+    },
+    "summer": {
+      "title": "Im Sommer",
+      "description": "Senken Sie die Zieltemperatur, um den Raum zu kühlen. Ein gekipptes Fenster für frische Luft ist in Ordnung – danach wieder schließen, damit die Kühlung nachkommt."
+    },
+    "winter": {
+      "title": "Im Winter",
+      "description": "Erhöhen Sie die Zieltemperatur, um den Raum zu heizen. Kurzes Stoßlüften (einige Minuten bei weit geöffnetem Fenster) erneuert die Luft, ohne die Wände auszukühlen."
+    },
+    "eco": "Eine kleine Bitte: Wenn Sie tagsüber unterwegs sind, drehen Sie die Temperatur etwas zurück – das spart Energie, und der Raum ist in wenigen Minuten wieder auf Ihrem Wohlfühlwert.",
+    "help": {
+      "title": "Wird es nicht warm oder kühl genug?",
+      "description": "Erreicht der Raum keine angenehme Temperatur, kontaktieren Sie uns – wir helfen gerne.",
+      "whatsapp": "WhatsApp-Support"
+    }
   }
 }
