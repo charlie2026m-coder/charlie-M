@@ -101,8 +101,7 @@ export default function Content() {
       <div className="flex flex-col-reverse md:grid md:grid-cols-3 gap-9">
         <div className="col-span-1 lg:col-span-2">
           {content.map((item, index) => (
-            <Section 
-              index={index}
+            <Section
               key={index}
               id={getSectionId(item.title)}
               title={item.title}
