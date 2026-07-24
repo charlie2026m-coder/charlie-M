@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
 import { DateRange } from 'react-day-picker'
 import { toast } from 'sonner'
@@ -23,12 +24,21 @@ import { Textarea } from '@/app/_components/ui/textarea'
 import { Checkbox } from '@/app/_components/ui/checkbox'
 import { DateInput } from '@/app/_components/ui/DateInput'
 import { Calendar } from '@/app/_components/ui/calendar'
-import PhoneInput from '@/app/_components/ui/PhoneInput'
 import { GroupGuests, type GuestCounts } from './GroupGuests'
 import { Link } from '@/navigation'
 import { cn, getMinArrivalDate } from '@/lib/utils'
 import { EMAIL, PHONE_NUMBER } from '@/lib/Constants'
 import { trackGenerateLead, trackContact } from '@/lib/analytics'
+
+// Client-only. `react-phone-number-input` calls hooks against a null React
+// dispatcher while server-rendering, which made a DIRECT load of this route
+// return 500 (soft navigation hid it, so the page looked fine in the app).
+// The field is interactive anyway, so skipping SSR costs nothing; the loading
+// placeholder holds its height so the form doesn't jump.
+const PhoneInput = dynamic(() => import('@/app/_components/ui/PhoneInput'), {
+  ssr: false,
+  loading: () => <div className="h-12 rounded-full border border-gray bg-white" />,
+})
 
 type Mode = 'group' | 'corporate'
 
