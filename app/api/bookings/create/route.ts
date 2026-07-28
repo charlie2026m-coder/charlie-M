@@ -1,5 +1,7 @@
-import { NextResponse } from "next/server"
+import { NextResponse, after } from "next/server"
 import { headers } from "next/headers"
+import { isStayExtensionService } from "@/lib/extrasPrice"
+import { sendStayExtensionConfirmation } from "@/services/guestway/sendGuestwayMessage"
 import { getOrRefreshToken } from "@/services/Request"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { createClient } from "@supabase/supabase-js"
@@ -646,8 +648,34 @@ export async function POST(request: Request) {
       )
     }
 
-    // Booking is complete and money is captured. The two side-effects below
+    // Booking is complete and money is captured. The side-effects below
     // are best-effort — a failure here doesn't roll back the booking.
+
+    // Confirm any Late/Early check-out/in to the guest via Guestway. Deferred
+    // with after() so it never blocks the response, and polled inside because
+    // Guestway only creates the conversation a few seconds after the booking
+    // syncs from Apaleo — an immediate send would find none.
+    try {
+      const extensions: { reservationId: string; kind: 'late' | 'early' }[] = []
+      booking.reservations.forEach((r: { services?: { serviceId?: string }[] }, i: number) => {
+        const resId = apaleoReservationIds[i]
+        if (!resId) return
+        for (const svc of r.services ?? []) {
+          const kind = isStayExtensionService(svc.serviceId ?? '')
+          if (kind) extensions.push({ reservationId: resId, kind })
+        }
+      })
+      if (extensions.length > 0) {
+        after(async () => {
+          for (const e of extensions) await sendStayExtensionConfirmation(e.reservationId, e.kind)
+        })
+      }
+    } catch (err) {
+      bookingLog.error('failed to schedule guestway stay-extension confirmation', {
+        apaleoBookingId: apaleoData.id,
+        error: err instanceof Error ? err.message : String(err),
+      })
+    }
 
     try {
       if (booking.consent && apaleoData.id) {

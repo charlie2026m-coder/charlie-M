@@ -7,6 +7,7 @@ import {
   reverseStayExtension,
 } from '@/services/apaleo/amendStayTime'
 import type { AppliedStayExtension } from '@/services/apaleo/amendStayTime'
+import { sendGuestwayMessage, buildStayExtensionMessage } from '@/services/guestway/sendGuestwayMessage'
 
 interface ServiceDate {
   serviceDate: string
@@ -403,6 +404,26 @@ export async function bookReservationServicesLegacy(
     for (const r of results) {
       if (isStayExtensionService(r.serviceId)) r.success = false
     }
+  }
+
+  // LCO/ECI is now applied AND paid → notify the guest via Guestway. This
+  // replaces the old Guestway automation that fired on the Apaleo extra service
+  // (LCO/ECI is a reservation amend now, so that trigger no longer matches).
+  // Best-effort: a send failure must never affect the booking outcome.
+  if (paymentResult.success && appliedAmends.length > 0) {
+    await Promise.all(
+      appliedAmends.map(a =>
+        sendGuestwayMessage({ reservationId, body: buildStayExtensionMessage(a.kind) }).then(r => {
+          if (!r.success) {
+            folioLog.warn('guestway stay-extension message not delivered', {
+              reservationId,
+              kind: a.kind,
+              error: r.error,
+            })
+          }
+        }),
+      ),
+    )
   }
 
   return { services: results, payment: paymentResult }

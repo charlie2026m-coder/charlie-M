@@ -1,5 +1,7 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse, after } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { isStayExtensionService } from "@/lib/extrasPrice"
+import { sendStayExtensionConfirmation } from "@/services/guestway/sendGuestwayMessage"
 import { getOrRefreshToken } from "@/services/Request"
 import { payFolioByPaymentAccount } from "@/services/bookReservationServices"
 import { bookPendingServices, refundAndMarkFailed } from "@/services/bookPendingServices"
@@ -374,6 +376,30 @@ async function createBookingFromPending(
         updated_at: new Date().toISOString(),
       })
       .eq('reference', reference)
+
+    // Best-effort LCO/ECI guest confirmation for this (tab-closed fallback)
+    // booking — deferred + polled, same rationale as the client create route.
+    try {
+      const reservations = (booking as { reservations?: { services?: { serviceId?: string }[] }[] }).reservations ?? []
+      const extensions: { reservationId: string; kind: 'late' | 'early' }[] = []
+      reservations.forEach((r, i) => {
+        const resId = apaleoReservationIds[i]
+        if (!resId) return
+        for (const svc of r.services ?? []) {
+          const kind = isStayExtensionService(svc.serviceId ?? '')
+          if (kind) extensions.push({ reservationId: resId, kind })
+        }
+      })
+      if (extensions.length > 0) {
+        after(async () => {
+          for (const e of extensions) await sendStayExtensionConfirmation(e.reservationId, e.kind)
+        })
+      }
+    } catch (err) {
+      bookingLog.error('webhook: failed to schedule guestway stay-extension confirmation', {
+        error: err instanceof Error ? err.message : String(err),
+      })
+    }
 
     return { success: true, bookingId: apaleoData.id }
   } catch (postBookingError) {

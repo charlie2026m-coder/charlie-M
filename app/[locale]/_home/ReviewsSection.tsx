@@ -12,6 +12,7 @@ import {
   CarouselItem,
 } from '@/app/_components/ui/carousel'
 import { GoArrowLeft, GoArrowRight } from "react-icons/go"
+import { FaStar, FaStarHalfAlt, FaRegStar } from 'react-icons/fa'
 import { useTranslations } from 'next-intl'
 
 import type { GoogleReview } from '@/services/getGoogleReviews'
@@ -20,10 +21,32 @@ interface Props {
   reviews?: GoogleReview[];
 }
 
+// Five stars, half-star aware — the rating comes with every Google review, so
+// showing it costs nothing and marks the block as verified rather than decorative.
+function Stars({ value }: { value: number }) {
+  return (
+    <span className='inline-flex items-center gap-0.5 text-dark-gold' aria-hidden='true'>
+      {Array.from({ length: 5 }).map((_, i) => {
+        const n = i + 1
+        if (value >= n) return <FaStar key={i} />
+        if (value >= n - 0.5) return <FaStarHalfAlt key={i} />
+        return <FaRegStar key={i} className='text-dark-gold/30' />
+      })}
+    </span>
+  )
+}
+
 const ReviewsSection = ({ reviews }: Props) => {
-  const displayItems = reviews && reviews.length > 0 ? reviews : items;
   const t = useTranslations('home')
   const [api, setApi] = useState<CarouselApi>()
+
+  // Only ever render REAL Google reviews. This block used to fall back to a
+  // hard-coded array of invented testimonials praising a breakfast buffet, spa,
+  // rooftop bar and conference facilities — advertising amenities as guest
+  // experience is exactly the misleading claim UWG §5a targets, and it showed
+  // whenever the Places API was unset or failing. No reviews → no section.
+  const displayItems = reviews ?? []
+  if (displayItems.length === 0) return null
 
   // Translucent arrows overlaid on the review card (centered), matching the
   // rooms carousel — replaces the buttons that used to sit below the carousel.
@@ -52,6 +75,7 @@ const ReviewsSection = ({ reviews }: Props) => {
                   <CarouselItem key={`${item.name}-${index}`} className="pl-4 basis-[75%] shrink-0">
                     <div className="flex flex-col gap-4 rounded-[40px] bg-[#F4F4F4] px-5 py-8 h-full">
                       <Image src='/images/icons/comas-icon.svg' alt={item.name} width={74} height={74} className="object-cover size-15 md:size-[74px]" />
+                      <Stars value={item.rating} />
                       <p className="text-mute inter md:mb-7 text-xs md:text-base">{item.review}</p>
                       <p className="text-mute italic text-end text-sm md:text-base font-bold mt-auto">{item.name}</p>
                     </div>
@@ -95,6 +119,7 @@ const ReviewsSection = ({ reviews }: Props) => {
             <SwiperSlide key={`${item.name}-${index}`} style={{ height: 'auto' }}>
               <div className="flex flex-col gap-4 rounded-[40px] bg-[#F4F4F4] px-5 py-8 h-full">
                 <Image src='/images/icons/comas-icon.svg' alt={item.name} width={74} height={74} className="object-cover size-[74px]" />
+                <Stars value={item.rating} />
                 <p className="text-mute inter mb-7">{item.review}</p>
                 <p className="text-mute italic text-end font-bold mt-auto">{item.name}</p>
               </div>
@@ -120,6 +145,7 @@ const ReviewsSection = ({ reviews }: Props) => {
             <SwiperSlide key={`${item.name}-${index}`} style={{ height: 'auto' }}>
               <div className="flex flex-col gap-4 rounded-[40px] bg-[#F4F4F4] px-5 py-8 h-full">
                 <Image src='/images/icons/comas-icon.svg' alt={item.name} width={74} height={74} className="object-cover size-[74px]" />
+                <Stars value={item.rating} />
                 <p className="text-mute inter mb-7">{item.review}</p>
                 <p className="text-mute italic text-end font-bold mt-auto">{item.name}</p>
               </div>
@@ -133,51 +159,3 @@ const ReviewsSection = ({ reviews }: Props) => {
 }
 
 export default ReviewsSection
-
-
-const items =[
-  {
-    name: 'Sarah Mitchell',
-    review: 'Absolutely stunning hotel! The rooms are spacious and beautifully designed. The staff went above and beyond to make our stay memorable. The breakfast buffet was incredible with so many options. Will definitely be returning!',
-  },
-  {
-    name: 'Michael Chen',
-    review: 'Great location in the heart of the city. The room was clean and comfortable, though a bit smaller than expected. The concierge service was very helpful with restaurant recommendations. Overall a pleasant stay.',
-  },
-  {
-    name: 'Emma Thompson',
-    review: 'Perfect weekend getaway! The spa facilities are top-notch and the rooftop bar has amazing views. The bed was incredibly comfortable - best sleep I\'ve had in ages. Highly recommend the deluxe suite!',
-  },
-  {
-    name: 'David Rodriguez',
-    review: 'The hotel has a modern, elegant design. Service was professional and efficient. Only minor issue was the WiFi being a bit slow in our room, but it was manageable. Great value for money.',
-  },
-  {
-    name: 'Olivia Williams',
-    review: 'Exceeded all expectations! From the moment we arrived, the staff made us feel special. The room had a beautiful view and was spotlessly clean. The restaurant serves delicious food. Can\'t wait to come back!',
-  },
-  {
-    name: 'James Anderson',
-    review: 'Absolutely stunning hotel! The rooms are spacious and beautifully designed. The staff went above and beyond to make our stay memorable. The breakfast buffet was incredible with so many options. Will definitely be returning!',
-  },
-  {
-    name: 'Sophie Martin',
-    review: 'Luxurious experience from start to finish! The attention to detail is impressive - fresh flowers in the room, turn-down service, premium toiletries. The location is perfect for exploring the city. Worth every penny!',
-  },
-  {
-    name: 'Robert Taylor',
-    review: 'Comfortable stay for business travel. The conference facilities are excellent and the business center is well-equipped. Staff was accommodating with early check-in. Good selection of restaurants nearby.',
-  },
-  {
-    name: 'Isabella Garcia',
-    review: 'Beautiful hotel with incredible architecture. The lobby is breathtaking and the rooms are tastefully decorated. The spa treatments were relaxing. Only wish we could have stayed longer!',
-  },
-  {
-    name: 'Thomas Brown',
-    review: 'Solid hotel experience. Clean rooms, friendly staff, and good location. The breakfast was decent but could use more variety. Parking was convenient. Would stay here again for the price point.',
-  },
-  {
-    name: 'Charlotte Davis',
-    review: 'Absolutely loved our stay! The hotel has a unique charm and character. The staff remembered our names and preferences. The room was spacious with a lovely balcony. Perfect romantic getaway destination!',
-  },
-]
