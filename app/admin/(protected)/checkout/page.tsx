@@ -119,6 +119,14 @@ export default function AdminCheckoutPage() {
               {generate.isPending ? 'Syncing with Apaleo…' : 'Generate / Sync'}
             </Button>
             <BulkZipButton disabled={items.length === 0} />
+            {/* Second, DIFFERENT sticker: scanning it asks for the surname and
+                then opens the guest's cabinet (breakfast, late check-out, …).
+                Never print it as the checkout code — different privilege. */}
+            <BulkZipButton
+              disabled={items.length === 0}
+              endpoint="/api/admin/room-qr/zip"
+              label="Booking QR"
+            />
             <Button asChild variant="outline" size="sm" className="gap-1.5 h-8">
               <Link href="/admin/rooms">
                 <MdArrowBack className="size-3.5" />

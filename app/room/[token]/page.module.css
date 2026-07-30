@@ -1,0 +1,58 @@
+/* Only what the self-checkout card doesn't already provide. Everything else
+   (page shell, card, corner motif, headings, .go button, .msg, .fine) is
+   imported from the self-checkout module so the two in-room screens stay one
+   visual family — a guest scans both stickers in the same room. */
+
+.field {
+  margin-top: 22px;
+  text-align: left;
+}
+
+.label {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: .01em;
+  color: var(--muted, #7a7570);
+  margin: 0 0 8px 4px;
+}
+
+.input {
+  width: 100%;
+  padding: 16px 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(43, 42, 41, .14);
+  background: #fff;
+  font-size: 17px; /* >=16px so iOS Safari doesn't zoom the page on focus */
+  font-family: var(--font-inter), system-ui, sans-serif;
+  color: var(--text);
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+.input::placeholder {
+  color: rgba(43, 42, 41, .32);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(88, 101, 64, .14);
+}
+
+/* Wrong surname: colour alone would fail for a colour-blind guest, so the
+   message below the field carries the meaning and this only reinforces it. */
+.inputError {
+  border-color: #b4534b;
+}
+
+.inputError:focus {
+  box-shadow: 0 0 0 3px rgba(180, 83, 75, .16);
+}
+
+.error {
+  margin: 10px 4px 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #b4534b;
+  text-align: left;
+}

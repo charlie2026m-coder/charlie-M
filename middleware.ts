@@ -14,7 +14,10 @@ export function middleware(request: NextRequest) {
 
   // /checkout/{token} is the guest QR self-checkout — locale-free by design
   // (printed QR URLs must stay short; the page has its own DE/EN toggle).
-  if (pathname.startsWith('/admin') || pathname.startsWith('/auth') || pathname.startsWith('/api') || pathname.startsWith('/checkout')) {
+  // /room/{token} is the in-room "open my booking" QR — same reasoning. The
+  // trailing slash matters: '/rooms' is the public catalogue and must keep its
+  // locale handling.
+  if (pathname.startsWith('/admin') || pathname.startsWith('/auth') || pathname.startsWith('/api') || pathname.startsWith('/checkout') || pathname.startsWith('/room/')) {
     return NextResponse.next();
   }
 
@@ -24,6 +27,6 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     // Match all pathnames EXCEPT admin, api, auth/callback, checkout and system files
-    '/((?!admin|api|auth/callback|checkout|\\.well-known|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!admin|api|auth/callback|checkout|room/|\\.well-known|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

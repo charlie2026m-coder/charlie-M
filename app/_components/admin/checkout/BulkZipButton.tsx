@@ -6,14 +6,29 @@ import { Button } from '@/app/_components/ui/button'
 import { MdFolderZip } from 'react-icons/md'
 import { COLOR_PRESETS } from './qrPresets'
 
-/** Download all room QR codes as one ZIP (svg or png). */
-export function BulkZipButton({ disabled }: { disabled?: boolean }) {
+/**
+ * Download all room QR codes as one ZIP (svg or png).
+ *
+ * Serves BOTH in-room stickers, which are deliberately different codes:
+ * self-checkout (one tap, no surname) and open-my-booking (surname, then the
+ * cabinet). The label is explicit because printing one as the other would hand
+ * out the wrong privilege.
+ */
+export function BulkZipButton({
+  disabled,
+  endpoint = '/api/admin/self-checkout/zip',
+  label = 'Checkout QR',
+}: {
+  disabled?: boolean
+  endpoint?: string
+  label?: string
+}) {
   const [fmt, setFmt] = useState<'svg' | 'png'>('svg')
   const [color, setColor] = useState<string>('000000')
   const [logo, setLogo] = useState(false)
 
   const href =
-    `/api/admin/self-checkout/zip?fmt=${fmt}&color=${color}` +
+    `${endpoint}?fmt=${fmt}&color=${color}` +
     (logo && fmt === 'svg' ? '&logo=1' : '')
 
   return (
@@ -21,7 +36,7 @@ export function BulkZipButton({ disabled }: { disabled?: boolean }) {
       <PopoverTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1.5 h-8" disabled={disabled}>
           <MdFolderZip className="size-3.5" />
-          ZIP
+          {label}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-64 space-y-3" align="end">
