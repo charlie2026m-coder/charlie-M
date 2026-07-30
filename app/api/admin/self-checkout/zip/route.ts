@@ -18,6 +18,22 @@ const querySchema = z.object({
 })
 
 /** Bulk download: one ZIP with a QR file per room. */
+// The archive is named after the site's own host (motz19.de -> "motz19",
+// charlie-m.de -> "charlie-m"), never a hardcoded hotel: this file gets copied
+// between the three properties, and a fixed name means every hotel downloads an
+// archive named after a different one. Kind is in the name too — the checkout
+// and booking stickers grant different things and must not be mixed up once
+// they are sitting in a downloads folder.
+function archiveName(base: string, kind: 'booking' | 'checkout', fmt: string): string {
+  let slug = 'hotel'
+  try {
+    slug = new URL(base).hostname.replace(/^www\./, '').split('.')[0] || 'hotel'
+  } catch {
+    // origin is always a valid URL in practice; fall through to the default.
+  }
+  return `${slug}-${kind}-qr-${fmt}.zip`
+}
+
 export async function GET(request: NextRequest) {
   const guard = await requireAdmin()
   if (!guard.ok) return guard.response
@@ -53,7 +69,7 @@ export async function GET(request: NextRequest) {
     return new NextResponse(new Uint8Array(zip), {
       headers: {
         'Content-Type': 'application/zip',
-        'Content-Disposition': `attachment; filename="qr-checkout-${fmt}.zip"`,
+        'Content-Disposition': `attachment; filename="${archiveName(base, 'checkout', fmt)}"`,
         'Cache-Control': 'no-store',
       },
     })
