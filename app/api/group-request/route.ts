@@ -3,17 +3,23 @@ import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 import { EMAIL } from '@/lib/Constants'
 
 // Server-side handler for the Group & Corporate request form. Sends the request
-// straight to the hotel inbox via Mailgun's HTTP API (no SDK) so nothing depends
-// on the guest's own mail client.
+// straight to the hotel inbox over HTTP (no SDK) so nothing depends on the
+// guest's own mail client.
 //
-// Required env vars (set in Vercel + local .env):
-//   MAILGUN_API_KEY   — Mailgun private API key
-//   MAILGUN_DOMAIN    — the sending domain verified in Mailgun (e.g. mg.charlie-m.de)
-// Optional:
-//   MAILGUN_BASE_URL  — API host, e.g. https://api.eu.mailgun.net (EU). Takes
-//                       precedence; falls back to MAILGUN_REGION, then US host.
-//   MAILGUN_REGION=eu — use the EU API host when MAILGUN_BASE_URL is unset
-//   MAILGUN_FROM      — From header (default: "Charlie M Website <noreply@DOMAIN>")
+// Transport: Resend first, Mailgun as a fallback, so this can ship before the
+// Resend key exists without taking a working form offline.
+//
+//   RESEND_API_KEY  — Resend API key (re_...). Preferred when present.
+//   RESEND_FROM     — From header, e.g. "{BRAND} Website <noreply@mg.example.de>".
+//                     MUST be on a domain verified in Resend. Falls back to
+//                     MAILGUN_FROM / noreply@MAILGUN_DOMAIN.
+// Mailgun (legacy fallback):
+//   MAILGUN_API_KEY, MAILGUN_DOMAIN — required for that path
+//   MAILGUN_BASE_URL / MAILGUN_REGION=eu — API host (default US)
+//   MAILGUN_FROM    — From header
+//
+// With neither configured the route answers 503 and the form shows its
+// "errorSend" toast — it never pretends a request was delivered.
 
 export const runtime = 'nodejs'
 
@@ -53,16 +59,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: 'validation' }, { status: 400 })
   }
 
-  const apiKey = process.env.MAILGUN_API_KEY
-  const domain = process.env.MAILGUN_DOMAIN
-  if (!apiKey || !domain) {
-    console.error('group-request: MAILGUN_API_KEY / MAILGUN_DOMAIN not configured')
+  const resendKey = process.env.RESEND_API_KEY
+  const mgKey = process.env.MAILGUN_API_KEY
+  const mgDomain = process.env.MAILGUN_DOMAIN
+  if (!resendKey && (!mgKey || !mgDomain)) {
+    console.error('group-request: no mail transport configured (set RESEND_API_KEY, or MAILGUN_API_KEY + MAILGUN_DOMAIN)')
     return NextResponse.json({ ok: false, error: 'not_configured' }, { status: 503 })
   }
 
-  const apiBase = (process.env.MAILGUN_BASE_URL?.replace(/\/+$/, ''))
-    || (process.env.MAILGUN_REGION === 'eu' ? 'https://api.eu.mailgun.net' : 'https://api.mailgun.net')
-  const fromAddress = process.env.MAILGUN_FROM || `Charlie M Website <noreply@${domain}>`
+  // From must sit on a domain the provider has verified, so it is taken from
+  // config rather than guessed. Guests never see this address — the mail goes
+  // from the site to the hotel's own inbox — so one shared sending domain can
+  // serve all properties.
+  const fromAddress = process.env.RESEND_FROM
+    || process.env.MAILGUN_FROM
+    || (mgDomain ? `Charlie M Website <noreply@${mgDomain}>` : '')
+  if (!fromAddress) {
+    console.error('group-request: RESEND_FROM is required when using Resend without a Mailgun domain')
+    return NextResponse.json({ ok: false, error: 'not_configured' }, { status: 503 })
+  }
 
   const isCorporate = body.mode === 'corporate'
   const typeLabel = isCorporate ? 'Corporate request' : 'Group booking'
@@ -85,26 +100,14 @@ export async function POST(request: Request) {
 
   const subject = `${typeLabel} — Charlie M${isCorporate && body.company?.trim() ? ` (${body.company.trim()})` : ''}`
 
-  const form = new URLSearchParams()
-  form.set('from', fromAddress)
-  form.set('to', EMAIL)
-  form.set('h:Reply-To', email) // hotel replies go straight to the guest
-  form.set('subject', subject)
-  form.set('text', lines.join('\n'))
-
   try {
-    const res = await fetch(`${apiBase}/v3/${domain}/messages`, {
-      method: 'POST',
-      headers: {
-        Authorization: 'Basic ' + Buffer.from(`api:${apiKey}`).toString('base64'),
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: form.toString(),
-    })
+    const mail = { from: fromAddress, to: EMAIL, replyTo: email, subject, text: lines.join('\n') }
+    const result = resendKey
+      ? await sendViaResend(resendKey, mail)
+      : await sendViaMailgun(mgKey as string, mgDomain as string, mail)
 
-    if (!res.ok) {
-      const detail = await res.text().catch(() => '')
-      console.error('group-request: Mailgun error', res.status, detail.slice(0, 300))
+    if (!result.ok) {
+      console.error(`group-request: ${resendKey ? 'Resend' : 'Mailgun'} error`, result.detail)
       return NextResponse.json({ ok: false, error: 'send_failed' }, { status: 502 })
     }
 
@@ -113,4 +116,52 @@ export async function POST(request: Request) {
     console.error('group-request: send exception', e instanceof Error ? e.message : 'unknown')
     return NextResponse.json({ ok: false, error: 'send_failed' }, { status: 502 })
   }
+}
+
+/** Resend: POST https://api.resend.com/emails, snake_case fields, Bearer auth. */
+async function sendViaResend(key: string, mail: {
+  from: string; to: string; replyTo: string; subject: string; text: string
+}): Promise<{ ok: true } | { ok: false; detail: string }> {
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${key}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: mail.from,
+      to: [mail.to],
+      reply_to: mail.replyTo, // hotel replies go straight to the guest
+      subject: mail.subject,
+      text: mail.text,
+    }),
+  })
+  if (res.ok) return { ok: true }
+  return { ok: false, detail: `${res.status} ${(await res.text().catch(() => '')).slice(0, 300)}` }
+}
+
+/** Mailgun: form-encoded, Basic auth, region-specific host. */
+async function sendViaMailgun(apiKey: string, domain: string, mail: {
+  from: string; to: string; replyTo: string; subject: string; text: string
+}): Promise<{ ok: true } | { ok: false; detail: string }> {
+  const apiBase = (process.env.MAILGUN_BASE_URL?.replace(/\/+$/, ''))
+    || (process.env.MAILGUN_REGION === 'eu' ? 'https://api.eu.mailgun.net' : 'https://api.mailgun.net')
+
+  const form = new URLSearchParams()
+  form.set('from', mail.from)
+  form.set('to', mail.to)
+  form.set('h:Reply-To', mail.replyTo)
+  form.set('subject', mail.subject)
+  form.set('text', mail.text)
+
+  const res = await fetch(`${apiBase}/v3/${domain}/messages`, {
+    method: 'POST',
+    headers: {
+      Authorization: 'Basic ' + Buffer.from(`api:${apiKey}`).toString('base64'),
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: form.toString(),
+  })
+  if (res.ok) return { ok: true }
+  return { ok: false, detail: `${res.status} ${(await res.text().catch(() => '')).slice(0, 300)}` }
 }
