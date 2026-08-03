@@ -29,6 +29,7 @@ import JSZip from 'jszip'
 import { createClient } from '@supabase/supabase-js'
 import { Fetch } from '@/services/Request'
 import { logger } from '@/lib/logger'
+import { releaseRoomAfterEarlyCheckout } from '@/services/apaleo/releaseRoomEarly'
 
 const scoLog = logger.withTag('self-checkout')
 
@@ -498,6 +499,17 @@ export async function confirm(token: string, earlyAck: boolean = false): Promise
         wait_seconds: EARLY_CHECKOUT_WAIT_SECONDS,
         msg: 'Frühzeitiger Check-out — bitte bestätigen.',
       }
+    }
+
+    // Early departure → hand the room back to inventory TOMORROW rather than at
+    // the original departure: housekeeping runs mornings, and tomorrow also
+    // leaves the guest a night of buffer (their door code follows the new
+    // departure, so a mistaken tap doesn't lock them out on the spot).
+    // Deliberately BEFORE the checkout — an amend needs a live reservation —
+    // and strictly best-effort: it never throws, and any failure simply leaves
+    // the room freeing up at the original departure, exactly as before.
+    if (ev.days_until > 0) {
+      await releaseRoomAfterEarlyCheckout(rid, { today, departure: ev.departure })
     }
 
     try {
