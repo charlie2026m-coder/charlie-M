@@ -102,9 +102,26 @@ export async function POST(request: Request) {
 
   try {
     const mail = { from: fromAddress, to: EMAIL, replyTo: email, subject, text: lines.join('\n') }
-    const result = resendKey
+    const mailgunReady = Boolean(mgKey && mgDomain)
+
+    let result = resendKey
       ? await sendViaResend(resendKey, mail)
       : await sendViaMailgun(mgKey as string, mgDomain as string, mail)
+
+    // Resend rejects mail until its sending domain is DNS-verified, and the key
+    // is normally set BEFORE the DNS lands. Without this fallback that gap turns
+    // every request into a 502 on sites whose Mailgun still works — a guest
+    // enquiry lost for a configuration step that is merely in progress.
+    if (!result.ok && resendKey && mailgunReady) {
+      console.error('group-request: Resend failed, falling back to Mailgun —', result.detail)
+      const viaMailgun = await sendViaMailgun(mgKey as string, mgDomain as string, {
+        ...mail,
+        // The Resend From lives on a domain Mailgun may not be allowed to sign;
+        // use Mailgun's own sender for its attempt.
+        from: process.env.MAILGUN_FROM || `Charlie M Website <noreply@${mgDomain}>`,
+      })
+      result = viaMailgun
+    }
 
     if (!result.ok) {
       console.error(`group-request: ${resendKey ? 'Resend' : 'Mailgun'} error`, result.detail)
