@@ -1,4 +1,5 @@
 import { NextResponse, after } from "next/server"
+import { PRIVACY_POLICY_VERSION, HOTEL_INFO } from "@/lib/Constants"
 import { headers } from "next/headers"
 import { isStayExtensionService } from "@/lib/extrasPrice"
 import { sendStayExtensionConfirmation } from "@/services/guestway/sendGuestwayMessage"
@@ -12,7 +13,6 @@ import { createPaymentAccount } from "@/services/apaleo/createPaymentAccount"
 import { cancelPaymentAccount } from "@/services/apaleo/cancelPaymentAccount"
 import { cancelReservation } from "@/services/apaleo/cancelReservation"
 import { payFolioByPaymentAccount } from "@/services/bookReservationServices"
-import { HOTEL_INFO } from "@/lib/Constants"
 import dayjs from "dayjs"
 import utc from "dayjs/plugin/utc"
 import timezone from "dayjs/plugin/timezone"
@@ -691,7 +691,7 @@ export async function POST(request: Request) {
           consent_type: 'booking',
           consent_given: true,
           ip_address: ip,
-          privacy_policy_version: '1.0',
+          privacy_policy_version: PRIVACY_POLICY_VERSION,
           consent_date: new Date().toISOString(),
         })
       }

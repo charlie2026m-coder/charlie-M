@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { PRIVACY_POLICY_VERSION } from "@/lib/Constants"
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { createClient } from '@supabase/supabase-js';
 
@@ -43,7 +44,7 @@ export async function POST(request: NextRequest) {
     consent_type: 'account_deletion',
     consent_given: true,
     ip_address: ip,
-    privacy_policy_version: '1.0',
+    privacy_policy_version: PRIVACY_POLICY_VERSION,
     consent_date: new Date().toISOString(),
   });
 

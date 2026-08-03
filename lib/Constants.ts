@@ -105,3 +105,14 @@ export const HOTEL_INFO = {
     twitter: "https://twitter.com/charliem"
   }
 } as const;
+
+/**
+ * Edition of the privacy notice a consent was given against. Written to the
+ * `consents` table on registration, booking and account deletion, so a stored
+ * consent stays attributable to the exact text the guest saw (Art. 5(2), 7(1)
+ * GDPR). It was a hard-coded '1.0' that never moved — including when the whole
+ * notice was replaced with the lawyer-reviewed version. Bump this whenever the
+ * published text changes; the value is the Stand date of that text.
+ */
+export const PRIVACY_POLICY_VERSION = '2026-07-24';
+

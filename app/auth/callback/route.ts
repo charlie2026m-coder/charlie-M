@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { PRIVACY_POLICY_VERSION } from "@/lib/Constants"
 import { createServerClient } from '@supabase/ssr';
 import { cookies, headers } from 'next/headers';
 
@@ -101,7 +102,7 @@ export async function GET(request: Request) {
               consent_type: 'registration',
               consent_given: true,
               ip_address: ip,
-              privacy_policy_version: '1.0',
+              privacy_policy_version: PRIVACY_POLICY_VERSION,
               consent_date: new Date().toISOString(),
             })
           }

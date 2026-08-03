@@ -10,6 +10,7 @@ import { useStore } from '@/store/useStore'
 
 import RoomParamsRow from '@/app/_components/ui/RoomParamsRow'
 import Price from '@/app/_components/ui/price'
+import { GoogleRatingBadge, UnitsLeftBadge } from '@/app/_components/ui/CardBadges'
 import { trackSelectItem } from '@/lib/analytics'
 
 const RoomCard = ({ 
@@ -86,9 +87,15 @@ const RoomCard = ({
       />
       <div className='flex flex-col p-4 pb-6 h-full'>
         <Link href={`/rooms/${roomDetailId}?${queryString}`} onClick={fireSelect}>
-          <h2 className='text-xl font-medium jakarta mb-3 hover:text-blue transition-colors cursor-pointer'>{roomsNeeded > 1 ? `${roomsNeeded} X ` : ''}{room.name}</h2>
+          <h2 className='text-xl font-medium jakarta mb-1.5 hover:text-blue transition-colors cursor-pointer'>{roomsNeeded > 1 ? `${roomsNeeded} X ` : ''}{room.name}</h2>
         </Link>
-        <RoomParamsRow 
+        {/* Trust first, then scarcity: the guest is comparing rooms here, and
+            `availableUnits` on this offer is already scoped to their dates. */}
+        <div className='flex flex-wrap items-center gap-x-3 gap-y-1.5 mb-2'>
+          <GoogleRatingBadge />
+          <UnitsLeftBadge availableUnits={room.availableUnits} />
+        </div>
+        <RoomParamsRow
           attributes={room.attributes} 
           maxPersons={room.maxPersons} 
           size={room.size} 

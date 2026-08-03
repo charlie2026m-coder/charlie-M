@@ -1,5 +1,4 @@
 {
-  
   "book_now_btn": "Jetzt buchen",
   "noCapacity": "Nicht genug Kapazität für diese Gästezahl",
   "check_in_btn": "Einchecken",
@@ -15,14 +14,12 @@
   "developmentBanner": {
     "message": "⚠️ Website befindet sich in der Entwicklung. Alle Buchungen sind untersagt."
   },
-
-  "home":{
+  "home": {
     "rooms_title": "Wählen Sie Ihr Zimmer",
     "rooms_subtitle": "Ihr perfektes Zimmer – nur einen Klick entfernt.",
     "location_title": "Standort",
     "location_subtitle": "Unser Hotel ist die perfekte Wahl für alle, die im Herzen Berlins wohnen möchten.",
     "weAreHere": "Wir sind hier",
-
     "concept_title": "Konzept",
     "concept_mobile_title": "Charlie M Konzept",
     "concept_h_1": "Reisen sollte sich einfach anfühlen",
@@ -30,7 +27,6 @@
     "concept_h_2": "Mit durchdacht gestalteten Zimmern",
     "concept_h_2_1": "und einem digitalen 24/7-Support",
     "concept_p_2": "wird Ihr Aufenthalt reibungslos, modern und angenehm unkompliziert.",
-
     "concept_it_1": "Online Check-in",
     "concept_ip_1": "keine Rezeption, keine Wartezeiten.",
     "concept_it_2": "Zugang zum Zimmer per Smart-Code",
@@ -39,12 +35,10 @@
     "concept_ip_3": "ein entspannter Aufenthalt ohne unnötige Unterbrechungen.",
     "concept_it_4": "Sofortige Unterstützung",
     "concept_ip_4": "schnelle Hilfe per Chat, wann immer Sie sie brauchen.",
-
     "concept_ip_1_text": "Dank unseres Online-Check-ins können Sie den Empfang komplett überspringen.",
     "concept_ip_2_text": "Ein persönlicher Code ermöglicht einen nahtlosen und sicheren Zugang.",
     "concept_ip_3_text": "Wir wissen, wie wertvoll Ihre Zeit ist – genießen Sie einen kontaktfreien und entspannten Aufenthalt.",
     "concept_ip_4_text": "Unser Team unterstützt Sie rund um die Uhr bei allen Fragen.",
-
     "experience_title": "Charlie M Erfahrungen",
     "items": [
       {
@@ -52,35 +46,30 @@
         "text": "Ein ruhiger Ort zum konzentrierten Arbeiten – inklusive Kaffeestation.",
         "content": "Ein ruhiger Bereich für konzentriertes Arbeiten, vollständig ausgestattet und mit Kaffeestation."
       },
-      
       {
         "title": "Kofferlagerungen",
         "text": "Sichere Aufbewahrung vor dem Check-in oder nach dem Check-out.",
         "content": "Ideal zur Aufbewahrung Ihres Gepäcks vor dem Check-in oder nach dem Check-out."
       },
-      
       {
         "title": "Self-Service Closet",
         "text": "Frische Handtücher, Pflegeprodukte und wichtige Zimmerutensilien jederzeit verfügbar.",
         "content": "Ein Self-Service-Schrank mit frischen Handtüchern, Pflegeprodukten und wichtigen Zimmerutensilien, jederzeit verfügbar."
       },
-      
       {
         "title": "Wäscheraum",
         "text": "Waschen und Trocknen, wann immer Sie es benötigen.",
-        "content":"Ein voll ausgestatteter Waschraum, in dem Sie Ihre Kleidung jederzeit waschen und trocknen können."
+        "content": "Ein voll ausgestatteter Waschraum, in dem Sie Ihre Kleidung jederzeit waschen und trocknen können."
       },
-
       {
         "title": "Kaffeemaschine im Zimmer",
         "text": "Kaffeekapseln während Ihres Aufenthalts inklusive.",
-        "content":"Eine stilvolle Kaffeemaschine im Zimmer mit kostenlosen Kaffeekapseln für Ihren gesamten Aufenthalt."
+        "content": "Eine stilvolle Kaffeemaschine im Zimmer mit kostenlosen Kaffeekapseln für Ihren gesamten Aufenthalt."
       },
-      
       {
         "title": "Schnelles WiFi",
         "text": "Zuverlässige Highspeed-Verbindung im gesamten Gebäude.",
-        "content":"Bleiben Sie mit schnellem, zuverlässigem WLAN überall im Gebäude verbunden."
+        "content": "Bleiben Sie mit schnellem, zuverlässigem WLAN überall im Gebäude verbunden."
       }
     ],
     "personalize_title": "Gestalten Sie Ihren Aufenthalt individuell",
@@ -111,8 +100,6 @@
         "text": "Bringen Sie Ihren vierbeinigen Begleiter mit – wir heißen ihn ebenfalls herzlich willkommen!"
       }
     ],
-
-
     "design_title": "Design, das Ihren Aufenthalt begleitet",
     "design_description": "Jeder Bereich bei Charlie M ist auf Ihren Aufenthalt abgestimmt. Vom Grundriss bis zu den Details ist alles darauf ausgelegt, Ihren Aufenthalt komfortabel, unkompliziert und stimmig zu gestalten. Ruhige, einladende Details prägen das Erlebnis. Materialien, Licht und Raumfluss fügen sich harmonisch zusammen und schaffen Orte, an denen Sie zur Ruhe kommen, ankommen und sich während Ihres Aufenthalts einfach wohlfühlen können.",
     "design_items": [
@@ -137,7 +124,6 @@
         "image_2": "Zimmer"
       }
     ],
-
     "reviews_title": "Was unsere Gäste sagen",
     "faq_title": "Häufig gestellte Fragen",
     "faq_categories": [
@@ -245,13 +231,11 @@
         ]
       }
     ],
-
     "video": {
       "title": "Charlie M - Ihre Berlin-Geschichte beginnt hier",
       "subtitle": "Vollautomatisierter Aufenthalt im Zentrum von Berlin",
       "exploreRooms": "Zimmer erkunden"
     }
-
   },
   "header": {
     "rooms_link": "Zimmer",
@@ -393,7 +377,12 @@
     "loading": "Wird geladen …",
     "booked": "Für diese Daten nicht verfügbar",
     "nextAvailable": "Frühester Termin",
-    "browseHint": "Zimmer mit baldiger Verfügbarkeit und Preisen — wählen Sie oben Ihre Daten, um Ihren Aufenthalt zu prüfen."
+    "browseHint": "Zimmer mit baldiger Verfügbarkeit und Preisen — wählen Sie oben Ihre Daten, um Ihren Aufenthalt zu prüfen.",
+    "googleRatingTitle": "{rating} von 5 auf Google, basierend auf {count} Bewertungen",
+    "onlyOneLeft": "Nur noch 1 für diese Daten",
+    "onlyNLeft": "Nur noch {count} für diese Daten",
+    "onlyOneLeftShort": "Nur noch 1",
+    "onlyNLeftShort": "Nur noch {count}"
   },
   "noRooms": {
     "title": "Keine Übereinstimmungen für Ihre Anfrage, bitte kontaktieren Sie uns direkt",
@@ -1041,7 +1030,7 @@
       {
         "title": "11. Nicht registrierte Personen",
         "paragraphs": [
-          "11.1 Nur die in der Reservierung genannten Gäste und Mitreisenden dürfen die Einheit während des Buchungszeitraums betreten. Nicht registrierte Personen sind grundsätzlich nur nach vorheriger Anmeldung und Freigabe durch Charlie M gestattet. Charlie M behält sich vor, eine Freigabe von Besuchern nicht oder nur gegen eine angemessene zusätzliche Gästegebühr in Abhängigkeit vom Tagespreis zu gestatten.",
+          "11.1 Nur die in der Reservierung genannten Gäste und Mitreisenden dürfen die Einheit während des Buchungszeitraums betreten. Nicht registrierte Personen sind grundsätzlich nur nach vorheriger Anmeldung und Freigabe durch Charlie M gestattet. Charlie M behält sich vor, eine Freigabe von Besuchern nicht oder nur gegen eine angemessene zusätzliche Gästegebühr gemäß der bei Buchung ausgewiesenen Preisliste zu gestatten.",
           "11.2 Verstößt der Gast schuldhaft gegen § 11.1, ist Charlie M berechtigt, eine angemessene zusätzliche Gästegebühr nach § 11.1 für die tatsächliche Aufenthaltsdauer nachzuberechnen. Bei schwerwiegendem Verstoß, insbesondere bei fehlender Abhilfe trotz Aufforderung, kann Charlie M den Beherbergungsvertrag aus wichtigem Grund mit sofortiger Wirkung kündigen. Der Anspruch auf die vereinbarte Vergütung bleibt unberührt; ersparte Aufwendungen sowie Einnahmen aus einer anderweitigen Verwertung der Einheit werden angerechnet."
         ]
       },
