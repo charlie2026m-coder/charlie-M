@@ -98,10 +98,30 @@ export async function POST(request: Request) {
     `\n— sent from charlie-m.de (${body.locale ?? 'en'})`,
   ].filter(Boolean) as string[]
 
+  // Same data as the text part, but structured so the HTML can lay it out.
+  const fields: MailField[] = [
+    body.phone?.trim() ? { label: 'Phone', value: body.phone.trim() } : null,
+    isCorporate && body.company?.trim() ? { label: 'Company', value: body.company.trim() } : null,
+    isCorporate && body.taxNumber?.trim() ? { label: 'Tax number', value: body.taxNumber.trim() } : null,
+    { label: 'Guests', value: `${adults} adult(s)${children ? `, ${children} child(ren)` : ''}` },
+    body.rooms?.trim() ? { label: 'Rooms', value: body.rooms.trim() } : null,
+    body.period?.trim() ? { label: 'Stay', value: body.period.trim() } : null,
+  ].filter(Boolean) as MailField[]
+
   const subject = `${typeLabel} — Charlie M${isCorporate && body.company?.trim() ? ` (${body.company.trim()})` : ''}`
 
   try {
-    const mail = { from: fromAddress, to: EMAIL, replyTo: email, subject, text: lines.join('\n') }
+    const html = buildHtml({
+      brand: 'Charlie M',
+      typeLabel,
+      name,
+      email,
+      fields,
+      message: body.message?.trim() ?? '',
+      origin: 'charlie-m.de',
+      locale: body.locale ?? 'en',
+    })
+    const mail = { from: fromAddress, to: EMAIL, replyTo: email, subject, text: lines.join('\n'), html }
     const mailgunReady = Boolean(mgKey && mgDomain)
 
     let result = resendKey
@@ -137,7 +157,7 @@ export async function POST(request: Request) {
 
 /** Resend: POST https://api.resend.com/emails, snake_case fields, Bearer auth. */
 async function sendViaResend(key: string, mail: {
-  from: string; to: string; replyTo: string; subject: string; text: string
+  from: string; to: string; replyTo: string; subject: string; text: string; html?: string
 }): Promise<{ ok: true } | { ok: false; detail: string }> {
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -151,6 +171,7 @@ async function sendViaResend(key: string, mail: {
       reply_to: mail.replyTo, // hotel replies go straight to the guest
       subject: mail.subject,
       text: mail.text,
+      ...(mail.html && { html: mail.html }),
     }),
   })
   if (res.ok) return { ok: true }
@@ -159,7 +180,7 @@ async function sendViaResend(key: string, mail: {
 
 /** Mailgun: form-encoded, Basic auth, region-specific host. */
 async function sendViaMailgun(apiKey: string, domain: string, mail: {
-  from: string; to: string; replyTo: string; subject: string; text: string
+  from: string; to: string; replyTo: string; subject: string; text: string; html?: string
 }): Promise<{ ok: true } | { ok: false; detail: string }> {
   const apiBase = (process.env.MAILGUN_BASE_URL?.replace(/\/+$/, ''))
     || (process.env.MAILGUN_REGION === 'eu' ? 'https://api.eu.mailgun.net' : 'https://api.mailgun.net')
@@ -170,6 +191,7 @@ async function sendViaMailgun(apiKey: string, domain: string, mail: {
   form.set('h:Reply-To', mail.replyTo)
   form.set('subject', mail.subject)
   form.set('text', mail.text)
+  if (mail.html) form.set('html', mail.html)
 
   const res = await fetch(`${apiBase}/v3/${domain}/messages`, {
     method: 'POST',
@@ -181,4 +203,85 @@ async function sendViaMailgun(apiKey: string, domain: string, mail: {
   })
   if (res.ok) return { ok: true }
   return { ok: false, detail: `${res.status} ${(await res.text().catch(() => '')).slice(0, 300)}` }
+}
+
+/** Escape anything a guest typed before it goes into HTML. Without this a
+ *  stray "<" mangles the layout — and a crafted value would be worse. */
+function esc(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+interface MailField { label: string; value: string }
+
+/**
+ * Table-based, inline-styled HTML — the two things every mail client still
+ * agrees on. Deliberately no images and no web fonts: nothing to block, nothing
+ * to load, and it renders the same in Outlook as in Gmail.
+ */
+function buildHtml(opts: {
+  brand: string
+  typeLabel: string
+  name: string
+  email: string
+  fields: MailField[]
+  message: string
+  origin: string
+  locale: string
+}): string {
+  const rows = opts.fields
+    .map(
+      f => `<tr>
+        <td style="padding:7px 0;color:#6b7280;font-size:13px;width:132px;vertical-align:top;">${esc(f.label)}</td>
+        <td style="padding:7px 0;color:#111827;font-size:14px;font-weight:600;">${esc(f.value)}</td>
+      </tr>`,
+    )
+    .join('')
+
+  const messageBlock = opts.message
+    ? `<tr><td style="padding:22px 0 0;">
+         <div style="color:#6b7280;font-size:12px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Message</div>
+         <div style="background:#f9fafb;border-left:3px solid #d1d5db;border-radius:0 8px 8px 0;padding:14px 16px;color:#111827;font-size:14px;line-height:1.6;white-space:pre-wrap;">${esc(opts.message)}</div>
+       </td></tr>`
+    : ''
+
+  return `<!doctype html>
+<html><body style="margin:0;padding:0;background:#f3f4f6;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:24px 12px;">
+<tr><td align="center">
+  <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;box-shadow:0 1px 3px rgba(0,0,0,.08);">
+
+    <tr><td style="background:#111827;padding:18px 26px;">
+      <div style="color:#ffffff;font-size:15px;font-weight:700;letter-spacing:.01em;">${esc(opts.typeLabel)}</div>
+      <div style="color:#9ca3af;font-size:12px;margin-top:2px;">${esc(opts.brand)}</div>
+    </td></tr>
+
+    <tr><td style="padding:26px 26px 0;">
+      <div style="color:#111827;font-size:21px;font-weight:800;line-height:1.25;">${esc(opts.name)}</div>
+      <div style="margin-top:6px;font-size:14px;">
+        <a href="mailto:${esc(opts.email)}" style="color:#1d4ed8;text-decoration:none;">${esc(opts.email)}</a>
+      </div>
+    </td></tr>
+
+    <tr><td style="padding:14px 26px 0;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}${messageBlock}</table>
+    </td></tr>
+
+    <tr><td style="padding:24px 26px 4px;">
+      <a href="mailto:${esc(opts.email)}" style="display:inline-block;background:#111827;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 22px;border-radius:8px;">Reply to ${esc(opts.name.split(' ')[0] || 'guest')}</a>
+    </td></tr>
+
+    <tr><td style="padding:20px 26px 24px;">
+      <div style="border-top:1px solid #e5e7eb;padding-top:14px;color:#9ca3af;font-size:12px;">
+        Sent from ${esc(opts.origin)} · language ${esc(opts.locale.toUpperCase())}
+      </div>
+    </td></tr>
+
+  </table>
+</td></tr>
+</table>
+</body></html>`
 }
