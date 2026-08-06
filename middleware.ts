@@ -26,7 +26,13 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Match all pathnames EXCEPT admin, api, auth/callback, checkout and system files
-    '/((?!admin|api|auth/callback|checkout|room/|\\.well-known|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // Match all pathnames EXCEPT admin, api, auth/callback, checkout and system files.
+    // `sitemap` and `robots.txt` MUST be excluded by name: crawlers request them
+    // without a locale prefix, so next-intl rewrote /sitemap.xml → /en/sitemap.xml
+    // and both returned a 404 HTML page in production — Google could read neither.
+    // The extension list must likewise cover every static type served from /public
+    // (txt/xml here, plus video/audio/font if any are ever added), or the same
+    // rewrite swallows those too.
+    '/((?!admin|api|auth/callback|checkout|room/|sitemap|robots.txt|\\.well-known|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|xml|txt)$).*)',
   ],
 };
