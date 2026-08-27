@@ -14,10 +14,10 @@ export function middleware(request: NextRequest) {
 
   // /checkout/{token} is the guest QR self-checkout — locale-free by design
   // (printed QR URLs must stay short; the page has its own DE/EN toggle).
-  // /room/{token} is the in-room "open my booking" QR — same reasoning. The
-  // trailing slash matters: '/rooms' is the public catalogue and must keep its
-  // locale handling.
-  if (pathname.startsWith('/admin') || pathname.startsWith('/auth') || pathname.startsWith('/api') || pathname.startsWith('/checkout') || pathname.startsWith('/room/')) {
+  // /room/{token} is the in-room "open my booking" QR — same reasoning, and
+  // /r/{id} is the Guestway post-pre-check-in landing. The trailing slash
+  // matters: '/rooms' is the public catalogue and must keep its locale handling.
+  if (pathname.startsWith('/admin') || pathname.startsWith('/auth') || pathname.startsWith('/api') || pathname.startsWith('/checkout') || pathname.startsWith('/room/') || pathname.startsWith('/r/')) {
     return NextResponse.next();
   }
 
@@ -33,6 +33,6 @@ export const config = {
     // The extension list must likewise cover every static type served from /public
     // (txt/xml here, plus video/audio/font if any are ever added), or the same
     // rewrite swallows those too.
-    '/((?!admin|api|auth/callback|checkout|room/|sitemap|robots.txt|\\.well-known|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|xml|txt)$).*)',
+    '/((?!admin|api|auth/callback|checkout|room/|r/|sitemap|robots.txt|\\.well-known|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|xml|txt)$).*)',
   ],
 };
