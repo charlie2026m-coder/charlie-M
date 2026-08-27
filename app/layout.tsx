@@ -95,13 +95,66 @@ export default async function RootLayout({ children, params }: Props) {
       "postalCode": HOTEL_INFO.address.postalCode,
       "addressCountry": HOTEL_INFO.address.addressCountry
     },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": HOTEL_INFO.geo.latitude,
+      "longitude": HOTEL_INFO.geo.longitude
+    },
     "telephone": HOTEL_INFO.telephone,
+    "email": HOTEL_INFO.email,
     "url": siteUrl,
     "priceRange": HOTEL_INFO.priceRange,
+    "numberOfRooms": HOTEL_INFO.numberOfRooms,
+    "checkinTime": HOTEL_INFO.checkinTime,
+    "checkoutTime": HOTEL_INFO.checkoutTime,
     "starRating": {
       "@type": "Rating",
       "ratingValue": HOTEL_INFO.starRating.toString()
+    },
+    // Straight from HOTEL_INFO so the markup can never claim a facility the
+    // hotel does not actually have.
+    "amenityFeature": HOTEL_INFO.amenities.map((name) => ({
+      "@type": "LocationFeatureSpecification",
+      "name": name
+    }))
+  };
+
+  // Publisher identity. Separate from the Hotel node on purpose: Google reads
+  // Organization for the knowledge panel (logo, contact), Hotel for the listing.
+  const organizationSchema = {
+    "@context": "https://schema.org/",
+    "@type": "Organization",
+    "url": siteUrl,
+    "logo": `${siteUrl}/images/logo-white.svg`,
+    "name": "Charlie M Hotel",
+    "description": "Modern hotel in Berlin Mitte with automated check-in",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": HOTEL_INFO.address.streetAddress,
+      "addressLocality": HOTEL_INFO.address.addressLocality,
+      "postalCode": HOTEL_INFO.address.postalCode,
+      "addressCountry": HOTEL_INFO.address.addressCountry
+    },
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "telephone": HOTEL_INFO.telephone,
+      "email": HOTEL_INFO.email,
+      "contactType": "customer service"
     }
+  };
+
+  // Gives the search snippet a site path instead of a bare URL.
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": siteUrl
+      }
+    ]
   };
 
   return (
@@ -123,7 +176,12 @@ export default async function RootLayout({ children, params }: Props) {
       </head>
       <body className={`${inter.variable} ${plusJakartaSans.variable} antialiased flex flex-col min-h-screen relative`}>
         {/* JSON-LD for Google */}
-        <Script id="hotel-schema" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(hotelSchema) }} />
+        {/* Plain <script>, not next/script: <Script> defers these into the RSC
+            payload, so the structured data reached crawlers only after JS ran.
+            A raw tag puts it in the served HTML where Google reads it. */}
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(hotelSchema) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
         {children}
         {/* GA/Ads load only after Cookiebot consent (Consent Mode v2 in sync). */}
