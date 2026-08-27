@@ -1,9 +1,19 @@
 {
-  "regions": ["fra1"],
+  "regions": [
+    "fra1"
+  ],
   "crons": [
     {
       "path": "/api/cron/reconcile-refunds",
       "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/reconcile-services",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/warm-bookable",
+      "schedule": "*/14 * * * *"
     }
   ]
 }
