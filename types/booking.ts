@@ -11,6 +11,10 @@ export interface Booking {
   },
 
   consent?: boolean; // GDPR consent flag
+  // Stay extension: the studio the guest is already in. Carried into
+  // pending_bookings so the webhook can pin the new reservation to it — the
+  // extension is only offered when that exact unit is free.
+  preferredUnitId?: string | null;
   totalAmount?: number; // Total price including rooms, extras and tax
   transactionReference?: string; // Adyen pspReference for transaction tracking
   paymentReference?: string; // client merchantReference (UUID) — key into pending_bookings

@@ -32,13 +32,22 @@ const BookingPage = ({
     allOffers: RoomOffer[]
     roomDetail?: RoomDetails
     filledRooms: Room[]
+    preferredUnitId?: string | null
     extras: Service[]
     isKidsBedAvailable?: boolean
     babyBedAvailability?: { isAvailable: boolean; count: number }
     isUnavailable?: boolean
   }
 }) => {
-  const { from, to, adults, children, rooms, allOffers, roomDetail, filledRooms, extras, isKidsBedAvailable = true, babyBedAvailability, isUnavailable = false } = params
+  const setPreferredUnitId = useBookingStore(state => state.setPreferredUnitId)
+  const { from, to, adults, children, rooms, allOffers, roomDetail, filledRooms, extras, preferredUnitId = null, isKidsBedAvailable = true, babyBedAvailability, isUnavailable = false } = params
+
+  // Which studio this booking must land on. Cleared for every normal booking
+  // so a stale value from an earlier extension cannot pin an unrelated
+  // reservation to someone else's room.
+  useEffect(() => {
+    setPreferredUnitId(preferredUnitId)
+  }, [preferredUnitId, setPreferredUnitId])
   const setRooms = useBookingStore(state => state.setRooms)
   const setRoomDetails = useBookingStore(state => state.setRoomDetails)
   const setParams = useBookingStore(state => state.setParams)

@@ -14,12 +14,14 @@ interface IParams {
     to: string
     adults?: string
     children?: string
+    extend?: string
+    unit?: string
   }>
 }
 
 const Booking = async ({ params, searchParams }: IParams) => {
   const { id, locale } = await params
-  const { from, to, adults, children } = await searchParams
+  const { from, to, adults, children, extend, unit } = await searchParams
   
   if (!from || !to) return <ErrorCard isSingleRoom={true} link='/rooms' />
   
@@ -82,6 +84,7 @@ const Booking = async ({ params, searchParams }: IParams) => {
           adults: adults || '1',
           children: children || '0',
           filledRooms,
+          preferredUnitId: extend === '1' ? unit ?? null : null,
           isKidsBedAvailable,
           babyBedAvailability,
           isUnavailable,

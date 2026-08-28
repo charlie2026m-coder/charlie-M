@@ -106,6 +106,10 @@ const BookingMenu = ({
       ...(booking?.booker && { booker: booking.booker }),
       reservations,
       totalAmount,
+      // Survives into pending_bookings so the webhook can pin the unit.
+      ...(useBookingStore.getState().preferredUnitId
+        ? { preferredUnitId: useBookingStore.getState().preferredUnitId }
+        : {}),
     })
 
     router.push(`/booking/${urlParams.id}/payment`, { scroll: true })

@@ -346,6 +346,9 @@ const ExtandYourStay = ({
                             from: fromDate,
                             to: toDate,
                             adults: (adults || 1).toString(),
+                          // The studio we just proved is free; pinned after
+                          // booking so the guest is not moved.
+                          ...(unitId ? { unit: unitId } : {}),
                             children: isBaby ? '1' : '0'
                           })
                           

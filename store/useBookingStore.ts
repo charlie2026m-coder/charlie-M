@@ -34,6 +34,8 @@ interface BookingState {
   extras: Service[];
 
   isRefundable: boolean;
+  /** Unit the guest must land on (stay extension). */
+  preferredUnitId?: string | null;
   isExtend: boolean;
   params: { from: string; to: string; nights: number; }
   bookingId: string | undefined;
@@ -50,6 +52,7 @@ interface BookingState {
   setExtras: (extras: Service[]) => void;
 
   setIsRefundable: (isRefundable: boolean) => void;
+  setPreferredUnitId: (unitId: string | null) => void;
   setIsExtend: (isExtend: boolean) => void;
   setParams: (params: { from: string; to: string; nights: number }) => void;
   setBookingId: (id: string) => void;
@@ -97,6 +100,7 @@ export const useBookingStore = create<BookingState>()(
 
       isRefundable: false,
       setIsRefundable: (isRefundable: boolean) => set((state) => ({ ...state, isRefundable })),
+      setPreferredUnitId: (preferredUnitId: string | null) => set((state) => ({ ...state, preferredUnitId })),
       
       isExtend: false,
       setIsExtend: (isExtend: boolean) => set((state) => ({ ...state, isExtend })),

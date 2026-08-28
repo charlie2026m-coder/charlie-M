@@ -11,6 +11,7 @@ import { createPaymentAccount } from "@/services/apaleo/createPaymentAccount"
 import { cancelReservation } from "@/services/apaleo/cancelReservation"
 import { correctPastArrivals } from "@/lib/correctPastArrival"
 import crypto from "crypto"
+import { assignUnit } from "@/services/apaleo/assignUnit"
 
 // Webhook has no user session — must use service_role to bypass RLS
 function createAdminClient() {
@@ -237,6 +238,18 @@ async function createBookingFromPending(
 
   const apaleoData = await response.json()
   const apaleoReservationIds: string[] = apaleoData.reservationIds?.map((r: any) => r.id) || []
+
+  // Stay extension: put the guest back in their own studio. They were only
+  // offered the extension because that exact unit was free, so letting Apaleo
+  // auto-assign could still move them.
+  //
+  // Awaited but never fatal: the payment has already succeeded, so a failure
+  // here must not roll anything back. The guest keeps a valid reservation;
+  // only the room number may differ.
+  const preferredUnitId = (booking as { preferredUnitId?: string | null }).preferredUnitId
+  if (preferredUnitId && apaleoReservationIds.length === 1) {
+    await assignUnit(apaleoReservationIds[0], preferredUnitId)
+  }
   apaleoLog.success('webhook: booking created', {
     id: apaleoData.id,
     reservationIds: apaleoReservationIds,
