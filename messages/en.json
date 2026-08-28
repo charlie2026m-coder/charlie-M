@@ -357,6 +357,10 @@
       "cancel": "Cancel",
       "check": "Check",
       "book": "Book",
+      "sameRoomNote": "Extensions are offered for your current studio only, so you never have to move rooms.",
+      "sameRoomFree": "Your studio is free for these dates",
+      "sameRoomTaken": "Your studio is already booked for these dates",
+      "searchRooms": "See other rooms",
       "loading": "Loading..."
     },
     "removeService": "Remove Service",

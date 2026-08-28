@@ -357,6 +357,10 @@
       "cancel": "Abbrechen",
       "check": "Prüfen",
       "book": "Buchen",
+      "sameRoomNote": "Eine Verlängerung ist nur für Ihr aktuelles Studio möglich — so müssen Sie nie das Zimmer wechseln.",
+      "sameRoomFree": "Ihr Studio ist an diesen Daten frei",
+      "sameRoomTaken": "Ihr Studio ist an diesen Daten bereits belegt",
+      "searchRooms": "Andere Zimmer ansehen",
       "loading": "Lädt..."
     },
     "removeService": "Service entfernen",

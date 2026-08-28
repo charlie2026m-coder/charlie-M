@@ -74,6 +74,7 @@ const ReservationPage = async ({ params }: { params: Promise<{ id: string; local
           departure={departureDate}
           availableExtras={extras}
           unitGroupId={reservation.unitGroup?.id}
+          unitId={reservation.unit?.id}
           adults={reservation.adults}
           children={reservation.childrenAges?.length || 0}
           booker={reservation.booker}

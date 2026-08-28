@@ -1,5 +1,6 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import Image from 'next/image'
 import { Calendar } from '@/app/_components/ui/calendar'
 import { DateRange } from 'react-day-picker'
 import ExistingExtras from './ExistingExtras'
@@ -20,6 +21,7 @@ const ExtandYourStay = ({
   departure,
   availableExtras,
   unitGroupId,
+  unitId,
   adults,
   booker,
   primaryGuest
@@ -30,6 +32,7 @@ const ExtandYourStay = ({
   departure: string,
   availableExtras: any[],
   unitGroupId?: string,
+  unitId?: string,
   adults?: number,
   children?: number,
   booker?: Guest,
@@ -124,9 +127,57 @@ const ExtandYourStay = ({
     service.service.id === 'CMH-BAB' || service.service.name?.toLowerCase().includes('baby')
   ) || false
 
+  // How far the guest can extend without changing studio: the day someone else
+  // moves into their unit. Extensions are only sold for their own room — if
+  // they have to move, the room needs a full turnover anyway — so this is the
+  // real boundary, asked once when the panel opens.
+  const [freeUntil, setFreeUntil] = useState<string | null>(null)
+  const [windowLoaded, setWindowLoaded] = useState(false)
+
+  useEffect(() => {
+    if (!unitId || !departure) return
+    let cancelled = false
+    const from = dayjs(departure).format('YYYY-MM-DD')
+    fetch(`/api/rooms/extension-window?unitId=${encodeURIComponent(unitId)}&from=${from}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => {
+        if (cancelled) return
+        setFreeUntil(data?.freeUntil ?? from)
+        setWindowLoaded(true)
+      })
+      .catch(() => {
+        if (!cancelled) {
+          // Fail closed — treat as "no extension possible".
+          setFreeUntil(from)
+          setWindowLoaded(true)
+        }
+      })
+    return () => { cancelled = true }
+  }, [unitId, departure])
+
+  const departureYmd = dayjs(departure).format('YYYY-MM-DD')
+  // Their studio is taken the moment they leave -> nothing to extend into.
+  const unitTakenImmediately = windowLoaded && !!freeUntil && freeUntil <= departureYmd
+
+  // Bring the panel into view when the guest opens it. On a phone the button
+  // sits well above the panel, so tapping it scrolled nothing and read as
+  // "nothing happened". Only on a real open — the panel is also shown when
+  // services already exist, which must not yank the page.
+  const panelRef = useRef<HTMLDivElement>(null)
+  const wasOpen = useRef(openExtendYourStay)
+  useEffect(() => {
+    const justOpened = openExtendYourStay && !wasOpen.current
+    wasOpen.current = openExtendYourStay
+    if (!justOpened) return
+    const raf = requestAnimationFrame(() => {
+      panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [openExtendYourStay])
+
   return (
-    <div className={cn(
-      'mb-10', 
+    <div ref={panelRef} className={cn(
+      'mb-10 scroll-mt-24', 
       (openExtendYourStay || (services && services.length > 0) || (existingServices && existingServices.length > 0)) 
       ? 'block' 
       : 'hidden')}>
@@ -135,7 +186,43 @@ const ExtandYourStay = ({
       </div>
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
         {/* Left side - Calendar (2/3 width) */}
-        {openExtendYourStay && (
+        {openExtendYourStay && unitTakenImmediately && (
+          <div className='col-span-1'>
+            {/* Their studio is taken the day they check out, so there is
+                nothing to pick. A calendar with every date greyed out is a dead
+                end; say it and offer the way out instead. */}
+            <div className='flex flex-col items-center rounded-lg border bg-white p-5 text-center'>
+              <p className='text-sm font-semibold text-red-600'>
+                {t('extendYourStay.sameRoomTaken')}
+              </p>
+              <Image
+                src='/images/room-not-found.svg'
+                alt=''
+                aria-hidden
+                width={119}
+                height={241}
+                className='mt-1 h-auto w-[96px] select-none sm:w-[108px]'
+              />
+              <Button
+                className='mt-3 h-[45px] min-w-[200px]'
+                variant='default'
+                disabled={isNavigating}
+                onClick={() => {
+                  setIsNavigating(true)
+                  const qs = new URLSearchParams({
+                    from: departureYmd,
+                    to: dayjs(departure).add(1, 'day').format('YYYY-MM-DD'),
+                    adults: (adults || 1).toString(),
+                  })
+                  router.push(`/rooms?${qs.toString()}`)
+                }}
+              >
+                {isNavigating ? t('extendYourStay.loading') : t('extendYourStay.searchRooms')}
+              </Button>
+            </div>
+          </div>
+        )}
+        {openExtendYourStay && !unitTakenImmediately && (
           <div className='col-span-1 '>
           <div className='rounded-lg border p-5 bg-white'>
             <style jsx global>{`
@@ -197,7 +284,10 @@ const ExtandYourStay = ({
               }}
               disabled={[
                 { before: departureDate }, // Disable all dates before departure
-                ...reservationDates // Disable all reservation dates (arrival to day before departure)
+                ...reservationDates, // Disable all reservation dates (arrival to day before departure)
+                // Everything from the day their studio is taken onwards: a hard
+                // boundary, so nothing is offered that Apaleo would refuse.
+                ...(freeUntil ? [{ after: dayjs(freeUntil).toDate() }] : []),
               ]}
               modifiers={{
                 reservation: reservationDates,
