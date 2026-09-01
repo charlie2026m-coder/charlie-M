@@ -6,6 +6,7 @@ import RoomErrorCard from './components/RoomErrorCard'
 import { RoomViewTracker } from './components/RoomViewTracker'
 import RoomReviews from './components/RoomReviews'
 import GoodToKnow from './components/GoodToKnow'
+import ScrollToTopOnMount from '@/app/_components/ui/ScrollToTopOnMount'
 import type { Metadata } from 'next'
 interface IParams {
   params: Promise<{ id: string; locale: string }>
@@ -121,6 +122,7 @@ const RoomPage = async ({ params, searchParams }: IParams) => {
   try {
     return (
       <div className='flex flex-col relative pt-10 flex-1'>
+        <ScrollToTopOnMount />
         <RoomViewTracker roomId={displayRoom.id} roomName={displayRoom.name} />
         <PhotoGallery images={displayRoom.images} roomName={displayRoom.name} />
         <div className='grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-y-10 md:gap-10 mb-[30px]'>

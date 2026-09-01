@@ -20,6 +20,7 @@ const RoomCard = ({
   locale: string
   translations: {
     perNightFrom: string
+    taxesIncluded?: string
     loading: string
     bookNow: string
     booked?: string
@@ -119,7 +120,16 @@ const RoomCard = ({
               </div>
             : <div className='flex flex-row flex-wrap items-center gap-2 md:gap-8 justify-between w-full'>
                 {item.oneNightPrice > 0 && (
-                  <Price price={item.oneNightPrice} className='h-[50px] w-auto !text-base !px-3 sm:!text-lg sm:!px-5' />
+                  <div className='flex flex-col gap-1 min-w-0'>
+                    <Price price={item.oneNightPrice} className='h-[50px] w-auto !text-base !px-3 sm:!text-lg sm:!px-5' />
+                    {/* All-in-Hinweis wie bei den OTAs: MwSt. und Berliner
+                        City Tax stecken schon drin. Ohne diesen Satz rechnet
+                        der Gast mit Aufschlaegen an der Kasse — und genau das
+                        ist ein Grund, zurueck zu Booking zu klicken. */}
+                    {translations.taxesIncluded && (
+                      <span className='text-[10px] leading-[1.35] text-mute'>{translations.taxesIncluded}</span>
+                    )}
+                  </div>
                 )}
                 <Button
                   onClick={handleBookNow}

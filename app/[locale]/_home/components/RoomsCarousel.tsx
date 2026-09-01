@@ -19,6 +19,7 @@ export function RoomsCarousel({
   locale: string
   translations: {
     perNightFrom: string
+    taxesIncluded?: string
     loading: string
     bookNow: string
     booked?: string

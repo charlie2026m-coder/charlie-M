@@ -26,6 +26,7 @@ const RoomsSection = async ({ locale }: { locale: string }) => {
 
   const roomCardTranslations = {
     perNightFrom: t('roomCard.perNightFrom'),
+    taxesIncluded: t('roomCard.taxesIncluded'),
     loading: t('roomCard.loading'),
     bookNow: t('roomCard.bookNow'),
     booked: t('roomCard.booked'),

@@ -376,6 +376,9 @@
     "failedToCancelBooking": "Failed to cancel booking"
   },
   "roomCard": {
+    "nightTotal": "1 night total",
+    "nightsTotal": "{count} nights total",
+    "taxesIncluded": "Including taxes and fees",
     "perNightFrom": "per night from",
     "bookNow": "Book Now",
     "loading": "Loading...",

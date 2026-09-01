@@ -108,10 +108,23 @@ const RoomCard = ({
             terrace: tParams('terrace'),
           }}
         />
-        <div className='text-mute mb-5 mt-auto'>{t('perNightFrom')}</div>
-
-        <div className='flex xxs:flex-row flex-col items-center gap-2 md:gap-8 justify-between w-full'>
-          <Price price={price} className='h-[50px] w-full xs:w-auto' />
+        {/* Die Zahl ist die SUMME fuer die Daten des Gastes (roomsNeeded x
+            Nachtpreis x Naechte). Darueber stand "per night from" — bei zwei
+            Naechten also glatt die doppelte Zahl als Nachtpreis ausgegeben.
+            Erst sagen, WAS die Zahl ist, dann was schon drinsteckt. */}
+        <div className='mt-auto pt-2'>
+        <div className='flex xxs:flex-row flex-col items-center xxs:items-end gap-2 md:gap-8 justify-between w-full'>
+          <div className='flex flex-col gap-1 min-w-0 w-full xs:w-auto'>
+            <span className='text-mute text-[11px] font-medium uppercase tracking-[0.14em] whitespace-nowrap'>
+              {nights === 1 ? t('nightTotal') : t('nightsTotal', { count: nights })}
+            </span>
+            <Price price={price} className='h-[50px] w-full xs:w-auto' />
+            {/* Bewusst NICHT nowrap: die deutsche Zeile ist ~166px, diese Spalte
+                kann schmaler sein, und mit sichtbarem Overflow malte der Text
+                quer ueber den Book-Button. Umbruch laesst die Spalte wachsen,
+                der Button bleibt auf Hoehe der letzten Zeile. */}
+            <span className='text-[10px] leading-[1.35] text-mute'>{t('taxesIncluded')}</span>
+          </div>
           <Button 
             onClick={handleBookNow}
             variant='outline'
@@ -119,6 +132,7 @@ const RoomCard = ({
           >
             {t('bookNow')}
           </Button>
+        </div>
         </div>
       </div>
     </div>

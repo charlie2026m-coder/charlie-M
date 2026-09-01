@@ -376,6 +376,9 @@
     "failedToCancelBooking": "Fehler beim Stornieren der Buchung"
   },
   "roomCard": {
+    "nightTotal": "1 Nacht gesamt",
+    "nightsTotal": "{count} Nächte gesamt",
+    "taxesIncluded": "Einschließlich Steuern und Gebühren",
     "perNightFrom": "pro Nacht ab",
     "bookNow": "Jetzt buchen",
     "loading": "Wird geladen …",

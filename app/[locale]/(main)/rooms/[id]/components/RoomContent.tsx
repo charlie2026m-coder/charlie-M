@@ -7,6 +7,7 @@ import { RoomOffer } from '@/types/offers'
 import { cn } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
 import { FiCalendar } from 'react-icons/fi'
+import ShareButton from '@/app/_components/ui/ShareButton'
 
 const scrollToBooking = () =>
   document.getElementById('room-booking-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -23,8 +24,15 @@ const RoomContent = ({
   const tCommon = useTranslations()
   return (
     <>
-      <div className='flex flex-col-reverse md:flex-row justify-between mb-5 items-start gap-2'>
-        <h2 className='text-[30px] md:text-[40px] font-semibold w-4/5 leading-[0.95]'>{room.name}</h2>
+      {/* Always a row. `flex-col-reverse` put the share control ABOVE the title
+          on phones — a stray button floating over the room name. Beside the
+          title it reads as an action on that title, which is what it is.
+          Not over the gallery: an overlay there swallows the photo swipe.
+          No url passed — sharing the page as it stands keeps the guest's dates
+          in the link. */}
+      <div className='flex flex-row items-start justify-between gap-3 mb-5'>
+        <h2 className='text-[30px] md:text-[40px] font-semibold leading-[0.95] min-w-0'>{room.name}</h2>
+        {isRoomInfo && <ShareButton title={room.name} showLabel className='shrink-0 mt-1' />}
       </div>
       <div className={cn('pb-3 mb-5 w-full  flex flex-col md:flex-row  justify-between', isRoomInfo && 'border-b')}>
         <RoomParamsRow 
