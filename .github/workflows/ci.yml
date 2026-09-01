@@ -32,12 +32,13 @@ jobs:
       - name: Types
         run: npm run typecheck
 
-      # Reporting only, deliberately. The repo carries 216 pre-existing eslint
-      # errors (mostly no-explicit-any and unused vars), none of them from the
-      # work this file was added alongside. Made blocking today it would fail on
-      # the first run for reasons nobody introduced, and a check that is always
-      # red is a check people stop reading. The count is printed so it can be
-      # driven down; flip continue-on-error off once it reaches zero.
+      # Reporting only, deliberately. The repo carries 217 eslint errors
+      # (mostly no-explicit-any, unused vars, and one react-hooks rule that
+      # fires per JSX element inside the room page's try/catch). Made blocking
+      # today it would fail on the first run for reasons nobody introduced, and
+      # a check that is always red is a check people stop reading. The count is
+      # printed so it can be driven down; flip continue-on-error off once it
+      # reaches zero.
       - name: Lint (reporting only)
         run: npm run lint
         continue-on-error: true
