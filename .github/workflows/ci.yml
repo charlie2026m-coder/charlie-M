@@ -20,9 +20,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 24, not 22: the lock file is produced on Node 24 / npm 11, and npm 10
+      # computes the optional wasm subtree of @tailwindcss/oxide differently —
+      # `npm ci` then rejects a lock that is perfectly valid locally. Match the
+      # runner to the machine the lock comes from.
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       - run: npm ci
