@@ -606,6 +606,8 @@
     "contactSupport": "Contact support:"
   },
   "profile": {
+    "reservationIdLabel": "Reservation ID",
+    "noShow": "No show",
     "profile": "Profile",
     "myReservations": "My Reservations",
     "all": "All",

@@ -264,7 +264,8 @@ export default function SelfCheckoutPage() {
     const d = data
     if (!d.ok) {
       if (d.state === 'invalid') return <Info icon="warn" title={t('invT')} msg={t('invM')} />
-      if (d.state === 'no_departure') return <Info icon="bed" title={t('noDepT')} msg={t('noDepM')} />
+      if (d.state === 'already_done') return <Info icon="check" title={t('alreadyT')} msg={t('alreadyM')} />
+    if (d.state === 'no_departure') return <Info icon="bed" title={t('noDepT')} msg={t('noDepM')} />
       if (d.state === 'blocked') {
         if (d.reason === 'balance_direct')
           return <Info icon="receipt" title={t('balT')} msg={balanceMsg(d)} />
@@ -272,6 +273,7 @@ export default function SelfCheckoutPage() {
       }
       return <Info icon="warn" title={t('errT')} msg={t('errM')} />
     }
+    if (d.state === 'already_done') return <Info icon="check" title={t('alreadyT')} msg={t('alreadyM')} />
     if (d.state === 'no_departure') return <Info icon="bed" title={t('noDepT')} msg={t('noDepM')} />
     if (d.state === 'blocked') {
       if (d.reason === 'balance_direct')

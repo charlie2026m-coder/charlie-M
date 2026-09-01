@@ -81,7 +81,7 @@ export interface Evaluation {
 /** JSON contract shared with the guest page — mirrors HotelCheck verbatim. */
 export interface SelfCheckoutResult {
   ok: boolean
-  state?: 'ready' | 'no_departure' | 'blocked' | 'needs_confirm' | 'done' | 'invalid' | 'error'
+  state?: 'ready' | 'no_departure' | 'already_done' | 'blocked' | 'needs_confirm' | 'done' | 'invalid' | 'error'
   msg?: string
   room?: string
   reservation_id?: string
@@ -213,6 +213,53 @@ export async function listUnits(): Promise<{ id: string; name: string }[]> {
  * at most one InHouse reservation at a time; the JS re-filter is
  * belt-and-braces.
  */
+/**
+ * Was this room's stay ALREADY closed today?
+ *
+ * Departure day runs on a knife edge: the stay is due out at 11:00 and the
+ * reservation flips to CheckedOut shortly after (night audit or a manual
+ * checkout). A guest who scans the QR a few minutes later is no longer InHouse,
+ * so findCurrentInhouse returns nothing and the page used to answer "no
+ * check-out is scheduled for this room today" — which reads as nonsense to
+ * someone standing in the room they are checking out of.
+ *
+ * Returns the closed reservation so the page can say something true and kind
+ * instead.
+ */
+export async function findClosedToday(
+  unitId: string,
+  today: string
+): Promise<ApaleoReservationHead | null> {
+  try {
+    const params = new URLSearchParams({
+      propertyIds: propertyId(),
+      unitIds: unitId,
+      dateFilter: 'Departure',
+      from: `${today}T00:00:00Z`,
+      to: `${today}T23:59:59Z`,
+      status: 'CheckedOut',
+      pageSize: '50',
+    })
+    const res = await Fetch<ApaleoReservationsResponse>(`/booking/v1/reservations?${params}`)
+    const items = res?.reservations
+    if (!Array.isArray(items)) return null
+    for (const it of items) {
+      if (!it || typeof it !== 'object') continue
+      if (String(it.status) !== 'CheckedOut') continue
+      if (String(it.departure || '').slice(0, 10) !== today) continue
+      const uid = String(it.unit?.id || '')
+      const assigned = (it.assignedUnits || []).map((x) => String(x?.unit?.id || ''))
+      if (![uid, ...assigned].includes(unitId)) continue
+      return it
+    }
+    return null
+  } catch (e) {
+    // Informational only — never let this break the page.
+    scoLog.warn('closed-today lookup failed:', e instanceof Error ? e.message : e)
+    return null
+  }
+}
+
 export async function findCurrentInhouse(
   unitId: string,
   today: string
@@ -377,6 +424,15 @@ export async function lookup(token: string): Promise<SelfCheckoutResult> {
   try {
     const head = await findCurrentInhouse(row.unit_id, today)
     if (!head) {
+      // Departure day, already closed in the PMS — say so warmly instead of
+      // "no check-out scheduled", which reads as nonsense to a guest standing
+      // in the room they are leaving. Wording kept identical to the screen's
+      // alreadyM: reading the API while debugging should show what the guest
+      // sees, not an older, blunter draft.
+      const closed = await findClosedToday(row.unit_id, today)
+      if (closed) {
+        return { ok: true, state: 'already_done', room: row.unit_name, msg: 'Ihr Check-out ist bereits abgeschlossen — Sie müssen nichts weiter tun. Die Check-out-Zeit ist 11:00 Uhr; falls Sie noch im Zimmer sind, bitten wir Sie, es nun zu verlassen. Vielen Dank für Ihren Aufenthalt!' }
+      }
       return {
         ok: true,
         state: 'no_departure',
@@ -452,6 +508,12 @@ export async function confirm(token: string, earlyAck: boolean = false): Promise
   try {
     const head = await findCurrentInhouse(row.unit_id, today)
     if (!head) {
+      // Same knife edge on the button as on the initial view: the stay can
+      // close between opening the page and tapping.
+      const closed = await findClosedToday(row.unit_id, today)
+      if (closed) {
+        return { ok: true, state: 'already_done', room: row.unit_name, msg: 'Ihr Check-out ist bereits abgeschlossen — Sie müssen nichts weiter tun. Die Check-out-Zeit ist 11:00 Uhr; falls Sie noch im Zimmer sind, bitten wir Sie, es nun zu verlassen. Vielen Dank für Ihren Aufenthalt!' }
+      }
       return { ok: false, state: 'no_departure', msg: 'Heute ist kein Check-out vorgesehen.' }
     }
     rid = String(head.id)

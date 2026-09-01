@@ -43,9 +43,15 @@ const ReservationCard = ({ reservation }: { reservation: ReservationType }  ) =>
           <Link href={`/profile/reservations/${id}`}>
             <h2 className='text-xl jakarta font-bold cursor-pointer  transition-colors'>{name}</h2>
           </Link>
-          {isCancelled && <StatusBadge status={bookingStatuses.Canceled} className='lg:hidden' />}
-            
+          {/* Mobil: das Desktop-Badge ist absolut positioniert, das traegt im
+              schmalen Layout nicht — hier laeuft es neben dem Titel mit. */}
+          <StatusBadge status={status} className='lg:hidden shrink-0' />
         </div>
+
+        {/* Zwei Aufenthalte in derselben Kategorie sind in dieser Liste sonst
+            nicht auseinanderzuhalten, und die Reservierungsnummer ist genau
+            das, wonach am Telefon und in jeder Mail gefragt wird. */}
+        <ReservationIdLine id={id} />
         <div className='flex flex-col lg:flex-row gap-1 lg:items-center text-sm text-mute mb-3'>
            <span className={cn('hidden lg:block',isCancelled && 'text-red-500')}>{from} - {to}</span>
            <span className={cn(' lg:hidden',isCancelled && 'text-red-500')}>{from}</span>
@@ -70,14 +76,47 @@ const ReservationCard = ({ reservation }: { reservation: ReservationType }  ) =>
 
 
       </div>
-      {isCancelled && <div className='absolute top-3 right-3 hidden lg:block'>
-        <StatusBadge status={bookingStatuses.Canceled} />
-      </div>}
+      {/* Ab jetzt fuer jeden Zustand. Vorher war nur eine Stornierung
+          beschriftet, ein bevorstehender und ein abgeschlossener Aufenthalt
+          sahen also gleich aus — bis auf die Buttons darunter. Ausserdem stand
+          hier fest Canceled: ein No-Show wurde als „storniert" ausgewiesen. */}
+      <div className='absolute top-3 right-3 hidden lg:block'>
+        <StatusBadge status={status} />
+      </div>
     </div>
   )
 }
 
 export default ReservationCard;
+
+/** Die Reservierungsnummer mit Ein-Klick-Kopie — der Wert, den Gast und
+ *  Rezeption tatsaechlich austauschen. */
+const ReservationIdLine = ({ id }: { id: string }) => {
+  const t = useTranslations('profile')
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(id)
+      toast.success(t('copiedToClipboard', { label: t('reservationIdLabel') }))
+    } catch {
+      toast.error(t('failedToCopy'))
+    }
+  }
+  return (
+    <div className='mb-2 flex items-center gap-1.5 text-[13px] text-mute'>
+      <span>{t('reservationIdLabel')}:</span>
+      <span className='font-[550] tracking-wide text-dark'>{id}</span>
+      <button
+        type='button'
+        onClick={copy}
+        title={t('clickToCopy')}
+        aria-label={t('clickToCopy')}
+        className='flex size-6 items-center justify-center rounded-md transition-colors hover:bg-black/5 cursor-pointer'
+      >
+        <IoCopy className='size-3.5' />
+      </button>
+    </div>
+  )
+}
 
 
 const RoomCode = ({roomNumber, code, unitId}: {roomNumber: string, code: string, unitId: string | null | undefined}) => {

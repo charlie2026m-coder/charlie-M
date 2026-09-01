@@ -17,6 +17,9 @@ export const T = {
     go: 'Jetzt auschecken',
     going: 'Wird ausgecheckt …',
     fine: 'Nur tippen, wenn Sie wirklich abreisen.',
+    alreadyT: 'Check-out bereits erledigt',
+    alreadyM:
+      'Ihr Check-out ist bereits abgeschlossen — Sie müssen nichts weiter tun. Die Check-out-Zeit ist 11:00 Uhr; falls Sie noch im Zimmer sind, bitten wir Sie, es nun zu verlassen. Vielen Dank für Ihren Aufenthalt!',
     doneT: 'Ausgecheckt',
     doneM:
       'Vielen Dank für Ihren Aufenthalt und gute Reise! Wir freuen uns, Sie bald wiederzusehen.',
@@ -56,6 +59,9 @@ export const T = {
     go: 'Check out now',
     going: 'Checking out …',
     fine: 'Only tap if you are really leaving.',
+    alreadyT: 'Check-out already done',
+    alreadyM:
+      'Your check-out is already complete — there is nothing left to do. Check-out time is 11:00; if you are still in the room, we kindly ask you to vacate it now. Thank you for staying with us!',
     doneT: 'Checked out',
     doneM: 'Thank you for your stay and safe travels! We look forward to welcoming you again.',
     noDepT: 'Nothing to do yet',

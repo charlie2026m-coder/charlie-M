@@ -606,6 +606,8 @@
     "contactSupport": "Support kontaktieren:"
   },
   "profile": {
+    "reservationIdLabel": "Reservierungsnummer",
+    "noShow": "Nicht angereist",
     "profile": "Profil",
     "myReservations": "Meine Reservierungen",
     "all": "Alle",
