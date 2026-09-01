@@ -15,7 +15,21 @@ export const RATE_PLANS = {
   NR_WEB: 'NR_WEB',        // 1 night, non-refundable
   NR_WEB2: 'NR_WEB2',      // 2 nights, non-refundable
   NR_WEB3: 'NR_WEB3',      // 3+ nights, non-refundable
+  // Extension plans — cheaper than the web rates and NOT length-tiered: Apaleo
+  // offers a single FLEX_EXTN / NR_EXTN whatever the stay length. Only reached
+  // when the guest arrives from "Extend Your Stay" (?extend=1); a normal search
+  // must never pick them or the tiered web rates become pointless.
+  //
+  // NOTE: these plans must exist on the Ibe channel in Apaleo for CMH. Until
+  // they do, resolveRatePlan finds no match and falls through to the web rates
+  // — the behaviour we have today — so shipping this early is harmless.
+  FLEX_EXTN: 'FLEX_EXTN',
+  NR_EXTN: 'NR_EXTN',
 }
+
+/** True for the plans sold only as a stay extension. */
+export const isExtensionRatePlan = (code?: string): boolean =>
+  code === RATE_PLANS.FLEX_EXTN || code === RATE_PLANS.NR_EXTN
 
 // Returns the correct refundable rate plan code based on stay length
 export const getRatePlanByNights = (nights: number): string => {
@@ -33,11 +47,22 @@ export const getNonRefundableRatePlanByNights = (nights: number): string => {
 
 // Picks the correct rate plan from a list of offers.
 // Returns null if no matching plan found — never picks a random room.
+//
+// `isExtension` switches to the extension plans, which are not length-tiered.
+// It falls through to the web rates when Apaleo does not offer one, so a
+// missing extension rate degrades to the old behaviour instead of "sold out".
 export const resolveRatePlan = <T extends { ratePlan: { code: string } }>(
   rooms: T[],
   nights: number,
   isRefundable: boolean,
+  isExtension = false,
 ): T | null => {
+  if (isExtension) {
+    const extensionCode = isRefundable ? RATE_PLANS.FLEX_EXTN : RATE_PLANS.NR_EXTN;
+    const match = rooms.find(r => r.ratePlan.code === extensionCode);
+    if (match) return match;
+  }
+
   const preferred = isRefundable
     ? getRatePlanByNights(nights)
     : getNonRefundableRatePlanByNights(nights);

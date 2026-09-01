@@ -33,6 +33,7 @@ const BookingPage = ({
     roomDetail?: RoomDetails
     filledRooms: Room[]
     preferredUnitId?: string | null
+    isExtension?: boolean
     extras: Service[]
     isKidsBedAvailable?: boolean
     babyBedAvailability?: { isAvailable: boolean; count: number }
@@ -40,7 +41,7 @@ const BookingPage = ({
   }
 }) => {
   const setPreferredUnitId = useBookingStore(state => state.setPreferredUnitId)
-  const { from, to, adults, children, rooms, allOffers, roomDetail, filledRooms, extras, preferredUnitId = null, isKidsBedAvailable = true, babyBedAvailability, isUnavailable = false } = params
+  const { from, to, adults, children, rooms, allOffers, roomDetail, filledRooms, extras, preferredUnitId = null, isExtension = false, isKidsBedAvailable = true, babyBedAvailability, isUnavailable = false } = params
 
   // Which studio this booking must land on. Cleared for every normal booking
   // so a stale value from an earlier extension cannot pin an unrelated
@@ -59,7 +60,10 @@ const BookingPage = ({
   const booking = useBookingStore(state => state.booking)
   const setBooking = useBookingStore(state => state.setBooking)
   const nights = calculateNights(from as string, to as string)
-  const mainRoom = resolveRatePlan(rooms, nights, false)
+  // isExtension comes from the URL (?extend=1), not from a store flag: a store
+  // flag is cleared by an effect on this page, which would swap the rate — and
+  // the bookingId built from it — halfway through the session.
+  const mainRoom = resolveRatePlan(rooms, nights, false, isExtension)
   const tCommon = useTranslations()
   const { id: roomTypeId } = useParams() as { id: string }
 

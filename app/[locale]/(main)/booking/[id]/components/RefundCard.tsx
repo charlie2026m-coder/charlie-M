@@ -8,7 +8,7 @@ import {
 } from "@/app/_components/ui/radio-group"
 import { Separator } from "@/app/_components/ui/separator"
 import { RoomOffer } from '@/types/offers'
-import { resolveRatePlan, HOTEL_INFO } from '@/lib/Constants'
+import { resolveRatePlan, isExtensionRatePlan, HOTEL_INFO } from '@/lib/Constants'
 import { useTranslations, useLocale } from 'next-intl'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
@@ -45,7 +45,13 @@ const RefundCard = ({ offers, nights, checkInDate }: { offers: RoomOffer[], nigh
 
   const handleRefundChange = (value: string) => {
     const isRefundable = value === 'true'
-    const mainRoom = resolveRatePlan(offers, nights, isRefundable)
+    // Derived from what is already selected rather than passed in: switching
+    // refundable/non-refundable must stay inside the extension family, or the
+    // guest silently jumps back to the pricier web rate.
+    const isExtension = isExtensionRatePlan(
+      useBookingStore.getState().roomDetails?.ratePlan?.code,
+    )
+    const mainRoom = resolveRatePlan(offers, nights, isRefundable, isExtension)
     if (!mainRoom) return
     setIsRefundable(isRefundable)
     setRoomDetails(mainRoom)

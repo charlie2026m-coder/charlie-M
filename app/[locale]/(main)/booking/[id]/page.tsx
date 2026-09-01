@@ -85,6 +85,7 @@ const Booking = async ({ params, searchParams }: IParams) => {
           children: children || '0',
           filledRooms,
           preferredUnitId: extend === '1' ? unit ?? null : null,
+          isExtension: extend === '1',
           isKidsBedAvailable,
           babyBedAvailability,
           isUnavailable,

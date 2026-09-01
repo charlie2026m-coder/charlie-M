@@ -299,7 +299,16 @@ const ExtandYourStay = ({
               }}
               className='mx-auto'
             />
-            
+            {/* The extension rate is only worth offering while the guest stays
+                put — a move means a full turnover anyway. So say the rule
+                rather than let the guest discover it: extensions are for THIS
+                studio, and if it is taken we send them to the normal search.
+                The string already existed in both languages and was never
+                rendered anywhere. */}
+            <p className='mx-auto mt-3 max-w-[640px] text-center text-[13px] leading-snug text-mute'>
+              {t('extendYourStay.sameRoomNote')}
+            </p>
+
             {/* Extension confirmation section */}
             {extensionRange?.from && extensionRange?.to && extensionNights > 0 && (
               <div className='flex flex-col pt-4 '>
