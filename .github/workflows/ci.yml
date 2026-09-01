@@ -1,0 +1,59 @@
+name: CI
+
+# Runs on every push and pull request. Until this existed the repo carried 26
+# test files and 274 tests that only ran when somebody remembered to type
+# `npm test` — a suite nobody runs is a suite that rots.
+on:
+  push:
+  pull_request:
+
+concurrency:
+  # A newer push makes an in-progress run pointless.
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Ordered cheapest-first so an obvious break reports in seconds rather
+      # than after a full build.
+      - name: Types
+        run: npm run typecheck
+
+      # Reporting only, deliberately. The repo carries 216 pre-existing eslint
+      # errors (mostly no-explicit-any and unused vars), none of them from the
+      # work this file was added alongside. Made blocking today it would fail on
+      # the first run for reasons nobody introduced, and a check that is always
+      # red is a check people stop reading. The count is printed so it can be
+      # driven down; flip continue-on-error off once it reaches zero.
+      - name: Lint (reporting only)
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Tests
+        run: npm test
+
+      # The build catches what the type checker cannot: a server/client boundary
+      # violation, a page that throws while prerendering.
+      #
+      # The two placeholders are required, not optional: lib/supabase.ts throws
+      # at module evaluation without them. They are never dialled — the build
+      # only needs them to exist. Everything else (Apaleo, Adyen, Guestway) is
+      # read at request time, so the build is green without a single real secret.
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key

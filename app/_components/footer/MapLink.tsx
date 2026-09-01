@@ -20,10 +20,15 @@ export default function MapLink({ url }: { url: string }) {
     // unchanged. A larger phone is absolutely positioned inside, aligned to the
     // top, and the slot's overflow-hidden crops it around the middle — so the
     // phone looks like it rises out of the footer without making it taller.
-    <div
-      className="map-isolated relative w-[104px] h-[118px] md:w-[226px] md:h-[186px] cursor-pointer overflow-hidden"
+    // A real anchor, not a div calling window.open(): on iOS that opened a tab,
+    // then handed the URL to the Maps app, leaving the tab on about:blank — so
+    // "back" returned the guest to a blank page instead of the site. Navigating
+    // in place lets Safari hand off to Maps and keeps us in the back stack.
+    <a
+      href={url}
+      aria-label="Open in Google Maps"
+      className="map-isolated relative block w-[104px] h-[118px] md:w-[226px] md:h-[186px] cursor-pointer overflow-hidden"
       style={{ isolation: 'isolate', zIndex: 1 }}
-      onClick={() => window.open(url, '_blank')}
     >
       <PhoneFrame className="absolute left-1/2 top-0 -translate-x-1/2 w-[100px] h-[220px] md:w-[200px] md:h-[420px]">
         {/* The map fills ONLY the visible (cropped) height of the phone, so its
@@ -35,6 +40,6 @@ export default function MapLink({ url }: { url: string }) {
           <MapWindow width="100%" height="100%" isFullscreen={false} radius="0px" zoom={isDesktop ? 16 : 14} />
         </div>
       </PhoneFrame>
-    </div>
+    </a>
   )
 }

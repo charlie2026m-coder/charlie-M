@@ -32,16 +32,20 @@ const ContactList = ({ contacts }: ContactListProps) => {
   };
 
   const handleClick = async (type: string, href: string, value: string, e: React.MouseEvent<HTMLAnchorElement>) => {
+    // GA4 contact — direct-booking / support intent (WhatsApp, phone, email, map).
+    // Fired FIRST, before any navigation decision, so every branch is counted.
+    trackContact({ method: type });
+
+    // WhatsApp and the map are plain external links: let the anchor do its own
+    // thing. Calling window.open() here instead used to make iOS Safari mint a
+    // tab, then hand the URL to the Maps/WhatsApp app — leaving that tab parked
+    // on about:blank, which is where "back" landed the guest instead of on us.
+    if (type === "whatsapp" || type === "location") return;
+
     e.preventDefault();
     e.stopPropagation();
 
-    // GA4 contact — direct-booking / support intent (WhatsApp, phone, email, map).
-    trackContact({ method: type });
-
-
-    if (type === "whatsapp" || type === "location") {
-      window.open(href, '_blank');
-    } else if (type === "email") {
+    if (type === "email") {
       // Try to open email client
       window.location.href = href;
       
