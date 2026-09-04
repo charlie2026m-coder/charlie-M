@@ -29,6 +29,53 @@ const base = createConsola({
  * Warnings become breadcrumbs instead: they cost no quota and give the trail
  * leading up to an error.
  */
+/**
+ * Slack gets the same errors, throttled.
+ *
+ * Sentry's own Slack integration needs a Team billing plan; this hotel already
+ * has an Incoming Webhook and lib/slack.ts wrapping it, so the errors go out
+ * that way instead and cost nothing.
+ *
+ * Throttled per message: an error that fires in a loop would otherwise bury the
+ * channel, and the second copy tells nobody anything the first did not. Sentry
+ * still counts every occurrence — Slack is the nudge, Sentry is the record.
+ */
+const SLACK_THROTTLE_MS = 10 * 60_000
+const lastSlackAt = new Map<string, number>()
+
+function slackThrottleAllows(key: string): boolean {
+  const now = Date.now()
+  const last = lastSlackAt.get(key)
+  if (last !== undefined && now - last < SLACK_THROTTLE_MS) return false
+  // A long-lived instance would otherwise grow this map without bound.
+  if (lastSlackAt.size > 500) lastSlackAt.clear()
+  lastSlackAt.set(key, now)
+  return true
+}
+
+function forwardToSlack(tag: string, title: string, context?: Record<string, unknown>) {
+  // Server only. SLACK_WEBHOOK_URL is not NEXT_PUBLIC, so in the browser this
+  // could never work anyway — and the guard keeps lib/slack.ts, and the webhook
+  // with it, out of the client bundle.
+  if (typeof window !== 'undefined') return
+  if (!process.env.SLACK_WEBHOOK_URL) return
+  // lib/slack.ts logs its own delivery failures through this logger. Reporting
+  // those to Slack would be a loop.
+  if (tag === 'slack') return
+  if (!slackThrottleAllows(`${tag}:${title}`)) return
+
+  // Imported lazily: lib/slack.ts imports this module, and a static import
+  // would be a cycle.
+  //
+  // Not awaited, because a consola reporter is synchronous. On a serverless
+  // instance that freezes the moment the handler returns, a message can be
+  // lost. That is the accepted cost of covering every error site for free; the
+  // money paths that must not be missed call notifySlack directly and await it.
+  void import('@/lib/slack')
+    .then(({ notifySlack }) => notifySlack('error', `[${tag}] ${title}`, context ?? {}))
+    .catch(() => {})
+}
+
 const sentryReporter: ConsolaReporter = {
   log(logObj) {
     // consola: fatal/error/fail = 0, warn = 1.
@@ -47,6 +94,8 @@ const sentryReporter: ConsolaReporter = {
       Sentry.addBreadcrumb({ category: tag, level: 'warning', message: title, data: context })
       return
     }
+
+    forwardToSlack(tag, title, context)
 
     // A real Error anywhere in the arguments carries a stack worth keeping.
     const err = logObj.args.find((a): a is Error => a instanceof Error)
