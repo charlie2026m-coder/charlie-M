@@ -18,6 +18,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import { T, fmt, niceDate, type Lang, type TKey } from './translations'
 import { MenuIcon } from '@/app/_components/breakfast/MenuIcon'
+import { MenuChips } from '@/app/_components/breakfast/MenuChips'
+import { Button } from '@/app/_components/ui/button'
 
 interface MenuView {
   code: string
@@ -156,6 +158,17 @@ export default function BreakfastPage() {
     ? fmt(t('hello'), { name: data.guestFirstName })
     : t('helloNoName')
 
+  // Every distinct menu of the stay, in the order it first appears. The same
+  // four menus are on offer every morning, so describing them under each date
+  // would print the same four cards four times over.
+  const menuLegend: MenuView[] = (() => {
+    const seen = new Map<string, MenuView>()
+    for (const m of data.mornings) {
+      for (const menu of m.menus) if (!seen.has(menu.code)) seen.set(menu.code, menu)
+    }
+    return [...seen.values()]
+  })()
+
   return (
     <Shell>
       <h1 className='text-2xl font-semibold mb-1'>{t('title')}</h1>
@@ -182,6 +195,33 @@ export default function BreakfastPage() {
             />
           </section>
 
+          {menuLegend.length > 0 && (
+            <details className='mb-6 rounded-2xl border bg-white p-5'>
+              <summary className='cursor-pointer font-medium'>{t('whatsIn')}</summary>
+              <div className='mt-4 grid gap-4 sm:grid-cols-2'>
+                {menuLegend.map(menu => (
+                  <div key={menu.code}>
+                    <div className='flex items-center gap-2 font-medium'>
+                      <MenuIcon name={menu.icon} className='h-[18px] w-[18px] shrink-0' />
+                      {menu.name}
+                    </div>
+                    {menu.description && (
+                      <p className='text-sm text-mute'>{menu.description}</p>
+                    )}
+                    {menu.items.length > 0 && (
+                      <p className='mt-1 text-sm'>{menu.items.join(' · ')}</p>
+                    )}
+                    {menu.allergens && (
+                      <p className='mt-1 text-xs text-mute'>
+                        {fmt(t('allergens'), { list: menu.allergens })}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </details>
+          )}
+
           {data.mornings.map(m => {
             const draft = drafts[m.morning] ?? { menu: m.chosenMenu, slot: m.chosenSlot, status: 'idle' as const }
             const set = (patch: Partial<Draft>) =>
@@ -205,42 +245,12 @@ export default function BreakfastPage() {
                       <legend className='text-xs font-medium uppercase tracking-[0.14em] text-mute mb-2'>
                         {t('menuLabel')}
                       </legend>
-                      <div className='flex flex-col gap-2'>
-                        {m.menus.map(menu => (
-                          <label
-                            key={menu.code}
-                            className={`flex cursor-pointer gap-3 rounded-xl border p-3 transition-colors ${
-                              draft.menu === menu.code ? 'border-black bg-black/[0.03]' : 'hover:bg-black/[0.02]'
-                            }`}
-                          >
-                            <input
-                              type='radio'
-                              name={`menu-${m.morning}`}
-                              className='mt-1 shrink-0'
-                              checked={draft.menu === menu.code}
-                              onChange={() => set({ menu: menu.code })}
-                              disabled={!!m.attendedAt}
-                            />
-                            <span className='min-w-0'>
-                              <span className='flex items-center gap-2 font-medium'>
-                                <MenuIcon name={menu.icon} className='h-[18px] w-[18px] shrink-0' />
-                                {menu.name}
-                              </span>
-                              {menu.description && (
-                                <span className='block text-sm text-mute'>{menu.description}</span>
-                              )}
-                              {menu.items.length > 0 && (
-                                <span className='mt-1 block text-sm'>{menu.items.join(' · ')}</span>
-                              )}
-                              {menu.allergens && (
-                                <span className='mt-1 block text-xs text-mute'>
-                                  {fmt(t('allergens'), { list: menu.allergens })}
-                                </span>
-                              )}
-                            </span>
-                          </label>
-                        ))}
-                      </div>
+                      <MenuChips
+                        options={m.menus}
+                        picked={draft.menu ?? undefined}
+                        onPick={code => set({ menu: code })}
+                        disabled={!!m.attendedAt}
+                      />
                     </fieldset>
 
                     <fieldset className='mb-5'>
@@ -250,9 +260,12 @@ export default function BreakfastPage() {
                       <div className='flex flex-wrap gap-2'>
                         {m.slots.map(s => {
                           // A slot the guest already holds stays selectable even
-                          // at zero left — those seats are theirs.
+                          // at zero left — those seats are theirs. For the rest,
+                          // seatsLeft already excludes this reservation, so it has
+                          // to cover the whole party: offering a sitting with one
+                          // seat left to a couple only earns them a slot_full.
                           const mine = m.chosenSlot === s.id
-                          const full = s.seatsLeft <= 0 && !mine
+                          const full = s.seatsLeft < m.persons && !mine
                           return (
                             <button
                               key={s.id}
@@ -260,7 +273,9 @@ export default function BreakfastPage() {
                               disabled={full || !!m.attendedAt}
                               onClick={() => set({ slot: s.id })}
                               className={`rounded-full border px-4 py-2 text-sm transition-colors ${
-                                draft.slot === s.id ? 'border-black bg-black text-white' : 'hover:bg-black/[0.03]'
+                                draft.slot === s.id
+                                  ? 'border-dark-gold bg-blue text-mute'
+                                  : 'hover:bg-black/[0.03]'
                               } ${full ? 'cursor-not-allowed opacity-40' : ''}`}
                             >
                               {s.startsAt}–{s.endsAt}
@@ -275,19 +290,19 @@ export default function BreakfastPage() {
 
                     {!m.attendedAt && (
                       <div className='flex flex-wrap items-center gap-3'>
-                        <button
+                        <Button
                           type='button'
                           onClick={() => void save(m.morning)}
                           disabled={draft.status === 'saving'}
-                          className='rounded-full bg-black px-5 py-2.5 text-sm font-medium text-white disabled:opacity-50'
+                          className='h-[45px] px-6 text-base'
                         >
                           {draft.status === 'saving' ? t('saving') : t('save')}
-                        </button>
+                        </Button>
                         {draft.status === 'saved' && (
                           <span className='text-sm text-green'>{t('saved')}</span>
                         )}
                         {draft.status === 'error' && draft.error && (
-                          <span className='text-sm text-red-600'>{draft.error}</span>
+                          <span className='text-sm text-red'>{draft.error}</span>
                         )}
                       </div>
                     )}

@@ -33,7 +33,7 @@ import {
 } from '@/app/_components/ui/dialog'
 import { Button } from '@/app/_components/ui/button'
 import { ButtonIcon } from '@/app/_components/ui/ButtonIcon'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Service } from '@/types/apaleo'
 import { useBookingStore } from '@/store/useBookingStore'
 import { Room, RoomExtra } from '@/types/types'
@@ -41,6 +41,7 @@ import { useTranslations, useLocale } from 'next-intl'
 import { trackSelectExtra } from '@/lib/analytics'
 import { breakfastMorningsForStay } from '@/lib/breakfastDates'
 import { MenuIcon } from '@/app/_components/breakfast/MenuIcon'
+import { MenuChips } from '@/app/_components/breakfast/MenuChips'
 
 interface MenuOption {
   code: string
@@ -79,12 +80,17 @@ const AddBreakfastExtra = ({
 
   const stayFrom = rooms[0]?.from ?? ''
   const stayTo = rooms[0]?.to ?? ''
-  const mornings = breakfastMorningsForStay(stayFrom, stayTo)
+  const mornings = useMemo(() => breakfastMorningsForStay(stayFrom, stayTo), [stayFrom, stayTo])
 
   const [calendar, setCalendar] = useState<MorningMenus[] | null>(null)
   const [roomCounts, setRoomCounts] = useState<Record<string, number>>({})
   // roomId -> morning -> menu code
   const [roomMenus, setRoomMenus] = useState<Record<string, Record<string, string>>>({})
+  // The same four menus are on offer every morning of a normal stay, so the
+  // default is one choice for the whole stay and this opens the per-morning
+  // rows. Only meaningful when the calendar is uniform; otherwise the rows are
+  // always shown, because then the days genuinely differ.
+  const [perDay, setPerDay] = useState(false)
 
   const maxFor = (room: Room) => room.adults + room.children
 
@@ -107,6 +113,7 @@ const AddBreakfastExtra = ({
     const { counts, menus } = readSaved()
     setRoomCounts(counts)
     setRoomMenus(menus)
+    setPerDay(Object.values(menus).some(byMorning => new Set(Object.values(byMorning)).size > 1))
   }
 
   // Fetched only while the dialog is open: most guests never open it, and the
@@ -134,13 +141,28 @@ const AddBreakfastExtra = ({
   // Every distinct menu that appears anywhere in this stay, in calendar order.
   // Deduplicated by code so the description block below stays one copy even
   // though the same menu is on offer every morning.
-  const menuLegend: MenuOption[] = (() => {
+  const menuLegend: MenuOption[] = useMemo(() => {
     const seen = new Map<string, MenuOption>()
     for (const day of calendar ?? []) {
       for (const menu of day.menus) if (!seen.has(menu.code)) seen.set(menu.code, menu)
     }
     return [...seen.values()]
-  })()
+  }, [calendar])
+
+  const menusOn = (morning: string) => calendar?.find(c => c.morning === morning)?.menus ?? []
+
+  // Does every morning of this stay offer exactly the same menus? Then asking
+  // four times is asking the same question four times.
+  const uniformMenus: MenuOption[] | null = useMemo(() => {
+    if (calendar === null || mornings.length === 0) return null
+    const first = calendar.find(c => c.morning === mornings[0])?.menus ?? []
+    if (first.length === 0) return null
+    const key = first.map(m => m.code).join(',')
+    const same = mornings.every(
+      m => (calendar.find(c => c.morning === m)?.menus ?? []).map(x => x.code).join(',') === key,
+    )
+    return same ? first : null
+  }, [calendar, mornings])
 
   const totalCount = Object.values(roomCounts).reduce((sum, c) => sum + c, 0)
   const totalPrice = Math.round(extra.price * totalCount * nights * 100) / 100
@@ -160,6 +182,32 @@ const AddBreakfastExtra = ({
 
   const pickMenu = (roomId: string, morning: string, code: string) =>
     setRoomMenus(prev => ({ ...prev, [roomId]: { ...(prev[roomId] ?? {}), [morning]: code } }))
+
+  const pickEveryMorning = (roomId: string, code: string) =>
+    setRoomMenus(prev => ({
+      ...prev,
+      [roomId]: Object.fromEntries(mornings.map(m => [m, code])),
+    }))
+
+  /** The one code held by every morning, or undefined if they differ. */
+  const pickedForAll = (roomId: string) => {
+    const chosen = mornings.map(m => roomMenus[roomId]?.[m])
+    return chosen.every(c => c && c === chosen[0]) ? chosen[0] : undefined
+  }
+
+  // Collapsing back to a single choice must not hide a difference it cannot
+  // show, so the first morning's pick wins for the whole stay.
+  const collapseToFirst = () => {
+    setPerDay(false)
+    setRoomMenus(prev =>
+      Object.fromEntries(
+        Object.entries(prev).map(([roomId, byMorning]) => {
+          const first = byMorning[mornings[0]]
+          return [roomId, first ? Object.fromEntries(mornings.map(m => [m, first])) : byMorning]
+        }),
+      ),
+    )
+  }
 
   const handleConfirm = () => {
     const writeIds = servicesToWrite.map(s => s.id)
@@ -213,7 +261,7 @@ const AddBreakfastExtra = ({
         </div>
       </DialogTrigger>
 
-      <DialogContent className='max-h-[85dvh] overflow-y-auto sm:max-w-[560px]'>
+      <DialogContent className='max-h-[85dvh] overflow-y-auto sm:max-w-[640px]'>
         <DialogHeader>
           <DialogTitle>
             {extra.name} (€{extra.price})
@@ -270,55 +318,62 @@ const AddBreakfastExtra = ({
                       </div>
                     )}
 
-                    {/* One line per morning, nothing repeated. The first cut
-                        printed all four menus in full under every date: on a
-                        four-night stay that is sixteen identical cards and the
-                        guest scrolls past the thing they came to do. The menus
-                        are the same every day, so they are described ONCE,
-                        below, behind a disclosure. */}
-                    <div className='divide-y rounded-lg border'>
-                      {mornings.map(morning => {
-                        const options = calendar.find(c => c.morning === morning)?.menus ?? []
-                        const picked = roomMenus[room.id]?.[morning]
-                        return (
-                          <div
-                            key={morning}
-                            className='flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:gap-4'
-                          >
-                            <div className='shrink-0 text-sm font-medium sm:w-28'>
-                              {dateLabel(morning)}
-                            </div>
-                            {options.length === 0 ? (
-                              <div className='text-sm text-mute'>{t('breakfastMenuNone')}</div>
-                            ) : (
-                              <div className='flex flex-wrap gap-1.5'>
-                                {options.map(menu => {
-                                  const isPicked = picked === menu.code
-                                  return (
-                                    <button
-                                      key={menu.code}
-                                      type='button'
-                                      onClick={() => pickMenu(room.id, morning, menu.code)}
-                                      aria-pressed={isPicked}
-                                      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors ${
-                                        isPicked
-                                          ? 'border-dark-gold bg-blue text-mute'
-                                          : 'border-transparent bg-black/[0.04] hover:bg-black/[0.07]'
-                                      }`}
-                                    >
-                                      <MenuIcon name={menu.icon} className='h-4 w-4 shrink-0' />
-                                      {menu.name}
-                                    </button>
-                                  )
-                                })}
+                    {/* One choice for the whole stay when every morning offers
+                        the same menus, which is the normal case: four identical
+                        rows is the same question asked four times. The rows are
+                        one tap away for a guest who does want to vary it, and
+                        appear on their own when the days really do differ. The
+                        menus themselves are described ONCE, below, behind a
+                        disclosure. */}
+                    {uniformMenus && !perDay ? (
+                      <div className='rounded-lg border p-3'>
+                        <div className='mb-2 text-sm font-medium'>
+                          {t('breakfastMenuEveryMorning')}
+                        </div>
+                        <MenuChips
+                          options={uniformMenus}
+                          picked={pickedForAll(room.id)}
+                          onPick={code => pickEveryMorning(room.id, code)}
+                        />
+                      </div>
+                    ) : (
+                      <div className='divide-y rounded-lg border'>
+                        {mornings.map(morning => {
+                          const options = menusOn(morning)
+                          return (
+                            <div
+                              key={morning}
+                              className='flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:gap-4'
+                            >
+                              <div className='shrink-0 text-sm font-medium sm:w-24'>
+                                {dateLabel(morning)}
                               </div>
-                            )}
-                          </div>
-                        )
-                      })}
-                    </div>
+                              {options.length === 0 ? (
+                                <div className='text-sm text-mute'>{t('breakfastMenuNone')}</div>
+                              ) : (
+                                <MenuChips
+                                  options={options}
+                                  picked={roomMenus[room.id]?.[morning]}
+                                  onPick={code => pickMenu(room.id, morning, code)}
+                                />
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
                   </div>
                 ))
+            )}
+
+            {uniformMenus && (
+              <button
+                type='button'
+                onClick={() => (perDay ? collapseToFirst() : setPerDay(true))}
+                className='text-sm text-mute underline underline-offset-2'
+              >
+                {perDay ? t('breakfastMenuSameAll') : t('breakfastMenuPerDay')}
+              </button>
             )}
 
             {/* The menus themselves, described once and closed by default —
@@ -354,11 +409,11 @@ const AddBreakfastExtra = ({
           </div>
         )}
 
-        <div className='mt-4 flex items-center justify-between border-t pt-4'>
-          <span className='text-sm'>
+        <div className='mt-4 flex items-center justify-between gap-3 border-t pt-4'>
+          <span className='whitespace-nowrap text-sm'>
             {t('total')}: {totalCount}
           </span>
-          <Button onClick={handleConfirm} className='h-[45px] min-w-[180px]'>
+          <Button onClick={handleConfirm} className='h-[45px] min-w-0 flex-1 sm:min-w-[180px] sm:flex-none'>
             {t('confirm')} € {totalPrice.toFixed(2)}
           </Button>
         </div>

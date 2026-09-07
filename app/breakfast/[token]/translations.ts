@@ -35,6 +35,7 @@ export const T = {
     personsPlural: 'für {count} Personen',
     allergens: 'Allergene: {list}',
     noMenus: 'An diesem Morgen wird kein Frühstück serviert.',
+    whatsIn: 'Was in den Menüs steckt',
 
     save: 'Auswahl speichern',
     saving: 'Wird gespeichert …',
@@ -71,6 +72,7 @@ export const T = {
     personsPlural: 'for {count} people',
     allergens: 'Allergens: {list}',
     noMenus: 'No breakfast is served on this morning.',
+    whatsIn: 'What is in each menu',
 
     save: 'Save selection',
     saving: 'Saving …',
