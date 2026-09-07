@@ -496,6 +496,7 @@
     "source": "Bewertungen von Google."
   },
   "bookingForm": {
+    "breakfastAllergens": "Allergene",
     "loading": "Wird geladen …",
     "breakfastMenuTitle": "Menü wählen",
     "breakfastMenuHint": "Wählen Sie für jeden Morgen aus. Änderung später jederzeit möglich.",

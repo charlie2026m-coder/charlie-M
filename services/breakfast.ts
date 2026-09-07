@@ -147,6 +147,9 @@ export async function ensureBreakfastToken(reservationId: string): Promise<strin
 
 export interface MenuView {
   code: string
+  /** Emoji shown beside the name. Recognised before the word is read, which is
+   *  what separates four menus on a phone. Empty is fine — the UI just omits it. */
+  icon: string
   name: string
   description: string
   items: string[]
@@ -262,6 +265,7 @@ export async function guestView(token: string, locale = 'en'): Promise<GuestBrea
         .filter(Boolean)
         .map(m => ({
           code: String(m!.code),
+          icon: String(m!.icon ?? ''),
           name: pick(locale, String(m!.name_de), String(m!.name_en)),
           description: pick(locale, String(m!.description_de), String(m!.description_en)),
           items: toLines(pick(locale, String(m!.items_de), String(m!.items_en))),
@@ -334,6 +338,7 @@ export async function menusForRange(
         .filter(Boolean)
         .map(m => ({
           code: String(m!.code),
+          icon: String(m!.icon ?? ''),
           name: pick(locale, String(m!.name_de), String(m!.name_en)),
           description: pick(locale, String(m!.description_de), String(m!.description_en)),
           items: toLines(pick(locale, String(m!.items_de), String(m!.items_en))),

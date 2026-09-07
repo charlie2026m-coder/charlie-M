@@ -20,6 +20,7 @@ import { T, fmt, niceDate, type Lang, type TKey } from './translations'
 
 interface MenuView {
   code: string
+  icon: string
   name: string
   description: string
   items: string[]
@@ -220,7 +221,14 @@ export default function BreakfastPage() {
                               disabled={!!m.attendedAt}
                             />
                             <span className='min-w-0'>
-                              <span className='block font-medium'>{menu.name}</span>
+                              <span className='flex items-center gap-2 font-medium'>
+                                {menu.icon && (
+                                  <span className='text-lg leading-none' aria-hidden>
+                                    {menu.icon}
+                                  </span>
+                                )}
+                                {menu.name}
+                              </span>
                               {menu.description && (
                                 <span className='block text-sm text-mute'>{menu.description}</span>
                               )}

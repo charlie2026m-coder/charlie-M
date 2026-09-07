@@ -43,6 +43,7 @@ import { breakfastMorningsForStay } from '@/lib/breakfastDates'
 
 interface MenuOption {
   code: string
+  icon: string
   name: string
   description: string
   items: string[]
@@ -265,22 +266,48 @@ const AddBreakfastExtra = ({
                           {options.length === 0 ? (
                             <div className='text-sm text-mute'>{t('breakfastMenuNone')}</div>
                           ) : (
-                            <div className='flex flex-wrap gap-2'>
-                              {options.map(menu => (
-                                <button
-                                  key={menu.code}
-                                  type='button'
-                                  onClick={() => pickMenu(room.id, morning, menu.code)}
-                                  title={menu.items.join(' · ')}
-                                  className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
-                                    picked === menu.code
-                                      ? 'border-black bg-black text-white'
-                                      : 'hover:bg-black/[0.03]'
-                                  }`}
-                                >
-                                  {menu.name}
-                                </button>
-                              ))}
+                            /* Cards, not pills. Four words in four pills make
+                               the guest read all four to tell them apart; an
+                               icon is recognised first, and the dish list is
+                               what they are actually choosing between. */
+                            <div className='grid gap-2 sm:grid-cols-2'>
+                              {options.map(menu => {
+                                const isPicked = picked === menu.code
+                                return (
+                                  <button
+                                    key={menu.code}
+                                    type='button'
+                                    onClick={() => pickMenu(room.id, morning, menu.code)}
+                                    aria-pressed={isPicked}
+                                    className={`rounded-xl border p-3 text-left transition-colors ${
+                                      isPicked ? 'border-black bg-black/[0.04]' : 'hover:bg-black/[0.02]'
+                                    }`}
+                                  >
+                                    <span className='flex items-center gap-2'>
+                                      {menu.icon && (
+                                        <span className='text-lg leading-none' aria-hidden>
+                                          {menu.icon}
+                                        </span>
+                                      )}
+                                      <span className='font-medium'>{menu.name}</span>
+                                      {isPicked && <span className='ml-auto text-sm' aria-hidden>✓</span>}
+                                    </span>
+                                    {menu.description && (
+                                      <span className='mt-1 block text-xs text-mute'>{menu.description}</span>
+                                    )}
+                                    {menu.items.length > 0 && (
+                                      <span className='mt-1.5 block text-xs leading-snug'>
+                                        {menu.items.join(' · ')}
+                                      </span>
+                                    )}
+                                    {menu.allergens && (
+                                      <span className='mt-1.5 block text-[11px] text-mute'>
+                                        {t('breakfastAllergens')}: {menu.allergens}
+                                      </span>
+                                    )}
+                                  </button>
+                                )
+                              })}
                             </div>
                           )}
                         </div>
