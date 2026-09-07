@@ -24,6 +24,16 @@ export default defineConfig({
     },
   },
   resolve: {
-    alias: { '@': path.resolve(__dirname, '.') },
+    alias: {
+      '@': path.resolve(__dirname, '.'),
+      // lib/logger.ts imports @sentry/nextjs at module scope and almost every
+      // service imports the logger. Under vitest that reaches
+      // @sentry/server-utils, whose vendored webpack plugin calls
+      // fileURLToPath on a non-file URL and throws — 13 of 29 test files died
+      // on import, on CI and locally. Tests assert nothing about Sentry, so the
+      // package is kept out of the test module graph rather than production
+      // code being reshaped around a test runner.
+      '@sentry/nextjs': path.resolve(__dirname, '__tests__/stubs/sentry.ts'),
+    },
   },
 });
