@@ -104,24 +104,78 @@ function headers(bearer: string) {
   }
 }
 
-/**
- * Find the guest conversation for an Apaleo reservation. Apaleo's reservationId
- * is Guestway's `reservations.confirmationCode` (same mapping our accesses lookup
- * uses). Returns null when there's no conversation yet.
- */
-async function findConversationId(reservationId: string): Promise<string | null> {
-  const filters = [{ field: 'reservations.confirmationCode', operator: 'eq', value: reservationId }]
+/** One page of conversations for a confirmation code, or null if the call failed. */
+async function conversationsFor(confirmationCode: string): Promise<Array<{ id: string }> | null> {
+  const filters = [
+    { field: 'reservations.confirmationCode', operator: 'eq', value: confirmationCode },
+  ]
   const url = `${API_URL}/conversations?filters=${encodeURIComponent(JSON.stringify(filters))}`
-  const res = await fetch(url, { headers: headers(MESSAGE_TOKEN as string), signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) })
+  const res = await fetch(url, {
+    headers: headers(MESSAGE_TOKEN as string),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+  })
   if (!res.ok) {
     bookingLog.warn('guestway: conversation lookup failed', {
-      reservationId,
+      confirmationCode,
       status: res.status,
     })
     return null
   }
   const json = (await res.json()) as ConversationsResponse
-  return json.data?.[0]?.id ?? null
+  return Array.isArray(json.data) ? json.data : []
+}
+
+// Guestway answers an unknown filter FIELD with HTTP 200 and the whole list
+// rather than an error. Taking data[0] from that is how a message ends up in a
+// stranger's thread — and a breakfast link is a bearer credential for somebody
+// else's booking, so this is not a cosmetic risk. Probe once per process with a
+// code that cannot exist: anything but an empty answer means the filter is
+// being ignored and nothing may be sent through it.
+const PROBE_CODE = 'CHARLIE-M-PROBE-NO-SUCH-RESERVATION'
+let filterHonoured: boolean | null = null
+
+async function filterIsHonoured(): Promise<boolean> {
+  if (filterHonoured !== null) return filterHonoured
+  try {
+    const rows = await conversationsFor(PROBE_CODE)
+    // A failed probe is not proof of anything, so it does not poison the cache.
+    if (rows === null) return false
+    filterHonoured = rows.length === 0
+  } catch {
+    return false
+  }
+  if (!filterHonoured) {
+    bookingLog.error(
+      'guestway: conversation filter is being ignored — refusing to send anything',
+      { probe: PROBE_CODE },
+    )
+  }
+  return filterHonoured
+}
+
+/**
+ * Find the guest conversation for an Apaleo reservation. Apaleo's reservationId
+ * is Guestway's `reservations.confirmationCode` (same mapping our accesses lookup
+ * uses). Returns null when there's no conversation yet.
+ *
+ * Requires EXACTLY ONE match. More than one means the filter did not do what we
+ * asked, and picking from the pile would send a guest's message to somebody
+ * else.
+ */
+async function findConversationId(reservationId: string): Promise<string | null> {
+  if (!(await filterIsHonoured())) return null
+
+  const rows = await conversationsFor(reservationId)
+  if (rows === null) return null
+  if (rows.length === 0) return null
+  if (rows.length > 1) {
+    bookingLog.error('guestway: filter returned several conversations — refusing to guess', {
+      reservationId,
+      count: rows.length,
+    })
+    return null
+  }
+  return rows[0]?.id ?? null
 }
 
 /**
