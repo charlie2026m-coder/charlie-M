@@ -14,9 +14,15 @@
  * quantities would be rejected as a mismatch at capture. That is a money-path
  * change and belongs in its own pass.
  *
- * The menu choice carries no money. It rides in the booking payload as
- * `breakfastMenus` and is applied after the webhook creates the reservation —
- * the first moment a reservation id exists to attach it to.
+ * The menu choice carries no money. It is kept on the RoomExtra as
+ * `breakfastMenus`, waiting for the half of the wiring that does not exist yet:
+ * NOTHING server-side reads it. A reservation id is the first thing the choice
+ * could be attached to and that only exists once the Adyen webhook has created
+ * the booking, so until a webhook step writes it through chooseBreakfast(), a
+ * menu picked here lives only in the browser store and the guest chooses again
+ * from the link we send. The modal is honest about that — "you can also choose
+ * or change your menu later from the link we send you" — but it is a gap, not a
+ * design.
  *
  * Menus are shown per MORNING. Apaleo bills breakfast by the night and the
  * guest eats it the next day, so the mornings of a stay run from the day after
