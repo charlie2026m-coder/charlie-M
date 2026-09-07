@@ -652,6 +652,258 @@ export async function applyBreakfastChoice(
   }
 }
 
+// ── The kitchen ─────────────────────────────────────────────────────────────
+
+export interface KitchenLine {
+  reservationId: string
+  guest: string
+  room: string
+  /** People this reservation has breakfast for on this morning. */
+  persons: number
+  /** Empty when the guest never picked — the kitchen still has to feed them. */
+  menus: { code: string; name: string; icon: string; persons: number }[]
+  slot: { id: number; startsAt: string; endsAt: string } | null
+  attendedPersons: number | null
+}
+
+export interface KitchenReport {
+  morning: string
+  /** Everyone breakfast is paid for. This is the number to cook to. */
+  covers: number
+  /** Of those, how many have a menu on file. */
+  chosen: number
+  byMenu: { code: string; name: string; icon: string; persons: number }[]
+  bySitting: {
+    id: number | null
+    label: string
+    persons: number
+    menus: { code: string; persons: number }[]
+  }[]
+  lines: KitchenLine[]
+}
+
+interface ApaleoReservationsPage {
+  count?: number
+  reservations?: unknown[]
+}
+
+/**
+ * Every reservation staying the night before `morning`, with its services.
+ *
+ * Paged because the house is 125 rooms and Apaleo caps a page at 100. Cancelled
+ * and no-show reservations are dropped here rather than through a status
+ * filter: the filter takes one status at a time, and asking for the three that
+ * count would be three round trips to exclude two.
+ */
+async function reservationsStayingOn(night: string): Promise<ApaleoReservationResponse[]> {
+  const out: ApaleoReservationResponse[] = []
+  const PAGE = 100
+  const MAX_PAGES = 6
+
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    const params = new URLSearchParams({
+      propertyIds: propertyId(),
+      dateFilter: 'Stay',
+      from: `${night}T00:00:00Z`,
+      to: `${night}T23:59:59Z`,
+      pageNumber: String(page),
+      pageSize: String(PAGE),
+      expand: 'services',
+    })
+    // URLSearchParams collapses repeats of the same key, and Apaleo wants one
+    // `expand` per value.
+    const url = `/booking/v1/reservations?${params}&expand=primaryGuest&expand=unit`
+
+    let res: ApaleoReservationsPage | null = null
+    try {
+      res = await Fetch<ApaleoReservationsPage>(url)
+    } catch (e) {
+      bfLog.error('kitchen: reservation page failed', {
+        night,
+        page,
+        error: e instanceof Error ? e.message : String(e),
+      })
+      break
+    }
+
+    const items = Array.isArray(res?.reservations) ? res.reservations : []
+    for (const item of items) {
+      const r = item as ApaleoReservationResponse & { status?: string }
+      const status = String(r?.status ?? '')
+      if (status === 'Canceled' || status === 'NoShow') continue
+      out.push(r)
+    }
+
+    if (items.length < PAGE) break
+  }
+
+  return out
+}
+
+/**
+ * What the kitchen cooks tomorrow.
+ *
+ * Two sources, and the difference between them is the point. Apaleo says who
+ * has PAID for breakfast that morning — that is the number of covers, and it
+ * includes every guest who never opened their link. Our own tables say who
+ * picked WHAT, and at which sitting. A report built from our tables alone would
+ * quietly under-cater by exactly the guests who could not be bothered to
+ * choose, which is the one mistake a breakfast service cannot recover from.
+ *
+ * So every paid reservation appears, and the ones with no choice are shown as
+ * such rather than left out.
+ */
+export async function kitchenReport(morning: string, locale = 'en'): Promise<KitchenReport> {
+  const empty: KitchenReport = {
+    morning,
+    covers: 0,
+    chosen: 0,
+    byMenu: [],
+    bySitting: [],
+    lines: [],
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(morning)) return empty
+
+  const night = morningToNight(morning)
+  const reservations = await reservationsStayingOn(night)
+
+  const paidLines = reservations
+    .map(r => {
+      const paid = paidBreakfastMornings(r).find(p => p.morning === morning)
+      if (!paid) return null
+      const withIds = r as ApaleoReservationResponse & {
+        id?: string
+        unit?: { name?: string }
+        primaryGuest?: { firstName?: string; lastName?: string }
+      }
+      const guest = [withIds.primaryGuest?.firstName, withIds.primaryGuest?.lastName]
+        .filter(Boolean)
+        .join(' ')
+        .trim()
+      return {
+        reservationId: String(withIds.id ?? ''),
+        guest,
+        room: String(withIds.unit?.name ?? ''),
+        persons: paid.persons,
+      }
+    })
+    .filter((x): x is { reservationId: string; guest: string; room: string; persons: number } =>
+      Boolean(x?.reservationId),
+    )
+
+  if (paidLines.length === 0) return empty
+
+  const db = admin()
+  const ids = paidLines.map(l => l.reservationId)
+
+  const [{ data: bookings }, { data: menus }, { data: slots }] = await Promise.all([
+    db
+      .from('breakfast_bookings')
+      .select('id, reservation_id, slot_id, attended_persons')
+      .eq('service_date', morning)
+      .in('reservation_id', ids),
+    db.from('breakfast_menus').select('code, icon, name_de, name_en').order('sort_order'),
+    db.from('breakfast_slots').select('id, starts_at, ends_at').order('sort_order'),
+  ])
+
+  const bookingIds = (bookings ?? []).map(b => Number(b.id)).filter(Number.isFinite)
+  const { data: split } = bookingIds.length
+    ? await db
+        .from('breakfast_booking_menus')
+        .select('booking_id, menu_code, persons')
+        .in('booking_id', bookingIds)
+    : { data: [] as { booking_id: number; menu_code: string; persons: number }[] }
+
+  const menuInfo = new Map(
+    (menus ?? []).map(m => [
+      String(m.code),
+      { name: pick(locale, String(m.name_de), String(m.name_en)), icon: String(m.icon ?? '') },
+    ]),
+  )
+  const slotInfo = new Map(
+    (slots ?? []).map(s => [
+      Number(s.id),
+      { startsAt: String(s.starts_at).slice(0, 5), endsAt: String(s.ends_at).slice(0, 5) },
+    ]),
+  )
+
+  const splitByBooking = new Map<number, { code: string; persons: number }[]>()
+  for (const row of split ?? []) {
+    const key = Number(row.booking_id)
+    const list = splitByBooking.get(key) ?? []
+    list.push({ code: String(row.menu_code), persons: Number(row.persons ?? 0) })
+    splitByBooking.set(key, list)
+  }
+
+  const bookingByReservation = new Map((bookings ?? []).map(b => [String(b.reservation_id), b]))
+
+  const lines: KitchenLine[] = paidLines.map(line => {
+    const booking = bookingByReservation.get(line.reservationId)
+    const chosen = booking ? (splitByBooking.get(Number(booking.id)) ?? []) : []
+    const slotId = booking?.slot_id != null ? Number(booking.slot_id) : null
+    const slot = slotId != null ? slotInfo.get(slotId) : undefined
+    return {
+      ...line,
+      menus: chosen
+        .map(c => ({
+          code: c.code,
+          name: menuInfo.get(c.code)?.name ?? c.code,
+          icon: menuInfo.get(c.code)?.icon ?? '',
+          persons: c.persons,
+        }))
+        .sort((a, b) => a.code.localeCompare(b.code)),
+      slot: slot && slotId != null ? { id: slotId, ...slot } : null,
+      attendedPersons:
+        booking?.attended_persons != null ? Number(booking.attended_persons) : null,
+    }
+  })
+
+  lines.sort((a, b) => (a.slot?.startsAt ?? '~').localeCompare(b.slot?.startsAt ?? '~') || a.room.localeCompare(b.room))
+
+  const byMenuCount = new Map<string, number>()
+  const bySittingCount = new Map<string, { persons: number; menus: Map<string, number> }>()
+
+  for (const line of lines) {
+    const key = line.slot ? String(line.slot.id) : 'none'
+    const bucket = bySittingCount.get(key) ?? { persons: 0, menus: new Map<string, number>() }
+    bucket.persons += line.persons
+    for (const m of line.menus) {
+      byMenuCount.set(m.code, (byMenuCount.get(m.code) ?? 0) + m.persons)
+      bucket.menus.set(m.code, (bucket.menus.get(m.code) ?? 0) + m.persons)
+    }
+    bySittingCount.set(key, bucket)
+  }
+
+  const covers = lines.reduce((total, l) => total + l.persons, 0)
+  const chosen = lines.reduce((total, l) => total + sumPortions(Object.fromEntries(l.menus.map(m => [m.code, m.persons]))), 0)
+
+  const bySitting = [...bySittingCount.entries()]
+    .map(([key, bucket]) => {
+      const id = key === 'none' ? null : Number(key)
+      const info = id != null ? slotInfo.get(id) : undefined
+      return {
+        id,
+        label: info ? `${info.startsAt}–${info.endsAt}` : 'No time chosen',
+        persons: bucket.persons,
+        menus: [...bucket.menus.entries()]
+          .map(([code, persons]) => ({ code, persons }))
+          .sort((a, b) => a.code.localeCompare(b.code)),
+      }
+    })
+    .sort((a, b) => (a.id == null ? 1 : b.id == null ? -1 : a.label.localeCompare(b.label)))
+
+  const byMenu = [...byMenuCount.entries()]
+    .map(([code, persons]) => ({
+      code,
+      name: menuInfo.get(code)?.name ?? code,
+      icon: menuInfo.get(code)?.icon ?? '',
+      persons,
+    }))
+    .sort((a, b) => a.code.localeCompare(b.code))
+
+  return { morning, covers, chosen, byMenu, bySitting, lines }
+}
+
 // ── The door ────────────────────────────────────────────────────────────────
 
 export interface ScanResult {

@@ -8,7 +8,7 @@ import { ServiceDetails } from '@/app/actions/supabase/services/getServicesDetai
 import { Button } from '@/app/_components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/_components/ui/table'
 import { IoLogOut } from 'react-icons/io5'
-import { MdEdit, MdQrCode2, MdQrCodeScanner } from 'react-icons/md'
+import { MdEdit, MdQrCode2, MdQrCodeScanner, MdRestaurantMenu } from 'react-icons/md'
 
 export default function AdminRoomsPage() {
   const router = useRouter()
@@ -111,6 +111,17 @@ export default function AdminRoomsPage() {
               <a href="/admin/breakfast/scan">
                 <MdQrCodeScanner className="size-3.5" />
                 Breakfast door
+              </a>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="gap-1.5 border-black text-black hover:bg-black hover:text-white h-8"
+            >
+              <a href="/admin/breakfast/report">
+                <MdRestaurantMenu className="size-3.5" />
+                Kitchen sheet
               </a>
             </Button>
             <Button
