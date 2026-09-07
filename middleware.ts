@@ -17,7 +17,11 @@ export function middleware(request: NextRequest) {
   // /room/{token} is the in-room "open my booking" QR — same reasoning, and
   // /r/{id} is the Guestway post-pre-check-in landing. The trailing slash
   // matters: '/rooms' is the public catalogue and must keep its locale handling.
-  if (pathname.startsWith('/admin') || pathname.startsWith('/auth') || pathname.startsWith('/api') || pathname.startsWith('/checkout') || pathname.startsWith('/room/') || pathname.startsWith('/r/')) {
+  // /breakfast/{token} is the menu-and-sitting page reached from a Guestway
+  // link and kept for the door QR: same shape, same reason. Without this the
+  // page 404s while its own API answers perfectly — next-intl rewrites the
+  // locale-free path to /en/breakfast/... where no route exists.
+  if (pathname.startsWith('/admin') || pathname.startsWith('/auth') || pathname.startsWith('/api') || pathname.startsWith('/checkout') || pathname.startsWith('/breakfast/') || pathname.startsWith('/room/') || pathname.startsWith('/r/')) {
     return NextResponse.next();
   }
 
@@ -33,6 +37,6 @@ export const config = {
     // The extension list must likewise cover every static type served from /public
     // (txt/xml here, plus video/audio/font if any are ever added), or the same
     // rewrite swallows those too.
-    '/((?!admin|api|auth/callback|checkout|room/|r/|sitemap|robots.txt|\\.well-known|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|xml|txt)$).*)',
+    '/((?!admin|api|auth/callback|checkout|breakfast/|room/|r/|sitemap|robots.txt|\\.well-known|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|xml|txt)$).*)',
   ],
 };
