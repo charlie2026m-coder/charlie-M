@@ -29,7 +29,22 @@ jobs:
           node-version: 24
           cache: npm
 
-      - run: npm ci
+      # npm ci, with a loud fallback — not a silent one.
+      #
+      # The lock is generated on Windows, where npm skips
+      # @rolldown/binding-wasm32-wasi and so never records the two @emnapi peers
+      # that Linux resolves for it. Any `npm install` on a dev machine drops
+      # those entries again — it has happened twice — and then every push here
+      # dies before a single check runs. Blocking CI on a cross-platform npm
+      # quirk helps nobody; silently papering over a rotten lock helps nobody
+      # either. So the fallback shouts in the run summary, and --no-save stops
+      # it rewriting anything.
+      - name: Install
+        run: |
+          npm ci || {
+            echo "::warning::package-lock.json is out of sync - a Windows npm install drops the @emnapi peers. Falling back to npm install --no-save; restore the lock entries."
+            npm install --no-save
+          }
 
       # Ordered cheapest-first so an obvious break reports in seconds rather
       # than after a full build.
