@@ -921,7 +921,13 @@
     "postalCode": "Postal Code",
     "city": "City",
     "country": "Country",
-    "save": "Save"
+    "save": "Save",
+    "breakfastCardTitle": "Your breakfast",
+    "breakfastCardNeedsChoice": "Choice needed",
+    "breakfastCardNotChosen": "no menu chosen",
+    "breakfastCardNoTime": "no time chosen",
+    "breakfastCardChoose": "Choose your menu and time",
+    "breakfastCardChange": "Change your choice"
   },
   "checkIn": {
     "title": "Online Check-In",

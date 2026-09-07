@@ -921,7 +921,13 @@
     "postalCode": "Postleitzahl",
     "city": "Ort",
     "country": "Land",
-    "save": "Speichern"
+    "save": "Speichern",
+    "breakfastCardTitle": "Ihr Frühstück",
+    "breakfastCardNeedsChoice": "Auswahl offen",
+    "breakfastCardNotChosen": "kein Menü gewählt",
+    "breakfastCardNoTime": "keine Uhrzeit gewählt",
+    "breakfastCardChoose": "Menü und Uhrzeit wählen",
+    "breakfastCardChange": "Auswahl ändern"
   },
   "checkIn": {
     "title": "Online-Check-In",

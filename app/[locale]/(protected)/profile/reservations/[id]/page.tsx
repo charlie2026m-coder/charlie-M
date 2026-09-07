@@ -1,6 +1,7 @@
 import MainInfo from './components/MainInfo';
 import BackButton from './components/BackButton';
 import AddExtras from './components/AddExtras';
+import BreakfastCard from './components/BreakfastCard';
 import InformationSection from "./components/InformationSection";
 import { getReservationById } from "@/services/getReservation";
 import { getApaleoExtras } from '@/app/actions/apaleo/services/getExtras';
@@ -80,6 +81,10 @@ const ReservationPage = async ({ params }: { params: Promise<{ id: string; local
           booker={reservation.booker}
           primaryGuest={reservation.primaryGuest}
         />
+        {/* Only for a stay that has not happened yet: a breakfast already eaten
+            has nothing left to choose. */}
+        {canAddExtras && <BreakfastCard reservationId={reservation.id} />}
+
         {canAddExtras && extras.length > 0 && (
           <AddExtras
             extras={extras}
