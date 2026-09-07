@@ -27,6 +27,10 @@ export interface Booking {
     // to price per-person services (e.g. breakfast) the same way the client does
     // (adults + children). Stripped before the Apaleo POST — Apaleo uses childrenAges.
     children?: number;
+    // Which menu each guest takes on each morning of the stay. Server-only in
+    // the same way: it carries no money, is stripped before the Apaleo POST,
+    // and is written to our own breakfast tables once the reservation exists.
+    breakfastMenus?: { morning: string; menus: Record<string, number> }[];
     childrenAges?: number[], // optional maybe
     channelCode: "IBE",
 

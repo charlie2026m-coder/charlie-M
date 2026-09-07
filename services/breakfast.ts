@@ -192,6 +192,63 @@ const pick = (locale: string, de: string, en: string) => (locale === 'de' ? de |
 export const sumPortions = (menus: Record<string, number>): number =>
   Object.values(menus).reduce((total, n) => total + (Number(n) || 0), 0)
 
+/** Portions with the rubbish removed: whole positive counts only. */
+export function normalisePortions(menus: Record<string, unknown>): Record<string, number> {
+  const out: Record<string, number> = {}
+  for (const [code, raw] of Object.entries(menus ?? {})) {
+    const n = Math.floor(Number(raw))
+    if (!Number.isFinite(n) || n <= 0) continue
+    out[code] = n
+  }
+  return out
+}
+
+/** One morning's choice, as it arrives from the booking flow. */
+export interface BreakfastChoice {
+  morning: string
+  menus: Record<string, number>
+}
+
+/**
+ * Which choices may actually be written.
+ *
+ * Three rules, and a choice failing any of them is dropped rather than
+ * corrected: breakfast has to be paid for that morning, the menus have to be
+ * on the calendar for it, and the portions have to add up to the people who
+ * paid. Guessing at a half-made choice would put a stranger's breakfast on the
+ * kitchen's list; dropping it leaves the guest to finish from their link.
+ *
+ * Pure, so the rules can be tested without a database.
+ */
+export function acceptableChoices(
+  choices: BreakfastChoice[],
+  paidByMorning: Map<string, number>,
+  offeredByMorning: Map<string, Set<string>>,
+): { morning: string; persons: number; menus: Record<string, number> }[] {
+  const out: { morning: string; persons: number; menus: Record<string, number> }[] = []
+  const seen = new Set<string>()
+
+  for (const choice of choices ?? []) {
+    const morning = String(choice?.morning ?? '')
+    if (!morning || seen.has(morning)) continue
+
+    const persons = paidByMorning.get(morning)
+    if (!persons) continue
+
+    const menus = normalisePortions(choice?.menus ?? {})
+    const codes = Object.keys(menus)
+    if (codes.length === 0 || sumPortions(menus) !== persons) continue
+
+    const onOffer = offeredByMorning.get(morning)
+    if (!onOffer || codes.some(code => !onOffer.has(code))) continue
+
+    seen.add(morning)
+    out.push({ morning, persons, menus })
+  }
+
+  return out
+}
+
 const toLines = (s: string): string[] =>
   String(s || '')
     .split('\n')
@@ -433,12 +490,7 @@ export async function chooseBreakfast(
 
   // Normalised before anything is checked: a code with no portions is not a
   // choice, and the count has to be a whole positive number of people.
-  const wanted: Record<string, number> = {}
-  for (const [code, raw] of Object.entries(menus ?? {})) {
-    const n = Math.floor(Number(raw))
-    if (!Number.isFinite(n) || n <= 0) continue
-    wanted[code] = n
-  }
+  const wanted = normalisePortions(menus ?? {})
   const codes = Object.keys(wanted)
   if (codes.length === 0) return { ok: false, reason: 'menu_not_offered' }
 
@@ -471,6 +523,133 @@ export async function chooseBreakfast(
   }
 
   return { ok: true }
+}
+
+/**
+ * Write the menus the guest picked while booking.
+ *
+ * The booking modal collects a menu per morning, but at that moment there is no
+ * reservation to attach it to — Apaleo only creates one once Adyen has taken
+ * the money. So the choice rides along on the reservation payload as a
+ * server-only field and lands here, called from both booking paths once the
+ * reservation ids are known.
+ *
+ * No sitting is recorded: which sitting a guest takes is theirs to choose,
+ * months later, from the link we send. That is also why this does not go
+ * through book_breakfast_slot — there is no seat to lock, so there is no race
+ * to protect against, and a booking row with a null slot is exactly the state
+ * "menu chosen, time still open".
+ *
+ * Never throws: the money is already taken and the reservation already exists.
+ * A breakfast the guest has to pick again is a nuisance; an exception here
+ * would be a rollback of a paid stay.
+ */
+export async function applyBreakfastChoice(
+  reservationId: string,
+  choices: BreakfastChoice[],
+): Promise<{ applied: number }> {
+  try {
+    if (!reservationId || !Array.isArray(choices) || choices.length === 0) return { applied: 0 }
+
+    const reservation = await loadReservation(reservationId)
+    if (!reservation) return { applied: 0 }
+
+    const paidByMorning = new Map(paidBreakfastMornings(reservation).map(p => [p.morning, p.persons]))
+    if (paidByMorning.size === 0) return { applied: 0 }
+
+    const dates = [...new Set(choices.map(c => String(c?.morning ?? '')).filter(Boolean))]
+    if (dates.length === 0) return { applied: 0 }
+
+    const db = admin()
+    const { data: offeredRows } = await db
+      .from('breakfast_menu_days')
+      .select('service_date, menu_code')
+      .in('service_date', dates)
+
+    const offeredByMorning = new Map<string, Set<string>>()
+    for (const row of offeredRows ?? []) {
+      const date = String(row.service_date).slice(0, 10)
+      const set = offeredByMorning.get(date) ?? new Set<string>()
+      set.add(String(row.menu_code))
+      offeredByMorning.set(date, set)
+    }
+
+    const accepted = acceptableChoices(choices, paidByMorning, offeredByMorning)
+    if (accepted.length === 0) return { applied: 0 }
+
+    let applied = 0
+    for (const choice of accepted) {
+      const now = new Date().toISOString()
+
+      // Read before write so an existing row keeps its sitting: the guest may
+      // have chosen a time already and this must not take it away.
+      const { data: existing } = await db
+        .from('breakfast_bookings')
+        .select('id')
+        .eq('reservation_id', reservationId)
+        .eq('service_date', choice.morning)
+        .maybeSingle()
+
+      let bookingId = existing?.id != null ? Number(existing.id) : null
+      if (bookingId != null) {
+        await db
+          .from('breakfast_bookings')
+          .update({ persons: choice.persons, updated_at: now })
+          .eq('id', bookingId)
+      } else {
+        const { data: inserted, error } = await db
+          .from('breakfast_bookings')
+          .insert({
+            reservation_id: reservationId,
+            service_date: choice.morning,
+            persons: choice.persons,
+          })
+          .select('id')
+          .single()
+        if (error || !inserted) {
+          bfLog.warn('apply: could not create booking row', {
+            reservationId,
+            morning: choice.morning,
+            error: error?.message,
+          })
+          continue
+        }
+        bookingId = Number(inserted.id)
+      }
+
+      await db.from('breakfast_booking_menus').delete().eq('booking_id', bookingId)
+      const { error: menusError } = await db.from('breakfast_booking_menus').insert(
+        Object.entries(choice.menus).map(([menu_code, persons]) => ({
+          booking_id: bookingId,
+          menu_code,
+          persons,
+        })),
+      )
+      if (menusError) {
+        bfLog.warn('apply: could not write menus', {
+          reservationId,
+          morning: choice.morning,
+          error: menusError.message,
+        })
+        continue
+      }
+      applied++
+    }
+
+    // The link the guest opens to pick a sitting — and the QR they show at the
+    // door — both hang off this token, so it exists from the moment there is
+    // anything to show.
+    if (applied > 0) await ensureBreakfastToken(reservationId)
+
+    bfLog.info('apply: menus written', { reservationId, applied, offered: choices.length })
+    return { applied }
+  } catch (e) {
+    bfLog.error('apply: failed', {
+      reservationId,
+      error: e instanceof Error ? e.message : String(e),
+    })
+    return { applied: 0 }
+  }
 }
 
 // ── The door ────────────────────────────────────────────────────────────────

@@ -3,6 +3,7 @@ import { PRIVACY_POLICY_VERSION, HOTEL_INFO } from "@/lib/Constants"
 import { headers } from "next/headers"
 import { isStayExtensionService } from "@/lib/extrasPrice"
 import { sendStayExtensionConfirmation } from "@/services/guestway/sendGuestwayMessage"
+import { applyBreakfastChoice } from "@/services/breakfast"
 import { getOrRefreshToken } from "@/services/Request"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { createClient } from "@supabase/supabase-js"
@@ -404,6 +405,7 @@ export async function POST(request: Request) {
       // field (Apaleo uses childrenAges) and is only used by payment validation.
       const apaleoReservation = { ...reservation }
       delete apaleoReservation.children
+      delete apaleoReservation.breakfastMenus
 
       const arrivalDateStr = reservation.arrival.slice(0, 10)
       const arrivalCheckinUTC = new Date(`${arrivalDateStr}T${String(HOTEL_CHECKIN_HOUR).padStart(2, '0')}:00:00Z`).getTime() - berlinOffsetMs
@@ -672,6 +674,26 @@ export async function POST(request: Request) {
       }
     } catch (err) {
       bookingLog.error('failed to schedule guestway stay-extension confirmation', {
+        apaleoBookingId: apaleoData.id,
+        error: err instanceof Error ? err.message : String(err),
+      })
+    }
+
+    // Best-effort: write the breakfast menus the guest picked while booking.
+    // After the money is settled and never fatal — a menu the guest has to pick
+    // again from their link is a nuisance, not a reason to unwind a paid stay.
+    // Apaleo returns reservationIds in the order the reservations were posted,
+    // the same assumption the stay-extension block above makes.
+    try {
+      await Promise.all(
+        booking.reservations.map((r, i) => {
+          const resId = apaleoReservationIds[i]
+          if (!resId || !r.breakfastMenus?.length) return Promise.resolve({ applied: 0 })
+          return applyBreakfastChoice(resId, r.breakfastMenus)
+        }),
+      )
+    } catch (err) {
+      bookingLog.error('failed to write breakfast menus', {
         apaleoBookingId: apaleoData.id,
         error: err instanceof Error ? err.message : String(err),
       })

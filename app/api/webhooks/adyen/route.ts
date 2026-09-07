@@ -12,6 +12,7 @@ import { cancelReservation } from "@/services/apaleo/cancelReservation"
 import { correctPastArrivals } from "@/lib/correctPastArrival"
 import crypto from "crypto"
 import { assignUnit } from "@/services/apaleo/assignUnit"
+import { applyBreakfastChoice, type BreakfastChoice } from "@/services/breakfast"
 
 // Webhook has no user session — must use service_role to bypass RLS
 function createAdminClient() {
@@ -180,6 +181,7 @@ async function createBookingFromPending(
     booking.reservations = correctPastArrivals(booking.reservations).map((r: any) => {
       const apaleoReservation = { ...r }
       delete apaleoReservation.children
+      delete apaleoReservation.breakfastMenus
       return apaleoReservation
     })
   }
@@ -410,6 +412,31 @@ async function createBookingFromPending(
       }
     } catch (err) {
       bookingLog.error('webhook: failed to schedule guestway stay-extension confirmation', {
+        error: err instanceof Error ? err.message : String(err),
+      })
+    }
+
+
+    // Best-effort: write the breakfast menus the guest picked while booking.
+    // Deliberately after the money is settled and never fatal — a menu the
+    // guest has to pick again from their link is a nuisance, not a reason to
+    // unwind a paid stay. Apaleo returns reservationIds in the order the
+    // reservations were posted, which is the same order the room list built
+    // them in; that is the assumption the stay-extension block above already
+    // makes.
+    try {
+      const withMenus = (
+        booking as { reservations?: { breakfastMenus?: BreakfastChoice[] }[] }
+      ).reservations ?? []
+      await Promise.all(
+        withMenus.map((r, i) => {
+          const resId = apaleoReservationIds[i]
+          if (!resId || !r.breakfastMenus?.length) return Promise.resolve({ applied: 0 })
+          return applyBreakfastChoice(resId, r.breakfastMenus)
+        }),
+      )
+    } catch (err) {
+      bookingLog.error('webhook: failed to write breakfast menus', {
         error: err instanceof Error ? err.message : String(err),
       })
     }

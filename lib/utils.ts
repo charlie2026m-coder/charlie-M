@@ -327,6 +327,12 @@ export const formatReservations = (
       // same guest count the client used (adults + children). Stripped before
       // the Apaleo POST in bookings/create and the webhook.
       children: item.children,
+      // Server-only, same treatment: which menu each guest takes on each
+      // morning. Carries no money — breakfast is priced by the service count,
+      // exactly as before — and is written to our own tables once the
+      // reservation exists. Read off the first extra that carries it: the two
+      // VAT halves of the bundle hold the same list.
+      breakfastMenus: item.extras?.find(e => e.breakfastMenus?.length)?.breakfastMenus,
       channelCode: 'IBE' as const,
       guaranteeType: 'Prepayment' as const,
       timeSlices,

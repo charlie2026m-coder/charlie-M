@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { addDays, paidBreakfastMornings } from '@/services/breakfast'
+import {
+  acceptableChoices,
+  addDays,
+  normalisePortions,
+  paidBreakfastMornings,
+} from '@/services/breakfast'
 import { BREAKFAST_FOOD_ID, BREAKFAST_BEVERAGE_ID } from '@/lib/breakfastBundle'
 import type { ApaleoReservationResponse } from '@/types/apaleo'
 
@@ -131,5 +136,82 @@ describe('paidBreakfastMornings', () => {
       '2026-09-12',
       '2026-09-13',
     ])
+  })
+})
+
+/**
+ * The rules that decide whether a menu the guest picked while booking may be
+ * written. Everything they reject is dropped rather than corrected: a guessed
+ * breakfast lands on the kitchen's list under a stranger's name, whereas a
+ * dropped one only means the guest picks again from their link.
+ */
+describe('normalisePortions', () => {
+  it('keeps whole positive counts', () => {
+    expect(normalisePortions({ A: 1, B: 2 })).toEqual({ A: 1, B: 2 })
+  })
+
+  it('drops zero, negative, fractional and unparseable counts', () => {
+    expect(normalisePortions({ A: 0, B: -1, C: 'x', D: null })).toEqual({})
+  })
+
+  it('floors a fractional count rather than rounding it up', () => {
+    expect(normalisePortions({ A: 1.9 })).toEqual({ A: 1 })
+  })
+})
+
+describe('acceptableChoices', () => {
+  const paid = new Map([
+    ['2026-09-21', 2],
+    ['2026-09-22', 1],
+  ])
+  const offered = new Map([
+    ['2026-09-21', new Set(['A', 'B'])],
+    ['2026-09-22', new Set(['A', 'B'])],
+  ])
+
+  it('accepts a party split across two menus', () => {
+    expect(acceptableChoices([{ morning: '2026-09-21', menus: { A: 1, B: 1 } }], paid, offered))
+      .toEqual([{ morning: '2026-09-21', persons: 2, menus: { A: 1, B: 1 } }])
+  })
+
+  it('rejects a morning breakfast was not paid for', () => {
+    expect(acceptableChoices([{ morning: '2026-09-30', menus: { A: 1 } }], paid, offered)).toEqual([])
+  })
+
+  it('rejects portions that do not add up to the party', () => {
+    expect(acceptableChoices([{ morning: '2026-09-21', menus: { A: 1 } }], paid, offered)).toEqual([])
+    expect(acceptableChoices([{ morning: '2026-09-22', menus: { A: 2 } }], paid, offered)).toEqual([])
+  })
+
+  it('rejects a menu the kitchen does not offer that morning', () => {
+    expect(acceptableChoices([{ morning: '2026-09-21', menus: { A: 1, Z: 1 } }], paid, offered)).toEqual([])
+  })
+
+  it('rejects an empty choice', () => {
+    expect(acceptableChoices([{ morning: '2026-09-22', menus: {} }], paid, offered)).toEqual([])
+  })
+
+  it('keeps only the first choice for a morning sent twice', () => {
+    const out = acceptableChoices(
+      [
+        { morning: '2026-09-22', menus: { A: 1 } },
+        { morning: '2026-09-22', menus: { B: 1 } },
+      ],
+      paid,
+      offered,
+    )
+    expect(out).toEqual([{ morning: '2026-09-22', persons: 1, menus: { A: 1 } }])
+  })
+
+  it('drops the bad morning and keeps the good one', () => {
+    const out = acceptableChoices(
+      [
+        { morning: '2026-09-21', menus: { A: 1 } },
+        { morning: '2026-09-22', menus: { B: 1 } },
+      ],
+      paid,
+      offered,
+    )
+    expect(out).toEqual([{ morning: '2026-09-22', persons: 1, menus: { B: 1 } }])
   })
 })
