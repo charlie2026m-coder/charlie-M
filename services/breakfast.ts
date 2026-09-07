@@ -22,6 +22,12 @@ import { createClient } from '@supabase/supabase-js'
 import { Fetch } from '@/services/Request'
 import { logger } from '@/lib/logger'
 import { BREAKFAST_FOOD_ID } from '@/lib/breakfastBundle'
+import {
+  addDays,
+  nightToMorning,
+  morningToNight,
+  breakfastMorningsForStay,
+} from '@/lib/breakfastDates'
 import type { ApaleoReservationResponse } from '@/types/apaleo'
 
 const bfLog = logger.withTag('breakfast')
@@ -41,12 +47,10 @@ export function berlinToday(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(new Date())
 }
 
-/** YYYY-MM-DD + n days, without dragging in a date library or a timezone. */
-export function addDays(isoDate: string, days: number): string {
-  const d = new Date(`${isoDate}T00:00:00Z`)
-  d.setUTCDate(d.getUTCDate() + days)
-  return d.toISOString().slice(0, 10)
-}
+// The night/morning mapping lives in lib/breakfastDates.ts so the booking
+// modal can use the same one without pulling supabase-js into the browser.
+// Re-exported here because callers of this module expect it.
+export { addDays, nightToMorning, morningToNight, breakfastMorningsForStay }
 
 // ── What Apaleo says is paid for ────────────────────────────────────────────
 
@@ -81,7 +85,7 @@ export function paidBreakfastMornings(reservation: ApaleoReservationResponse): P
       if (!night) continue
       const count = Number(d?.count ?? 0)
       if (!Number.isFinite(count) || count <= 0) continue
-      const morning = addDays(night, 1)
+      const morning = nightToMorning(night)
       byMorning.set(morning, (byMorning.get(morning) ?? 0) + count)
     }
   }
@@ -288,6 +292,57 @@ export async function guestView(token: string, locale = 'en'): Promise<GuestBrea
     // it does not count as an outstanding choice.
     needsChoice: mornings.some(m => m.menus.length > 0 && (!m.chosenMenu || m.chosenSlot == null)),
   }
+}
+
+export interface MorningMenus {
+  morning: string
+  menus: MenuView[]
+}
+
+/**
+ * Which menus are served on each morning of a range.
+ *
+ * Used by the booking modal, where there is no reservation yet and nothing to
+ * personalise — it answers only "what is on that day". Mornings with no menus
+ * are still returned, so the modal can say "no breakfast served" rather than
+ * silently dropping a date the guest is being charged for.
+ */
+export async function menusForRange(
+  from: string,
+  to: string,
+  locale = 'en',
+): Promise<MorningMenus[]> {
+  const db = admin()
+  const [{ data: menus }, { data: days }] = await Promise.all([
+    db.from('breakfast_menus').select('*').eq('is_active', true).order('sort_order'),
+    db.from('breakfast_menu_days').select('service_date, menu_code').gte('service_date', from).lte('service_date', to),
+  ])
+
+  const byCode = new Map((menus ?? []).map(m => [String(m.code), m]))
+  const offered = new Map<string, string[]>()
+  for (const d of days ?? []) {
+    const key = String(d.service_date).slice(0, 10)
+    offered.set(key, [...(offered.get(key) ?? []), String(d.menu_code)])
+  }
+
+  const out: MorningMenus[] = []
+  for (let d = from, i = 0; d <= to && i < 366; d = addDays(d, 1), i++) {
+    out.push({
+      morning: d,
+      menus: (offered.get(d) ?? [])
+        .map(code => byCode.get(code))
+        .filter(Boolean)
+        .map(m => ({
+          code: String(m!.code),
+          name: pick(locale, String(m!.name_de), String(m!.name_en)),
+          description: pick(locale, String(m!.description_de), String(m!.description_en)),
+          items: toLines(pick(locale, String(m!.items_de), String(m!.items_en))),
+          allergens: pick(locale, String(m!.allergens_de), String(m!.allergens_en)),
+          photoUrl: (m!.photo_url as string | null) ?? null,
+        })),
+    })
+  }
+  return out
 }
 
 // ── Choosing ────────────────────────────────────────────────────────────────

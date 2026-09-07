@@ -2,6 +2,8 @@
 import Image from 'next/image'
 import { Service } from '@/types/apaleo';
 import AddUnlimitedExtra from './AddUnlimitedExtra';
+import AddBreakfastExtra from './AddBreakfastExtra';
+import { isBreakfastFood } from '@/lib/breakfastBundle';
 import AddCheckoutExtra from './AddCheckout';
 import AddCleaningExtra from './AddCleaningExtra';
 import { Room } from '@/types/types'
@@ -46,7 +48,13 @@ const ExtraCard = ({ item, rooms, nights, bundleServices }: { item: Service, roo
             ? <AddCheckoutExtra extra={item} rooms={rooms} />
             : isCleaning
               ? <AddCleaningExtra extra={item} rooms={rooms} />
-              : <AddUnlimitedExtra extra={item} rooms={rooms} nights={nights} isParking={isParking} bundleServices={bundleServices} />
+              /* Breakfast gets its own modal: same price maths as any daily
+                 per-person extra, plus the menu on offer for each morning and
+                 the guest's pick. Identified by the FOOD half, which is the id
+                 the bundle card is built from. */
+              : isBreakfastFood(bundleServices?.[0]?.id ?? item.id)
+                ? <AddBreakfastExtra extra={item} rooms={rooms} nights={nights} bundleServices={bundleServices} />
+                : <AddUnlimitedExtra extra={item} rooms={rooms} nights={nights} isParking={isParking} bundleServices={bundleServices} />
           }
         </div>
       )}

@@ -48,6 +48,24 @@ export type RoomExtra = Omit<Service, 'description'> & {
     serviceDate: string;
     count: number;
   }[];
+  /**
+   * Breakfast only: which menu the guest picked for each MORNING.
+   *
+   * Keyed by morning, not by serviceDate, and named differently on purpose.
+   * Apaleo dates breakfast by the NIGHT and the guest eats it the morning
+   * after, so the two are never the same day — one field called `serviceDate`
+   * holding both would be an off-by-one waiting to happen. See
+   * lib/breakfastDates.ts.
+   *
+   * Carries no money: the price comes from the service count exactly as
+   * before. This rides along in the booking payload so the choice survives to
+   * the webhook, which is the first moment a reservation id exists to attach
+   * it to.
+   */
+  breakfastMenus?: {
+    morning: string;
+    menuCode: string;
+  }[];
 };
 
 export interface Room {

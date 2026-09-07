@@ -496,6 +496,11 @@
     "source": "Bewertungen von Google."
   },
   "bookingForm": {
+    "loading": "Wird geladen …",
+    "breakfastMenuTitle": "Menü wählen",
+    "breakfastMenuHint": "Wählen Sie für jeden Morgen aus. Änderung später jederzeit möglich.",
+    "breakfastMenuNone": "An diesem Morgen wird kein Frühstück serviert.",
+    "breakfastMenuLater": "Sie können Ihr Menü auch später über den Link ändern, den wir Ihnen senden.",
     "title": "BUCHEN",
     "pleaseSelectDates": "Bitte wählen Sie Daten aus",
     "search": "Suchen",

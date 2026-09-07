@@ -1,0 +1,310 @@
+'use client'
+
+/**
+ * Breakfast in the booking flow.
+ *
+ * Two jobs the generic extra modal cannot do: show the guest WHAT is served on
+ * each morning of their stay, and let them pick a menu per morning.
+ *
+ * Pricing is deliberately untouched — persons x nights x catalogue price,
+ * exactly as AddUnlimitedExtra computes it, writing the same two RoomExtras
+ * (food at 7%, beverages at 19%). Choosing individual mornings would change the
+ * amount, and the server re-prices a dated service at one unit per date
+ * (payments-validation: "UI enforces count=1 per date"), so per-morning
+ * quantities would be rejected as a mismatch at capture. That is a money-path
+ * change and belongs in its own pass.
+ *
+ * The menu choice carries no money. It rides in the booking payload as
+ * `breakfastMenus` and is applied after the webhook creates the reservation —
+ * the first moment a reservation id exists to attach it to.
+ *
+ * Menus are shown per MORNING. Apaleo bills breakfast by the night and the
+ * guest eats it the next day, so the mornings of a stay run from the day after
+ * arrival through departure day. See lib/breakfastDates.ts.
+ */
+
+import { FaPlus } from 'react-icons/fa6'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTrigger,
+  DialogTitle,
+} from '@/app/_components/ui/dialog'
+import { Button } from '@/app/_components/ui/button'
+import { ButtonIcon } from '@/app/_components/ui/ButtonIcon'
+import { useEffect, useState } from 'react'
+import { Service } from '@/types/apaleo'
+import { useBookingStore } from '@/store/useBookingStore'
+import { Room, RoomExtra } from '@/types/types'
+import { useTranslations, useLocale } from 'next-intl'
+import { trackSelectExtra } from '@/lib/analytics'
+import { breakfastMorningsForStay } from '@/lib/breakfastDates'
+
+interface MenuOption {
+  code: string
+  name: string
+  description: string
+  items: string[]
+  allergens: string
+}
+
+interface MorningMenus {
+  morning: string
+  menus: MenuOption[]
+}
+
+const AddBreakfastExtra = ({
+  extra,
+  rooms,
+  nights,
+  bundleServices,
+}: {
+  extra: Service
+  rooms: Room[]
+  nights: number
+  bundleServices?: Service[]
+}) => {
+  const t = useTranslations('bookingForm')
+  const locale = useLocale()
+  const [isOpen, setIsOpen] = useState(false)
+  const editRoom = useBookingStore(state => state.editRoom)
+
+  // The display card is the bundle; the real services are booked separately so
+  // each keeps its own VAT rate.
+  const servicesToWrite = bundleServices && bundleServices.length > 0 ? bundleServices : [extra]
+  const savedId = servicesToWrite[0].id
+
+  const stayFrom = rooms[0]?.from ?? ''
+  const stayTo = rooms[0]?.to ?? ''
+  const mornings = breakfastMorningsForStay(stayFrom, stayTo)
+
+  const [calendar, setCalendar] = useState<MorningMenus[] | null>(null)
+  const [roomCounts, setRoomCounts] = useState<Record<string, number>>({})
+  // roomId -> morning -> menu code
+  const [roomMenus, setRoomMenus] = useState<Record<string, Record<string, string>>>({})
+
+  const maxFor = (room: Room) => room.adults + room.children
+
+  const readSaved = () => {
+    const counts: Record<string, number> = {}
+    const menus: Record<string, Record<string, string>> = {}
+    rooms.forEach(room => {
+      const saved = room.extras?.find(e => e.id === savedId)
+      counts[room.id] = saved?.count ?? 0
+      menus[room.id] = Object.fromEntries(
+        (saved?.breakfastMenus ?? []).map(m => [m.morning, m.menuCode]),
+      )
+    })
+    return { counts, menus }
+  }
+
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open)
+    if (!open) return
+    const { counts, menus } = readSaved()
+    setRoomCounts(counts)
+    setRoomMenus(menus)
+  }
+
+  // Fetched only while the dialog is open: most guests never open it, and the
+  // calendar is the same for everyone, so the route caches it for five minutes.
+  useEffect(() => {
+    if (!isOpen || mornings.length === 0 || calendar) return
+    const from = mornings[0]
+    const to = mornings[mornings.length - 1]
+    let cancelled = false
+    fetch(`/api/public/breakfast/menus?from=${from}&to=${to}&locale=${locale}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(json => {
+        if (!cancelled && json?.ok) setCalendar(json.mornings as MorningMenus[])
+      })
+      .catch(() => {
+        // A calendar we cannot load must not block the sale: the guest can still
+        // buy breakfast and pick the menu later from the link we send them.
+        if (!cancelled) setCalendar([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [isOpen, mornings, calendar, locale])
+
+  const totalCount = Object.values(roomCounts).reduce((sum, c) => sum + c, 0)
+  const totalPrice = Math.round(extra.price * totalCount * nights * 100) / 100
+
+  const add = (roomId: string, max: number) => {
+    const current = roomCounts[roomId] ?? 0
+    if (current >= max) return
+    trackSelectExtra({ name: extra.name, price: extra.price })
+    setRoomCounts(prev => ({ ...prev, [roomId]: current + 1 }))
+  }
+
+  const subtract = (roomId: string) => {
+    const current = roomCounts[roomId] ?? 0
+    if (current <= 0) return
+    setRoomCounts(prev => ({ ...prev, [roomId]: current - 1 }))
+  }
+
+  const pickMenu = (roomId: string, morning: string, code: string) =>
+    setRoomMenus(prev => ({ ...prev, [roomId]: { ...(prev[roomId] ?? {}), [morning]: code } }))
+
+  const handleConfirm = () => {
+    const writeIds = servicesToWrite.map(s => s.id)
+    rooms.forEach(room => {
+      const count = roomCounts[room.id] ?? 0
+      const kept = (room.extras ?? []).filter(e => !writeIds.includes(e.id))
+
+      if (count <= 0) {
+        editRoom(room.id, { ...room, extras: kept })
+        return
+      }
+
+      // Only mornings that actually have a menu on offer are stored: a choice
+      // for a morning the kitchen is closed would be a promise we cannot keep.
+      const chosen = Object.entries(roomMenus[room.id] ?? {})
+        .filter(([morning]) => mornings.includes(morning))
+        .map(([morning, menuCode]) => ({ morning, menuCode }))
+        .sort((a, b) => a.morning.localeCompare(b.morning))
+
+      const newExtras: RoomExtra[] = servicesToWrite.map(svc => ({
+        ...svc,
+        count,
+        totalPrice: Math.round(svc.price * count * nights * 100) / 100,
+        // Attached to both halves so neither can be dropped independently and
+        // leave the choice orphaned; the webhook reads whichever it meets first.
+        breakfastMenus: chosen,
+      }))
+
+      editRoom(room.id, { ...room, extras: [...kept, ...newExtras] })
+    })
+
+    setIsOpen(false)
+  }
+
+  const dateLabel = (iso: string) =>
+    new Intl.DateTimeFormat(locale === 'de' ? 'de-DE' : 'en-GB', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      timeZone: 'UTC',
+    }).format(new Date(`${iso}T00:00:00Z`))
+
+  return (
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild className='ml-auto md:ml-0'>
+        <div className='self-start md:self-auto'>
+          <div className='flex md:hidden items-center justify-center rounded transition-all duration-300 cursor-pointer size-10 shadow-lg bg-blue border-blue text-white'>
+            <FaPlus className='size-6' />
+          </div>
+          <Button variant='outline' className='hidden md:block h-[35px] p-0 w-full'>{t('add')}</Button>
+        </div>
+      </DialogTrigger>
+
+      <DialogContent className='max-h-[85dvh] overflow-y-auto sm:max-w-[560px]'>
+        <DialogHeader>
+          <DialogTitle>
+            {extra.name} (€{extra.price})
+          </DialogTitle>
+        </DialogHeader>
+
+        {extra.description && <p className='text-sm text-mute'>{extra.description}</p>}
+
+        {/* Quantity — unchanged from every other daily per-person extra. */}
+        <div className='mt-4 border-t pt-4'>
+          {rooms.map((room, index) => {
+            const max = maxFor(room)
+            const count = roomCounts[room.id] ?? 0
+            return (
+              <div key={room.id} className='flex items-center justify-between gap-4 py-2'>
+                <div className='min-w-0'>
+                  <div className='font-medium'>
+                    {rooms.length > 1 ? `${t('room')} ${index + 1}` : extra.name}
+                  </div>
+                  <div className='text-sm text-mute'>
+                    €{extra.price} × {nights} × {t('guests')} (max {max})
+                  </div>
+                </div>
+                <div className='flex items-center gap-3'>
+                  <ButtonIcon symbol='-' onClick={() => subtract(room.id)} disabled={count <= 0} />
+                  <span className='w-4 text-center'>{count}</span>
+                  <ButtonIcon symbol='+' onClick={() => add(room.id, max)} disabled={count >= max} />
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* What is served, and the guest's pick per morning. Shown only once
+            breakfast is actually in the basket — an empty basket has nothing to
+            choose a menu for. */}
+        {totalCount > 0 && mornings.length > 0 && (
+          <div className='mt-4 border-t pt-4'>
+            <h4 className='mb-1 text-xs font-medium uppercase tracking-[0.14em] text-mute'>
+              {t('breakfastMenuTitle')}
+            </h4>
+            <p className='mb-3 text-sm text-mute'>{t('breakfastMenuHint')}</p>
+
+            {calendar === null ? (
+              <p className='text-sm text-mute'>{t('loading')}</p>
+            ) : (
+              rooms
+                .filter(room => (roomCounts[room.id] ?? 0) > 0)
+                .map((room, index) => (
+                  <div key={room.id} className='mb-4'>
+                    {rooms.length > 1 && (
+                      <div className='mb-2 text-sm font-medium'>
+                        {t('room')} {index + 1}
+                      </div>
+                    )}
+                    {mornings.map(morning => {
+                      const options = calendar.find(c => c.morning === morning)?.menus ?? []
+                      const picked = roomMenus[room.id]?.[morning]
+                      return (
+                        <div key={morning} className='mb-3'>
+                          <div className='mb-1 text-sm font-medium'>{dateLabel(morning)}</div>
+                          {options.length === 0 ? (
+                            <div className='text-sm text-mute'>{t('breakfastMenuNone')}</div>
+                          ) : (
+                            <div className='flex flex-wrap gap-2'>
+                              {options.map(menu => (
+                                <button
+                                  key={menu.code}
+                                  type='button'
+                                  onClick={() => pickMenu(room.id, morning, menu.code)}
+                                  title={menu.items.join(' · ')}
+                                  className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
+                                    picked === menu.code
+                                      ? 'border-black bg-black text-white'
+                                      : 'hover:bg-black/[0.03]'
+                                  }`}
+                                >
+                                  {menu.name}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                ))
+            )}
+
+            <p className='text-xs text-mute'>{t('breakfastMenuLater')}</p>
+          </div>
+        )}
+
+        <div className='mt-4 flex items-center justify-between border-t pt-4'>
+          <span className='text-sm'>
+            {t('total')}: {totalCount}
+          </span>
+          <Button onClick={handleConfirm} className='h-[45px] min-w-[180px]'>
+            {t('confirm')} € {totalPrice.toFixed(2)}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+export default AddBreakfastExtra

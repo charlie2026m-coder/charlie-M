@@ -496,6 +496,11 @@
     "source": "Reviews sourced from Google."
   },
   "bookingForm": {
+    "loading": "Loading …",
+    "breakfastMenuTitle": "Choose your menu",
+    "breakfastMenuHint": "Pick what you would like on each morning. You can change it later.",
+    "breakfastMenuNone": "No breakfast served on this morning.",
+    "breakfastMenuLater": "You can also choose or change your menu later from the link we send you.",
     "title": "BOOK",
     "pleaseSelectDates": "Please select dates",
     "search": "Search",
