@@ -12,7 +12,7 @@ import { cancelReservation } from "@/services/apaleo/cancelReservation"
 import { correctPastArrivals } from "@/lib/correctPastArrival"
 import crypto from "crypto"
 import { assignUnit } from "@/services/apaleo/assignUnit"
-import { applyBreakfastChoice, type BreakfastChoice } from "@/services/breakfast"
+import { applyBreakfastChoice, sendBreakfastMenuInvite, type BreakfastChoice } from "@/services/breakfast"
 
 // Webhook has no user session — must use service_role to bypass RLS
 function createAdminClient() {
@@ -437,6 +437,21 @@ async function createBookingFromPending(
       )
     } catch (err) {
       bookingLog.error('webhook: failed to write breakfast menus', {
+        error: err instanceof Error ? err.message : String(err),
+      })
+    }
+
+    // And invite them to choose the rest of it. Deferred with after() because
+    // Guestway only creates the conversation a few seconds after the booking
+    // syncs from Apaleo, and the invite decides for itself whether there is
+    // anything left to choose — a guest who settled every morning in the modal
+    // hears nothing.
+    try {
+      after(async () => {
+        for (const resId of apaleoReservationIds) await sendBreakfastMenuInvite(resId)
+      })
+    } catch (err) {
+      bookingLog.error('failed to schedule the breakfast invite', {
         error: err instanceof Error ? err.message : String(err),
       })
     }

@@ -248,6 +248,104 @@ export async function sendGuestwayMessage(params: {
 }
 
 /**
+ * "You have breakfast — now choose what you want."
+ *
+ * Plain text and bilingual for the same reason as the stay-extension message:
+ * OTA guests read it in a channel thread that strips HTML.
+ *
+ * The link is the whole point, and it is also the QR the guest shows at the
+ * door, so the message says to keep it rather than treating it as a one-off
+ * form to fill in and forget.
+ */
+export function buildBreakfastMenuInvite(url: string, mornings: number): string {
+  const rule = '——————————'
+  const morningsEn = mornings === 1 ? 'one morning' : `${mornings} mornings`
+  const morningsDe = mornings === 1 ? 'einen Morgen' : `${mornings} Morgen`
+  return [
+    'Breakfast — choose your menu',
+    '',
+    'Dear guest,',
+    '',
+    `Breakfast is booked for ${morningsEn} of your stay. Choose what you would like on each morning and the time you would like to come down — that reserves your seat.`,
+    '',
+    `Choose here: ${url}`,
+    '',
+    'Please keep the link: it also holds the code you show at the breakfast room.',
+    '',
+    'Charlie M Team',
+    '',
+    rule,
+    '',
+    'Frühstück — wählen Sie Ihr Menü',
+    '',
+    'Hallo,',
+    '',
+    `Für ${morningsDe} Ihres Aufenthalts ist Frühstück gebucht. Wählen Sie für jeden Morgen Ihr Menü und Ihre Uhrzeit — damit ist Ihr Platz reserviert.`,
+    '',
+    `Hier wählen: ${url}`,
+    '',
+    'Bitte bewahren Sie den Link auf: er enthält auch den Code, den Sie am Frühstücksraum zeigen.',
+    '',
+    'Ihr Charlie M Team',
+  ].join('\n')
+}
+
+/**
+ * Deliver a message to a NEW booking, waiting for Guestway to catch up.
+ *
+ * Guestway creates the conversation a few seconds after the reservation syncs
+ * from Apaleo, so a single immediate send finds none. Shared by the
+ * stay-extension confirmation and the breakfast invite; fully best-effort and
+ * never throws.
+ */
+async function sendWhenConversationExists(
+  reservationId: string,
+  body: string,
+  label: string,
+  opts: { attempts?: number; delayMs?: number } = {},
+): Promise<boolean> {
+  const attempts = opts.attempts ?? 18
+  const delayMs = opts.delayMs ?? 5000
+
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    const result = await sendGuestwayMessage({ reservationId, body })
+    if (result.success) {
+      bookingLog.success(`guestway: ${label} sent`, { reservationId, attempt })
+      return true
+    }
+    // "no conversation found" = Guestway is still syncing the new reservation;
+    // keep polling. Any other error won't fix itself on retry — give up early.
+    if (result.error !== 'no conversation found' && attempt >= 3) {
+      bookingLog.error(`guestway: ${label} failed (non-retriable)`, {
+        reservationId,
+        error: result.error,
+      })
+      return false
+    }
+    if (attempt < attempts) await new Promise(res => setTimeout(res, delayMs))
+  }
+  bookingLog.error(`guestway: ${label} NOT delivered (conversation never appeared)`, {
+    reservationId,
+  })
+  return false
+}
+
+/** Post the breakfast invite once Guestway has a conversation for the booking. */
+export async function deliverBreakfastMenuInvite(
+  reservationId: string,
+  url: string,
+  mornings: number,
+  opts: { attempts?: number; delayMs?: number } = {},
+): Promise<boolean> {
+  return sendWhenConversationExists(
+    reservationId,
+    buildBreakfastMenuInvite(url, mornings),
+    'breakfast invite',
+    opts,
+  )
+}
+
+/**
  * Deferred, polling LCO/ECI confirmation for a NEW booking.
  *
  * On a fresh booking Guestway hasn't created the conversation yet — it syncs the
@@ -261,23 +359,10 @@ export async function sendStayExtensionConfirmation(
   kind: 'late' | 'early',
   opts: { attempts?: number; delayMs?: number } = {},
 ): Promise<void> {
-  const attempts = opts.attempts ?? 18
-  const delayMs = opts.delayMs ?? 5000
-  const body = buildStayExtensionMessage(kind)
-
-  for (let attempt = 1; attempt <= attempts; attempt++) {
-    const result = await sendGuestwayMessage({ reservationId, body })
-    if (result.success) {
-      bookingLog.success('guestway: stay-extension confirmation sent', { reservationId, kind, attempt })
-      return
-    }
-    // "no conversation found" = Guestway is still syncing the new reservation;
-    // keep polling. Any other error won't fix itself on retry — give up early.
-    if (result.error !== 'no conversation found' && attempt >= 3) {
-      bookingLog.error('guestway: stay-extension confirmation failed (non-retriable)', { reservationId, kind, error: result.error })
-      return
-    }
-    if (attempt < attempts) await new Promise(res => setTimeout(res, delayMs))
-  }
-  bookingLog.error('guestway: stay-extension confirmation NOT delivered (conversation never appeared)', { reservationId, kind })
+  await sendWhenConversationExists(
+    reservationId,
+    buildStayExtensionMessage(kind),
+    `stay-extension confirmation (${kind})`,
+    opts,
+  )
 }

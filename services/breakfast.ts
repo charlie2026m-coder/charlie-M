@@ -28,6 +28,7 @@ import {
   morningToNight,
   breakfastMorningsForStay,
 } from '@/lib/breakfastDates'
+import { deliverBreakfastMenuInvite } from '@/services/guestway/sendGuestwayMessage'
 import type { ApaleoReservationResponse } from '@/types/apaleo'
 
 const bfLog = logger.withTag('breakfast')
@@ -649,6 +650,46 @@ export async function applyBreakfastChoice(
       error: e instanceof Error ? e.message : String(e),
     })
     return { applied: 0 }
+  }
+}
+
+/**
+ * Invite a guest to choose their breakfast, through Guestway.
+ *
+ * Only when there is something to choose: no breakfast on the booking, or every
+ * morning already settled, and the guest hears nothing. A message telling
+ * somebody to pick a menu they have already picked is the kind of thing that
+ * teaches guests to ignore us.
+ *
+ * Best-effort and never throws — it runs after the money is taken, and the
+ * guest can still reach the page from their booking either way.
+ */
+export async function sendBreakfastMenuInvite(
+  reservationId: string,
+  opts: { attempts?: number; delayMs?: number } = {},
+): Promise<{ sent: boolean; reason?: string }> {
+  try {
+    if (!reservationId) return { sent: false, reason: 'no_reservation' }
+
+    const token = await ensureBreakfastToken(reservationId)
+    const view = await guestView(token, 'en')
+    if (!view || view.mornings.length === 0) return { sent: false, reason: 'no_breakfast' }
+    if (!view.needsChoice) return { sent: false, reason: 'already_chosen' }
+
+    const base = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.charlie-m.de').replace(/\/+$/, '')
+    const sent = await deliverBreakfastMenuInvite(
+      reservationId,
+      `${base}/breakfast/${token}`,
+      view.mornings.length,
+      opts,
+    )
+    return { sent }
+  } catch (e) {
+    bfLog.error('invite failed', {
+      reservationId,
+      error: e instanceof Error ? e.message : String(e),
+    })
+    return { sent: false, reason: 'error' }
   }
 }
 

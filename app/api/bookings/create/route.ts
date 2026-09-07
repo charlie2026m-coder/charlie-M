@@ -3,7 +3,7 @@ import { PRIVACY_POLICY_VERSION, HOTEL_INFO } from "@/lib/Constants"
 import { headers } from "next/headers"
 import { isStayExtensionService } from "@/lib/extrasPrice"
 import { sendStayExtensionConfirmation } from "@/services/guestway/sendGuestwayMessage"
-import { applyBreakfastChoice } from "@/services/breakfast"
+import { applyBreakfastChoice, sendBreakfastMenuInvite } from "@/services/breakfast"
 import { getOrRefreshToken } from "@/services/Request"
 import { createSupabaseServerClient } from "@/lib/supabase-server"
 import { createClient } from "@supabase/supabase-js"
@@ -695,6 +695,21 @@ export async function POST(request: Request) {
     } catch (err) {
       bookingLog.error('failed to write breakfast menus', {
         apaleoBookingId: apaleoData.id,
+        error: err instanceof Error ? err.message : String(err),
+      })
+    }
+
+    // And invite them to choose the rest of it. Deferred with after() because
+    // Guestway only creates the conversation a few seconds after the booking
+    // syncs from Apaleo, and the invite decides for itself whether there is
+    // anything left to choose — a guest who settled every morning in the modal
+    // hears nothing.
+    try {
+      after(async () => {
+        for (const resId of apaleoReservationIds) await sendBreakfastMenuInvite(resId)
+      })
+    } catch (err) {
+      bookingLog.error('failed to schedule the breakfast invite', {
         error: err instanceof Error ? err.message : String(err),
       })
     }
