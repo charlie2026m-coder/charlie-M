@@ -291,6 +291,40 @@ export function buildBreakfastMenuInvite(url: string, mornings: number): string 
 }
 
 /**
+ * The evening before: breakfast is booked and still not chosen.
+ *
+ * Shorter than the invite on purpose. The guest has already had the long
+ * version; this one exists to be read in the three seconds before bed, so it
+ * leads with tomorrow and carries one link.
+ */
+export function buildBreakfastReminder(url: string): string {
+  const rule = '——————————'
+  return [
+    'Breakfast tomorrow — you have not chosen yet',
+    '',
+    'Dear guest,',
+    '',
+    'Breakfast is booked for tomorrow morning and no menu has been picked. Choose now and your seat is reserved; otherwise we will simply serve you whatever is on.',
+    '',
+    `Choose here: ${url}`,
+    '',
+    'Charlie M Team',
+    '',
+    rule,
+    '',
+    'Frühstück morgen — noch nicht gewählt',
+    '',
+    'Hallo,',
+    '',
+    'Für morgen früh ist Frühstück gebucht, aber noch kein Menü gewählt. Wählen Sie jetzt, dann ist Ihr Platz reserviert — sonst servieren wir Ihnen einfach, was es an dem Tag gibt.',
+    '',
+    `Hier wählen: ${url}`,
+    '',
+    'Ihr Charlie M Team',
+  ].join('\n')
+}
+
+/**
  * Deliver a message to a NEW booking, waiting for Guestway to catch up.
  *
  * Guestway creates the conversation a few seconds after the reservation syncs

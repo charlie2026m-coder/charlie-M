@@ -28,7 +28,11 @@ import {
   morningToNight,
   breakfastMorningsForStay,
 } from '@/lib/breakfastDates'
-import { deliverBreakfastMenuInvite } from '@/services/guestway/sendGuestwayMessage'
+import {
+  buildBreakfastReminder,
+  deliverBreakfastMenuInvite,
+  sendGuestwayMessage,
+} from '@/services/guestway/sendGuestwayMessage'
 import type { ApaleoReservationResponse } from '@/types/apaleo'
 
 const bfLog = logger.withTag('breakfast')
@@ -943,6 +947,94 @@ export async function kitchenReport(morning: string, locale = 'en'): Promise<Kit
     .sort((a, b) => a.code.localeCompare(b.code))
 
   return { morning, covers, chosen, byMenu, bySitting, lines }
+}
+
+export interface ReminderRun {
+  morning: string
+  /** Reservations with breakfast tomorrow and something still unchosen. */
+  candidates: number
+  sent: number
+  /** Already nudged for this morning on an earlier run. */
+  skipped: number
+  failed: number
+}
+
+/**
+ * Remind everyone eating tomorrow who has not chosen.
+ *
+ * "Not chosen" is either half missing: no menu, or a menu with no sitting. The
+ * sitting is not a formality — it is the seat, and an unspread house is how
+ * thirty guests arrive at 09:00 for twelve chairs.
+ *
+ * The kitchen sheet already answers "who is eating tomorrow, and what did they
+ * pick", including the guests with no booking row at all, so this reuses it
+ * rather than sweeping Apaleo a second way and disagreeing with it.
+ *
+ * One message per reservation per morning, recorded before it can be sent
+ * again: a five-night guest who never opens the link would otherwise be told
+ * five evenings running, and the fifth is the one that teaches them to ignore
+ * us. A send that fails is NOT recorded, so tomorrow's run tries once more.
+ *
+ * Single attempt, no polling: unlike a fresh booking, the conversation has
+ * existed for as long as the booking has.
+ */
+export async function remindUnchosenBreakfast(morning: string): Promise<ReminderRun> {
+  const run: ReminderRun = { morning, candidates: 0, sent: 0, skipped: 0, failed: 0 }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(morning)) return run
+
+  const report = await kitchenReport(morning, 'en')
+  const candidates = report.lines.filter(line => line.menus.length === 0 || line.slot === null)
+  run.candidates = candidates.length
+  if (candidates.length === 0) return run
+
+  const db = admin()
+  const { data: already } = await db
+    .from('breakfast_reminders')
+    .select('reservation_id')
+    .eq('service_date', morning)
+    .in(
+      'reservation_id',
+      candidates.map(c => c.reservationId),
+    )
+  const done = new Set((already ?? []).map(r => String(r.reservation_id)))
+
+  const base = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.charlie-m.de').replace(/\/+$/, '')
+
+  for (const line of candidates) {
+    if (done.has(line.reservationId)) {
+      run.skipped++
+      continue
+    }
+    try {
+      const token = await ensureBreakfastToken(line.reservationId)
+      const result = await sendGuestwayMessage({
+        reservationId: line.reservationId,
+        body: buildBreakfastReminder(`${base}/breakfast/${token}`),
+      })
+      if (!result.success) {
+        run.failed++
+        continue
+      }
+      // Recorded only after it actually went out.
+      await db
+        .from('breakfast_reminders')
+        .upsert(
+          { reservation_id: line.reservationId, service_date: morning },
+          { onConflict: 'reservation_id,service_date' },
+        )
+      run.sent++
+    } catch (e) {
+      run.failed++
+      bfLog.error('reminder failed', {
+        reservationId: line.reservationId,
+        morning,
+        error: e instanceof Error ? e.message : String(e),
+      })
+    }
+  }
+
+  bfLog.info('reminder run', run as unknown as Record<string, unknown>)
+  return run
 }
 
 // ── The door ────────────────────────────────────────────────────────────────
