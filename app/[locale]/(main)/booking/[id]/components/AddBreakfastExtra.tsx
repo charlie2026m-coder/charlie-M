@@ -24,6 +24,7 @@
  */
 
 import { FaPlus } from 'react-icons/fa6'
+import { LuChevronDown } from 'react-icons/lu'
 import {
   Dialog,
   DialogContent,
@@ -41,8 +42,12 @@ import { useTranslations, useLocale } from 'next-intl'
 import { trackSelectExtra } from '@/lib/analytics'
 import { breakfastMorningsForStay } from '@/lib/breakfastDates'
 import { MenuIcon } from '@/app/_components/breakfast/MenuIcon'
-import { LuDices } from 'react-icons/lu'
-import { MenuChips, randomMenuCode } from '@/app/_components/breakfast/MenuChips'
+import {
+  MenuPicker,
+  randomSplit,
+  sumSplit,
+  type MenuSplit,
+} from '@/app/_components/breakfast/MenuPicker'
 
 interface MenuOption {
   code: string
@@ -85,8 +90,8 @@ const AddBreakfastExtra = ({
 
   const [calendar, setCalendar] = useState<MorningMenus[] | null>(null)
   const [roomCounts, setRoomCounts] = useState<Record<string, number>>({})
-  // roomId -> morning -> menu code
-  const [roomMenus, setRoomMenus] = useState<Record<string, Record<string, string>>>({})
+  // roomId -> morning -> how many of the party take each menu
+  const [roomMenus, setRoomMenus] = useState<Record<string, Record<string, MenuSplit>>>({})
   // The same four menus are on offer every morning of a normal stay, so the
   // default is one choice for the whole stay and this opens the per-morning
   // rows. Only meaningful when the calendar is uniform; otherwise the rows are
@@ -97,12 +102,12 @@ const AddBreakfastExtra = ({
 
   const readSaved = () => {
     const counts: Record<string, number> = {}
-    const menus: Record<string, Record<string, string>> = {}
+    const menus: Record<string, Record<string, MenuSplit>> = {}
     rooms.forEach(room => {
       const saved = room.extras?.find(e => e.id === savedId)
       counts[room.id] = saved?.count ?? 0
       menus[room.id] = Object.fromEntries(
-        (saved?.breakfastMenus ?? []).map(m => [m.morning, m.menuCode]),
+        (saved?.breakfastMenus ?? []).map(m => [m.morning, { ...m.menus }]),
       )
     })
     return { counts, menus }
@@ -114,7 +119,11 @@ const AddBreakfastExtra = ({
     const { counts, menus } = readSaved()
     setRoomCounts(counts)
     setRoomMenus(menus)
-    setPerDay(Object.values(menus).some(byMorning => new Set(Object.values(byMorning)).size > 1))
+    setPerDay(
+      Object.values(menus).some(
+        byMorning => new Set(Object.values(byMorning).map(splitKey)).size > 1,
+      ),
+    )
   }
 
   // Fetched only while the dialog is open: most guests never open it, and the
@@ -178,49 +187,36 @@ const AddBreakfastExtra = ({
   const subtract = (roomId: string) => {
     const current = roomCounts[roomId] ?? 0
     if (current <= 0) return
-    setRoomCounts(prev => ({ ...prev, [roomId]: current - 1 }))
+    const next = current - 1
+    setRoomCounts(prev => ({ ...prev, [roomId]: next }))
+    // One fewer breakfast means one portion too many on file. Trimming here
+    // keeps what is shown and what is stored the same thing.
+    setRoomMenus(prev => {
+      const byMorning = prev[roomId]
+      if (!byMorning) return prev
+      return {
+        ...prev,
+        [roomId]: Object.fromEntries(
+          Object.entries(byMorning).map(([morning, split]) => [morning, trimSplit(split, next)]),
+        ),
+      }
+    })
   }
 
-  const pickMenu = (roomId: string, morning: string, code: string) =>
-    setRoomMenus(prev => ({ ...prev, [roomId]: { ...(prev[roomId] ?? {}), [morning]: code } }))
+  const pickMenu = (roomId: string, morning: string, split: MenuSplit) =>
+    setRoomMenus(prev => ({ ...prev, [roomId]: { ...(prev[roomId] ?? {}), [morning]: split } }))
 
-  const pickEveryMorning = (roomId: string, code: string) =>
+  const pickEveryMorning = (roomId: string, split: MenuSplit) =>
     setRoomMenus(prev => ({
       ...prev,
-      [roomId]: Object.fromEntries(mornings.map(m => [m, code])),
+      [roomId]: Object.fromEntries(mornings.map(m => [m, { ...split }])),
     }))
 
-  /** The one code held by every morning, or undefined if they differ. */
-  const pickedForAll = (roomId: string) => {
-    const chosen = mornings.map(m => roomMenus[roomId]?.[m])
-    return chosen.every(c => c && c === chosen[0]) ? chosen[0] : undefined
-  }
-
-  // For the guest who does not care which of the four it is. One tap decides
-  // the whole stay — every morning of every room that has breakfast — because
-  // being undecided about one morning and sure about the next is not a thing
-  // anyone is. In the per-morning view it rolls separately for each day, so an
-  // undecided guest gets variety rather than the same menu four times.
-  const surpriseMe = () => {
-    setRoomMenus(prev => {
-      const next = { ...prev }
-      for (const room of rooms) {
-        if ((roomCounts[room.id] ?? 0) <= 0) continue
-        const current = prev[room.id] ?? {}
-        if (uniformMenus && !perDay) {
-          const code = randomMenuCode(uniformMenus, pickedForAll(room.id))
-          next[room.id] = Object.fromEntries(mornings.map(m => [m, code]))
-          continue
-        }
-        const byMorning: Record<string, string> = { ...current }
-        for (const morning of mornings) {
-          const options = menusOn(morning)
-          if (options.length > 0) byMorning[morning] = randomMenuCode(options, current[morning])
-        }
-        next[room.id] = byMorning
-      }
-      return next
-    })
+  /** The one split held by every morning, or empty if they differ. */
+  const pickedForAll = (roomId: string): MenuSplit => {
+    const chosen = mornings.map(m => roomMenus[roomId]?.[m] ?? {})
+    const first = chosen[0] ?? {}
+    return chosen.every(c => splitKey(c) === splitKey(first)) ? first : {}
   }
 
   // Collapsing back to a single choice must not hide a difference it cannot
@@ -231,7 +227,10 @@ const AddBreakfastExtra = ({
       Object.fromEntries(
         Object.entries(prev).map(([roomId, byMorning]) => {
           const first = byMorning[mornings[0]]
-          return [roomId, first ? Object.fromEntries(mornings.map(m => [m, first])) : byMorning]
+          return [
+            roomId,
+            first ? Object.fromEntries(mornings.map(m => [m, { ...first }])) : byMorning,
+          ]
         }),
       ),
     )
@@ -250,9 +249,12 @@ const AddBreakfastExtra = ({
 
       // Only mornings that actually have a menu on offer are stored: a choice
       // for a morning the kitchen is closed would be a promise we cannot keep.
+      // Half-made choices are left out too — a split that does not add up to the
+      // party would be refused when it is applied, and the guest can finish it
+      // from the link we send them.
       const chosen = Object.entries(roomMenus[room.id] ?? {})
-        .filter(([morning]) => mornings.includes(morning))
-        .map(([morning, menuCode]) => ({ morning, menuCode }))
+        .filter(([morning, split]) => mornings.includes(morning) && sumSplit(split) === count)
+        .map(([morning, split]) => ({ morning, menus: { ...split } }))
         .sort((a, b) => a.morning.localeCompare(b.morning))
 
       const newExtras: RoomExtra[] = servicesToWrite.map(svc => ({
@@ -358,10 +360,15 @@ const AddBreakfastExtra = ({
                         <div className='mb-2 text-sm font-medium'>
                           {t('breakfastMenuEveryMorning')}
                         </div>
-                        <MenuChips
+                        <MenuPicker
                           options={uniformMenus}
-                          picked={pickedForAll(room.id)}
-                          onPick={code => pickEveryMorning(room.id, code)}
+                          persons={roomCounts[room.id] ?? 1}
+                          value={pickedForAll(room.id)}
+                          onChange={split => pickEveryMorning(room.id, split)}
+                          randomLabel={t('breakfastMenuRandom')}
+                          chosenLabel={(count, total) =>
+                            t('breakfastMenuChosen', { count, total })
+                          }
                         />
                       </div>
                     ) : (
@@ -379,10 +386,15 @@ const AddBreakfastExtra = ({
                               {options.length === 0 ? (
                                 <div className='text-sm text-mute'>{t('breakfastMenuNone')}</div>
                               ) : (
-                                <MenuChips
+                                <MenuPicker
                                   options={options}
-                                  picked={roomMenus[room.id]?.[morning]}
-                                  onPick={code => pickMenu(room.id, morning, code)}
+                                  persons={roomCounts[room.id] ?? 1}
+                                  value={roomMenus[room.id]?.[morning] ?? {}}
+                                  onChange={split => pickMenu(room.id, morning, split)}
+                                  randomLabel={t('breakfastMenuRandom')}
+                                  chosenLabel={(count, total) =>
+                                    t('breakfastMenuChosen', { count, total })
+                                  }
                                 />
                               )}
                             </div>
@@ -394,26 +406,14 @@ const AddBreakfastExtra = ({
                 ))
             )}
 
-            {calendar !== null && (
-              <div className='flex flex-wrap items-center gap-x-5 gap-y-2'>
-                <button
-                  type='button'
-                  onClick={surpriseMe}
-                  className='inline-flex items-center gap-1.5 text-sm text-mute underline underline-offset-2'
-                >
-                  <LuDices className='h-4 w-4 shrink-0' aria-hidden />
-                  {t('breakfastMenuRandom')}
-                </button>
-                {uniformMenus && (
-                  <button
-                    type='button'
-                    onClick={() => (perDay ? collapseToFirst() : setPerDay(true))}
-                    className='text-sm text-mute underline underline-offset-2'
-                  >
-                    {perDay ? t('breakfastMenuSameAll') : t('breakfastMenuPerDay')}
-                  </button>
-                )}
-              </div>
+            {uniformMenus && (
+              <button
+                type='button'
+                onClick={() => (perDay ? collapseToFirst() : setPerDay(true))}
+                className='text-sm text-mute underline underline-offset-2'
+              >
+                {perDay ? t('breakfastMenuSameAll') : t('breakfastMenuPerDay')}
+              </button>
             )}
 
             {/* The menus themselves, described once and closed by default —
@@ -421,9 +421,15 @@ const AddBreakfastExtra = ({
                 and otherwise it costs them no screen at all. Deduplicated
                 across mornings by code, so a day-specific menu still appears. */}
             {calendar !== null && menuLegend.length > 0 && (
-              <details className='mt-3 rounded-lg border p-3'>
-                <summary className='cursor-pointer text-sm text-mute'>
-                  {t('breakfastMenuWhatsIn')}
+              <details className='group mt-3 rounded-lg border p-3'>
+                {/* The native marker is a 6px triangle nobody reads as "this
+                    opens". A full-width row with a chevron that turns does. */}
+                <summary className='flex cursor-pointer list-none items-center justify-between gap-2 text-sm text-mute [&::-webkit-details-marker]:hidden'>
+                  <span className='underline underline-offset-2'>{t('breakfastMenuWhatsIn')}</span>
+                  <LuChevronDown
+                    className='h-4 w-4 shrink-0 transition-transform group-open:rotate-180'
+                    aria-hidden
+                  />
                 </summary>
                 <div className='mt-3 grid gap-3 sm:grid-cols-2'>
                   {menuLegend.map(menu => (
@@ -460,6 +466,27 @@ const AddBreakfastExtra = ({
       </DialogContent>
     </Dialog>
   )
+}
+
+/** A stable string for comparing two splits — object identity says nothing. */
+const splitKey = (split: MenuSplit): string =>
+  Object.entries(split ?? {})
+    .filter(([, n]) => n > 0)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([code, n]) => `${code}:${n}`)
+    .join(',')
+
+/** Drop portions until the split fits `max` people, oldest choices first. */
+const trimSplit = (split: MenuSplit, max: number): MenuSplit => {
+  const out: MenuSplit = {}
+  let left = max
+  for (const [code, n] of Object.entries(split ?? {})) {
+    if (left <= 0) break
+    const take = Math.min(n, left)
+    if (take > 0) out[code] = take
+    left -= take
+  }
+  return out
 }
 
 export default AddBreakfastExtra

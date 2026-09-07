@@ -64,7 +64,9 @@ export type RoomExtra = Omit<Service, 'description'> & {
    */
   breakfastMenus?: {
     morning: string;
-    menuCode: string;
+    /** How many of the party take each menu that morning, e.g. { A: 1, B: 1 }.
+     *  A room is not one appetite. */
+    menus: Record<string, number>;
   }[];
 };
 

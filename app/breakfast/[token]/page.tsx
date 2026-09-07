@@ -6,7 +6,7 @@
  *
  * API:
  *   GET  /api/public/breakfast/{token}?locale=de   → the mornings and choices
- *   POST /api/public/breakfast/{token}             → { morning, menuCode, slotId }
+ *   POST /api/public/breakfast/{token}             → { morning, menus, slotId }
  *   GET  /api/public/breakfast/{token}/qr          → the door code
  *
  * Deliberately outside [locale]: the link is opened from a message, not from
@@ -18,7 +18,12 @@ import { useCallback, useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import { T, fmt, niceDate, type Lang, type TKey } from './translations'
 import { MenuIcon } from '@/app/_components/breakfast/MenuIcon'
-import { MenuChips } from '@/app/_components/breakfast/MenuChips'
+import {
+  MenuPicker,
+  sumSplit,
+  type MenuSplit,
+} from '@/app/_components/breakfast/MenuPicker'
+import { LuChevronDown } from 'react-icons/lu'
 import { Button } from '@/app/_components/ui/button'
 
 interface MenuView {
@@ -44,7 +49,8 @@ interface MorningView {
   persons: number
   menus: MenuView[]
   slots: SlotView[]
-  chosenMenu: string | null
+  /** How many of the party take each menu, e.g. { A: 1, B: 1 }. */
+  chosenMenus: Record<string, number>
   chosenSlot: number | null
   attendedAt: string | null
 }
@@ -62,7 +68,7 @@ type State = ViewData | 'loading' | 'unknown' | 'net_error'
 /** Per-morning UI state. Kept beside the data rather than inside it so a
  *  refetch cannot silently discard what the guest is in the middle of doing. */
 interface Draft {
-  menu: string | null
+  menus: MenuSplit
   slot: number | null
   status: 'idle' | 'saving' | 'saved' | 'error'
   error?: string
@@ -103,7 +109,9 @@ export default function BreakfastPage() {
       setDrafts(prev => {
         const next = { ...prev }
         for (const m of json.mornings) {
-          if (!next[m.morning]) next[m.morning] = { menu: m.chosenMenu, slot: m.chosenSlot, status: 'idle' }
+          if (!next[m.morning]) {
+            next[m.morning] = { menus: { ...m.chosenMenus }, slot: m.chosenSlot, status: 'idle' }
+          }
         }
         return next
       })
@@ -118,7 +126,9 @@ export default function BreakfastPage() {
 
   const save = async (morning: string) => {
     const draft = drafts[morning]
-    if (!draft?.menu || draft.slot == null) {
+    const persons = (data as ViewData).mornings.find(m => m.morning === morning)?.persons ?? 1
+    // Every portion has to be spoken for: the kitchen cooks to this number.
+    if (!draft || sumSplit(draft.menus) !== persons || draft.slot == null) {
       setDrafts(d => ({ ...d, [morning]: { ...d[morning], status: 'error', error: t('chooseBoth') } }))
       return
     }
@@ -127,7 +137,7 @@ export default function BreakfastPage() {
       const res = await fetch(`/api/public/breakfast/${encodeURIComponent(token)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ morning, menuCode: draft.menu, slotId: draft.slot }),
+        body: JSON.stringify({ morning, menus: draft.menus, slotId: draft.slot }),
       })
       const json = (await res.json()) as { ok: boolean; reason?: string }
       if (json.ok) {
@@ -141,7 +151,12 @@ export default function BreakfastPage() {
         [morning]: {
           ...d[morning],
           status: 'error',
-          error: json.reason === 'slot_full' ? t('slotFull') : t('failed'),
+          error:
+            json.reason === 'slot_full'
+              ? t('slotFull')
+              : json.reason === 'menu_total_mismatch'
+                ? t('chooseBoth')
+                : t('failed'),
         },
       }))
       if (json.reason === 'slot_full') void load()
@@ -196,8 +211,16 @@ export default function BreakfastPage() {
           </section>
 
           {menuLegend.length > 0 && (
-            <details className='mb-6 rounded-2xl border bg-white p-5'>
-              <summary className='cursor-pointer font-medium'>{t('whatsIn')}</summary>
+            <details className='group mb-6 rounded-2xl border bg-white p-5'>
+              {/* The native marker is a 6px triangle nobody reads as "this
+                  opens". A full-width row with a chevron that turns does. */}
+              <summary className='flex cursor-pointer list-none items-center justify-between gap-2 font-medium [&::-webkit-details-marker]:hidden'>
+                <span className='underline underline-offset-4'>{t('whatsIn')}</span>
+                <LuChevronDown
+                  className='h-5 w-5 shrink-0 transition-transform group-open:rotate-180'
+                  aria-hidden
+                />
+              </summary>
               <div className='mt-4 grid gap-4 sm:grid-cols-2'>
                 {menuLegend.map(menu => (
                   <div key={menu.code}>
@@ -223,7 +246,11 @@ export default function BreakfastPage() {
           )}
 
           {data.mornings.map(m => {
-            const draft = drafts[m.morning] ?? { menu: m.chosenMenu, slot: m.chosenSlot, status: 'idle' as const }
+            const draft = drafts[m.morning] ?? {
+              menus: { ...m.chosenMenus },
+              slot: m.chosenSlot,
+              status: 'idle' as const,
+            }
             const set = (patch: Partial<Draft>) =>
               setDrafts(d => ({ ...d, [m.morning]: { ...draft, ...patch, status: 'idle', error: undefined } }))
 
@@ -245,12 +272,16 @@ export default function BreakfastPage() {
                       <legend className='text-xs font-medium uppercase tracking-[0.14em] text-mute mb-2'>
                         {t('menuLabel')}
                       </legend>
-                      <MenuChips
+                      <MenuPicker
                         options={m.menus}
-                        picked={draft.menu ?? undefined}
-                        onPick={code => set({ menu: code })}
+                        persons={m.persons}
+                        value={draft.menus}
+                        onChange={menus => set({ menus })}
                         disabled={!!m.attendedAt}
                         randomLabel={t('random')}
+                        chosenLabel={(count, total) =>
+                          fmt(t('chosen'), { count, total })
+                        }
                       />
                     </fieldset>
 

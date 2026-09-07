@@ -59,7 +59,7 @@ export async function POST(
   const { token } = await params
   if (rateLimited(request, 'breakfast-choose', token)) return tooMany()
 
-  let body: { morning?: string; menuCode?: string; slotId?: number }
+  let body: { morning?: string; menus?: Record<string, unknown>; slotId?: number }
   try {
     body = await request.json()
   } catch {
@@ -67,16 +67,32 @@ export async function POST(
   }
 
   const morning = String(body?.morning ?? '')
-  const menuCode = String(body?.menuCode ?? '')
   const slotId = Number(body?.slotId)
 
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(morning) || !menuCode || !Number.isFinite(slotId)) {
+  // { "A": 1, "B": 1 } — a party can take one of each. Shape-checked here,
+  // meaning-checked in the service: the codes must be on the calendar and the
+  // portions must add up to the people who paid.
+  const menus: Record<string, number> = {}
+  const raw = body?.menus
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    for (const [code, value] of Object.entries(raw)) {
+      const n = Math.floor(Number(value))
+      if (!/^[A-Za-z0-9_-]{1,16}$/.test(code) || !Number.isFinite(n) || n <= 0) continue
+      menus[code] = n
+    }
+  }
+
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(morning) ||
+    Object.keys(menus).length === 0 ||
+    !Number.isFinite(slotId)
+  ) {
     return NextResponse.json({ ok: false, reason: 'error' }, { status: 400, headers: NO_STORE })
   }
 
   // Everything is re-checked server-side against Apaleo, the menu calendar and
   // the seat count — the page the guest is looking at may be minutes old.
-  const result = await chooseBreakfast(token, morning, menuCode, slotId)
+  const result = await chooseBreakfast(token, morning, menus, slotId)
 
   // Refusals are HTTP 200 with a reason: the page renders the reason, and a
   // "slot is full" is a normal outcome rather than a transport failure.

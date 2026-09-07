@@ -171,7 +171,9 @@ export interface MorningView {
   /** Menus on offer that morning. Empty means the kitchen offers nothing. */
   menus: MenuView[]
   slots: SlotView[]
-  chosenMenu: string | null
+  /** How many of the party take each menu, e.g. { A: 1, B: 1 }. Empty until
+   *  the guest has chosen. Sums to `persons` once the choice is complete. */
+  chosenMenus: Record<string, number>
   chosenSlot: number | null
   attendedAt: string | null
 }
@@ -185,6 +187,10 @@ export interface GuestBreakfastView {
 }
 
 const pick = (locale: string, de: string, en: string) => (locale === 'de' ? de || en : en || de)
+
+/** Portions across all menus of one morning. */
+export const sumPortions = (menus: Record<string, number>): number =>
+  Object.values(menus).reduce((total, n) => total + (Number(n) || 0), 0)
 
 const toLines = (s: string): string[] =>
   String(s || '')
@@ -246,6 +252,27 @@ export async function guestView(token: string, locale = 'en'): Promise<GuestBrea
 
   const mineByDate = new Map((bookings ?? []).map(b => [String(b.service_date).slice(0, 10), b]))
 
+  // The menu split lives one table down, so a party can take the eggs and the
+  // vegan bowl on the same morning.
+  const splitByDate = new Map<string, Record<string, number>>()
+  const bookingIds = (bookings ?? []).map(b => Number(b.id)).filter(Number.isFinite)
+  if (bookingIds.length > 0) {
+    const { data: split } = await db
+      .from('breakfast_booking_menus')
+      .select('booking_id, menu_code, persons')
+      .in('booking_id', bookingIds)
+    const dateOfBooking = new Map(
+      (bookings ?? []).map(b => [Number(b.id), String(b.service_date).slice(0, 10)]),
+    )
+    for (const row of split ?? []) {
+      const date = dateOfBooking.get(Number(row.booking_id))
+      if (!date) continue
+      const bucket = splitByDate.get(date) ?? {}
+      bucket[String(row.menu_code)] = Number(row.persons ?? 0)
+      splitByDate.set(date, bucket)
+    }
+  }
+
   const takenBy = new Map<string, number>() // `${date}|${slotId}` -> persons
   for (const b of taken ?? []) {
     if (b.slot_id == null) continue
@@ -282,7 +309,7 @@ export async function guestView(token: string, locale = 'en'): Promise<GuestBrea
           seatsLeft: Math.max(0, Number(s.capacity) - used),
         }
       }),
-      chosenMenu: (mine?.menu_code as string | null) ?? null,
+      chosenMenus: mine ? (splitByDate.get(morning) ?? {}) : {},
       chosenSlot: mine?.slot_id != null ? Number(mine.slot_id) : null,
       attendedAt: (mine?.attended_at as string | null) ?? null,
     }
@@ -294,7 +321,11 @@ export async function guestView(token: string, locale = 'en'): Promise<GuestBrea
     mornings,
     // A morning with nothing on offer is not the guest's problem to solve, so
     // it does not count as an outstanding choice.
-    needsChoice: mornings.some(m => m.menus.length > 0 && (!m.chosenMenu || m.chosenSlot == null)),
+    needsChoice: mornings.some(
+      m =>
+        m.menus.length > 0 &&
+        (m.chosenSlot == null || sumPortions(m.chosenMenus) !== m.persons),
+    ),
   }
 }
 
@@ -354,7 +385,19 @@ export async function menusForRange(
 
 export type ChooseResult =
   | { ok: true }
-  | { ok: false; reason: 'unknown_token' | 'not_paid' | 'menu_not_offered' | 'slot_full' | 'slot_not_found' | 'past' | 'error'; detail?: string }
+  | {
+      ok: false
+      reason:
+        | 'unknown_token'
+        | 'not_paid'
+        | 'menu_not_offered'
+        | 'menu_total_mismatch'
+        | 'slot_full'
+        | 'slot_not_found'
+        | 'past'
+        | 'error'
+      detail?: string
+    }
 
 /**
  * Record the guest's menu and sitting for one morning.
@@ -368,7 +411,7 @@ export type ChooseResult =
 export async function chooseBreakfast(
   token: string,
   morning: string,
-  menuCode: string,
+  menus: Record<string, number>,
   slotId: number,
 ): Promise<ChooseResult> {
   const db = admin()
@@ -388,19 +431,33 @@ export async function chooseBreakfast(
   const paid = paidBreakfastMornings(reservation).find(p => p.morning === morning)
   if (!paid) return { ok: false, reason: 'not_paid' }
 
+  // Normalised before anything is checked: a code with no portions is not a
+  // choice, and the count has to be a whole positive number of people.
+  const wanted: Record<string, number> = {}
+  for (const [code, raw] of Object.entries(menus ?? {})) {
+    const n = Math.floor(Number(raw))
+    if (!Number.isFinite(n) || n <= 0) continue
+    wanted[code] = n
+  }
+  const codes = Object.keys(wanted)
+  if (codes.length === 0) return { ok: false, reason: 'menu_not_offered' }
+
+  // Every portion accounted for. The RPC checks this too — this is the one that
+  // gets to answer with a reason the guest can act on.
+  if (sumPortions(wanted) !== paid.persons) return { ok: false, reason: 'menu_total_mismatch' }
+
   const { data: offered } = await db
     .from('breakfast_menu_days')
     .select('menu_code')
     .eq('service_date', morning)
-    .eq('menu_code', menuCode)
-    .maybeSingle()
-  if (!offered) return { ok: false, reason: 'menu_not_offered' }
+    .in('menu_code', codes)
+  if ((offered ?? []).length !== codes.length) return { ok: false, reason: 'menu_not_offered' }
 
   const { error } = await db.rpc('book_breakfast_slot', {
     p_reservation_id: reservationId,
     p_service_date: morning,
     p_persons: paid.persons,
-    p_menu_code: menuCode,
+    p_menus: wanted,
     p_slot_id: slotId,
   })
 
@@ -408,6 +465,7 @@ export async function chooseBreakfast(
     const msg = String(error.message || '')
     if (msg.includes('slot_full')) return { ok: false, reason: 'slot_full' }
     if (msg.includes('slot_not_found')) return { ok: false, reason: 'slot_not_found' }
+    if (msg.includes('menu_total_mismatch')) return { ok: false, reason: 'menu_total_mismatch' }
     bfLog.error('choose failed', { reservationId, morning, error: msg })
     return { ok: false, reason: 'error', detail: msg.slice(0, 200) }
   }
@@ -422,7 +480,8 @@ export interface ScanResult {
   result: 'ok' | 'already' | 'no_booking' | 'not_paid' | 'unknown_token' | 'error'
   guest?: string
   room?: string
-  menu?: { code: string; name: string } | null
+  /** What the party eats, one entry per menu they picked. */
+  menus?: { code: string; name: string; persons: number }[]
   slot?: { startsAt: string; endsAt: string } | null
   persons?: number
   attendedAt?: string | null
@@ -481,20 +540,37 @@ export async function scanBreakfast(token: string, locale = 'de'): Promise<ScanR
 
   const { data: booking } = await db
     .from('breakfast_bookings')
-    .select('id, menu_code, slot_id, attended_at, persons')
+    .select('id, slot_id, attended_at, persons')
     .eq('reservation_id', reservationId)
     .eq('service_date', morning)
     .maybeSingle()
 
-  let menu: ScanResult['menu'] = null
-  if (booking?.menu_code) {
-    const { data: m } = await db
-      .from('breakfast_menus')
-      .select('code, name_de, name_en')
-      .eq('code', booking.menu_code)
-      .maybeSingle()
-    if (m) menu = { code: String(m.code), name: pick(locale, String(m.name_de), String(m.name_en)) }
+  // The person holding the scanner needs the whole party's order, not one dish:
+  // a couple can have taken one of each.
+  const menus: NonNullable<ScanResult['menus']> = []
+  if (booking?.id) {
+    const { data: split } = await db
+      .from('breakfast_booking_menus')
+      .select('menu_code, persons')
+      .eq('booking_id', booking.id)
+    const codes = (split ?? []).map(r => String(r.menu_code))
+    const { data: named } = codes.length
+      ? await db.from('breakfast_menus').select('code, name_de, name_en').in('code', codes)
+      : { data: [] as { code: string; name_de: string; name_en: string }[] }
+    const nameOf = new Map(
+      (named ?? []).map(m => [String(m.code), pick(locale, String(m.name_de), String(m.name_en))]),
+    )
+    for (const row of split ?? []) {
+      const code = String(row.menu_code)
+      menus.push({ code, name: nameOf.get(code) ?? code, persons: Number(row.persons ?? 0) })
+    }
+    menus.sort((a, b) => a.code.localeCompare(b.code))
   }
+
+  /** "2x A, 1x B" — the log is read by a human, not joined against. */
+  const menuSummary = menus.length
+    ? menus.map(m => `${m.persons}x ${m.code}`).join(', ')
+    : null
 
   let slot: ScanResult['slot'] = null
   if (booking?.slot_id != null) {
@@ -510,15 +586,15 @@ export async function scanBreakfast(token: string, locale = 'de'): Promise<ScanR
   // there is no menu on file so they can hand over whatever is on today.
   if (!booking) {
     await log('no_booking', { reservation_id: reservationId, guest, persons: paid.persons })
-    return { ok: true, result: 'no_booking', guest, room, persons: paid.persons, menu: null, slot: null }
+    return { ok: true, result: 'no_booking', guest, room, persons: paid.persons, menus: [], slot: null }
   }
 
   if (booking.attended_at) {
     await log('already', {
-      reservation_id: reservationId, guest, persons: paid.persons, menu_code: booking.menu_code,
+      reservation_id: reservationId, guest, persons: paid.persons, menu_code: menuSummary,
     })
     return {
-      ok: true, result: 'already', guest, room, menu, slot,
+      ok: true, result: 'already', guest, room, menus, slot,
       persons: paid.persons, attendedAt: String(booking.attended_at),
     }
   }
@@ -530,8 +606,8 @@ export async function scanBreakfast(token: string, locale = 'de'): Promise<ScanR
     .eq('id', booking.id)
 
   await log('ok', {
-    reservation_id: reservationId, guest, persons: paid.persons, menu_code: booking.menu_code,
+    reservation_id: reservationId, guest, persons: paid.persons, menu_code: menuSummary,
   })
 
-  return { ok: true, result: 'ok', guest, room, menu, slot, persons: paid.persons, attendedAt: now }
+  return { ok: true, result: 'ok', guest, room, menus, slot, persons: paid.persons, attendedAt: now }
 }
