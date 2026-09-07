@@ -130,6 +130,17 @@ const AddBreakfastExtra = ({
     }
   }, [isOpen, mornings, calendar, locale])
 
+  // Every distinct menu that appears anywhere in this stay, in calendar order.
+  // Deduplicated by code so the description block below stays one copy even
+  // though the same menu is on offer every morning.
+  const menuLegend: MenuOption[] = (() => {
+    const seen = new Map<string, MenuOption>()
+    for (const day of calendar ?? []) {
+      for (const menu of day.menus) if (!seen.has(menu.code)) seen.set(menu.code, menu)
+    }
+    return [...seen.values()]
+  })()
+
   const totalCount = Object.values(roomCounts).reduce((sum, c) => sum + c, 0)
   const totalPrice = Math.round(extra.price * totalCount * nights * 100) / 100
 
@@ -257,67 +268,92 @@ const AddBreakfastExtra = ({
                         {t('room')} {index + 1}
                       </div>
                     )}
-                    {mornings.map(morning => {
-                      const options = calendar.find(c => c.morning === morning)?.menus ?? []
-                      const picked = roomMenus[room.id]?.[morning]
-                      return (
-                        <div key={morning} className='mb-3'>
-                          <div className='mb-1 text-sm font-medium'>{dateLabel(morning)}</div>
-                          {options.length === 0 ? (
-                            <div className='text-sm text-mute'>{t('breakfastMenuNone')}</div>
-                          ) : (
-                            /* Cards, not pills. Four words in four pills make
-                               the guest read all four to tell them apart; an
-                               icon is recognised first, and the dish list is
-                               what they are actually choosing between. */
-                            <div className='grid gap-2 sm:grid-cols-2'>
-                              {options.map(menu => {
-                                const isPicked = picked === menu.code
-                                return (
-                                  <button
-                                    key={menu.code}
-                                    type='button'
-                                    onClick={() => pickMenu(room.id, morning, menu.code)}
-                                    aria-pressed={isPicked}
-                                    className={`rounded-xl border p-3 text-left transition-colors ${
-                                      isPicked ? 'border-black bg-black/[0.04]' : 'hover:bg-black/[0.02]'
-                                    }`}
-                                  >
-                                    <span className='flex items-center gap-2'>
+
+                    {/* One line per morning, nothing repeated. The first cut
+                        printed all four menus in full under every date: on a
+                        four-night stay that is sixteen identical cards and the
+                        guest scrolls past the thing they came to do. The menus
+                        are the same every day, so they are described ONCE,
+                        below, behind a disclosure. */}
+                    <div className='divide-y rounded-lg border'>
+                      {mornings.map(morning => {
+                        const options = calendar.find(c => c.morning === morning)?.menus ?? []
+                        const picked = roomMenus[room.id]?.[morning]
+                        return (
+                          <div
+                            key={morning}
+                            className='flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:gap-4'
+                          >
+                            <div className='shrink-0 text-sm font-medium sm:w-28'>
+                              {dateLabel(morning)}
+                            </div>
+                            {options.length === 0 ? (
+                              <div className='text-sm text-mute'>{t('breakfastMenuNone')}</div>
+                            ) : (
+                              <div className='flex flex-wrap gap-1.5'>
+                                {options.map(menu => {
+                                  const isPicked = picked === menu.code
+                                  return (
+                                    <button
+                                      key={menu.code}
+                                      type='button'
+                                      onClick={() => pickMenu(room.id, morning, menu.code)}
+                                      aria-pressed={isPicked}
+                                      className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
+                                        isPicked
+                                          ? 'border-dark-gold bg-blue text-mute'
+                                          : 'border-transparent bg-black/[0.04] hover:bg-black/[0.07]'
+                                      }`}
+                                    >
                                       {menu.icon && (
-                                        <span className='text-lg leading-none' aria-hidden>
+                                        <span className='mr-1.5' aria-hidden>
                                           {menu.icon}
                                         </span>
                                       )}
-                                      <span className='font-medium'>{menu.name}</span>
-                                      {isPicked && <span className='ml-auto text-sm' aria-hidden>✓</span>}
-                                    </span>
-                                    {menu.description && (
-                                      <span className='mt-1 block text-xs text-mute'>{menu.description}</span>
-                                    )}
-                                    {menu.items.length > 0 && (
-                                      <span className='mt-1.5 block text-xs leading-snug'>
-                                        {menu.items.join(' · ')}
-                                      </span>
-                                    )}
-                                    {menu.allergens && (
-                                      <span className='mt-1.5 block text-[11px] text-mute'>
-                                        {t('breakfastAllergens')}: {menu.allergens}
-                                      </span>
-                                    )}
-                                  </button>
-                                )
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      )
-                    })}
+                                      {menu.name}
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
                 ))
             )}
 
-            <p className='text-xs text-mute'>{t('breakfastMenuLater')}</p>
+            {/* The menus themselves, described once and closed by default —
+                the guest opens it if they want to know what is in "Hearty",
+                and otherwise it costs them no screen at all. Deduplicated
+                across mornings by code, so a day-specific menu still appears. */}
+            {calendar !== null && menuLegend.length > 0 && (
+              <details className='mt-3 rounded-lg border p-3'>
+                <summary className='cursor-pointer text-sm text-mute'>
+                  {t('breakfastMenuWhatsIn')}
+                </summary>
+                <div className='mt-3 grid gap-3 sm:grid-cols-2'>
+                  {menuLegend.map(menu => (
+                    <div key={menu.code}>
+                      <div className='flex items-center gap-2 text-sm font-medium'>
+                        {menu.icon && <span aria-hidden>{menu.icon}</span>}
+                        {menu.name}
+                      </div>
+                      {menu.items.length > 0 && (
+                        <div className='mt-1 text-xs leading-snug'>{menu.items.join(' · ')}</div>
+                      )}
+                      {menu.allergens && (
+                        <div className='mt-1 text-[11px] text-mute'>
+                          {t('breakfastAllergens')}: {menu.allergens}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </details>
+            )}
+            <p className='mt-3 text-xs text-mute'>{t('breakfastMenuLater')}</p>
           </div>
         )}
 
