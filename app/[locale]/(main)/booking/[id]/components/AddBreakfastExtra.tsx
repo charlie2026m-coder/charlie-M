@@ -40,6 +40,7 @@ import { Room, RoomExtra } from '@/types/types'
 import { useTranslations, useLocale } from 'next-intl'
 import { trackSelectExtra } from '@/lib/analytics'
 import { breakfastMorningsForStay } from '@/lib/breakfastDates'
+import { MenuIcon } from '@/app/_components/breakfast/MenuIcon'
 
 interface MenuOption {
   code: string
@@ -299,17 +300,13 @@ const AddBreakfastExtra = ({
                                       type='button'
                                       onClick={() => pickMenu(room.id, morning, menu.code)}
                                       aria-pressed={isPicked}
-                                      className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
+                                      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors ${
                                         isPicked
                                           ? 'border-dark-gold bg-blue text-mute'
                                           : 'border-transparent bg-black/[0.04] hover:bg-black/[0.07]'
                                       }`}
                                     >
-                                      {menu.icon && (
-                                        <span className='mr-1.5' aria-hidden>
-                                          {menu.icon}
-                                        </span>
-                                      )}
+                                      <MenuIcon name={menu.icon} className='h-4 w-4 shrink-0' />
                                       {menu.name}
                                     </button>
                                   )
@@ -337,7 +334,7 @@ const AddBreakfastExtra = ({
                   {menuLegend.map(menu => (
                     <div key={menu.code}>
                       <div className='flex items-center gap-2 text-sm font-medium'>
-                        {menu.icon && <span aria-hidden>{menu.icon}</span>}
+                        <MenuIcon name={menu.icon} className='h-4 w-4 shrink-0' />
                         {menu.name}
                       </div>
                       {menu.items.length > 0 && (

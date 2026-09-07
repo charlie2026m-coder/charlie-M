@@ -17,6 +17,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import { T, fmt, niceDate, type Lang, type TKey } from './translations'
+import { MenuIcon } from '@/app/_components/breakfast/MenuIcon'
 
 interface MenuView {
   code: string
@@ -222,11 +223,7 @@ export default function BreakfastPage() {
                             />
                             <span className='min-w-0'>
                               <span className='flex items-center gap-2 font-medium'>
-                                {menu.icon && (
-                                  <span className='text-lg leading-none' aria-hidden>
-                                    {menu.icon}
-                                  </span>
-                                )}
+                                <MenuIcon name={menu.icon} className='h-[18px] w-[18px] shrink-0' />
                                 {menu.name}
                               </span>
                               {menu.description && (
