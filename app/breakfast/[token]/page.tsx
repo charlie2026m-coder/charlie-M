@@ -250,6 +250,7 @@ export default function BreakfastPage() {
                         picked={draft.menu ?? undefined}
                         onPick={code => set({ menu: code })}
                         disabled={!!m.attendedAt}
+                        randomLabel={t('random')}
                       />
                     </fieldset>
 

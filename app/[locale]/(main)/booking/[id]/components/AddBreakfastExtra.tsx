@@ -41,7 +41,8 @@ import { useTranslations, useLocale } from 'next-intl'
 import { trackSelectExtra } from '@/lib/analytics'
 import { breakfastMorningsForStay } from '@/lib/breakfastDates'
 import { MenuIcon } from '@/app/_components/breakfast/MenuIcon'
-import { MenuChips } from '@/app/_components/breakfast/MenuChips'
+import { LuDices } from 'react-icons/lu'
+import { MenuChips, randomMenuCode } from '@/app/_components/breakfast/MenuChips'
 
 interface MenuOption {
   code: string
@@ -193,6 +194,33 @@ const AddBreakfastExtra = ({
   const pickedForAll = (roomId: string) => {
     const chosen = mornings.map(m => roomMenus[roomId]?.[m])
     return chosen.every(c => c && c === chosen[0]) ? chosen[0] : undefined
+  }
+
+  // For the guest who does not care which of the four it is. One tap decides
+  // the whole stay — every morning of every room that has breakfast — because
+  // being undecided about one morning and sure about the next is not a thing
+  // anyone is. In the per-morning view it rolls separately for each day, so an
+  // undecided guest gets variety rather than the same menu four times.
+  const surpriseMe = () => {
+    setRoomMenus(prev => {
+      const next = { ...prev }
+      for (const room of rooms) {
+        if ((roomCounts[room.id] ?? 0) <= 0) continue
+        const current = prev[room.id] ?? {}
+        if (uniformMenus && !perDay) {
+          const code = randomMenuCode(uniformMenus, pickedForAll(room.id))
+          next[room.id] = Object.fromEntries(mornings.map(m => [m, code]))
+          continue
+        }
+        const byMorning: Record<string, string> = { ...current }
+        for (const morning of mornings) {
+          const options = menusOn(morning)
+          if (options.length > 0) byMorning[morning] = randomMenuCode(options, current[morning])
+        }
+        next[room.id] = byMorning
+      }
+      return next
+    })
   }
 
   // Collapsing back to a single choice must not hide a difference it cannot
@@ -366,14 +394,26 @@ const AddBreakfastExtra = ({
                 ))
             )}
 
-            {uniformMenus && (
-              <button
-                type='button'
-                onClick={() => (perDay ? collapseToFirst() : setPerDay(true))}
-                className='text-sm text-mute underline underline-offset-2'
-              >
-                {perDay ? t('breakfastMenuSameAll') : t('breakfastMenuPerDay')}
-              </button>
+            {calendar !== null && (
+              <div className='flex flex-wrap items-center gap-x-5 gap-y-2'>
+                <button
+                  type='button'
+                  onClick={surpriseMe}
+                  className='inline-flex items-center gap-1.5 text-sm text-mute underline underline-offset-2'
+                >
+                  <LuDices className='h-4 w-4 shrink-0' aria-hidden />
+                  {t('breakfastMenuRandom')}
+                </button>
+                {uniformMenus && (
+                  <button
+                    type='button'
+                    onClick={() => (perDay ? collapseToFirst() : setPerDay(true))}
+                    className='text-sm text-mute underline underline-offset-2'
+                  >
+                    {perDay ? t('breakfastMenuSameAll') : t('breakfastMenuPerDay')}
+                  </button>
+                )}
+              </div>
             )}
 
             {/* The menus themselves, described once and closed by default —

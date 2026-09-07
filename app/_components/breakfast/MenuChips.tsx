@@ -11,6 +11,7 @@
  * on one line, so they simply flow.
  */
 
+import { LuDices } from 'react-icons/lu'
 import { MenuIcon } from './MenuIcon'
 
 export interface ChipMenu {
@@ -19,16 +20,27 @@ export interface ChipMenu {
   name: string
 }
 
+/** A menu at random, never the one already chosen: a button that can leave
+ *  everything exactly as it was reads as broken. */
+export function randomMenuCode(options: readonly ChipMenu[], current?: string): string {
+  const pool = options.filter(o => o.code !== current)
+  const from = pool.length > 0 ? pool : options
+  return from[Math.floor(Math.random() * from.length)].code
+}
+
 export function MenuChips({
   options,
   picked,
   onPick,
   disabled,
+  randomLabel,
 }: {
   options: readonly ChipMenu[]
   picked: string | undefined
   onPick: (code: string) => void
   disabled?: boolean
+  /** When set, a dice pill is appended that picks for an undecided guest. */
+  randomLabel?: string
 }) {
   return (
     <div className='grid grid-cols-[repeat(auto-fit,minmax(7.5rem,1fr))] gap-1.5 sm:flex sm:flex-wrap'>
@@ -52,6 +64,19 @@ export function MenuChips({
           </button>
         )
       })}
+      {randomLabel && options.length > 1 && (
+        <button
+          type='button'
+          onClick={() => onPick(randomMenuCode(options, picked))}
+          disabled={disabled}
+          // Dashed and never filled: this is an action, not a fifth menu, and it
+          // must not look selected once it has done its work.
+          className='inline-flex items-center gap-1.5 rounded-full border border-dashed border-dark-gold px-3 py-1.5 text-sm text-dark transition-colors hover:bg-black/[0.04] disabled:cursor-not-allowed disabled:opacity-60'
+        >
+          <LuDices className='h-4 w-4 shrink-0' aria-hidden />
+          {randomLabel}
+        </button>
+      )}
     </div>
   )
 }

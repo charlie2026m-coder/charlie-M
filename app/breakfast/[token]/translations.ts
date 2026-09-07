@@ -36,6 +36,7 @@ export const T = {
     allergens: 'Allergene: {list}',
     noMenus: 'An diesem Morgen wird kein Frühstück serviert.',
     whatsIn: 'Was in den Menüs steckt',
+    random: 'Zufällig wählen',
 
     save: 'Auswahl speichern',
     saving: 'Wird gespeichert …',
@@ -73,6 +74,7 @@ export const T = {
     allergens: 'Allergens: {list}',
     noMenus: 'No breakfast is served on this morning.',
     whatsIn: 'What is in each menu',
+    random: 'Surprise me',
 
     save: 'Save selection',
     saving: 'Saving …',
