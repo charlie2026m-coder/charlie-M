@@ -660,7 +660,7 @@ export interface ScanResult {
   guest?: string
   room?: string
   /** What the party eats, one entry per menu they picked. */
-  menus?: { code: string; name: string; persons: number }[]
+  menus?: { code: string; name: string; icon: string; persons: number }[]
   slot?: { startsAt: string; endsAt: string } | null
   persons?: number
   attendedAt?: string | null
@@ -734,14 +734,25 @@ export async function scanBreakfast(token: string, locale = 'de'): Promise<ScanR
       .eq('booking_id', booking.id)
     const codes = (split ?? []).map(r => String(r.menu_code))
     const { data: named } = codes.length
-      ? await db.from('breakfast_menus').select('code, name_de, name_en').in('code', codes)
-      : { data: [] as { code: string; name_de: string; name_en: string }[] }
-    const nameOf = new Map(
-      (named ?? []).map(m => [String(m.code), pick(locale, String(m.name_de), String(m.name_en))]),
+      ? await db.from('breakfast_menus').select('code, icon, name_de, name_en').in('code', codes)
+      : { data: [] as { code: string; icon: string; name_de: string; name_en: string }[] }
+    // The door screen draws the same icon the guest saw when they chose, so it
+    // comes from the menu row rather than a second copy of the mapping.
+    const shown = new Map(
+      (named ?? []).map(m => [
+        String(m.code),
+        { name: pick(locale, String(m.name_de), String(m.name_en)), icon: String(m.icon ?? '') },
+      ]),
     )
     for (const row of split ?? []) {
       const code = String(row.menu_code)
-      menus.push({ code, name: nameOf.get(code) ?? code, persons: Number(row.persons ?? 0) })
+      const info = shown.get(code)
+      menus.push({
+        code,
+        name: info?.name ?? code,
+        icon: info?.icon ?? '',
+        persons: Number(row.persons ?? 0),
+      })
     }
     menus.sort((a, b) => a.code.localeCompare(b.code))
   }
