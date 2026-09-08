@@ -13,6 +13,13 @@ import { logger } from '@/lib/logger'
  * sent again, so the worst a stranger can do by calling this is make it do its
  * own work slightly early. Set CRON_SECRET anyway.
  */
+export const dynamic = 'force-dynamic'
+// It sweeps every reservation staying tonight out of Apaleo, page by page, and
+// then sends to each guest who has not chosen. That is far past the default a
+// route handler gets, and a job that dies halfway sends nothing to the guests
+// it had not reached yet — they simply do not hear from us that evening.
+export const maxDuration = 300
+
 const cronLog = logger.withTag('cron')
 
 export async function GET(req: Request) {

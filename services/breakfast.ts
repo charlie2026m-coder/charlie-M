@@ -1000,38 +1000,54 @@ export async function remindUnchosenBreakfast(morning: string): Promise<Reminder
 
   const base = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.charlie-m.de').replace(/\/+$/, '')
 
-  for (const line of candidates) {
-    if (done.has(line.reservationId)) {
-      run.skipped++
-      continue
-    }
-    try {
-      const token = await ensureBreakfastToken(line.reservationId)
-      const result = await sendGuestwayMessage({
-        reservationId: line.reservationId,
-        body: buildBreakfastReminder(`${base}/breakfast/${token}`),
-      })
-      if (!result.success) {
+  const pending = candidates.filter(line => {
+    if (!done.has(line.reservationId)) return true
+    run.skipped++
+    return false
+  })
+
+  // A few at a time rather than one after another. Each send is a lookup plus a
+  // post, both bounded at five seconds, so a full house of undecided guests
+  // sent strictly in sequence would outlast any function budget — and the ones
+  // at the end of the list would simply never be told. Four keeps the whole
+  // batch inside a minute without leaning on Guestway.
+  const LANES = 4
+  const queue = [...pending]
+
+  const worker = async () => {
+    for (;;) {
+      const line = queue.shift()
+      if (!line) return
+      try {
+        const token = await ensureBreakfastToken(line.reservationId)
+        const result = await sendGuestwayMessage({
+          reservationId: line.reservationId,
+          body: buildBreakfastReminder(`${base}/breakfast/${token}`),
+        })
+        if (!result.success) {
+          run.failed++
+          continue
+        }
+        // Recorded only after it actually went out.
+        await db
+          .from('breakfast_reminders')
+          .upsert(
+            { reservation_id: line.reservationId, service_date: morning },
+            { onConflict: 'reservation_id,service_date' },
+          )
+        run.sent++
+      } catch (e) {
         run.failed++
-        continue
+        bfLog.error('reminder failed', {
+          reservationId: line.reservationId,
+          morning,
+          error: e instanceof Error ? e.message : String(e),
+        })
       }
-      // Recorded only after it actually went out.
-      await db
-        .from('breakfast_reminders')
-        .upsert(
-          { reservation_id: line.reservationId, service_date: morning },
-          { onConflict: 'reservation_id,service_date' },
-        )
-      run.sent++
-    } catch (e) {
-      run.failed++
-      bfLog.error('reminder failed', {
-        reservationId: line.reservationId,
-        morning,
-        error: e instanceof Error ? e.message : String(e),
-      })
     }
   }
+
+  await Promise.all(Array.from({ length: Math.min(LANES, queue.length) }, worker))
 
   bfLog.info('reminder run', run as unknown as Record<string, unknown>)
   return run

@@ -55,7 +55,35 @@ describe('who the sweep touches', () => {
     await call()
 
     expect(runRoomReady).toHaveBeenCalledTimes(2)
-    expect(runRoomReady.mock.calls.map((c) => c[0])).toEqual(['AAA-1', 'BBB-1'])
+    // Set, not sequence: the pass starts at a different point each quarter of
+    // an hour (see below), so the order is deliberately not fixed.
+    expect(runRoomReady.mock.calls.map((c) => c[0]).sort()).toEqual(['AAA-1', 'BBB-1'])
+  })
+
+  it('starts at a different arrival each quarter of an hour', async () => {
+    // A pass that runs out of time stops wherever it got to. Always starting at
+    // the top of the list would mean the names after the cut-off are never
+    // reached at all — they would lose the feature silently. Rotating gives
+    // every arrival its turn within the hour.
+    const rows = [
+      { id: 'AAA-1', arrival: '2026-09-08T15:00:00+02:00', status: 'Confirmed' },
+      { id: 'BBB-1', arrival: '2026-09-08T15:00:00+02:00', status: 'Confirmed' },
+      { id: 'CCC-1', arrival: '2026-09-08T15:00:00+02:00', status: 'Confirmed' },
+    ]
+
+    const firstTouched = async (time: string) => {
+      vi.setSystemTime(new Date(time))
+      vi.clearAllMocks()
+      arrivals(rows)
+      await call()
+      return runRoomReady.mock.calls[0][0]
+    }
+
+    expect(await firstTouched('2026-09-08T10:10:00+02:00')).toBe('AAA-1')
+    expect(await firstTouched('2026-09-08T10:25:00+02:00')).toBe('BBB-1')
+    expect(await firstTouched('2026-09-08T10:40:00+02:00')).toBe('CCC-1')
+    // Wraps rather than falling off the end.
+    expect(await firstTouched('2026-09-08T10:55:00+02:00')).toBe('AAA-1')
   })
 
   it('leaves cancelled and no-show reservations alone', async () => {

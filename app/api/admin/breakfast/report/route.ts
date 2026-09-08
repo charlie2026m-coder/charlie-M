@@ -12,6 +12,11 @@ import { berlinToday, kitchenReport, nightToMorning } from '@/services/breakfast
  * Defaults to tomorrow, not today: this is read the evening before, when the
  * question is what to prep. Today's number is one click away.
  */
+export const dynamic = 'force-dynamic'
+// One Apaleo page per hundred reservations staying that night, plus our own
+// tables. On a full house that is comfortably past the default.
+export const maxDuration = 60
+
 const ISO = /^\d{4}-\d{2}-\d{2}$/
 
 export async function GET(request: NextRequest) {

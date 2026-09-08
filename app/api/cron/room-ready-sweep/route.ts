@@ -112,7 +112,18 @@ export async function GET(req: Request) {
   // because, unlike a dirty room, this one does not fix itself: somebody has to
   // check that guest out.
   const occupied: string[] = []
-  for (const r of arrivals.slice(0, MAX_ARRIVALS)) {
+  // Start somewhere different each pass.
+  //
+  // The work is one Apaleo round-trip per arrival at minimum, and a house this
+  // size can hand the function more than it can finish. Always starting at the
+  // top of the list would mean the same names are reached every time and the
+  // ones after the cut-off are never looked at at all — they would lose the
+  // feature entirely, silently. Rotating by the quarter-hour gives every
+  // arrival its turn within the hour.
+  const rotate = Math.floor(Number(hhmm.slice(3, 5)) / 15) % Math.max(1, arrivals.length)
+  const ordered = [...arrivals.slice(rotate), ...arrivals.slice(0, rotate)]
+
+  for (const r of ordered.slice(0, MAX_ARRIVALS)) {
     if (r.status === 'Canceled' || r.status === 'NoShow') continue
     try {
       const out = await runRoomReady(r.id, { alertOnFailure: false })
