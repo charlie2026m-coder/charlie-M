@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js"
 import { Fetch } from "@/services/Request"
 import { bookReservationServicesLegacy } from "@/services/bookReservationServices"
 import { reversePayment } from "@/app/actions/adyen/reversePayment"
+import { reservationChargeable, isRefusedVerdict } from "@/services/apaleo/reservationChargeable"
 import { validateServicesPayment } from "@/lib/payments-validation"
 import { bookingLog, apaleoLog, priceLog } from "@/lib/logger"
 
@@ -282,6 +283,24 @@ export async function bookPendingServices(
     reference,
     reservationId: pendingServices.reservation_id,
   })
+
+  // The guest cancelled while this payment was in flight — or, far more likely,
+  // while it sat stuck and the reconcile cron picked it up hours later. Nothing
+  // is owed on a stay that no longer exists, so give the money back instead of
+  // booking extras onto it. Checked after the lock so only one delivery does it.
+  //
+  // Every money path here used to ask only about its own Supabase row —
+  // pending, processing, completed — and never about the reservation itself.
+  const verdict = await reservationChargeable(pendingServices.reservation_id)
+  if (isRefusedVerdict(verdict)) {
+    bookingLog.warn('services: reservation is gone — refusing the charge', {
+      reference,
+      reservationId: pendingServices.reservation_id,
+      status: verdict,
+    })
+    await refundAndMarkFailed(supabase, reference, pspReference, `reservation-${verdict}`)
+    return { error: `Reservation is ${verdict} — refunded` }
+  }
 
   try {
     // Book the Apaleo payloads the validator built from the same services +

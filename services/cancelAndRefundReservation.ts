@@ -403,16 +403,26 @@ export async function cancelAndRefundReservation(
     return { ok: true, cancelled: true, refund: { amountCents: totalRefundCents, currency, status: 'failed', manual: true } }
   }
 
+  // Prior refunds already exceeded what the guest was entitled to on at least
+  // one payment — a possible over-payment this flow cannot claw back.
+  //
+  // Raised BEFORE the branch below, deliberately. It used to live inside the
+  // "nothing left to refund" case, so an over-refund on one payment vanished
+  // from the record the moment any OTHER payment still had money coming: the
+  // total was positive, the flow refunded that other payment, and nobody was
+  // ever told about the first. Which payment is over-refunded has nothing to do
+  // with whether a different one is owed.
+  if (priorOverRefundCents > 0) {
+    bookingLog.error('cancel: prior refunds EXCEED entitlement — possible over-payment, review', {
+      reservationId,
+      overByCents: priorOverRefundCents,
+      currency,
+      alsoRefundingCents: totalRefundCents,
+    })
+  }
+
   if (totalRefundCents <= 0) {
     if (priorOverRefundCents > 0) {
-      // Nothing more to refund, but prior refunds already exceeded what the guest
-      // was entitled to — a possible over-payment this flow cannot claw back. Mark
-      // completed (no action) but flag loudly for finance.
-      bookingLog.error('cancel: prior refunds EXCEED entitlement — possible over-payment, review', {
-        reservationId,
-        overByCents: priorOverRefundCents,
-        currency,
-      })
       await markRow({
         status: 'completed',
         note: `no refund due; prior refunds EXCEED entitlement by ${(priorOverRefundCents / 100).toFixed(2)} ${currency} — review for over-payment`,
