@@ -3,6 +3,7 @@ import { verifyReservationInProperty } from '@/services/verifyReservationInPrope
 import { cancelReservation } from '@/services/apaleo/cancelReservation'
 import { refundFolioPayment, getFolioRefundsByPayment } from '@/services/apaleo/refundFolioPayment'
 import { getReservationFolioPayments, type FolioPayment } from '@/services/getReservationFolioPayments'
+import { planEntitlements } from '@/lib/refundPlanning'
 import { bookingLog } from '@/lib/logger'
 import { bookingStatuses } from '@/types/types'
 
@@ -155,6 +156,13 @@ export async function cancelAndRefundReservation(
     .maybeSingle()
   const roomPsp: string | null = bookingRow?.transaction_reference ?? null
 
+  // Every psp that is room money. Today that is the booking payment alone; the
+  // set exists because the planner treats room money as one pot, which is what
+  // makes a second room payment (a top-up for moved dates) come out right when
+  // there is one.
+  const roomPsps = new Set<string>()
+  if (roomPsp) roomPsps.add(roomPsp)
+
   // Read what was actually captured, per Adyen psp, from the reservation's
   // folio(s). Read-only — safe before the lock/cancel.
   let folioPayments: FolioPayment[] = []
@@ -205,21 +213,35 @@ export async function cancelAndRefundReservation(
     if (r > 0) refundedByPsp.set(p.pspReference, (refundedByPsp.get(p.pspReference) ?? 0) + r)
   }
 
-  // Refund target per psp = what's STILL owed: net payments − already-refunded,
-  // minus the cancellation penalty on the room psp only (services in full).
-  // Clamped at 0 — a psp already settled gets nothing. Separately track any psp
-  // where prior refunds EXCEED the entitlement (guest was already over-refunded):
-  // this flow can't claw it back, but it must be surfaced, not silently swallowed.
-  let priorOverRefundCents = 0
-  const plan = [...capturedByPsp.entries()].map(([psp, netPaymentsCents]) => {
-    const isRoom = roomPsp != null && psp === roomPsp
-    const entitlementCents = Math.max(0, isRoom ? netPaymentsCents - feeCents : netPaymentsCents)
-    const refundedForPsp = refundedByPsp.get(psp) ?? 0
-    if (refundedForPsp > entitlementCents) priorOverRefundCents += refundedForPsp - entitlementCents
-    const refundCents = Math.max(0, entitlementCents - refundedForPsp)
-    return { psp, refundCents, isRoom }
+  // What is still owed per psp: captures minus what has already been handed
+  // back, with the cancellation penalty taken from the room money and never
+  // from a service.
+  //
+  // Lifted out to lib/refundPlanning so it can be tested. This is the
+  // arithmetic that decides what leaves a live Adyen account, and sitting
+  // inline between two Apaleo reads there was no way to check it except by
+  // reading it — which is exactly how the same code at Motz19 carried two money
+  // bugs until it was extracted.
+  const { lines: plan, priorOverRefundCents, feeUnappliedCents } = planEntitlements({
+    capturedByPsp,
+    refundedByPsp,
+    roomPsps,
+    primaryRoomPsp: roomPsp,
+    feeCents,
   })
   const totalRefundCents = plan.reduce((sum, p) => sum + p.refundCents, 0)
+
+  // Penalty the room money could not cover — the hotel keeps less than the
+  // policy says it may. Nothing here can fix that, but it must not pass in
+  // silence.
+  if (feeUnappliedCents > 0) {
+    bookingLog.error('cancel: cancellation fee exceeds the room money captured', {
+      reservationId,
+      feeCents,
+      shortfallCents: feeUnappliedCents,
+      currency,
+    })
+  }
 
   // A negative /payments line (reversal/chargeback/payout) has an unverified
   // cardholder-direction semantic — netting it could under-refund. And a capture
