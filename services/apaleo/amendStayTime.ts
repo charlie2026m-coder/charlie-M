@@ -565,28 +565,64 @@ export async function reverseStayExtension(applied: AppliedStayExtension): Promi
 // max(13:00, clean-time) and, via webhook (app/api/guestway/room-ready), calls
 // this to open the door at that same moment: we amend the reservation's Apaleo
 // ARRIVAL to now and Guestway re-syncs the smart-lock code from the check-in
-// time. That lever is PROVEN on prod — the paid ECI amends arrival 15:00→13:00
-// and the code follows to 13:00 — and this function never sets a time below
-// 13:00, so it stays inside verified territory. Guestway's own Open API is
-// read-only for locks (no extend-access endpoint; checked against its Swagger),
-// so the Apaleo arrival amend is the only lever there is.
+// time. That lever is PROVEN on prod: reading each door's code.validFrom back
+// from Guestway shows it sitting on whatever arrival we wrote, including a
+// non-round 14:01 — see the note on ROOM_READY_FLOOR_HHMM below. Guestway's own
+// Open API is read-only for locks (no extend-access endpoint; checked against
+// its Swagger), so the Apaleo arrival amend is the only lever there is.
 //
 // It applies to EVERY reservation arriving today (per the owner's spec — not
 // only paid-ECI guests), charges NOTHING, and only ever moves the arrival
-// EARLIER on the arrival day itself. A paid-ECI guest (already at 13:00) is a
-// no-op: max(13:00, now) can never beat 13:00.
+// EARLIER on the arrival day itself.
+//
+// A paid-ECI guest is NOT a no-op at a 09:00 floor: a guest who bought 13:00
+// and whose room is finished at 10:00 gets moved to 10:03 — they keep what they
+// paid for and gain on top. The reverse can never happen: the only-move-earlier
+// guard below still refuses to push any arrival later.
+//
+// WHAT THIS CANNOT SEE: everything below trusts Apaleo's unit condition. If a
+// room is marked Clean before it is finished, no guard here will know — the
+// only signal we have says the room is ready. That is a housekeeping-process
+// risk, not a code one, and it is the reason this feature stays behind
+// GUESTWAY_ROOM_READY_ENABLED.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Never grant access before this local time — the business floor. Coincides
-// with the paid-ECI arrival time, which is exactly why the lock re-sync at (or
-// after) this time is proven behaviour.
-const ROOM_READY_FLOOR_HHMM = EARLY_CHECKIN_HHMM; // '13:00'
+// Never grant access before this local time.
+//
+// This used to sit at EARLY_CHECKIN_HHMM ('13:00') because that was the only
+// arrival time the lock had ever been observed to follow, so a room finished at
+// 12:33 still waited until 13:00 for no reason anyone could name.
+//
+// Measured at Motz19 on live bookings (2026-09-07) via Guestway
+// GET /reservation-accesses, comparing each door's code.validFrom against the
+// reservation's checkIn: most reservations showed a 0.0h gap, the amended ones
+// moved with the arrival, and one landed on a NON-round 14:01 from a room-ready
+// that fired at ~13:58. The last case is the one that settles it — the code
+// tracks whatever arrival we write, not a fixed step. So the floor is purely an
+// operational choice.
+//
+// 09:00 is that choice, matching Motz19: early enough to hand over a room the
+// moment housekeeping is done (checkout is 11:00, so turnovers land well after
+// this), late enough that nobody is let into the building at dawn. The Guestway
+// automation is the other bound — it cannot fire before its own trigger — and
+// this constant is the belt for the day someone widens that trigger.
+//
+// NOT the same value as EARLY_CHECKIN_HHMM: that one is what the PAID early
+// check-in sells and must stay at 13:00.
+const ROOM_READY_FLOOR_HHMM = '09:00';
 // Headroom added to "now" so the amended arrival is never in the past by the
 // time Apaleo evaluates it (berlinNow truncates to the minute and the offer +
 // amend round-trips take seconds).
 const ROOM_READY_HEADROOM_MIN = 3;
 // Unit conditions that count as ready for the guest.
-const ROOM_READY_OK_CONDITIONS = new Set(['Clean', 'CleanToInspect']);
+//
+// `Clean` only. An earlier version also accepted 'CleanToInspect', which would
+// have let a guest in before a supervisor had walked the room — except that no
+// such value exists here: reading all 147 units across the three properties
+// (2026-09-08) returned nothing but `Clean` and `Dirty`, so the extra entry was
+// dead either way. Anything unrecognised counts as dirty, which is the safe
+// direction if the inspection workflow is ever switched on in Apaleo.
+const ROOM_READY_OK_CONDITIONS = new Set(['Clean']);
 
 export type RoomReadyOutcome =
   | { status: 'moved'; from: string; to: string }
@@ -625,22 +661,35 @@ function addMinutes(hhmm: string, n: number): string | null {
   return `${hh}:${mm}`;
 }
 
-/** Fail-closed belt: the assigned unit must actually be ready (clean/inspect,
- *  not occupied) before we open its door. Any read failure blocks. */
-async function unitIsReady(unitId: string): Promise<boolean> {
+/** Fail-closed belt: the assigned unit must actually be ready (clean, not
+ *  occupied) before we open its door. Any read failure blocks. */
+type UnitReadiness = 'ready' | 'dirty' | 'occupied' | 'unknown';
+
+/**
+ * Why a room is not ready, not merely that it isn't.
+ *
+ * These three used to collapse into one `unit-not-ready`, which made the cases
+ * indistinguishable in the logs — and they call for opposite responses.
+ * `dirty` is the ordinary morning state and resolves itself once housekeeping
+ * gets there. `occupied` means Apaleo still has the PREVIOUS guest in the room:
+ * they were never checked out, so the sweep will keep asking until the QR
+ * checkout or the night audit closes them, and if it never happens that is a
+ * front-of-house problem, not a cleaning one.
+ */
+async function unitReadiness(unitId: string): Promise<UnitReadiness> {
   try {
     const unit = await Fetch<{ status?: { isOccupied?: boolean; condition?: string } }>(
       `/inventory/v1/units/${unitId}`,
     );
+    if (unit?.status?.isOccupied === true) return 'occupied';
     const condition = unit?.status?.condition ?? '';
-    const occupied = unit?.status?.isOccupied === true;
-    return !occupied && ROOM_READY_OK_CONDITIONS.has(condition);
+    return ROOM_READY_OK_CONDITIONS.has(condition) ? 'ready' : 'dirty';
   } catch (err) {
     apaleoLog.warn('room-ready: unit status read failed — BLOCKING (fail-closed)', {
       unitId,
       error: err instanceof Error ? err.message : String(err),
     });
-    return false;
+    return 'unknown';
   }
 }
 
@@ -700,8 +749,12 @@ export async function openRoomEarly(reservationId: string): Promise<RoomReadyOut
   const target = nowPlus > ROOM_READY_FLOOR_HHMM ? nowPlus : ROOM_READY_FLOOR_HHMM;
 
   // Only ever move EARLIER. This single check safely covers every case:
-  //  - paid-ECI guest (arrival 13:00): target ≥ 13:00 ⇒ skip — never push a
-  //    paid early check-in LATER;
+  //  - paid-ECI guest (arrival 13:00): moved earlier too, whenever the target
+  //    beats their 13:00. Deliberate, and set out under ROOM_READY_FLOOR_HHMM
+  //    above: the feature covers every reservation arriving today, so a buyer
+  //    keeps what they paid for and gains on top. Do NOT "fix" this by flooring
+  //    ECI arrivals at 13:00 — that would hand a paying guest their room LATER
+  //    than a guest who paid nothing;
   //  - already moved by a previous fire: target ≥ that arrival ⇒ no-op;
   //  - regular 15:00 guest after ~15:00: target ≥ 15:00 ⇒ nothing to gain.
   if (target >= arrHHmm) return { status: 'skipped', reason: 'nothing-earlier-to-gain' };
@@ -711,9 +764,14 @@ export async function openRoomEarly(reservationId: string): Promise<RoomReadyOut
   // to open; a dirty/occupied unit must never open regardless of what the
   // triggering automation believed.
   if (!ctx.unitId) return { status: 'skipped', reason: 'no-unit-assigned' };
-  if (!(await unitIsReady(ctx.unitId))) {
-    return { status: 'skipped', reason: 'unit-not-ready' };
-  }
+  // Spelled out one branch per state on purpose: the outcome test reads this
+  // source for `reason:` literals and fails when a new one has not been
+  // classified as alertable or not. Returning the variable directly would slip
+  // past that guard.
+  const readiness = await unitReadiness(ctx.unitId);
+  if (readiness === 'occupied') return { status: 'skipped', reason: 'unit-occupied' };
+  if (readiness === 'dirty') return { status: 'skipped', reason: 'unit-dirty' };
+  if (readiness === 'unknown') return { status: 'skipped', reason: 'unit-unknown' };
 
   // Counterpart late-checkout belt (fail-closed here — physical access): if
   // the same unit's departing guest holds a late checkout today, don't hand
@@ -753,6 +811,37 @@ export async function openRoomEarly(reservationId: string): Promise<RoomReadyOut
       offeredCents,
     });
     return { status: 'skipped', reason: 'price-drift' };
+  }
+
+  // LAST LOOK before the door opens.
+  //
+  // Between the readiness check above and here sit two Apaleo round-trips, and
+  // on a slow afternoon that has been seen taking half a minute. More to the
+  // point, the room we checked is not necessarily the room the guest ends up
+  // with: Apaleo can move a reservation to a different unit at any time, and
+  // the early access follows the RESERVATION, not the unit we inspected. So
+  // re-read both, and refuse if either has moved.
+  //
+  // This does not cover a re-assignment that happens AFTER the amend — nothing
+  // here can, because by then the lock is already synced. That case needs the
+  // front desk to notice, and is one more reason the whole feature is a switch.
+  const recheck = await loadReservationForAmend(reservationId);
+  if (!recheck || recheck.unitId !== ctx.unitId) {
+    apaleoLog.warn('room-ready: unit changed under us — skipping', {
+      reservationId,
+      wasUnit: ctx.unitId,
+      nowUnit: recheck?.unitId ?? null,
+    });
+    return { status: 'skipped', reason: 'unit-changed' };
+  }
+  const stillReady = await unitReadiness(ctx.unitId);
+  if (stillReady !== 'ready') {
+    apaleoLog.warn('room-ready: unit stopped being ready before the amend — skipping', {
+      reservationId,
+      unitId: ctx.unitId,
+      readiness: stillReady,
+    });
+    return { status: 'skipped', reason: 'unit-changed' };
   }
 
   try {

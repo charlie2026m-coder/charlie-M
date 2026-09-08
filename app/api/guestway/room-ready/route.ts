@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { timingSafeEqual } from 'crypto';
-import { openRoomEarly } from '@/services/apaleo/amendStayTime';
+import { runRoomReady } from '@/services/roomReady';
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 import { bookingLog } from '@/lib/logger';
 
@@ -86,7 +86,15 @@ export async function POST(req: NextRequest) {
     }
 
     bookingLog.info('room-ready webhook: received', { reservationId });
-    const result = await openRoomEarly(reservationId);
+    // Through the shared runner, not openRoomEarly directly: the guest has to
+    // be told the moment the door opens, and the sweep is the other caller that
+    // must behave identically. Before this, a door opened by anything but the
+    // Guestway automation swung open without a word to anyone.
+    //
+    // alertOnFailure because the webhook fires about once per room per day: the
+    // refusals nothing can clear still reach a human here, while the sweep —
+    // which asks every quarter of an hour — stays quiet.
+    const result = await runRoomReady(reservationId, { alertOnFailure: true });
     // Full per-reservation outcome stays in the server log only. The HTTP
     // response is deliberately OPAQUE ({ok:true}) so it can't be used as an
     // "is this guest arriving today?" oracle by a secret holder.

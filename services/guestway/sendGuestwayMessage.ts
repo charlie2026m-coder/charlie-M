@@ -291,6 +291,65 @@ export function buildBreakfastMenuInvite(url: string, mornings: number): string 
 }
 
 /**
+ * "Your room is ready" — sent by US, the moment the door actually opened.
+ *
+ * Guestway can send this on its own schedule, but its schedule and the door are
+ * two separate things: it would tell the guest at a fixed hour whether or not
+ * the amend succeeded, and it would stay silent between the moment the room
+ * became ready and that hour. Sending it here ties the words to the fact — the
+ * guest hears "you can come in" only after the lock has been moved, and hears
+ * it straight away.
+ *
+ * The time is not hardcoded because the door time is not fixed: it is whenever
+ * housekeeping finished, 10:03 as easily as 13:00.
+ *
+ * Neither is the baseline. It deliberately does NOT end "no need to wait until
+ * 15:00", which is false for a guest who bought the paid early check-in: their
+ * arrival is already 13:00, so 15:00 was never their wait. Saying only how
+ * early the room is ready is true for everyone.
+ */
+export function buildRoomReadyMessage(readyFrom: string): string {
+  // `readyFrom` is the amended arrival, an Apaleo local datetime such as
+  // "2026-09-05T11:18:00+02:00". Take its wall-clock HH:mm; if it is ever
+  // shaped differently, say "now" rather than print something wrong.
+  const hhmm = /T(\d{2}:\d{2})/.exec(readyFrom)?.[1] ?? null
+  const enWhen = hhmm ? `from ${hhmm}` : 'now'
+  const deWhen = hhmm ? `ab ${hhmm} Uhr` : 'ab sofort'
+  const rule = '——————————'
+  return [
+    'Your room is ready early',
+    '',
+    'Dear guest,',
+    '',
+    `Good news — your room is ready earlier than planned. You can check in ${enWhen} today.`,
+    '',
+    `• Room ready ${enWhen} today`,
+    '• Please use the check-in details from our earlier message',
+    '',
+    'We look forward to hosting you.',
+    'Charlie M Team',
+    '',
+    rule,
+    '',
+    'Ihr Zimmer ist früher bereit',
+    '',
+    'Hallo,',
+    '',
+    `Gute Nachrichten — Ihr Zimmer ist früher fertig geworden. Sie können heute bereits ${deWhen} einchecken.`,
+    '',
+    `• Zimmer heute ${deWhen} bereit`,
+    '• Bitte nutzen Sie die Check-in-Daten aus unserer vorherigen Nachricht',
+    '',
+    'Wir freuen uns auf Sie.',
+    'Charlie M Team',
+    '',
+    rule,
+    '',
+    'Friedrichstraße 33, 10969 Berlin · www.charlie-m.de',
+  ].join('\n')
+}
+
+/**
  * The evening before: breakfast is booked and still not chosen.
  *
  * Shorter than the invite on purpose. The guest has already had the long
