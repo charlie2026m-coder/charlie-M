@@ -30,6 +30,8 @@ import { createClient } from '@supabase/supabase-js'
 import { Fetch } from '@/services/Request'
 import { logger } from '@/lib/logger'
 import { releaseRoomAfterEarlyCheckout } from '@/services/apaleo/releaseRoomEarly'
+import { blockRoomUntilNextMorning } from '@/services/apaleo/blockEarlyVacatedRoom'
+import { notifySlack } from '@/lib/slack'
 
 const scoLog = logger.withTag('self-checkout')
 
@@ -504,6 +506,9 @@ export async function confirm(token: string, earlyAck: boolean = false): Promise
 
   const today = todayBerlin()
   let rid = ''
+  // Full timestamp, not ev.departure (a bare date): the dirty-room block ends
+  // at the booked departure and needs the hour to get the window right.
+  let departureIso = ''
   let ev: Evaluation
   try {
     const head = await findCurrentInhouse(row.unit_id, today)
@@ -522,6 +527,7 @@ export async function confirm(token: string, earlyAck: boolean = false): Promise
       return { ok: false, state: 'no_departure', msg: 'Heute ist kein Check-out vorgesehen.' }
     }
     ev = evaluate(resv, today)
+    departureIso = String(resv.departure || '')
 
     if (!ev.can_checkout) {
       await recordLog({
@@ -597,6 +603,35 @@ export async function confirm(token: string, earlyAck: boolean = false): Promise
   } catch (e) {
     scoLog.error('confirm failed:', e instanceof Error ? e.message : e)
     return { ok: false, state: 'error', msg: 'Vorübergehender Fehler. Bitte versuchen Sie es gleich erneut.' }
+  }
+
+  // The guest is out and the room is empty at an hour nobody planned for. Two
+  // things follow, and neither may affect what the guest sees — the checkout has
+  // already succeeded, so this deliberately runs OUTSIDE the try above.
+  //
+  //  1. Take the unit off sale until it has been cleaned. Apaleo counts an
+  //     early-vacated room as available for the CURRENT night, on every channel
+  //     at once — measured at Motz19, a channel booking landed on a room forty-
+  //     seven minutes after the guest left it dirty.
+  //  2. Tell the team, because nothing else does. The cleaning watcher is built
+  //     from today's ARRIVALS and DEPARTURES, and a guest leaving a day early is
+  //     in neither list, so the room would otherwise stay unknown until the next
+  //     morning's list.
+  //
+  // Both are best-effort by contract and never throw. The block reports its own
+  // failure to Slack, so this message carries the outcome rather than repeating it.
+  if (ev.days_until > 0) {
+    const blocked = await blockRoomUntilNextMorning(row.unit_id, departureIso, { reservationId: rid })
+    await notifySlack('warn', 'Early departure: room is empty and unclean', {
+      room: row.unit_name,
+      reservation: rid,
+      'booked until': departureIso.slice(0, 16).replace('T', ' '),
+      sale:
+        blocked.status === 'blocked'
+          ? `blocked until ${blocked.until.slice(0, 16).replace('T', ' ')}`
+          : `NOT blocked (${blocked.status === 'skipped' ? blocked.reason : 'error'})`,
+      action: 'clean before the next arrival',
+    })
   }
 
   await recordLog({ token, reservation_id: rid, unit_id: row.unit_id, guest: ev.guest, result: 'ok' })

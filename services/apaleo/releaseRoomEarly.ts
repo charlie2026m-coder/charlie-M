@@ -15,11 +15,19 @@ import { notifySlack } from '@/lib/slack';
  * Why this exists
  * ---------------
  * A guest who self-checks-out before their booked departure leaves the room
- * physically empty, but Apaleo keeps the reservation's time slices — so the
- * unit stays `soldCount` until the ORIGINAL departure. Verified on prod
- * (JKRFDSBD-1: guest left 26 Jul, departure stayed 27 Jul 11:00, and the night
- * 26→27 showed soldCount 13/13, availableCount 0). A week-long booking that is
- * ended on day one therefore blocks the room for the whole remaining week.
+ * physically empty while Apaleo keeps the reservation's time slices, so the
+ * remaining nights stay charged and — from the morning after onwards — keep
+ * counting as sold. A week-long booking ended on day one therefore blocks the
+ * room for the whole remaining week.
+ *
+ * ⚠️ That does NOT hold for the night already in progress, and this header used
+ * to claim it did, citing a reading of soldCount 13/13 for the night a guest
+ * left. That reading was taken the morning AFTER, when availability is
+ * recomputed from the stored slices — it never described the live night.
+ * Measured properly at Motz19 (2026-09-07): the guest left at 19:46 and at
+ * 21:37 the availability grid offered that very unit for that very night, dirty.
+ * Stopping that is services/apaleo/blockEarlyVacatedRoom's job, not this file's:
+ * this one only deals with the nights AFTER, and with the money.
  *
  * This shortens the reservation to TOMORROW so the remaining nights return to
  * sale — deliberately tomorrow and never today:
