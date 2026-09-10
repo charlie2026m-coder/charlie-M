@@ -181,7 +181,9 @@ export async function payFolioByPaymentAccount(params: {
  *     missing charges. The capture amount is capped at `allowedPayment` so the
  *     call can never exceed the open balance.
  */
-async function payServicesFolioByAuthorization(params: {
+// Exported for the rebooking top-up, which captures its own authorization
+// against the same folio and must not grow a second copy of this.
+export async function payServicesFolioByAuthorization(params: {
   reservationId: string
   pspReference: string
   expectedChargeCents: number

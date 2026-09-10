@@ -40,6 +40,7 @@ async function probe(
   n: number,
   adults: number,
   unitGroupId?: string,
+  ratePlanCodes?: string[],
 ): Promise<boolean> {
   const dep = addDaysYmd(arrival, n);
   // NB: a genuine Apaleo failure THROWS here (Fetch rejects on non-2xx). We let
@@ -50,15 +51,25 @@ async function probe(
     `/booking/v1/offers?propertyId=${propId}&arrival=${arrival}&departure=${dep}&channelCode=Ibe&adults=${adults}`,
   );
   const offers = res.offers ?? [];
-  return unitGroupId
-    ? offers.some((o) => o.unitGroup?.id === unitGroupId && (o.availableUnits ?? 0) >= 1)
-    : offers.some((o) => (o.availableUnits ?? 0) >= 1);
+  // `ratePlanCodes` narrows "is anything bookable" to "is one of THESE rates
+  // bookable". The rebooking calendar needs that: a date can be on offer only
+  // under FLEX_EXTN / NR_EXTN (the extension rates, which a date change must
+  // never land on), and treating it as bookable dead-ends the guest on
+  // 'rate-plan-mismatch'. Omitted elsewhere, so the search keeps seeing every
+  // rate it is allowed to sell.
+  return offers.some(
+    (o) =>
+      (o.availableUnits ?? 0) >= 1 &&
+      (!unitGroupId || o.unitGroup?.id === unitGroupId) &&
+      (!ratePlanCodes || ratePlanCodes.includes(o.ratePlan?.code ?? '')),
+  );
 }
 
 async function computeBookableDepartures(
   arrival: string,
   adults: number,
   unitGroupId: string | undefined,
+  ratePlanCodes: string[] | undefined,
 ): Promise<BookableDepartures> {
   const lengths = Array.from({ length: WINDOW_NIGHTS }, (_, i) => i + 1);
   const results: { n: number; ok: boolean }[] = [];
@@ -67,7 +78,9 @@ async function computeBookableDepartures(
   // stays optimistic and retries; a clean run is cached and shared across users.
   for (let i = 0; i < lengths.length; i += CONCURRENCY) {
     const batch = lengths.slice(i, i + CONCURRENCY);
-    const oks = await Promise.all(batch.map((n) => probe(arrival, n, adults, unitGroupId)));
+    const oks = await Promise.all(
+      batch.map((n) => probe(arrival, n, adults, unitGroupId, ratePlanCodes)),
+    );
     batch.forEach((n, j) => results.push({ n, ok: oks[j] }));
   }
 
@@ -97,14 +110,19 @@ export async function getBookableDepartures(
   arrival: string,
   guests: number = 1,
   unitGroupId?: string,
+  ratePlanCodes?: string[],
 ): Promise<BookableDepartures> {
   if (!propId || !arrival)
     return { departures: [], minNights: null, maxNights: null, windowNights: WINDOW_NIGHTS };
   const adults = Math.max(1, guests);
 
+  // The rate-plan filter is part of the cache identity — without it a
+  // FLEX-only probe and an all-rates probe would share one entry and whichever
+  // ran first would answer for both.
+  const planKey = ratePlanCodes?.length ? [...ratePlanCodes].sort().join(',') : ''
   const cached = unstable_cache(
-    () => computeBookableDepartures(arrival, adults, unitGroupId),
-    ['bookable-departures', arrival, String(adults), unitGroupId ?? ''],
+    () => computeBookableDepartures(arrival, adults, unitGroupId, ratePlanCodes),
+    ['bookable-departures', arrival, String(adults), unitGroupId ?? '', planKey],
     { revalidate: CACHE_TTL_SECONDS, tags: ['apaleo-bookable'] },
   );
   return cached();

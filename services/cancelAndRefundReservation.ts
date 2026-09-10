@@ -160,8 +160,19 @@ export async function cancelAndRefundReservation(
   // set exists because the planner treats room money as one pot, which is what
   // makes a second room payment (a top-up for moved dates) come out right when
   // there is one.
+  // A date change is paid as a SECOND room payment, so it belongs in the same
+  // pot as the booking payment: the cancellation penalty applies to the stay,
+  // not to each payment that built it.
+  const { data: rebookRow } = await supabase
+    .from('reservation_rebookings')
+    .select('adyen_psp_reference')
+    .eq('reservation_id', reservationId)
+    .maybeSingle()
+  const topUpPsp: string | null = rebookRow?.adyen_psp_reference ?? null
+
   const roomPsps = new Set<string>()
   if (roomPsp) roomPsps.add(roomPsp)
+  if (topUpPsp) roomPsps.add(topUpPsp)
 
   // Read what was actually captured, per Adyen psp, from the reservation's
   // folio(s). Read-only — safe before the lock/cancel.

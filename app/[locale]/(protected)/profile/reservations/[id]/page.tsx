@@ -2,6 +2,8 @@ import MainInfo from './components/MainInfo';
 import BackButton from './components/BackButton';
 import AddExtras from './components/AddExtras';
 import AddSecondGuest from './components/AddSecondGuest';
+import ChangeDates from './components/ChangeDates';
+import { canChangeDates } from '@/lib/reservationStatus';
 import BreakfastCard from './components/BreakfastCard';
 import InformationSection from "./components/InformationSection";
 import { getReservationById } from "@/services/getReservation";
@@ -82,6 +84,19 @@ const ReservationPage = async ({ params }: { params: Promise<{ id: string; local
           booker={reservation.booker}
           primaryGuest={reservation.primaryGuest}
         />
+        {/* Decided on the server, not in the client component: the check compares
+            the free-cancellation deadline against the clock, and one answer per
+            request keeps the panel and everything around it agreeing. */}
+        {canChangeDates(reservation) && (
+          <ChangeDates
+            reservationId={reservation.id}
+            arrival={arrivalDate}
+            departure={departureDate}
+            unitGroupId={reservation.unitGroup?.id}
+            adults={reservation.adults}
+          />
+        )}
+
         {/* Only on a live, not-yet-departed stay — the same gate the extras use.
             The card hides itself when Apaleo has no two-adult offer, so
             single-occupancy rooms never show it. */}

@@ -28,6 +28,24 @@ export const RATE_PLANS = {
 }
 
 /** True for the plans sold only as a stay extension. */
+/**
+ * The refundable web rates, in length order.
+ *
+ * Exported because more than one place has to agree on exactly this set: the
+ * rebooking quote will only move a booking onto one of these, and the calendar
+ * has to grey out any date where none of them is on offer. When the two
+ * disagreed at Motz19, a date backed only by FLEX_EXTN looked bookable and the
+ * quote then refused it as 'rate-plan-mismatch'.
+ *
+ * Three tiers here, not five: Charlie M publishes FLEX_WEB3 as "3 nights and
+ * up", so anything longer resolves to it.
+ */
+export const FLEX_WEB_CODES: string[] = [
+  RATE_PLANS.FLEX_WEB,
+  RATE_PLANS.FLEX_WEB2,
+  RATE_PLANS.FLEX_WEB3,
+]
+
 export const isExtensionRatePlan = (code?: string): boolean =>
   code === RATE_PLANS.FLEX_EXTN || code === RATE_PLANS.NR_EXTN
 

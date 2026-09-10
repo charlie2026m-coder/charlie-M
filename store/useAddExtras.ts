@@ -23,6 +23,8 @@ export interface AddExtrasService {
 interface AddExtrasState {
   openExtendYourStay: boolean;
   setOpenExtendYourStay: (open: boolean) => void;
+  openChangeDates: boolean;
+  setOpenChangeDates: (open: boolean) => void;
   services: AddExtrasService[];
   transactionReference: string | null;
   nights: number;
@@ -38,8 +40,14 @@ interface AddExtrasState {
 }
 
 export const useAddExtrasStore = create<AddExtrasState>((set) => ({
+  // The two date panels are mutually exclusive: both rewrite the same stay, and
+  // having them open together invites a guest to extend and move at once.
   openExtendYourStay: false,
-  setOpenExtendYourStay: (open) => set({ openExtendYourStay: open }),
+  setOpenExtendYourStay: (open) =>
+    set(open ? { openExtendYourStay: true, openChangeDates: false } : { openExtendYourStay: false }),
+  openChangeDates: false,
+  setOpenChangeDates: (open) =>
+    set(open ? { openChangeDates: true, openExtendYourStay: false } : { openChangeDates: false }),
   services: [],
   transactionReference: null,
   nights: 0,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkout } from "@/lib/adyen";
 import { adyenLog } from "@/lib/logger";
 import { validatePaymentAmount, validateServicesPayment } from "@/lib/payments-validation";
+import { validateRebookPayment } from "@/services/applyRebookTopUp";
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,7 +16,7 @@ export async function POST(request: NextRequest) {
       : undefined
     const deliveryDate: Date | undefined = deliveryDateStr ? new Date(deliveryDateStr) : undefined
 
-    if (flow !== 'booking' && flow !== 'services') {
+    if (flow !== 'booking' && flow !== 'services' && flow !== 'rebook') {
       adyenLog.error('make-payment: missing or invalid flow', { reference, flow })
       return NextResponse.json(
         { error: 'InvalidFlow', message: 'flow must be "booking" or "services"' },
@@ -93,6 +94,43 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           { error: 'UnknownValidationStatus' },
           { status: 500 },
+        )
+      }
+    } else if (flow === 'rebook') {
+      // Paying the difference on a date change. Same fail-closed contract as
+      // the other two: the amount is re-derived from a fresh Apaleo quote, and
+      // anything unreadable refuses rather than charges.
+      const validation = await validateRebookPayment(reference, amount)
+
+      adyenLog.info('rebook payment validation outcome', {
+        reference,
+        status: validation.status,
+        ...(validation.status === 'mismatch' && {
+          clientCents: validation.clientCents,
+          expectedCents: validation.expectedCents,
+        }),
+        ...(validation.status === 'unavailable' && { reason: validation.reason }),
+      })
+
+      if (validation.status === 'mismatch') {
+        return NextResponse.json(
+          {
+            error: 'PriceChanged',
+            message: 'The price has changed since you last loaded the page. Please refresh and try again.',
+            clientCents: validation.clientCents,
+            expectedCents: validation.expectedCents,
+          },
+          { status: 400 },
+        )
+      }
+      if (validation.status === 'unavailable') {
+        return NextResponse.json(
+          {
+            error: 'ValidationUnavailable',
+            message: 'We could not confirm the price just now. Please try again in a moment.',
+            reason: validation.reason,
+          },
+          { status: 503 },
         )
       }
     } else {

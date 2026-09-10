@@ -18,3 +18,27 @@ export function canShowInvoice(
   return reservation.status === bookingStatuses.CheckedOut
     || reservation.status === bookingStatuses.NoShow;
 }
+
+/**
+ * May this guest move their stay to other dates?
+ *
+ * Decided on the server so the button and the panel cannot disagree: the check
+ * compares the free-cancellation deadline against the current time, and two
+ * evaluations a second apart could otherwise answer differently.
+ *
+ * Refundable and still free to cancel, on our own channel. Past the deadline
+ * cancelling costs the full stay, so a free move would be a way around the
+ * penalty; and an OTA booking is governed by the platform's terms, not ours.
+ */
+export function canChangeDates(
+  reservation: Pick<Reservation, 'status' | 'channelCode' | 'cancellationFee'>,
+): boolean {
+  if (reservation.status !== bookingStatuses.Confirmed) return false;
+  if (!['ibe', 'direct'].includes((reservation.channelCode ?? '').toLowerCase())) return false;
+  if (reservation.cancellationFee?.code !== 'FLEX') return false;
+  const dueMs = reservation.cancellationFee?.dueDateTime
+    ? Date.parse(reservation.cancellationFee.dueDateTime)
+    : NaN;
+  // Fails CLOSED on an unparseable deadline: `Date.now() < NaN` is false.
+  return Number.isFinite(dueMs) && Date.now() < dueMs;
+}

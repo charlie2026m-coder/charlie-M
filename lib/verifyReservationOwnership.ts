@@ -26,7 +26,19 @@ interface AccessUser {
 }
 
 export type OwnershipResult =
-  | { ok: true }
+  | {
+      ok: true;
+      /**
+       * The reservation this check read, when it read one.
+       *
+       * Handed back so a caller that needs the object does not fetch it a
+       * second time — the rebooking quote needs the dates, the rate plan and
+       * the time slices, and Apaleo is slow enough that a duplicate read is
+       * felt. Absent on the cachedBookerEmail fast path, where by definition
+       * the caller already has it.
+       */
+      reservation?: ApaleoReservationResponse;
+    }
   | { ok: false; status: 401 | 403 | 404 | 500; error: string };
 
 const normalizeEmail = (email: string | null | undefined): string =>
@@ -41,6 +53,7 @@ export async function verifyReservationOwnership(
   if (!user) return { ok: false, status: 401, error: 'Authentication required' };
 
   const userEmail = normalizeEmail(user.email);
+  let fetched: ApaleoReservationResponse | undefined;
 
   if (opts && 'cachedBookerEmail' in opts) {
     // Fast path: the caller already fetched the reservation (and verified the
@@ -50,6 +63,7 @@ export async function verifyReservationOwnership(
     }
   } else {
     // No cached email: fetch the reservation to verify property + email match.
+    // eslint-disable-next-line prefer-const -- assigned in the try below
     let reservation: ApaleoReservationResponse;
     try {
       reservation = await Fetch<ApaleoReservationResponse>(
@@ -81,9 +95,13 @@ export async function verifyReservationOwnership(
         ...(reservation.additionalGuests ?? []).map((g) => normalizeEmail(g.email)),
       ];
       if (reservationEmails.includes(userEmail)) {
-        return { ok: true };
+        return { ok: true, reservation };
       }
     }
+
+    // Not an email match, but the reservation was read and is ours to hand on
+    // if the DB link below grants access.
+    fetched = reservation;
   }
 
   // Explicit DB link (anonymous guests, or added reservations).
@@ -94,7 +112,7 @@ export async function verifyReservationOwnership(
     .eq('reservation_id', reservationId)
     .maybeSingle();
 
-  if (link) return { ok: true };
+  if (link) return { ok: true, reservation: fetched };
 
   return { ok: false, status: 403, error: 'Reservation not found or not owned by current user' };
 }

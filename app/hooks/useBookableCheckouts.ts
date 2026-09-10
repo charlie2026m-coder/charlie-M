@@ -19,16 +19,27 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const cache = new Map<string, CheckoutInfo>();
 const inflight = new Map<string, Promise<void>>();
 
-function cacheKey(arrivalYmd: string, unitGroupId: string | undefined, guests: number) {
-  return `${arrivalYmd}|${unitGroupId ?? ''}|${guests}`;
+function cacheKey(
+  arrivalYmd: string,
+  unitGroupId: string | undefined,
+  guests: number,
+  ratePlanCodes?: string[],
+) {
+  const plans = ratePlanCodes?.length ? [...ratePlanCodes].sort().join(',') : '';
+  return `${arrivalYmd}|${unitGroupId ?? ''}|${guests}|${plans}`;
 }
 
-function loadKey(arrivalYmd: string, unitGroupId: string | undefined, guests: number): Promise<void> {
-  const key = cacheKey(arrivalYmd, unitGroupId, guests);
+function loadKey(
+  arrivalYmd: string,
+  unitGroupId: string | undefined,
+  guests: number,
+  ratePlanCodes?: string[],
+): Promise<void> {
+  const key = cacheKey(arrivalYmd, unitGroupId, guests, ratePlanCodes);
   if (cache.has(key)) return Promise.resolve();
   const existing = inflight.get(key);
   if (existing) return existing;
-  const p = getBookableDepartures(arrivalYmd, guests, unitGroupId)
+  const p = getBookableDepartures(arrivalYmd, guests, unitGroupId, ratePlanCodes)
     .then((res) => {
       cache.set(key, {
         departures: new Set(res.departures),
@@ -57,15 +68,16 @@ export async function prefetchBookableCheckouts(
   unitGroupId: string | undefined,
   guests: number,
   concurrency = 4,
+  ratePlanCodes?: string[],
 ): Promise<void> {
   const ymds = arrivals
     .map(toYmd)
-    .filter((y) => !cache.has(cacheKey(y, unitGroupId, guests)));
+    .filter((y) => !cache.has(cacheKey(y, unitGroupId, guests, ratePlanCodes)));
   let i = 0;
   const workers = Array.from({ length: Math.min(concurrency, ymds.length) }, async () => {
     while (i < ymds.length) {
       const y = ymds[i++];
-      await loadKey(y, unitGroupId, guests);
+      await loadKey(y, unitGroupId, guests, ratePlanCodes);
     }
   });
   await Promise.all(workers);
@@ -87,10 +99,15 @@ export function useBookableCheckouts(
   arrival: Date | null | undefined,
   unitGroupId?: string,
   guests: number = 1,
+  /** Restrict to these rate plans — the rebooking calendar passes the
+   *  refundable web rates, because those are the only ones a date change can
+   *  be moved onto. */
+  ratePlanCodes?: string[],
 ) {
   const [, setTick] = useState(0);
   const arrivalYmd = arrival ? toYmd(arrival) : null;
-  const key = arrivalYmd ? cacheKey(arrivalYmd, unitGroupId, guests) : null;
+  const plansKey = ratePlanCodes?.length ? [...ratePlanCodes].sort().join(',') : '';
+  const key = arrivalYmd ? cacheKey(arrivalYmd, unitGroupId, guests, ratePlanCodes) : null;
 
   useEffect(() => {
     if (!arrivalYmd || !key) return;
@@ -98,7 +115,7 @@ export function useBookableCheckouts(
     let cancelled = false;
     // Tiny debounce so flicking through arrivals doesn't fire a request per day.
     const timer = setTimeout(() => {
-      loadKey(arrivalYmd, unitGroupId, guests).then(() => {
+      loadKey(arrivalYmd, unitGroupId, guests, ratePlanCodes).then(() => {
         if (!cancelled) setTick((n) => n + 1);
       });
     }, 120);
@@ -106,7 +123,10 @@ export function useBookableCheckouts(
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [arrivalYmd, key, unitGroupId, guests]);
+    // `plansKey` rather than the array itself: a fresh array literal on every
+    // render would restart the effect forever.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [arrivalYmd, key, unitGroupId, guests, plansKey]);
 
   const info = key ? cache.get(key) : undefined;
   const ready = !!info;

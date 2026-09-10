@@ -13,6 +13,7 @@ import { correctPastArrivals } from "@/lib/correctPastArrival"
 import crypto from "crypto"
 import { assignUnit } from "@/services/apaleo/assignUnit"
 import { applyBreakfastChoice, sendBreakfastMenuInvite, type BreakfastChoice } from "@/services/breakfast"
+import { applyRebookFromPending } from "@/services/applyRebookTopUp"
 
 // Webhook has no user session — must use service_role to bypass RLS
 function createAdminClient() {
@@ -812,6 +813,34 @@ export async function POST(request: NextRequest) {
           noPendingBooking = true
         } catch (error: any) {
           bookingLog.error('webhook: booking threw', { reference: merchantReference, error: error.message })
+        }
+
+        // Before late services: a date change the guest paid the difference
+        // for. It claims its own reference in reservation_rebookings, so this
+        // only acts on payments that are provably ours — anything else falls
+        // through untouched.
+        try {
+          const isRebook = await applyRebookFromPending(merchantReference, pspReference)
+          if (isRebook) {
+            bookingLog.info('webhook: handled as a rebooking top-up', {
+              reference: merchantReference,
+              pspReference,
+            })
+            continue
+          }
+        } catch (error: unknown) {
+          // Never fall through to the services flow on an error here: that
+          // would let another handler act on a payment this one may own.
+          bookingLog.error('webhook: rebooking top-up threw — returning 503 so Adyen retries', {
+            reference: merchantReference,
+            pspReference,
+            error: error instanceof Error ? error.message : String(error),
+          })
+          // 503 rather than falling through, for the same reason the booking
+          // lock does it above: this payment may belong to the rebooking, and
+          // letting the services handler have a go at it would act on money
+          // that is not its own. Adyen redelivers.
+          return new NextResponse('rebooking top-up failed', { status: 503 })
         }
 
         // Fallback: no booking — assume payment was for a late-services add.
