@@ -1783,5 +1783,15 @@
       "description": "Erreicht der Raum keine angenehme Temperatur, kontaktieren Sie uns – wir helfen gerne.",
       "whatsapp": "WhatsApp-Support"
     }
+  },
+  "secondGuest": {
+    "title": "Reisen Sie zu zweit?",
+    "subtitlePaid": "Fügen Sie Ihrer Buchung einen zweiten Gast für {amount} hinzu.",
+    "subtitleFree": "Fügen Sie Ihrer Buchung ohne Aufpreis einen zweiten Gast hinzu.",
+    "cta": "Gast hinzufügen",
+    "added": "Hinzugefügt",
+    "inBasket": "{amount} wurden Ihrer Bestellung unten hinzugefügt. Nach der Zahlung kostet Ihr Aufenthalt insgesamt {newTotal}.",
+    "inBasketFree": "Zu Ihrer Bestellung unten hinzugefügt — ohne Aufpreis.",
+    "lineItem": "Zweiter Gast"
   }
 }

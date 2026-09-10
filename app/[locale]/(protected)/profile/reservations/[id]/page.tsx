@@ -1,6 +1,7 @@
 import MainInfo from './components/MainInfo';
 import BackButton from './components/BackButton';
 import AddExtras from './components/AddExtras';
+import AddSecondGuest from './components/AddSecondGuest';
 import BreakfastCard from './components/BreakfastCard';
 import InformationSection from "./components/InformationSection";
 import { getReservationById } from "@/services/getReservation";
@@ -81,6 +82,11 @@ const ReservationPage = async ({ params }: { params: Promise<{ id: string; local
           booker={reservation.booker}
           primaryGuest={reservation.primaryGuest}
         />
+        {/* Only on a live, not-yet-departed stay — the same gate the extras use.
+            The card hides itself when Apaleo has no two-adult offer, so
+            single-occupancy rooms never show it. */}
+        {canAddExtras && <AddSecondGuest adults={reservation.adults} />}
+
         {/* Only for a stay that has not happened yet: a breakfast already eaten
             has nothing left to choose. */}
         {canAddExtras && <BreakfastCard reservationId={reservation.id} />}

@@ -5,7 +5,7 @@ import { Button } from '@/app/_components/ui/button'
 import { useRouter, useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { FiTrash2 } from 'react-icons/fi'
-import { isBabyBedService, isCleaningService } from '@/lib/extrasPrice'
+import { isBabyBedService, isCleaningService, isSecondGuestService } from '@/lib/extrasPrice'
 import { isBreakfastPart, isBreakfastFood, isBreakfastBeverage, breakfastBundleLabel, BREAKFAST_FOOD_ID, BREAKFAST_BEVERAGE_ID } from '@/lib/breakfastBundle'
 const ExistingExtras = ({ 
   services, 
@@ -17,6 +17,7 @@ const ExistingExtras = ({
   availableExtras: Service[]
 }) => {
   const t = useTranslations('profile')
+  const tSecondGuest = useTranslations('secondGuest')
   const router = useRouter()
   const params = useParams()
   const locale = params.locale as 'en' | 'de'
@@ -41,6 +42,20 @@ const ExistingExtras = ({
   const selectedBreakfastBeverage = selectedServices.find(s => isBreakfastBeverage(s.serviceId))
 
   const newServiceRows: SummaryRow[] = selectedServices.flatMap(selectedService => {
+    // SECOND_GUEST is deliberately absent from the Apaleo catalogue (it is an
+    // occupancy amend, priced by the rate plan), so it must be rendered before
+    // the lookup below — otherwise the guest is told it was added while the
+    // order shows nothing, and with it as the only pick there is no Pay button
+    // at all. Its price rides on the basket line.
+    if (isSecondGuestService(selectedService.serviceId)) {
+      return [{
+        serviceId: selectedService.serviceId,
+        name: tSecondGuest('lineItem'),
+        quantityText: '1',
+        price: selectedService.price ?? 0,
+      }]
+    }
+
     const serviceDetails = availableExtras.find(s => s.id === selectedService.serviceId)
     if (!serviceDetails) return []
 

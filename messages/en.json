@@ -1782,5 +1782,15 @@
       "description": "If the room does not reach a comfortable temperature, contact us — we are happy to help.",
       "whatsapp": "WhatsApp Support"
     }
+  },
+  "secondGuest": {
+    "title": "Travelling with someone?",
+    "subtitlePaid": "Add a second guest to your booking for {amount}.",
+    "subtitleFree": "Add a second guest to your booking at no extra cost.",
+    "cta": "Add a guest",
+    "added": "Added",
+    "inBasket": "{amount} has been added to your order below. Your stay will total {newTotal} once paid.",
+    "inBasketFree": "Added to your order below — no extra cost.",
+    "lineItem": "Second guest"
   }
 }

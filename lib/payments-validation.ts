@@ -21,10 +21,12 @@ import {
   buildApaleoServicePayloads,
   isCleaningService,
   isStayExtensionService,
+  isSecondGuestService,
   UnknownServiceError,
   type ExtrasPriceLine,
   type ApaleoBookServicePayload,
 } from '@/lib/extrasPrice'
+import { getSecondGuestQuote } from '@/services/apaleo/addSecondGuest'
 import { priceLog, apaleoLog } from '@/lib/logger'
 import { pendingServicesReadSchema } from '@/types/schemas'
 import type { Booking } from '@/types/booking'
@@ -624,6 +626,24 @@ export async function validateServicesPayment(
     return { status: 'unavailable', reason: 'empty extras catalog' }
   }
 
+  // Second guest is priced by the rate plan, not by the catalogue, so its cents
+  // are fetched live here and handed to the computation. Re-read on BOTH phases
+  // (auth and webhook) so the amount charged is always the one Apaleo is
+  // offering at that moment, never a figure the client sent.
+  let secondGuestSurchargeCents: number | undefined
+  if (services.some(s => isSecondGuestService(s.serviceId))) {
+    const quote = await getSecondGuestQuote(row.reservation_id)
+    if (!quote.eligible) {
+      priceLog.error('services validation: second guest not available', {
+        reference,
+        reservationId: row.reservation_id,
+        reason: quote.reason,
+      })
+      return { status: 'unavailable', reason: `second guest: ${quote.reason}` }
+    }
+    secondGuestSurchargeCents = Math.round(quote.surcharge * 100)
+  }
+
   let result: ReturnType<typeof computeServicesTotalCents>
   try {
     result = computeServicesTotalCents(
@@ -631,7 +651,7 @@ export async function validateServicesPayment(
       catalog,
       // Remaining-nights window — matches what the cabinet client displayed
       // and charged (see extrasStart/extrasNights above).
-      { nights: reservation.extrasNights },
+      { nights: reservation.extrasNights, secondGuestSurchargeCents },
       reservation.existingCleaningDates,
     )
   } catch (err) {

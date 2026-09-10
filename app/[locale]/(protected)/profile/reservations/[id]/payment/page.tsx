@@ -5,7 +5,7 @@ import ServicesTable from './components/ServicesTable'
 import { useAddExtrasStore } from '@/store/useAddExtras'
 import PaymentBanner from '@/app/_components/ui/PaymentBanner'
 import { useTranslations } from 'next-intl'
-import { computeServicesTotalCents, isCleaningService } from '@/lib/extrasPrice'
+import { computeServicesTotalCents, isCleaningService, isSecondGuestService } from '@/lib/extrasPrice'
 
 const PaymentPage = () => {
   const t = useTranslations('payment')
@@ -43,8 +43,19 @@ const PaymentPage = () => {
   // Defensive filter: a stale store may carry serviceIds that are no longer
   // in availableExtras (catalog refetched, service retired). Drop them so
   // computeServicesTotalCents doesn't throw UnknownServiceError on the UI side.
+  // SECOND_GUEST has no catalogue entry by design (it is an occupancy amend,
+  // priced by the rate plan), so the catalogue filter below would silently drop
+  // it — and the authorised amount would then miss the surcharge while
+  // save-pending still carries the line, making the server reject every such
+  // payment as a price mismatch. Keep it, and feed its cents in separately.
+  const secondGuestLine = selectedServices.find(s => isSecondGuestService(s.serviceId))
+  const secondGuestSurchargeCents =
+    secondGuestLine && typeof secondGuestLine.price === 'number'
+      ? Math.round(secondGuestLine.price * 100)
+      : undefined
+
   const knownServices = selectedServices.filter(s =>
-    availableExtras.some(e => e.id === s.serviceId),
+    isSecondGuestService(s.serviceId) || availableExtras.some(e => e.id === s.serviceId),
   )
   const existingCleaningDates = new Set(
     knownServices
@@ -61,7 +72,7 @@ const PaymentPage = () => {
   const { totalCents, breakdown } = computeServicesTotalCents(
     knownServices,
     availableExtras,
-    { nights },
+    { nights, secondGuestSurchargeCents },
     existingCleaningDates,
   )
   // Prefer the amount carried across the 3DS redirect; fall back to the

@@ -3,6 +3,15 @@ import type { AddExtrasService } from '@/store/useAddExtras'
 
 export interface ExtrasPriceContext {
   nights: number
+  /**
+   * Live Apaleo delta for adding a second adult, in cents. REQUIRED whenever the
+   * payload contains SECOND_GUEST: that line has no catalog entry (it is a
+   * reservation amend, not a folio service) and its price is per rate plan —
+   * 0 on the OTA plans, a few euro a night on the web rates. The caller fetches
+   * it from the reservation's adults=2 offer; without it the total cannot be
+   * verified and computeServicesTotalCents refuses the payload.
+   */
+  secondGuestSurchargeCents?: number
 }
 
 export interface ExtrasPriceLine {
@@ -56,6 +65,18 @@ export function isStayExtensionService(serviceId: string): 'late' | 'early' | nu
   return null
 }
 
+/**
+ * Adding a second adult. Like LCO/ECI this is a reservation AMEND, not a folio
+ * service — but unlike them it has no Apaleo catalogue entry at all, because its
+ * price is whatever the rate plan charges for double occupancy. Hence a
+ * synthetic id that can never collide with a real `CMH-*` service code.
+ */
+export const SECOND_GUEST_SERVICE_ID = 'SECOND_GUEST'
+
+export function isSecondGuestService(serviceId: string): boolean {
+  return serviceId === SECOND_GUEST_SERVICE_ID
+}
+
 // A daily Person/Room service is charged `count × nights`, so it must be
 // booked on every night. Shared between the price computation and the Apaleo
 // payload builder so "how many units" can never diverge from "what we book".
@@ -75,6 +96,24 @@ export function computeServicesTotalCents(
   const breakdown: ExtrasPriceLine[] = []
 
   for (const service of services) {
+    // Second guest is priced by the rate plan, not by a catalogue line, so it
+    // is settled before the catalogue lookup below (which would throw for it).
+    // The cents come from the caller's live adults=2 offer; a missing value is
+    // an unverifiable total, so it fails exactly like an unknown service rather
+    // than silently charging 0.
+    if (isSecondGuestService(service.serviceId)) {
+      const cents = ctx.secondGuestSurchargeCents
+      if (typeof cents !== 'number') throw new UnknownServiceError(service.serviceId)
+      totalCents += cents
+      breakdown.push({
+        serviceId: service.serviceId,
+        catalogPriceCents: cents,
+        units: 1,
+        subtotalCents: cents,
+      })
+      continue
+    }
+
     const cat = catalog.find(c => c.id === service.serviceId)
     if (!cat) {
       throw new UnknownServiceError(service.serviceId)
@@ -157,6 +196,13 @@ export function buildApaleoServicePayloads(
   existingCleaningDates: ReadonlySet<string> = new Set(),
 ): ApaleoBookServicePayload[] {
   return services.flatMap((service): ApaleoBookServicePayload[] => {
+    // Second guest is an occupancy amend, not a folio service, and has no
+    // catalogue entry — so it must bail out BEFORE the lookup below, which
+    // would otherwise throw UnknownServiceError and take the whole validation
+    // down with it (LCO/ECI get away with the lookup because they DO exist in
+    // the catalogue). Nothing to book: applySecondGuest does the work.
+    if (isSecondGuestService(service.serviceId)) return []
+
     const cat = catalog.find(c => c.id === service.serviceId)
     if (!cat) {
       throw new UnknownServiceError(service.serviceId)

@@ -1,12 +1,17 @@
 import { Fetch } from '@/services/Request'
 import { folioLog } from '@/lib/logger'
-import { isStayExtensionService } from '@/lib/extrasPrice'
+import { isStayExtensionService, isSecondGuestService } from '@/lib/extrasPrice'
 import {
   loadReservationForAmend,
   bookStayExtension,
   reverseStayExtension,
 } from '@/services/apaleo/amendStayTime'
 import type { AppliedStayExtension } from '@/services/apaleo/amendStayTime'
+import {
+  applySecondGuest,
+  revertSecondGuest,
+  type AppliedSecondGuest,
+} from '@/services/apaleo/addSecondGuest'
 import { sendGuestwayMessage, buildStayExtensionMessage } from '@/services/guestway/sendGuestwayMessage'
 
 interface ServiceDate {
@@ -321,10 +326,27 @@ export async function bookReservationServicesLegacy(
   // a reservation amend (change the checkout/checkin time) plus a folio fee.
   // Everything else books via the normal book-service endpoint.
   const amendPayloads = services.filter(s => isStayExtensionService(s.serviceId))
-  const regularPayloads = services.filter(s => !isStayExtensionService(s.serviceId))
+  // Second guest is also an amend (occupancy, not time) and has no catalogue
+  // entry, so it must be kept out of the regular book-service path too.
+  const secondGuestPayloads = services.filter(s => isSecondGuestService(s.serviceId))
+  const regularPayloads = services.filter(
+    s => !isStayExtensionService(s.serviceId) && !isSecondGuestService(s.serviceId),
+  )
 
   const results: { serviceId: string; success: boolean; error?: string }[] = []
   const appliedAmends: AppliedStayExtension[] = []
+  const appliedSecondGuests: AppliedSecondGuest[] = []
+  // Every rollback path below must undo BOTH kinds of amend, so they are
+  // reverted together rather than at each call site.
+  const revertAllAmends = async () => {
+    // Order matters. The second-guest revert restores the slices as they stood
+    // when it ran — which, since it runs AFTER the stay extensions, already
+    // carry the 13:00 LCO time. Undoing it last would therefore re-apply the
+    // late check-out that was just reversed, handing the guest a free 13:00
+    // departure on a fully refunded basket. Newest amend first.
+    for (const g of appliedSecondGuests) await revertSecondGuest(g)
+    for (const a of appliedAmends) await reverseStayExtension(a)
+  }
 
   folioLog.info('booking services (legacy)', {
     reservationId,
@@ -349,10 +371,22 @@ export async function bookReservationServicesLegacy(
     }
   }
 
-  // Any extension failed → reverse the ones that applied and stop before
-  // booking regular services or capturing against a partially-extended stay.
+  // 1b. Second guest — reprice the stay for two. No money moves here; the
+  //     surcharge rides the same Adyen authorization captured further down.
+  for (const p of secondGuestPayloads) {
+    const outcome = await applySecondGuest(reservationId)
+    if (outcome.ok) appliedSecondGuests.push(outcome.applied)
+    results.push({
+      serviceId: p.serviceId,
+      success: outcome.ok,
+      error: outcome.ok ? undefined : `second guest: ${outcome.reason}`,
+    })
+  }
+
+  // Any amend failed → reverse the ones that applied and stop before booking
+  // regular services or capturing against a partially-amended stay.
   if (results.some(r => !r.success)) {
-    for (const a of appliedAmends) await reverseStayExtension(a)
+    await revertAllAmends()
     for (const r of results) r.success = false
     return {
       services: results,
@@ -378,9 +412,9 @@ export async function bookReservationServicesLegacy(
   // guest keeps a free LCO/ECI once the caller refunds. (The caller separately
   // deletes the successfully-booked regular services.)
   if (results.some(r => !r.success)) {
-    for (const a of appliedAmends) await reverseStayExtension(a)
+    await revertAllAmends()
     for (const r of results) {
-      if (isStayExtensionService(r.serviceId)) r.success = false
+      if (isStayExtensionService(r.serviceId) || isSecondGuestService(r.serviceId)) r.success = false
     }
     return { services: results, payment: null }
   }
@@ -400,9 +434,9 @@ export async function bookReservationServicesLegacy(
   // Capture failed → reverse extensions here: the caller's rollback only knows
   // how to DELETE book-service entries, which can't undo an amend.
   if (!paymentResult.success) {
-    for (const a of appliedAmends) await reverseStayExtension(a)
+    await revertAllAmends()
     for (const r of results) {
-      if (isStayExtensionService(r.serviceId)) r.success = false
+      if (isStayExtensionService(r.serviceId) || isSecondGuestService(r.serviceId)) r.success = false
     }
   }
 
