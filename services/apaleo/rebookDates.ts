@@ -173,9 +173,19 @@ export async function quoteRebook(params: {
   let facts = params.facts
   if (!facts) {
     try {
-      facts = await Fetch<ApaleoReservationResponse>(
-        `/booking/v1/reservations/${encodeURIComponent(reservationId)}?propertyIds=${process.env.APALEO_PROPERTY_ID}`,
+      const read = await Fetch<ApaleoReservationResponse>(
+        `/booking/v1/reservations/${encodeURIComponent(reservationId)}`,
       )
+      // Apaleo's single-resource endpoint IGNORES propertyIds — passing it here
+      // reads as a guard and is not one. The account is shared with the other
+      // hotel, so without this check an id from over there would be quoted, and
+      // moved, as if it were ours. Every caller today hands `facts` in from the
+      // ownership check, which enforces the property itself; this path exists
+      // for the next one that does not.
+      if (!read?.id || read.property?.id !== process.env.APALEO_PROPERTY_ID) {
+        return { ok: false, reason: 'not-found' }
+      }
+      facts = read
     } catch {
       return { ok: false, reason: 'not-found' }
     }
