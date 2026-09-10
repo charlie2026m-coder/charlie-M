@@ -8,10 +8,10 @@
  *
  * Now every reservation arriving today is re-tried all day long. So a room that
  * is merely not ready YET is not an incident — it is the normal state of a
- * hotel between checkout and housekeeping. Measured at Motz19, every unit read
- * Dirty right through the cleaning shift; alerting on that would have meant a
- * burst of pages every single morning describing nothing at all, and the real
- * ones would have stopped being read within the week.
+ * hotel between checkout and housekeeping, and on 2026-09-08 all thirteen units
+ * read Dirty at 09:39, 10:00, 10:56 and 11:19. Alerting on that would have
+ * meant a burst of pages every single morning describing nothing at all, and
+ * the real ones would have stopped being read within the week.
  *
  * What is left are the states no amount of retrying can clear: a missing
  * property id, a reservation with no arrival time, and a price that would move.
@@ -36,9 +36,13 @@ const DOOR_BLOCKING_REASONS = new Set([
  *   · `unit-occupied`  Apaleo still has the previous guest in it — they clear
  *                      at the QR checkout or at the night audit;
  *   · `unit-unknown`   the inventory read failed; the next pass re-reads it;
- *   · `unit-changed`   the room was re-assigned, or stopped being ready,
- *                      between the check and the amend. The next pass looks at
- *                      whatever room the guest now has;
+ *   · `unit-reassigned`     Apaleo moved the guest to another room between the
+ *                          check and the amend — a front-desk question, and the
+ *                          next pass looks at whatever room they now have;
+ *   · `unit-no-longer-ready` the room we checked stopped being ready in that
+ *                          same gap — a housekeeping question. Deliberately not
+ *                          the same string as the line above: they are two
+ *                          different problems for two different people;
  *   · `no-unit-assigned` / `no-offer`  both usually resolve once Apaleo settles
  *                      the room assignment for the day;
  *   · `opposite-extension-conflict`  the departing guest bought a late

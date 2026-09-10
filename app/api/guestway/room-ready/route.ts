@@ -94,7 +94,16 @@ export async function POST(req: NextRequest) {
     // alertOnFailure because the webhook fires about once per room per day: the
     // refusals nothing can clear still reach a human here, while the sweep —
     // which asks every quarter of an hour — stays quiet.
-    const result = await runRoomReady(reservationId, { alertOnFailure: true });
+    //
+    // trustGuestwayClean: reaching here means Guestway's automation held until
+    // it considered the room finished and then fired. Its flag is the fresher
+    // of the two — Apaleo's has been measured an hour and three quarters behind
+    // it — so on this path it is not second-guessed. See the note above the
+    // readiness check in openRoomEarly.
+    const result = await runRoomReady(reservationId, {
+      alertOnFailure: true,
+      trustGuestwayClean: true,
+    });
     // Full per-reservation outcome stays in the server log only. The HTTP
     // response is deliberately OPAQUE ({ok:true}) so it can't be used as an
     // "is this guest arriving today?" oracle by a secret holder.

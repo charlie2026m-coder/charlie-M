@@ -1,5 +1,6 @@
 import { Fetch } from '@/services/Request'
 import { runRoomReady } from '@/services/roomReady'
+import { unitReadiness } from '@/services/apaleo/amendStayTime'
 import { bookingLog } from '@/lib/logger'
 
 /**
@@ -26,22 +27,26 @@ import { bookingLog } from '@/lib/logger'
  *
  * What it does NOT do is page anyone per reservation. Running 36 times a day,
  * a per-attempt alert on "not ready yet" would be a pager storm every morning
- * (measured at Motz19: every unit read Dirty through the whole cleaning shift).
+ * (all 13 units read Dirty at 09:39, 10:00, 10:56 and 11:19 on 2026-09-08).
  * The webhook keeps that job: it fires about once per room per day, so the
  * hard reasons still reach a human through it. See lib/roomReadyOutcome.
  */
 export const dynamic = 'force-dynamic'
 // Each arrival costs several sequential Apaleo round-trips, and Apaleo has been
-// seen taking >25s on a busy afternoon. Higher than the other crons because
-// this one is the only one whose work scales with the size of the house.
+// seen taking >25s on a busy afternoon.
 export const maxDuration = 300
 
-// Bound the work per pass. Charlie M is 124 rooms, so a full changeover day is
-// well past Motz19's 40 — but the slice always starts at the beginning of the
-// list, so a cap below the real arrival count would mean the tail of the day
-// never gets looked at, no matter how often the job runs. 120 covers the house;
-// the duration below is what actually protects the function.
+// Bound the work per pass. Motz19 has 125 studios; a day where more than this
+// many people arrive is a day this job should not be holding the function open.
 const MAX_ARRIVALS = 120
+
+// Stop STARTING new reservations once the pass has run this long. maxDuration is
+// 60s and one reservation can cost several sequential Apaleo calls — >25s has
+// been seen on a busy afternoon — so without this the function gets killed
+// mid-loop. That is worse than it sounds: Apaleo returns the day's arrivals in a
+// stable order, so the same tail of the list would be starved on every single
+// pass rather than a different one each time.
+const PASS_BUDGET_MS = 240_000
 
 // The one pass per day that checks whether the whole feature did anything.
 // Chosen at 14:00 Berlin: late enough that housekeeping has finished the
@@ -66,6 +71,24 @@ interface ArrivalRow {
   id: string
   arrival: string
   status?: string
+  unit?: { id?: string; name?: string }
+}
+
+/** The house check-in hour. Anyone whose arrival sits before it has a door that
+ *  opens early — whether we moved it or they paid for it. */
+const STANDARD_CHECKIN_HHMM = '15:00'
+
+// How long a door may stand open onto a room Apaleo still calls dirty before it
+// counts as a real problem rather than the housekeeping flag lagging behind
+// Guestway's. The measured lags are an hour (2026-09-07) and an hour and three
+// quarters (2026-09-10); three hours clears both with room to spare, and a room
+// still unready three hours after its guest was let in is not a lag.
+const STALE_AFTER_MIN = 180
+
+/** Minutes since midnight for a zero-padded "HH:mm". */
+function minutesOf(hhmm: string): number {
+  const [h, m] = hhmm.split(':').map(Number)
+  return Number.isFinite(h) && Number.isFinite(m) ? h * 60 + m : 0
 }
 
 export async function GET(req: Request) {
@@ -112,19 +135,35 @@ export async function GET(req: Request) {
   // because, unlike a dirty room, this one does not fix itself: somebody has to
   // check that guest out.
   const occupied: string[] = []
+  const startedAt = Date.now()
+  let skippedForTime = 0
   // Start somewhere different each pass.
   //
-  // The work is one Apaleo round-trip per arrival at minimum, and a house this
-  // size can hand the function more than it can finish. Always starting at the
-  // top of the list would mean the same names are reached every time and the
-  // ones after the cut-off are never looked at at all — they would lose the
-  // feature entirely, silently. Rotating by the quarter-hour gives every
-  // arrival its turn within the hour.
+  // The deadline below stops a pass that is running long, which protects the
+  // function — but on its own it does not protect the GUESTS at the end of the
+  // list: Apaleo returns the day's arrivals in a stable order, so the same
+  // names would be reached every quarter of an hour and the ones after the
+  // cut-off never once. They would lose the feature entirely, silently, with
+  // every refusal in the log describing somebody else. Rotating by the
+  // quarter-hour gives every arrival its turn within the hour.
   const rotate = Math.floor(Number(hhmm.slice(3, 5)) / 15) % Math.max(1, arrivals.length)
-  const ordered = [...arrivals.slice(rotate), ...arrivals.slice(0, rotate)]
+  const candidates = [...arrivals.slice(rotate), ...arrivals.slice(0, rotate)]
+    .slice(0, MAX_ARRIVALS)
+    // openRoomEarly acts on Confirmed only — anyone already checked in, checked
+    // out or cancelled costs a reservation fetch just to be refused, on every
+    // one of the day's 36 passes. The audit below still reads the full list.
+    // An absent status is left in: unknown is not a reason to skip a guest.
+    .filter((r) => r.status === undefined || r.status === 'Confirmed')
 
-  for (const r of ordered.slice(0, MAX_ARRIVALS)) {
-    if (r.status === 'Canceled' || r.status === 'NoShow') continue
+  for (const r of candidates) {
+    if (Date.now() - startedAt > PASS_BUDGET_MS) {
+      skippedForTime = candidates.length - candidates.indexOf(r)
+      bookingLog.warn('room-ready sweep: out of time, leaving the rest to the next pass', {
+        done: candidates.length - skippedForTime,
+        left: skippedForTime,
+      })
+      break
+    }
     try {
       const out = await runRoomReady(r.id, { alertOnFailure: false })
       if (out.status === 'moved') moved.push(r.id)
@@ -142,6 +181,67 @@ export async function GET(req: Request) {
   }
 
   if (moved.length) bookingLog.info('room-ready sweep: doors opened', { moved })
+
+  // THE OTHER DIRECTION: a door that is already open onto a room that is not
+  // ready. Everything above asks "may this guest come in early yet"; this asks
+  // "is the room still fit for the guest we already let in".
+  //
+  // Nothing was watching that. openRoomEarly re-reads the room immediately
+  // before it amends, but once the amend lands the lock is synced and the code
+  // has no further say — Apaleo can move the guest to another unit, or the room
+  // can stop being clean, and the guest simply walks into it. That is the half
+  // of the 2026-09-08 incident the last-look guard cannot reach, and it is the
+  // half nobody could see.
+  //
+  // Only reservations still Confirmed: once a guest checks in Apaleo rewrites
+  // `arrival` to the check-in moment, so an early time would no longer mean the
+  // door was opened ahead of the hour.
+  //
+  // This alerts on every pass while it lasts, which is intended — an open door
+  // onto a dirty room is an active problem, not a daily digest. Slack throttles
+  // per message text and the id is in the text, so it is one line per guest per
+  // ten minutes, and it stops the moment the room is fixed or the guest arrives.
+  for (const r of arrivals) {
+    if (Date.now() - startedAt > PASS_BUDGET_MS) break
+    if (r.status !== 'Confirmed') continue
+    // Early AND already open. Both halves are needed: `< 15:00` says the door
+    // was opened ahead of the hour, `<= now` says it has actually opened.
+    //
+    // Without the second, a paid early check-in — arrival 13:00, bought, not
+    // moved by us — would be read at 08:10 as a door standing open onto a dirty
+    // room. It is not: their room has until 13:00 to be cleaned and normally is.
+    // Several such arrivals a day would have meant the channel filling up every
+    // morning with rooms that were perfectly on schedule.
+    const arrivalHHmm = hhmmOf(r.arrival)
+    if (arrivalHHmm >= STANDARD_CHECKIN_HHMM) continue
+    if (arrivalHHmm > hhmm) continue
+    if (!r.unit?.id) continue
+    const readiness = await unitReadiness(r.unit.id)
+    if (readiness === 'ready') continue
+
+    // `dirty` here is usually not a problem at all any more, and that is new.
+    // Since the webhook takes Guestway's word on cleanliness, a door opens the
+    // moment Guestway says the room is finished — while Apaleo's own flag can
+    // still read Dirty for a good while after. Measured: an hour on 2026-09-07,
+    // an hour and three quarters on 2026-09-10. Alerting on that would page for
+    // every guest we successfully served, which is the opposite of the job.
+    //
+    // So the two are treated differently. `occupied` is wrong immediately and
+    // unambiguously — the previous guest is still checked in, and no lag
+    // explains that. `dirty` and `unknown` only mean something once they have
+    // outlasted any plausible lag, so they wait out a grace window and then say
+    // so, because a room still unready hours after its door opened is real.
+    const openForMin = minutesOf(hhmm) - minutesOf(arrivalHHmm)
+    if (readiness !== 'occupied' && openForMin < STALE_AFTER_MIN) continue
+
+    bookingLog.error(`room-ready: door already open onto a room that is not ready — ${r.id}`, {
+      reservationId: r.id,
+      room: r.unit.name ?? r.unit.id,
+      readiness,
+      openSince: arrivalHHmm,
+      openForMin,
+    })
+  }
 
   // Once a day: did ANY arriving guest get in before the standard 15:00 today?
   //
@@ -183,6 +283,7 @@ export async function GET(req: Request) {
   return Response.json({
     ok: true,
     arrivals: arrivals.length,
+    tried: candidates.length - skippedForTime,
     moved: moved.length,
     reasons,
     audited,

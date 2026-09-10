@@ -19,9 +19,14 @@ import { buildRoomReadyMessage, sendGuestwayMessage } from '@/services/guestway/
  */
 export async function runRoomReady(
   reservationId: string,
-  opts: { alertOnFailure?: boolean } = {},
+  opts: { alertOnFailure?: boolean; trustGuestwayClean?: boolean } = {},
 ): Promise<RoomReadyOutcome> {
-  const result = await openRoomEarly(reservationId);
+  // `trustGuestwayClean` belongs to the webhook alone: it means "Guestway just
+  // told us this room is finished". The sweep has nothing equivalent to pass —
+  // there is no housekeeping endpoint to ask — so it reads Apaleo instead.
+  const result = await openRoomEarly(reservationId, {
+    trustGuestwayClean: opts.trustGuestwayClean,
+  });
 
   if (result.status === 'moved') {
     bookingLog.info('room-ready: result', { reservationId, result });

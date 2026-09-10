@@ -25,9 +25,10 @@ const EXPECTED: Record<string, boolean> = {
   'unit-dirty': false,
   'unit-occupied': false,
   'unit-unknown': false,
-  // The room moved under us, or stopped being ready, between the check and the
-  // amend. The next pass looks at whatever room the guest now has.
-  'unit-changed': false,
+  // The last look, split in two on purpose: a room shuffled mid-afternoon is a
+  // front-desk question, a room that stopped being clean is a housekeeping one.
+  'unit-reassigned': false,
+  'unit-no-longer-ready': false,
   'no-unit-assigned': false,
   'no-offer': false,
   // We sold the departing guest that late checkout. Nothing is broken.
@@ -58,8 +59,8 @@ describe('classifying a room-ready outcome', () => {
   it('stays quiet while a room is merely not ready yet', () => {
     // The regression this list was rewritten for. These three ran at error
     // level while the webhook was the only chance a guest got; with the sweep
-    // asking again all day they are the normal state of a hotel before noon:
-    // measured at Motz19, every unit read Dirty right through the shift.
+    // asking again all day they are the normal state of a hotel before noon —
+    // all 13 units read Dirty at 09:39, 10:00, 10:56 and 11:19 on 2026-09-08.
     for (const reason of ['unit-dirty', 'unit-occupied', 'unit-unknown']) {
       expect(doorStayedShut(reason), reason).toBe(false)
     }
@@ -90,8 +91,26 @@ describe('classifying a room-ready outcome', () => {
     }
   })
 
+  it('keeps the last look telling its two causes apart', () => {
+    // Both were one `unit-changed`. Collapsing them again would hide which of
+    // the two actually happens in practice — and they need different people.
+    const src = readFileSync(join(process.cwd(), 'services/apaleo/amendStayTime.ts'), 'utf8')
+    expect(src).toContain("reason: 'unit-reassigned'")
+    expect(src).toContain("reason: 'unit-no-longer-ready'")
+    expect(src).not.toContain("reason: 'unit-changed'")
+  })
+
+  it('re-reads the status at the last look, not just the room', () => {
+    // The gap the last look exists to close swallows a check-in just as easily
+    // as a room swap, and the status arrives on the same call — ignoring it
+    // re-opens the Confirmed guard from the top of the function.
+    const src = readFileSync(join(process.cwd(), 'services/apaleo/amendStayTime.ts'), 'utf8')
+    const lastLook = src.slice(src.indexOf('LAST LOOK'))
+    expect(lastLook).toContain("recheck.status !== 'Confirmed'")
+  })
+
   it('still sees the readiness reasons after the split', () => {
-    // They were one `unit-not-ready` before. If a refactor ever
+    // They were one `unit-not-ready` until 2026-09-08. If a refactor ever
     // collapses them back into a variable, the exhaustiveness check above goes
     // blind without failing — this is what notices.
     const src = readFileSync(
@@ -101,5 +120,35 @@ describe('classifying a room-ready outcome', () => {
     for (const reason of ['unit-dirty', 'unit-occupied', 'unit-unknown']) {
       expect(src, reason).toContain(`reason: '${reason}'`)
     }
+  })
+
+  it('takes Guestway word on cleanliness only where Guestway spoke', () => {
+    // The webhook IS Guestway asserting the room is finished, and its flag runs
+    // ahead of Apaleo's by an hour or more (measured 60 min on 2026-09-07,
+    // 105 min on 2026-09-10). The sweep has no such assertion to pass — there is
+    // no housekeeping endpoint in the Open API — so it must keep reading Apaleo,
+    // which is what let it rescue MXMGMNHX-1 at 11:13 that day.
+    const hook = readFileSync(
+      join(process.cwd(), 'app/api/guestway/room-ready/route.ts'),
+      'utf8',
+    )
+    const sweep = readFileSync(
+      join(process.cwd(), 'app/api/cron/room-ready-sweep/route.ts'),
+      'utf8',
+    )
+    expect(hook).toContain('trustGuestwayClean: true')
+    expect(sweep).not.toContain('trustGuestwayClean')
+  })
+
+  it('never lets that trust cover an occupied or unreadable room', () => {
+    // Occupancy is Apaleo's alone to know — Guestway cannot see whether the
+    // previous guest is still checked in — and `unknown` means we know neither.
+    // Both stay fail-closed no matter who woke us.
+    const src = readFileSync(join(process.cwd(), 'services/apaleo/amendStayTime.ts'), 'utf8')
+    const guard = src.slice(src.indexOf('WHOSE WORD COUNTS'), src.indexOf('const newArrival'))
+    expect(guard).toMatch(/readiness === 'occupied'\s*\)?\s*return/)
+    expect(guard).toMatch(/readiness === 'unknown'\s*\)?\s*return/)
+    // Only the dirty branch is allowed to consult the flag.
+    expect(guard).toContain("readiness === 'dirty' && !opts.trustGuestwayClean")
   })
 })

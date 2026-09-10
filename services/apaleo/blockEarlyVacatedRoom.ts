@@ -60,10 +60,13 @@ const propId = process.env.APALEO_PROPERTY_ID;
 /**
  * Conditions that mean the room is ready for a guest. Mirrors amendStayTime.
  *
- * `Clean` alone: reading all 147 units across the three properties (2026-09-08)
- * returned nothing but `Clean` and `Dirty`, so an "awaiting inspection" state
- * would be new behaviour rather than something already in use — and treating an
- * uninspected room as ready is the wrong direction to guess in.
+ * `Clean` alone, and it must stay in step with room-ready's set: these two
+ * answer the same question — is this room fit for a guest — one for the door
+ * and one for whether it may be SOLD. Letting them drift means refusing the
+ * door while putting the room back on sale.
+ *
+ * The enum is Clean | CleanToBeInspected | Dirty. An uninspected room is not
+ * treated as ready, which is the safe direction for both.
  */
 const CLEAN_CONDITIONS = new Set(['Clean']);
 
