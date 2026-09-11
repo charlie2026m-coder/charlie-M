@@ -343,7 +343,19 @@ export async function hasOppositeExtensionConflict(
   opts: { failClosed?: boolean } = {},
 ): Promise<boolean> {
   try {
-    if (!propId || !ctx.unitId) return false;
+    if (!propId) return false;
+    if (!ctx.unitId) {
+      // Nothing to compare against: the collision is between two reservations in
+      // the SAME physical room, and a group-level check would block every room
+      // in the house. Say so instead of returning a quiet false — this is the
+      // one way the guard can miss a real conflict, and it used to leave no
+      // trace at all.
+      apaleoLog.info('stay-extension: conflict guard skipped — no unit assigned yet', {
+        reservationId,
+        kind,
+      });
+      return false;
+    }
     // LCO departing day D → look at reservations ARRIVING on D in this unit.
     // ECI arriving day D  → look at reservations DEPARTING on D in this unit.
     const date = (kind === 'late' ? ctx.departure : ctx.arrival).slice(0, 10);
@@ -357,15 +369,28 @@ export async function hasOppositeExtensionConflict(
       to: `${date}T23:59:59Z`,
       dateFilter: kind === 'late' ? 'Arrival' : 'Departure',
     });
-    // Only reservations that will actually occupy the unit can collide — exclude
-    // Canceled/NoShow so a cancelled counterpart can't falsely block a sale.
-    params.append('status', 'Confirmed');
-    params.append('status', 'InHouse');
+    // NO status filter on the wire, on purpose. Apaleo applies only the FIRST
+    // `status` it is given and silently drops the rest — a repeated
+    // `status=Confirmed&status=InHouse` therefore means `status=Confirmed`, and
+    // the guest still in the room is invisible. That is not a hypothetical: it
+    // is how Motz19 room 12 was sold twice over on 2026-09-11. The departing
+    // guest was InHouse with a paid late checkout at 13:00, and an early
+    // check-in for 13:00 was sold on the same room at 11:59 — zero minutes to
+    // clean — because the query this guard sent could only ever see Confirmed
+    // ones. (Apaleo does take a COMMA list — `status=Confirmed,InHouse` is a
+    // real OR — but a filter whose failure mode is silent and one-directional
+    // does not belong on a safety check. The set here is one unit on one day;
+    // reading it whole costs nothing.)
     const list = await Fetch<{
-      reservations?: Array<{ id: string; arrival: string; departure: string }>;
+      reservations?: Array<{ id: string; arrival: string; departure: string; status?: string }>;
     }>(`/booking/v1/reservations?${params.toString()}`);
     for (const other of list.reservations ?? []) {
       if (other.id === reservationId) continue;
+      // Only a counterpart that really holds the room can collide. Canceled and
+      // NoShow never do — everything else does, CheckedOut very much included:
+      // the departing guest reads CheckedOut by the afternoon, and the room they
+      // left at 13:00 is no less unavailable for being empty.
+      if (other.status === 'Canceled' || other.status === 'NoShow') continue;
       if (kind === 'late') {
         if (hhmmOf(other.arrival) && hhmmOf(other.arrival) < DEFAULT_CHECKIN_HHMM) return true;
       } else {
