@@ -47,10 +47,14 @@ function hhmmOf(iso: string): string {
  *  - Apaleo's OWN documented pattern for paid late check-out / early check-in is
  *    to amend the reservation's departure/arrival TIME and add the fee. That is
  *    bookable any time (it's a reservation change, not a night-bound service),
- *    actually extends the checkout time (so Guestway PIN / housekeeping update),
- *    and — because the amend offer checks real room availability — it naturally
- *    prevents selling BOTH late-checkout and early-check-in on the same room/day
- *    (the second one's offer returns availableUnits 0).
+ *    actually extends the checkout time (so Guestway PIN / housekeeping update).
+ *    ⚠️ It does NOT stop a late checkout and an early check-in being sold on the
+ *    same room for the same day. Apaleo's availability is per NIGHT, not per
+ *    hour: on 2026-09-11 the early-check-in amend for Motz19 room 12 went
+ *    through with a 13:00 late checkout already on that unit. That is what
+ *    hasOppositeExtensionConflict is for — and it can only see a collision once
+ *    Apaleo has assigned the room, which for most bookings happens on the day of
+ *    arrival. The room-ready sweep reports what slipped past it that morning.
  *
  * Confirmed against the live Apaleo API:
  *  - GET /booking/v1/reservations/{id}/offers?departure=<ISO> (or ?arrival=)
@@ -90,8 +94,10 @@ interface OffersEnvelope {
 /**
  * Read-only: price/availability for moving the reservation's departure (LCO) or
  * arrival (ECI) to a new time. Returns null when there's no offer (e.g. the time
- * is unchanged, or the room isn't available for the extended window — which is
- * exactly how the late-vs-early conflict surfaces). On the FORWARD (booking)
+ * is unchanged, or the room isn't available for the extended window). ⚠️ It is
+ * NOT how a late-vs-early collision surfaces: Apaleo's availability is per night,
+ * and on 2026-09-11 this returned an offer for a 13:00 early check-in on a room
+ * whose guest had a 13:00 late checkout. On the FORWARD (booking)
  * path a null simply surfaces as "time not available" and the caller refuses the
  * sale — fail-safe. The reversal path does NOT use this (it restores from the
  * stored original time slices) precisely so a transient blip can't strand a
@@ -331,12 +337,16 @@ export async function loadReservationForAmend(
  * check-out (departure → 13:00) and an early check-in (arrival → 13:00) collide
  * only on the SAME physical unit on the changeover day. We can only assert that
  * collision when Apaleo has assigned a unit; a group-level check would wrongly
- * block any of the 125 rooms, so when no unit is assigned we DO NOT block here
- * and rely on the amend offer's own availability instead.
+ * block every room in the house, so when no unit is assigned we DO NOT block
+ * here. Nothing else does either: the amend offer will not refuse it (Apaleo's
+ * availability is per night, not per hour), and most bookings have no unit until
+ * the day of arrival — 55 of 63 upcoming arrivals on 2026-09-11. An advance
+ * purchase therefore goes through unchecked; the room-ready sweep's morning
+ * report is where those are caught, once the room is known.
  *
  * FAIL-OPEN by default: any error returns false (allow). This guard can never
- * reject a legitimate sale — at worst it does nothing and the amend offer is
- * the only gate. The room-ready DOOR path passes failClosed=true instead: it
+ * reject a legitimate sale — at worst it does nothing and the sale goes
+ * through. The room-ready DOOR path passes failClosed=true instead: it
  * grants physical access, so an unverifiable conflict must block, not allow.
  * Detection is by clock time: a counterpart reservation "took ECI" if it
  * arrives before 15:00; "took LCO" if it departs after 11:00 (exactly how these
