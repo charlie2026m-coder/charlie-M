@@ -26,17 +26,37 @@ vi.mock('@/services/apaleo/amendStayTime', () => ({
 const log = { info: vi.fn(), warn: vi.fn(), error: vi.fn() }
 vi.mock('@/lib/logger', () => ({ bookingLog: log }))
 
-process.env.APALEO_PROPERTY_ID = 'CMH'
+const notifySlack = vi.fn(() => Promise.resolve())
+vi.mock('@/lib/slack', () => ({
+  notifySlack: (...a: unknown[]) => notifySlack(...(a as [])),
+}))
+
+process.env.APALEO_PROPERTY_ID = 'MOT'
 process.env.GUESTWAY_ROOM_READY_ENABLED = 'true'
 delete process.env.CRON_SECRET
 
 const { GET } = await import('@/app/api/cron/room-ready-sweep/route')
 
-const call = () => GET(new Request('https://www.charlie-m.de/api/cron/room-ready-sweep'))
+const call = () => GET(new Request('https://motz19.de/api/cron/room-ready-sweep'))
 
-/** Today's arrival list as Apaleo would answer it. */
-function arrivals(rows: { id: string; arrival: string; status?: string }[]) {
-  fetchMock.mockResolvedValue({ reservations: rows })
+/** Today's arrival list as Apaleo would answer it, plus optionally today's
+ *  departures — the sweep asks for those separately to spot a guest simply
+ *  carrying on in the same room. */
+function arrivals(
+  rows: {
+    id: string
+    arrival: string
+    status?: string
+    unit?: { id?: string; name?: string }
+    primaryGuest?: { email?: string; lastName?: string }
+  }[],
+  departures: unknown[] = [],
+) {
+  fetchMock.mockImplementation((endpoint: string) =>
+    Promise.resolve({
+      reservations: String(endpoint).includes('dateFilter=Departure') ? departures : rows,
+    }),
+  )
 }
 
 beforeEach(() => {
@@ -60,37 +80,7 @@ describe('who the sweep touches', () => {
     ])
     await call()
 
-    // Set, not sequence: the pass starts at a different point each quarter of
-    // an hour (see the rotation test below), so the order is not fixed.
-    expect(runRoomReady.mock.calls.map((c) => c[0]).sort()).toEqual(['AAA-1', 'CCC-1'])
-  })
-
-  it('starts at a different arrival each quarter of an hour', async () => {
-    // The budget below stops a long pass, which protects the function. It does
-    // not protect the guests at the END of the list: Apaleo returns the day's
-    // arrivals in a stable order, so without rotating, the same names would be
-    // reached every time and the ones past the cut-off never once — they would
-    // lose the feature silently. This is what makes the starvation impossible.
-    const rows = [
-      { id: 'AAA-1', arrival: '2026-09-08T15:00:00+02:00', status: 'Confirmed' },
-      { id: 'BBB-1', arrival: '2026-09-08T15:00:00+02:00', status: 'Confirmed' },
-      { id: 'CCC-1', arrival: '2026-09-08T15:00:00+02:00', status: 'Confirmed' },
-    ]
-
-    const firstTouched = async (time: string) => {
-      vi.setSystemTime(new Date(time))
-      vi.clearAllMocks()
-      runRoomReady.mockResolvedValue({ status: 'skipped', reason: 'unit-dirty' })
-      arrivals(rows)
-      await call()
-      return runRoomReady.mock.calls[0][0]
-    }
-
-    expect(await firstTouched('2026-09-08T10:10:00+02:00')).toBe('AAA-1')
-    expect(await firstTouched('2026-09-08T10:25:00+02:00')).toBe('BBB-1')
-    expect(await firstTouched('2026-09-08T10:40:00+02:00')).toBe('CCC-1')
-    // Wraps rather than falling off the end.
-    expect(await firstTouched('2026-09-08T10:55:00+02:00')).toBe('AAA-1')
+    expect(runRoomReady.mock.calls.map((c) => c[0])).toEqual(['AAA-1', 'CCC-1'])
   })
 
   it('does not re-ask about guests who already checked in', async () => {
@@ -127,11 +117,9 @@ describe('who the sweep touches', () => {
         status: 'Confirmed',
       })),
     )
-    // Each call burns 100 simulated seconds; the 240s budget allows three
-    // starts. (Charlie M runs a longer budget than Motz19 — 124 rooms rather
-    // than 13 — so the arithmetic here is scaled to match, not the behaviour.)
+    // Each call burns 20 simulated seconds; the 45s budget allows three starts.
     runRoomReady.mockImplementation(async () => {
-      vi.setSystemTime(new Date(Date.now() + 100_000))
+      vi.setSystemTime(new Date(Date.now() + 20_000))
       return { status: 'skipped', reason: 'unit-dirty' }
     })
     const res = await call()
@@ -178,14 +166,37 @@ describe('who the sweep touches', () => {
     expect(await res.json()).toMatchObject({ ok: true })
   })
 
-  it('does nothing at all while the feature is switched off', async () => {
+  it('opens no doors while switched off — but still watches the rooms', async () => {
+    // The switch is for the doors. A guest twenty minutes from a dirty room is
+    // owed a word at every hotel, including the ones where early doors are off.
     process.env.GUESTWAY_ROOM_READY_ENABLED = 'false'
-    arrivals([{ id: 'AAA-1', arrival: '2026-09-08T15:00:00+02:00', status: 'Confirmed' }])
+    vi.setSystemTime(new Date('2026-09-08T14:40:00+02:00'))
+    arrivals([
+      { id: 'AAA-1', arrival: '2026-09-08T15:00:00+02:00', status: 'Confirmed', unit: { id: 'MOT-DUO', name: '310' } },
+    ])
+    unitReadiness.mockResolvedValue('dirty')
     const res = await call()
     process.env.GUESTWAY_ROOM_READY_ENABLED = 'true'
 
     expect(runRoomReady).not.toHaveBeenCalled()
-    expect(await res.json()).toMatchObject({ skipped: 'disabled' })
+    expect(await res.json()).toMatchObject({ doors: 'off', tried: 0 })
+    expect(log.error).toHaveBeenCalledWith(
+      'Room 310: not ready, guest arrives in 20 min',
+      expect.objectContaining({ room: '310' }),
+    )
+  })
+
+  it('keeps the door-only audits quiet while switched off', async () => {
+    // "Nobody got in early — feature may be dead" is not a finding at a hotel
+    // where the feature is deliberately off; it would cry wolf every day.
+    process.env.GUESTWAY_ROOM_READY_ENABLED = 'false'
+    vi.setSystemTime(new Date('2026-09-08T14:10:00+02:00'))
+    arrivals([{ id: 'AAA-1', arrival: '2026-09-08T15:00:00+02:00', status: 'Confirmed' }])
+    await call()
+    process.env.GUESTWAY_ROOM_READY_ENABLED = 'true'
+
+    expect(log.error).not.toHaveBeenCalled()
+    expect(notifySlack).not.toHaveBeenCalledWith('info', 'Room-ready: today in full', expect.anything())
   })
 
   it('alerts when it cannot reach Apaleo at all', async () => {
@@ -398,5 +409,518 @@ describe('a door already open onto a room that is not ready', () => {
 
     expect(unitReadiness).not.toHaveBeenCalled()
     expect(log.error).not.toHaveBeenCalled()
+  })
+})
+
+describe('the once-a-day report', () => {
+  // Every other alert catches one specific breakage. None of them answers "did
+  // it work today, for everyone?" — a guest who quietly never got an early door
+  // is not a breakage anywhere, so four of five opening reads exactly like five
+  // of five from the inside. This is what makes the fifth visible.
+  const opened = {
+    id: 'OPEN-1',
+    arrival: '2026-09-08T11:38:00+02:00',
+    status: 'Confirmed',
+    unit: { id: 'MOT-VCQ', name: '308' },
+  }
+  const waiting = {
+    id: 'WAIT-1',
+    arrival: '2026-09-08T15:00:00+02:00',
+    status: 'Confirmed',
+    unit: { id: 'MOT-IJK', name: '13' },
+  }
+
+  beforeEach(() => {
+    vi.setSystemTime(new Date('2026-09-08T14:10:00+02:00'))
+  })
+
+  it('names each guest and says why in words, not reason codes', async () => {
+    arrivals([opened, waiting])
+    runRoomReady.mockResolvedValue({ status: 'skipped', reason: 'unit-dirty' })
+    await call()
+
+    expect(notifySlack).toHaveBeenCalledWith(
+      'info',
+      'Room-ready: today in full',
+      expect.objectContaining({
+        arrivals: 2,
+        'opened early': 1,
+        'arriving at the normal hour': 1,
+        'room 13': expect.stringContaining('not cleaned yet'),
+        'room 308': expect.stringContaining('opened 11:38'),
+      }),
+    )
+  })
+
+  it('never raises the level just because somebody has no early door', async () => {
+    // The regression this was rewritten for. A guest arriving at the booked
+    // hour has lost a bonus, not a room, and levelling on it made an ordinary
+    // 14:10 read as two broken rooms. The alarm for a room that will genuinely
+    // not be ready is separate and fires close to the arrival.
+    arrivals([opened, waiting])
+    runRoomReady.mockResolvedValue({ status: 'skipped', reason: 'unit-dirty' })
+    await call()
+
+    const levels = notifySlack.mock.calls.map((c) => String((c as unknown[])[0]))
+    expect(levels).not.toContain('warn')
+    expect(levels).toContain('info')
+  })
+
+  it('does not report outside the audit window', async () => {
+    // Once a day, not thirty-six times.
+    vi.setSystemTime(new Date('2026-09-08T10:25:00+02:00'))
+    arrivals([opened, waiting])
+    await call()
+
+    expect(notifySlack).not.toHaveBeenCalled()
+  })
+
+  it('says nothing on a day with no arrivals', async () => {
+    arrivals([])
+    await call()
+
+    expect(notifySlack).not.toHaveBeenCalled()
+  })
+})
+
+describe('the guest is nearly here and the room is not ready', () => {
+  // The only room-ready outcome a person has to act on. Everything else is
+  // either a bonus that did not happen or a state that clears itself.
+  const soon = {
+    id: 'SOON-1',
+    arrival: '2026-09-08T15:00:00+02:00',
+    status: 'Confirmed',
+    unit: { id: 'MOT-DUO', name: '310' },
+  }
+
+  it('says it plainly: room, minutes, reason', async () => {
+    vi.setSystemTime(new Date('2026-09-08T14:40:00+02:00'))
+    arrivals([soon])
+    unitReadiness.mockResolvedValue('dirty')
+    await call()
+
+    expect(log.error).toHaveBeenCalledWith(
+      'Room 310: not ready, guest arrives in 20 min',
+      expect.objectContaining({ room: '310', arrival: '15:00', problem: 'not cleaned yet' }),
+    )
+  })
+
+  it('gets LOUDER once the guest is at the door, not quieter', async () => {
+    // The first version stopped at the arrival time and went silent exactly when
+    // it mattered most. Measured live on 2026-09-10: room 310 still dirty at
+    // 15:17, seventeen minutes past its hour, and nothing had said so since
+    // 15:00 — the guest was outside and the channel was calm.
+    vi.setSystemTime(new Date('2026-09-08T15:17:00+02:00'))
+    arrivals([soon])
+    unitReadiness.mockResolvedValue('dirty')
+    await call()
+
+    expect(log.error).toHaveBeenCalledWith(
+      'Room 310: not ready, guest was due 17 min ago and cannot get in',
+      expect.objectContaining({ room: '310', problem: 'not cleaned yet' }),
+    )
+  })
+
+  it('stops on its own once the guest has checked in', async () => {
+    // Apaleo leaves Confirmed at check-in, so the guest being inside ends it
+    // without anyone having to remember to switch it off.
+    vi.setSystemTime(new Date('2026-09-08T15:17:00+02:00'))
+    arrivals([{ ...soon, status: 'InHouse' }])
+    unitReadiness.mockResolvedValue('dirty')
+    await call()
+
+    expect(log.error).not.toHaveBeenCalled()
+  })
+
+  it('stays quiet while there is still time to clean', async () => {
+    // At 13:00 a dirty room with a 15:00 arrival is housekeeping's ordinary
+    // day, not an incident. Calling it one is what caused the false alarm.
+    vi.setSystemTime(new Date('2026-09-08T13:00:00+02:00'))
+    arrivals([soon])
+    unitReadiness.mockResolvedValue('dirty')
+    await call()
+
+    expect(log.error).not.toHaveBeenCalled()
+  })
+
+  it('stays quiet when the room is ready in time', async () => {
+    vi.setSystemTime(new Date('2026-09-08T14:40:00+02:00'))
+    arrivals([soon])
+    unitReadiness.mockResolvedValue('ready')
+    await call()
+
+    expect(log.error).not.toHaveBeenCalled()
+  })
+
+  it('puts the room in the message text so one room cannot mute another', async () => {
+    vi.setSystemTime(new Date('2026-09-08T14:40:00+02:00'))
+    arrivals([soon, { ...soon, id: 'SOON-2', unit: { id: 'MOT-IJK', name: '13' } }])
+    unitReadiness.mockResolvedValue('occupied')
+    await call()
+
+    const texts = log.error.mock.calls.map((c) => String((c as unknown[])[0])).filter((t) => t.startsWith('Room '))
+    expect(new Set(texts).size).toBe(2)
+    expect(texts.some((t) => t.includes('310'))).toBe(true)
+    expect(texts.some((t) => t.includes('13'))).toBe(true)
+  })
+})
+
+describe('a guest simply carrying on in the same room', () => {
+  // A stay can be split across two reservations — four nights booked in advance
+  // plus the night before added later. Apaleo treats the seam as a checkout and
+  // a check-in, and marks the room Dirty because every checkout is marked Dirty.
+  // Nobody left, nobody is locked out, no turnover clean is owed.
+  //
+  // Measured on prod 2026-09-10, room 310: AVVEXQIM-1 09→10 Sept and
+  // NSMDXCVX-1 10→14 Sept, one room, one address. The alert called that
+  // "guest was due 21 min ago and cannot get in" while he was upstairs.
+  const carrying = {
+    id: 'NEXT-1',
+    arrival: '2026-09-08T15:00:00+02:00',
+    status: 'Confirmed',
+    unit: { id: 'MOT-BFF', name: '310' },
+    primaryGuest: { email: 'Michael@Example.at', lastName: 'Sommer' },
+  }
+  const samePersonLeaving = {
+    id: 'PREV-1',
+    arrival: '2026-09-07T15:00:00+02:00',
+    unit: { id: 'MOT-BFF', name: '310' },
+    primaryGuest: { email: 'michael@example.at', lastName: 'Sommer' },
+  }
+
+  beforeEach(() => {
+    vi.setSystemTime(new Date('2026-09-08T15:21:00+02:00'))
+    unitReadiness.mockResolvedValue('dirty')
+  })
+
+  it('says nothing when the same address is leaving that room today', async () => {
+    arrivals([carrying], [samePersonLeaving])
+    await call()
+
+    expect(log.error).not.toHaveBeenCalled()
+  })
+
+  it('matches the address regardless of how it was typed', async () => {
+    // Real data differed in case and carried a double space in the name.
+    arrivals([carrying], [{ ...samePersonLeaving, primaryGuest: { email: '  MICHAEL@example.AT ' } }])
+    await call()
+
+    expect(log.error).not.toHaveBeenCalled()
+  })
+
+  it('still shouts for a real turnover to a different guest', async () => {
+    // The dangerous direction: silencing a genuinely unready room. A different
+    // guest leaving that room today is exactly when the alert must survive.
+    arrivals([carrying], [{ ...samePersonLeaving, id: 'OTHER-1', primaryGuest: { email: 'someone@else.com', lastName: 'Other' } }])
+    await call()
+
+    expect(log.error).toHaveBeenCalledWith(
+      expect.stringContaining('Room 310'),
+      expect.anything(),
+    )
+  })
+
+  it('falls back to the surname when no address is on file', async () => {
+    arrivals(
+      [{ ...carrying, primaryGuest: { lastName: 'Sommer' } }],
+      [{ ...samePersonLeaving, primaryGuest: { lastName: 'sommer' } }],
+    )
+    await call()
+
+    expect(log.error).not.toHaveBeenCalled()
+  })
+
+  it('shouts anyway when it cannot tell', async () => {
+    // Unknown is not proof of a continuation. A needless page beats a guest
+    // locked out in silence.
+    arrivals([carrying], [])
+    await call()
+
+    expect(log.error).toHaveBeenCalledWith(
+      expect.stringContaining('Room 310'),
+      expect.anything(),
+    )
+  })
+
+  it('does not mistake the same name leaving a DIFFERENT room for a continuation', async () => {
+    // The departures are read for the whole house now, so the room has to be
+    // matched here — a Sommer leaving 12 says nothing about 310.
+    arrivals([carrying], [{ ...samePersonLeaving, unit: { id: 'MOT-IIM', name: '12' } }])
+    await call()
+
+    expect(log.error).toHaveBeenCalledWith(expect.stringContaining('Room 310'), expect.anything())
+  })
+})
+
+describe('a paid early check-in into a room that is not ready', () => {
+  // Two kinds of arrival sit before 15:00 and they could not be more different.
+  // One WE moved, on Guestway's word that the room was finished — Apaleo's flag
+  // lags an hour or two behind that, so a dirty reading is noise and gets the
+  // three-hour grace. The other the guest PAID for: nobody said the room was
+  // clean, the hour was simply sold. Room 12, 2026-09-11 — a late checkout at
+  // 13:00 and an early check-in at 13:00 on the same room, and under the grace
+  // nothing would have said so until 16:10.
+  const paid = {
+    id: 'PAID-1',
+    arrival: '2026-09-08T13:00:00+02:00',
+    status: 'Confirmed',
+    unit: { id: 'MOT-IIM', name: '12' },
+    primaryGuest: { email: 'lahti@example.com', lastName: 'Lahti' },
+  }
+  const leavingLate = {
+    id: 'LEAVING-1',
+    arrival: '2026-09-02T14:09:00+02:00',
+    departure: '2026-09-08T13:00:00+02:00',
+    status: 'InHouse',
+    unit: { id: 'MOT-IIM', name: '12' },
+    primaryGuest: { email: 'popovich@example.com', lastName: 'popovich' },
+  }
+
+  /** Apaleo as the sweep sees it: arrivals, departures, and whose folio carries
+   *  our own "Early Check-In" line. */
+  function world(rows: unknown[], departures: unknown[], paidIds: string[]) {
+    fetchMock.mockImplementation((endpoint: string) => {
+      const url = String(endpoint)
+      if (url.includes('/finance/v1/folios')) {
+        const id = decodeURIComponent(url.match(/reservationIds=([^&]+)/)?.[1] ?? '')
+        return Promise.resolve({
+          folios: paidIds.includes(id) ? [{ charges: [{ name: 'Early Check-In' }] }] : [{ charges: [] }],
+        })
+      }
+      return Promise.resolve({ reservations: url.includes('dateFilter=Departure') ? departures : rows })
+    })
+  }
+
+  beforeEach(() => {
+    vi.setSystemTime(new Date('2026-09-08T12:40:00+02:00'))
+    unitReadiness.mockResolvedValue('occupied')
+  })
+
+  it('pages at the urgent distance, not after the three-hour grace', async () => {
+    world([paid], [], ['PAID-1'])
+    await call()
+
+    expect(log.error).toHaveBeenCalledWith(
+      'Room 12: not ready, guest arrives in 20 min',
+      expect.objectContaining({ room: '12', arrival: '13:00', problem: 'previous guest still checked in' }),
+    )
+  })
+
+  it('names the collision when a late checkout is on the same room', async () => {
+    world([paid], [leavingLate], ['PAID-1'])
+    await call()
+
+    expect(log.error).toHaveBeenCalledWith(
+      'Room 12: not ready, guest arrives in 20 min — sold twice over: late checkout 13:00 + early check-in 13:00, 0 min to clean',
+      expect.objectContaining({ 'late checkout': 'LEAVING-1 until 13:00' }),
+    )
+  })
+
+  it('leaves a door WE opened to the grace — a dirty reading there is Apaleo lagging', async () => {
+    // Same shape, no fee on the folio: room-ready moved this one.
+    world([paid], [leavingLate], [])
+    unitReadiness.mockResolvedValue('dirty')
+    await call()
+
+    expect(log.error).not.toHaveBeenCalled()
+  })
+
+  it('treats an unreadable folio as not paid, so a hiccup cannot page for every moved guest', async () => {
+    fetchMock.mockImplementation((endpoint: string) =>
+      String(endpoint).includes('/finance/v1/folios')
+        ? Promise.reject(new Error('503'))
+        : Promise.resolve({ reservations: String(endpoint).includes('dateFilter=Departure') ? [] : [paid] }),
+    )
+    unitReadiness.mockResolvedValue('dirty')
+    await call()
+
+    expect(log.error).not.toHaveBeenCalled()
+    expect(log.warn).toHaveBeenCalledWith(
+      'room-ready sweep: could not read the folio',
+      expect.objectContaining({ reservationId: 'PAID-1' }),
+    )
+  })
+
+  it('is one voice, not two, once the hour has long passed', async () => {
+    // 16:10: three hours past 13:00, when the open-door watch would also start
+    // talking about this room. It leaves paid hours to the urgent alert.
+    vi.setSystemTime(new Date('2026-09-08T16:10:00+02:00'))
+    world([paid], [leavingLate], ['PAID-1'])
+    unitReadiness.mockResolvedValue('dirty')
+    await call()
+
+    const texts = log.error.mock.calls.map((c) => String((c as unknown[])[0]))
+    expect(texts.filter((t) => t.startsWith('Room 12')).length).toBe(1)
+    expect(texts.some((t) => t.startsWith('room-ready: door already open'))).toBe(false)
+    expect(texts[0]).toContain('guest was due 190 min ago')
+  })
+
+  it('stays quiet for the same guest bridging their own two reservations', async () => {
+    world([paid], [{ ...leavingLate, primaryGuest: paid.primaryGuest }], ['PAID-1'])
+    await call()
+
+    expect(log.error).not.toHaveBeenCalled()
+  })
+
+  it('stops the moment the guest is in', async () => {
+    vi.setSystemTime(new Date('2026-09-08T13:20:00+02:00'))
+    world([{ ...paid, status: 'InHouse' }], [leavingLate], ['PAID-1'])
+    await call()
+
+    expect(log.error).not.toHaveBeenCalled()
+  })
+
+  it('reads the folio only for a room that is not ready — never for the whole list', async () => {
+    world([paid], [leavingLate], ['PAID-1'])
+    unitReadiness.mockResolvedValue('ready')
+    await call()
+
+    expect(fetchMock.mock.calls.filter((c) => String(c[0]).includes('/finance/v1/folios')).length).toBe(0)
+  })
+})
+
+describe('reading the day whole', () => {
+  it('asks for the whole day, not the first hundred', async () => {
+    // Apaleo has no page ceiling (1000 is accepted) but pageSize=100 against a
+    // count of 150 returns 100 rows and a 200. A full turnover day at 125
+    // studios must still come back whole.
+    arrivals([])
+    await call()
+
+    expect(String(fetchMock.mock.calls[0][0])).toContain('pageSize=500')
+  })
+
+  it('shouts when Apaleo hands back fewer rows than it says it has', async () => {
+    // Every check in this job runs over that list. A row quietly dropped off the
+    // end is a guest nobody watches, and the list itself looks healthy.
+    fetchMock.mockImplementation((endpoint: string) =>
+      Promise.resolve({
+        count: 150,
+        reservations: String(endpoint).includes('dateFilter=Departure')
+          ? []
+          : [{ id: 'R1-1', arrival: '2026-09-08T15:00:00+02:00', status: 'Confirmed' }],
+      }),
+    )
+    await call()
+
+    expect(log.error).toHaveBeenCalledWith("room-ready sweep: today's arrival list is truncated", {
+      count: 150,
+      returned: 1,
+    })
+  })
+
+  it('starts somewhere else on each pass, so no guest is starved all day', async () => {
+    // Apaleo returns the day in a stable order. A fixed slice(0, 40) was not a
+    // cap — it was a list of guests who never got an early door.
+    const fifty = Array.from({ length: 50 }, (_, i) => ({
+      id: `R${String(i).padStart(2, '0')}-1`,
+      arrival: '2026-09-08T15:00:00+02:00',
+      status: 'Confirmed',
+    }))
+    arrivals(fifty)
+    vi.setSystemTime(new Date('2026-09-08T10:25:00+02:00'))
+    await call()
+
+    expect(runRoomReady).toHaveBeenCalledTimes(40)
+    expect(runRoomReady.mock.calls[0][0]).toBe('R40-1')
+  })
+
+  it('runs late enough in winter for a 15:00 guest to still be heard', async () => {
+    const { readFileSync } = await import('fs')
+    const { join } = await import('path')
+    const cfg = JSON.parse(readFileSync(join(process.cwd(), 'vercel.json'), 'utf8')) as {
+      crons: { path: string; schedule: string }[]
+    }
+    const sweep = cfg.crons.find((c) => c.path === '/api/cron/room-ready-sweep')
+
+    // UTC hours. 5-15 is 07:10–17:55 Berlin in summer and 06:10–16:55 in winter;
+    // the old 6-14 fell silent at 15:55 Berlin in winter — 55 minutes after the
+    // house check-in hour, with the urgent alert still owing its loudest part.
+    expect(sweep?.schedule).toBe('10,25,40,55 5-15 * * *')
+  })
+})
+
+describe('the morning report: rooms sold twice over today', () => {
+  // The guard at the point of sale only sees a collision once the room is
+  // known, and Apaleo assigns rooms on the day of arrival — 55 of 63 upcoming
+  // arrivals had none on 2026-09-11. So an early check-in bought in advance is
+  // never checked against the late checkout it will collide with. The first
+  // pass after assignment is the first chance to say so, and the morning is
+  // when the arriving guest can still be moved to a clean room.
+  const paid = {
+    id: 'PAID-1',
+    arrival: '2026-09-08T13:00:00+02:00',
+    status: 'Confirmed',
+    unit: { id: 'MOT-IIM', name: '12' },
+    primaryGuest: { email: 'lahti@example.com', lastName: 'Lahti' },
+  }
+  const leavingLate = {
+    id: 'LEAVING-1',
+    arrival: '2026-09-02T14:09:00+02:00',
+    departure: '2026-09-08T13:00:00+02:00',
+    status: 'InHouse',
+    unit: { id: 'MOT-IIM', name: '12' },
+    primaryGuest: { email: 'popovich@example.com', lastName: 'popovich' },
+  }
+  function world(rows: unknown[], departures: unknown[], paidIds: string[]) {
+    fetchMock.mockImplementation((endpoint: string) => {
+      const url = String(endpoint)
+      if (url.includes('/finance/v1/folios')) {
+        const id = decodeURIComponent(url.match(/reservationIds=([^&]+)/)?.[1] ?? '')
+        return Promise.resolve({
+          folios: paidIds.includes(id) ? [{ charges: [{ name: 'Early Check-In' }] }] : [{ charges: [] }],
+        })
+      }
+      return Promise.resolve({ reservations: url.includes('dateFilter=Departure') ? departures : rows })
+    })
+  }
+  const reported = () =>
+    notifySlack.mock.calls.filter((c) => (c as unknown[])[1] === 'Room-ready: zero cleaning time sold today')
+
+  beforeEach(() => {
+    vi.setSystemTime(new Date('2026-09-08T08:10:00+02:00'))
+    unitReadiness.mockResolvedValue('occupied')
+  })
+
+  it('names the pair and the minutes between them, once, at 08:10', async () => {
+    world([paid], [leavingLate], ['PAID-1'])
+    await call()
+
+    expect(notifySlack).toHaveBeenCalledWith(
+      'warn',
+      'Room-ready: zero cleaning time sold today',
+      expect.objectContaining({ 'room 12': 'LEAVING-1 out 13:00 → PAID-1 in 13:00 · 0 min to clean' }),
+    )
+    // Hours before the guest is due, so the urgent alert has nothing to say yet.
+    expect(log.error).not.toHaveBeenCalled()
+  })
+
+  it('says nothing when nothing collides', async () => {
+    world([paid], [], ['PAID-1'])
+    await call()
+
+    expect(reported()).toHaveLength(0)
+  })
+
+  it('ignores a door we opened ourselves — no fee, no collision', async () => {
+    world([paid], [leavingLate], [])
+    await call()
+
+    expect(reported()).toHaveLength(0)
+  })
+
+  it('ignores the same guest carrying on in their own room', async () => {
+    world([paid], [{ ...leavingLate, primaryGuest: paid.primaryGuest }], ['PAID-1'])
+    await call()
+
+    expect(reported()).toHaveLength(0)
+  })
+
+  it('is said once — not on the other forty-three passes', async () => {
+    vi.setSystemTime(new Date('2026-09-08T10:25:00+02:00'))
+    world([paid], [leavingLate], ['PAID-1'])
+    await call()
+
+    expect(reported()).toHaveLength(0)
   })
 })
