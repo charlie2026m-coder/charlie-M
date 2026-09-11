@@ -369,6 +369,8 @@ export interface ApaleoReservationResponse {
   noShowFee: NoShowFee;
   booker?: Booker;
   primaryGuest: Guest;
+  // Present once Apaleo has assigned a room; absent on a fresh booking.
+  unit?: Unit;
   additionalGuests?: Guest[];
   property: Property;
   ratePlan: RatePlan;

@@ -27,6 +27,7 @@ import {
   type ApaleoBookServicePayload,
 } from '@/lib/extrasPrice'
 import { getSecondGuestQuote } from '@/services/apaleo/addSecondGuest'
+import { hasOppositeExtensionConflict } from '@/services/apaleo/amendStayTime'
 import { priceLog, apaleoLog } from '@/lib/logger'
 import { pendingServicesReadSchema } from '@/types/schemas'
 import type { Booking } from '@/types/booking'
@@ -379,6 +380,12 @@ interface ReservationValidationData {
   extrasWindowEnded: boolean
   arrivalTime: string   // "HH:mm" local — to detect an already-applied ECI (13:00)
   departureTime: string // "HH:mm" local — to detect an already-applied LCO (13:00)
+  // For the collision guard: the full timestamps, the room, and the guest (to
+  // tell a guest bridging their own two reservations from a real turnover).
+  arrivalIso: string
+  departureIso: string
+  unitId?: string
+  primaryGuest?: { email?: string; lastName?: string }
   nights: number
   existingCleaningDates: Set<string>
 }
@@ -475,7 +482,23 @@ async function fetchReservationForValidation(
 
   return {
     kind: 'ok',
-    data: { arrival, departure, extrasStart, extrasNights, extrasWindowEnded, arrivalTime, departureTime, nights, existingCleaningDates },
+    data: {
+      arrival,
+      departure,
+      extrasStart,
+      extrasNights,
+      extrasWindowEnded,
+      arrivalTime,
+      departureTime,
+      nights,
+      existingCleaningDates,
+      arrivalIso: res.arrival,
+      departureIso: res.departure,
+      unitId: res.unit?.id,
+      primaryGuest: res.primaryGuest
+        ? { email: res.primaryGuest.email, lastName: res.primaryGuest.lastName }
+        : undefined,
+    },
   }
 }
 
@@ -594,6 +617,37 @@ export async function validateServicesPayment(
         reservationId: row.reservation_id,
       })
       return { status: 'unavailable', reason: 'early check-in no longer available today' }
+    }
+    // The two products collide on one room: a late checkout (departure 13:00)
+    // and an early check-in (arrival 13:00) sold for the same day leave zero
+    // minutes to clean between two guests — Motz19 room 12, 2026-09-11. The
+    // guard that refuses this used to run only AFTER Adyen had taken the money,
+    // inside the webhook, where "refused" means charge-then-refund on a live
+    // account. Ask here first, so make-payment says "unavailable" before any
+    // card is touched. Auth phase only: the webhook runs the same guard itself
+    // and refunds if the world changed in between; a second refusal here would
+    // add nothing. Fail-open like the guard — a blip must not refuse a sale.
+    if (phase === 'auth' && ext) {
+      const conflict = await hasOppositeExtensionConflict(row.reservation_id, ext, {
+        arrival: reservation.arrivalIso,
+        departure: reservation.departureIso,
+        unitId: reservation.unitId,
+        primaryGuest: reservation.primaryGuest,
+      })
+      if (conflict) {
+        priceLog.error('services validation: opposite stay extension already on this room — refusing', {
+          reference,
+          reservationId: row.reservation_id,
+          kind: ext,
+        })
+        return {
+          status: 'unavailable',
+          reason:
+            ext === 'late'
+              ? 'late check-out unavailable — an early check-in is booked on this room for that day'
+              : 'early check-in unavailable — a late check-out is booked on this room for that day',
+        }
+      }
     }
   }
 

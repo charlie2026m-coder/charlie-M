@@ -1,6 +1,7 @@
 'use server';
 import { Fetch } from '@/services/Request';
 import { markUnitClean } from '@/services/apaleo/markUnitClean';
+import { sameGuest } from '@/lib/sameGuest';
 import { isStayExtensionService } from '@/lib/extrasPrice';
 import { apaleoLog } from '@/lib/logger';
 
@@ -226,6 +227,9 @@ export interface ReservationAmendContext {
   unitId?: string;       // assigned unit, when Apaleo has one
   timeSlices: AmendTimeSlice[]; // original slices, to restore the time on rollback
   status?: string;       // Apaleo reservation status (Confirmed / InHouse / …)
+  // Who is staying. The collision guard needs it to tell a guest bridging their
+  // own two back-to-back reservations from a real turnover to somebody else.
+  primaryGuest?: { email?: string; lastName?: string };
 }
 
 export interface AppliedStayExtension {
@@ -277,6 +281,7 @@ export async function loadReservationForAmend(
       childrenAges?: number[];
       status?: string;
       unit?: { id?: string };
+      primaryGuest?: { email?: string; lastName?: string };
       property?: { id?: string };
       ratePlan?: { id?: string };
       timeSlices?: Array<{
@@ -310,6 +315,7 @@ export async function loadReservationForAmend(
       unitId: res.unit?.id,
       timeSlices,
       status: res.status,
+      primaryGuest: res.primaryGuest,
     };
   } catch (err) {
     apaleoLog.warn('stay-extension: reservation read failed', {
@@ -339,7 +345,9 @@ export async function loadReservationForAmend(
 export async function hasOppositeExtensionConflict(
   reservationId: string,
   kind: 'late' | 'early',
-  ctx: ReservationAmendContext,
+  // Only what the check reads — so the pre-payment validator, which has no
+  // amend context, can ask the same question before any card is charged.
+  ctx: Pick<ReservationAmendContext, 'arrival' | 'departure' | 'unitId' | 'primaryGuest'>,
   opts: { failClosed?: boolean } = {},
 ): Promise<boolean> {
   try {
@@ -368,6 +376,7 @@ export async function hasOppositeExtensionConflict(
       from: `${date}T00:00:00Z`,
       to: `${date}T23:59:59Z`,
       dateFilter: kind === 'late' ? 'Arrival' : 'Departure',
+      expand: 'primaryGuest',
     });
     // NO status filter on the wire, on purpose. Apaleo applies only the FIRST
     // `status` it is given and silently drops the rest — a repeated
@@ -382,7 +391,13 @@ export async function hasOppositeExtensionConflict(
     // does not belong on a safety check. The set here is one unit on one day;
     // reading it whole costs nothing.)
     const list = await Fetch<{
-      reservations?: Array<{ id: string; arrival: string; departure: string; status?: string }>;
+      reservations?: Array<{
+        id: string;
+        arrival: string;
+        departure: string;
+        status?: string;
+        primaryGuest?: { email?: string; lastName?: string };
+      }>;
     }>(`/booking/v1/reservations?${params.toString()}`);
     for (const other of list.reservations ?? []) {
       if (other.id === reservationId) continue;
@@ -391,6 +406,14 @@ export async function hasOppositeExtensionConflict(
       // the departing guest reads CheckedOut by the afternoon, and the room they
       // left at 13:00 is no less unavailable for being empty.
       if (other.status === 'Canceled' || other.status === 'NoShow') continue;
+      // The same person on both sides is not a turnover. A stay booked as two
+      // reservations back to back has an 11:00–15:00 hole in the middle, and a
+      // late checkout on the first plus an early check-in on the second is
+      // exactly how the guest closes it — nobody leaves, nothing needs cleaning,
+      // and the hotel is glad to sell both. Only a POSITIVE match passes;
+      // "cannot tell" is a stranger, because a refused sale can be made by hand
+      // and a room sold twice cannot be un-sold.
+      if (sameGuest(ctx.primaryGuest, other.primaryGuest) === true) continue;
       if (kind === 'late') {
         if (hhmmOf(other.arrival) && hhmmOf(other.arrival) < DEFAULT_CHECKIN_HHMM) return true;
       } else {
