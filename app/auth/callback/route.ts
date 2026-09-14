@@ -66,6 +66,16 @@ export async function GET(request: Request) {
         return NextResponse.redirect(`${requestUrl.origin}${localePrefix}/reset-password`);
       }
 
+      // Staff signing in with Google from /admin/login: the login page sets a
+      // short-lived cookie first, because the redirect URL itself must match
+      // Supabase's allow-list exactly and cannot carry a "next" parameter.
+      // Back to the panel, which checks the admins table; the cookie is spent.
+      if (cookieStore.get('admin-after-login')?.value === '1') {
+        const res = NextResponse.redirect(`${requestUrl.origin}/admin`);
+        res.cookies.set('admin-after-login', '', { path: '/', maxAge: 0 });
+        return res;
+      }
+
       // Check if this is email confirmation
       const isEmailConfirmation = type === 'email_change' || type === 'email';
       
