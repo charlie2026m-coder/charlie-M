@@ -6,6 +6,11 @@
  * login lands afterwards depends on what the person may do: the panel, or
  * the kitchen screen alone.
  *
+ * Dressed as the hotel, not as a control panel: the guest pages' card, the
+ * rounded fields with a gold mark on the left, the brand button. It is the
+ * first screen a new manager sees, and it should look like the place they
+ * work in.
+ *
  * Built for people who are not at a computer all day: labels on the fields,
  * an eye that shows the password, a warning when Caps Lock is on, errors in
  * plain words, a "forgot password" that sends the reset mail from right
@@ -17,16 +22,22 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { FcGoogle } from 'react-icons/fc'
-import { LuEye, LuEyeOff, LuShieldCheck, LuTriangleAlert } from 'react-icons/lu'
+import { IoEyeOffSharp, IoEyeSharp } from 'react-icons/io5'
+import { MdLock } from 'react-icons/md'
+import { TbMailFilled } from 'react-icons/tb'
+import { LuShieldCheck, LuTriangleAlert } from 'react-icons/lu'
+import { Button } from '@/app/_components/ui/button'
 import { landingFor, normaliseAreas } from '@/lib/adminAccess'
 import { resetPassword } from '@/app/actions/supabase/auth/resetPassword'
 
 const field =
-  'h-12 w-full rounded-xl border-2 border-gray-200 bg-white px-4 text-base text-black outline-none transition-colors placeholder:text-gray-400 focus:border-black'
-const label = 'mb-1 block text-sm font-medium text-gray-700'
+  'h-12 w-full rounded-full border border-gray/40 bg-white pl-[45px] pr-4 text-base text-mute outline-none transition-colors placeholder:text-gray focus:border-dark-gold'
+const mark = 'pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-blue'
+const label = 'mb-1.5 ml-4 block text-sm font-medium text-mute'
 
 /** Supabase's messages, in words a person at the desk can act on. */
 function explain(message: string): string {
@@ -235,26 +246,31 @@ export default function AdminLoginPage() {
   }
 
   const errorBox = error && (
-    <div className='flex items-start gap-2 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700'>
+    <div className='flex items-start gap-2 rounded-2xl bg-red/10 px-4 py-3 text-sm text-red'>
       <LuTriangleAlert className='mt-0.5 h-4 w-4 shrink-0' aria-hidden />
       <span>{error}</span>
     </div>
   )
 
   return (
-    <div className='flex min-h-dvh items-center justify-center bg-white px-4 py-8'>
-      <div className='w-full max-w-md'>
+    <div className='flex min-h-dvh items-center justify-center bg-blue/10 px-4 py-10'>
+      <div className='w-full max-w-md rounded-2xl bg-white p-6 shadow-sm sm:p-10'>
         <div className='mb-8 text-center'>
-          <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-black text-2xl font-bold text-white'>
-            C
-          </div>
-          <h1 className='text-2xl font-bold text-black'>
-            {step === 'code' ? 'One more step' : 'Charlie M staff'}
+          <Image
+            src='/images/Logo.svg'
+            alt='Charlie M'
+            width={132}
+            height={44}
+            priority
+            className='mx-auto mb-6 h-11 w-auto'
+          />
+          <h1 className='jakarta text-2xl font-semibold text-mute'>
+            {step === 'code' ? 'One more step' : 'Staff sign-in'}
           </h1>
-          <p className='mt-1 text-sm text-gray-500'>
+          <p className='mt-2 text-sm text-dark'>
             {step === 'code'
               ? 'Open your authenticator app and type the 6-digit code.'
-              : 'Sign in to the panel'}
+              : 'The breakfast, the rooms and the team live behind this page.'}
           </p>
         </div>
 
@@ -264,11 +280,11 @@ export default function AdminLoginPage() {
               e.preventDefault()
               if (code.length === 6) void verifyCode(code)
             }}
-            className='space-y-4'
+            className='space-y-5'
           >
-            <div className='flex items-center justify-center gap-2 text-gray-500'>
-              <LuShieldCheck className='h-5 w-5' aria-hidden />
-              <span className='text-sm'>{sessionEmail}</span>
+            <div className='flex items-center justify-center gap-2 rounded-full bg-blue/15 px-4 py-2 text-sm text-mute'>
+              <LuShieldCheck className='h-4 w-4 shrink-0 text-dark-gold' aria-hidden />
+              {sessionEmail}
             </div>
             <input
               type='text'
@@ -276,61 +292,62 @@ export default function AdminLoginPage() {
               autoComplete='one-time-code'
               autoFocus
               placeholder='123456'
-              className={`${field} text-center text-3xl tracking-[0.4em]`}
+              aria-label='Six-digit code'
+              className={`${field} pl-4 text-center text-3xl tracking-[0.4em]`}
               value={code}
               onChange={e => onCodeChange(e.target.value)}
               disabled={loading}
             />
             {errorBox}
-            <button
-              type='submit'
-              disabled={loading || code.length < 6}
-              className='h-12 w-full rounded-xl bg-black font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50'
-            >
+            <Button type='submit' disabled={loading || code.length < 6} className='h-[55px] w-full text-lg'>
               {loading ? 'Checking…' : 'Continue'}
-            </button>
+            </Button>
             <button
               type='button'
               onClick={() => void startOver()}
-              className='w-full py-2 text-sm text-gray-500 hover:text-black'
+              className='w-full py-1 text-sm text-dark underline underline-offset-4 hover:text-mute'
             >
               Start over with a different account
             </button>
           </form>
         ) : (
-          <form onSubmit={handlePassword} className='space-y-4'>
+          <form onSubmit={handlePassword} className='space-y-5'>
             <div>
               <label htmlFor='email' className={label}>
                 Email
               </label>
-              <input
-                id='email'
-                type='email'
-                required
-                autoFocus
-                autoComplete='username'
-                placeholder='you@charlie-m.de'
-                className={field}
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-              />
+              <div className='relative'>
+                <TbMailFilled className={mark} aria-hidden />
+                <input
+                  id='email'
+                  type='email'
+                  required
+                  autoFocus
+                  autoComplete='username'
+                  placeholder='you@charlie-m.de'
+                  className={field}
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                />
+              </div>
             </div>
 
             <div>
-              <div className='mb-1 flex items-center justify-between'>
-                <label htmlFor='password' className='text-sm font-medium text-gray-700'>
+              <div className='mb-1.5 flex items-center justify-between'>
+                <label htmlFor='password' className='ml-4 text-sm font-medium text-mute'>
                   Password
                 </label>
                 <button
                   type='button'
                   onClick={() => void forgot()}
                   disabled={loading}
-                  className='text-sm text-gray-500 underline underline-offset-2 hover:text-black'
+                  className='text-sm text-dark underline underline-offset-4 hover:text-mute'
                 >
-                  Forgot your password?
+                  Forgot it?
                 </button>
               </div>
               <div className='relative'>
+                <MdLock className={mark} aria-hidden />
                 <input
                   id='password'
                   type={showPassword ? 'text' : 'password'}
@@ -348,13 +365,13 @@ export default function AdminLoginPage() {
                   onClick={() => setShowPassword(v => !v)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                   aria-pressed={showPassword}
-                  className='absolute inset-y-0 right-0 flex w-12 items-center justify-center text-gray-500 hover:text-black'
+                  className='absolute inset-y-0 right-0 flex w-12 items-center justify-center text-dark hover:text-mute'
                 >
-                  {showPassword ? <LuEyeOff className='h-5 w-5' /> : <LuEye className='h-5 w-5' />}
+                  {showPassword ? <IoEyeOffSharp className='size-5' /> : <IoEyeSharp className='size-5' />}
                 </button>
               </div>
               {capsLock && (
-                <p className='mt-1 flex items-center gap-1.5 text-xs text-amber-700'>
+                <p className='ml-4 mt-1.5 flex items-center gap-1.5 text-xs text-dark-gold'>
                   <LuTriangleAlert className='h-3.5 w-3.5' aria-hidden />
                   Caps Lock is on
                 </p>
@@ -363,39 +380,35 @@ export default function AdminLoginPage() {
 
             {errorBox}
             {notice && (
-              <div className='rounded-xl bg-green-50 px-3 py-2 text-sm text-green-800'>{notice}</div>
+              <div className='rounded-2xl bg-green/10 px-4 py-3 text-sm text-green'>{notice}</div>
             )}
 
-            <button
-              type='submit'
-              disabled={loading}
-              className='h-12 w-full rounded-xl bg-black font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50'
-            >
+            <Button type='submit' disabled={loading} className='h-[55px] w-full text-lg'>
               {loading ? 'Signing in…' : 'Sign in'}
-            </button>
+            </Button>
 
-            <div className='relative my-6'>
+            <div className='relative py-1'>
               <div className='absolute inset-0 flex items-center'>
-                <div className='w-full border-t border-gray-200' />
+                <div className='w-full border-t border-gray/30' />
               </div>
-              <div className='relative flex justify-center text-xs uppercase'>
-                <span className='bg-white px-2 text-gray-500'>or</span>
+              <div className='relative flex justify-center text-sm'>
+                <span className='bg-white px-4 text-dark'>or</span>
               </div>
             </div>
 
-            <button
+            <Button
               type='button'
+              variant='outline'
               onClick={() => void handleGoogleLogin()}
               disabled={loading}
-              className='flex h-12 w-full items-center justify-center gap-2 rounded-xl border-2 border-gray-200 font-medium transition-colors hover:bg-gray-50 disabled:opacity-50'
+              className='h-[55px] w-full text-base'
             >
-              <FcGoogle className='size-5' />
-              <span className='text-black'>Continue with Google</span>
-            </button>
+              <FcGoogle className='size-6' /> Continue with Google
+            </Button>
           </form>
         )}
 
-        <p className='mt-8 text-center text-xs text-gray-400'>Staff accounts only</p>
+        <p className='mt-8 text-center text-xs text-dark'>Staff accounts only</p>
       </div>
     </div>
   )
