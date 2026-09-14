@@ -4,10 +4,12 @@
  * The kitchen's screen. Built for somebody who has never opened a computer.
  *
  * One question, answered in the largest type that fits: how many people are
- * coming to breakfast, which menus, at what time. Two big buttons jump to today
- * and tomorrow, two arrows step through any other day, one button goes to the
- * door scanner, and that is the whole interface. No settings, no menus to edit,
- * no money — those live in the admin panel, behind a different login.
+ * coming to breakfast, which menus, at what time. A strip of seven mornings
+ * carries the head count above each date — 11, 17, 0 — so the week is read at a
+ * glance before anything is tapped; a tap opens the morning, two arrows move
+ * the strip a week, one button goes to the door scanner, and that is the whole
+ * interface. No settings, no menus to edit, no money — those live in the admin
+ * panel, behind a different login.
  *
  * Every block carries a picture as well as a word, because the word may be in
  * the wrong language for whoever is on the pass that morning.
@@ -26,7 +28,6 @@ import Link from 'next/link'
 import {
   MdChevronLeft,
   MdChevronRight,
-  MdEvent,
   MdGroups,
   MdHelpOutline,
   MdListAlt,
@@ -34,7 +35,6 @@ import {
   MdRefresh,
   MdRestaurantMenu,
   MdSchedule,
-  MdToday,
 } from 'react-icons/md'
 import { MenuIcon } from '@/app/_components/breakfast/MenuIcon'
 import { addDays } from '@/lib/breakfastDates'
@@ -46,8 +46,8 @@ const T = {
     title: 'Frühstück',
     today: 'Heute',
     tomorrow: 'Morgen',
-    dayBefore: 'Vorheriger Tag',
-    dayAfter: 'Nächster Tag',
+    weekBefore: 'Woche zurück',
+    weekAfter: 'Woche vor',
     people: (n: number) => (n === 1 ? '1 Gast' : `${n} Gäste`),
     nobody: 'Niemand zum Frühstück.',
     toCook: 'Was kochen',
@@ -71,8 +71,8 @@ const T = {
     title: 'Breakfast',
     today: 'Today',
     tomorrow: 'Tomorrow',
-    dayBefore: 'Previous day',
-    dayAfter: 'Next day',
+    weekBefore: 'Week back',
+    weekAfter: 'Week ahead',
     people: (n: number) => (n === 1 ? '1 guest' : `${n} guests`),
     nobody: 'Nobody for breakfast.',
     toCook: 'What to cook',
@@ -130,11 +130,18 @@ function Heading({ icon, children }: { icon: React.ReactNode; children: React.Re
 export default function KitchenPage() {
   const [lang, setLang] = useState<Lang>('de')
   // Any morning, not only today and tomorrow: the pass needs those two most,
-  // but the week's shopping is planned further out, so the arrows step a day
-  // at a time and the two big buttons jump straight back.
+  // but the week's shopping is planned further out. The strip shows seven
+  // mornings from `windowStart`; the arrows move it a week, a tap picks a day.
   const [morning, setMorning] = useState(berlinToday)
+  const [windowStart, setWindowStart] = useState(berlinToday)
   const [report, setReport] = useState<Report | null>(null)
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading')
+  // The head count for each morning of the strip, remembered with the week it
+  // belongs to: a strip that has moved on shows "…" until its own numbers
+  // arrive, never last week's under this week's dates. 'error' when the
+  // numbers could not be read — the strip then shows "–" rather than a zero
+  // that would look like an answer.
+  const [counts, setCounts] = useState<{ from: string; days: Record<string, number> } | null | 'error'>(null)
   const t = T[lang]
 
   // Remembered per device, so the tablet on the pass stays in its language.
@@ -174,6 +181,38 @@ export default function KitchenPage() {
     void load(morning, lang)
   }, [load, morning, lang])
 
+  const strip = Array.from({ length: 7 }, (_, i) => addDays(windowStart, i))
+  const windowEnd = strip[6]
+
+  // Seven mornings in one call, numbers only — see the counts route. Loaded
+  // separately from the morning's report so a tap on a day never blanks the
+  // week, and re-loaded on "reload" along with the report.
+  const loadCounts = useCallback(async (from: string, to: string) => {
+    try {
+      const res = await fetch(`/api/admin/breakfast/counts?from=${from}&to=${to}`, { cache: 'no-store' })
+      if (!res.ok) return setCounts('error')
+      const json = (await res.json()) as { days?: { morning: string; covers: number }[] }
+      const days: Record<string, number> = {}
+      for (const d of json.days ?? []) days[d.morning] = d.covers
+      setCounts({ from, days })
+    } catch {
+      setCounts('error')
+    }
+  }, [])
+
+  useEffect(() => {
+    void loadCounts(windowStart, windowEnd)
+  }, [loadCounts, windowStart, windowEnd])
+
+  // Move the strip a week; keep the chosen morning if it is still on the
+  // strip, otherwise land on the strip's first day.
+  const shiftWeek = (days: number) => {
+    const start = addDays(windowStart, days)
+    setWindowStart(start)
+    const end = addDays(start, 6)
+    if (morning < start || morning > end) setMorning(start)
+  }
+
   const dateLabel = new Intl.DateTimeFormat(t.locale, {
     weekday: 'long',
     day: 'numeric',
@@ -186,26 +225,50 @@ export default function KitchenPage() {
   const today = berlinToday()
   const tomorrow = addDays(today, 1)
 
-  const jumpButton = (target: string, label: string, icon: React.ReactNode) => (
-    <button
-      type='button'
-      onClick={() => setMorning(target)}
-      className={`flex h-16 flex-1 items-center justify-center gap-2 rounded-2xl text-2xl font-bold transition-colors ${
-        morning === target ? 'bg-black text-white' : 'bg-gray-100 text-black hover:bg-gray-200'
-      }`}
-    >
-      {icon}
-      {label}
-    </button>
-  )
+  /** The number above a date: what the strip knows, or the fresher report
+   *  for the morning that is open. "…" while loading, "–" when unreadable —
+   *  never a zero that only looks like an answer. */
+  const countFor = (day: string): string => {
+    if (report && state === 'ready' && report.morning === day) return String(report.covers)
+    if (counts === 'error') return '–'
+    if (counts === null || counts.from !== windowStart) return '…'
+    return String(counts.days[day] ?? 0)
+  }
+
+  const dayName = (day: string): string => {
+    if (day === today) return t.today
+    if (day === tomorrow) return t.tomorrow
+    return new Intl.DateTimeFormat(t.locale, { weekday: 'short', timeZone: 'UTC' }).format(new Date(`${day}T00:00:00Z`))
+  }
+  const dayNumber = (day: string): string =>
+    new Intl.DateTimeFormat(t.locale, { day: 'numeric', month: 'numeric', timeZone: 'UTC' }).format(new Date(`${day}T00:00:00Z`))
+
+  const dayChip = (day: string) => {
+    const selected = morning === day
+    return (
+      <button
+        key={day}
+        type='button'
+        onClick={() => setMorning(day)}
+        aria-pressed={selected}
+        className={`flex h-24 min-w-[84px] flex-1 flex-col items-center justify-center rounded-2xl leading-none transition-colors ${
+          selected ? 'bg-black text-white' : 'bg-gray-100 text-black hover:bg-gray-200'
+        }`}
+      >
+        <span className='text-3xl font-bold tabular-nums'>{countFor(day)}</span>
+        <span className='mt-2 text-base font-bold'>{dayName(day)}</span>
+        <span className={`mt-1 text-sm ${selected ? 'text-white/70' : 'text-gray-500'}`}>{dayNumber(day)}</span>
+      </button>
+    )
+  }
 
   const stepButton = (days: number, label: string) => (
     <button
       type='button'
-      onClick={() => setMorning(m => addDays(m, days))}
+      onClick={() => shiftWeek(days)}
       aria-label={label}
       title={label}
-      className='flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gray-100 text-black hover:bg-gray-200'
+      className='flex h-24 w-14 shrink-0 items-center justify-center rounded-2xl bg-gray-100 text-black hover:bg-gray-200'
     >
       {days < 0 ? <MdChevronLeft className='h-9 w-9' /> : <MdChevronRight className='h-9 w-9' />}
     </button>
@@ -230,7 +293,10 @@ export default function KitchenPage() {
         <div className='ml-auto flex items-center gap-2'>
           <button
             type='button'
-            onClick={() => void load(morning, lang)}
+            onClick={() => {
+              void load(morning, lang)
+              void loadCounts(windowStart, windowEnd)
+            }}
             className='inline-flex h-10 items-center gap-1 rounded-xl border border-gray-300 px-3 text-sm'
           >
             <MdRefresh /> {t.reload}
@@ -251,11 +317,12 @@ export default function KitchenPage() {
         {scanButton('hidden h-12 px-5 text-lg lg:flex')}
       </div>
 
-      <div className='mb-3 flex gap-3 lg:max-w-[720px]'>
-        {stepButton(-1, t.dayBefore)}
-        {jumpButton(today, t.today, <MdToday className='h-7 w-7' />)}
-        {jumpButton(tomorrow, t.tomorrow, <MdEvent className='h-7 w-7' />)}
-        {stepButton(1, t.dayAfter)}
+      {/* Seven mornings, the head count above each date. On a phone the strip
+          scrolls sideways under the thumb; on a wide screen it sits whole. */}
+      <div className='mb-3 flex items-stretch gap-2 overflow-x-auto pb-1 lg:max-w-[980px]'>
+        {stepButton(-7, t.weekBefore)}
+        {strip.map(dayChip)}
+        {stepButton(7, t.weekAfter)}
       </div>
       <p className='mb-6 text-xl capitalize text-gray-700'>{dateLabel}</p>
 
