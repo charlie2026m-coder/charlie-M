@@ -4,9 +4,9 @@
  * The kitchen's screen. Built for somebody who has never opened a computer.
  *
  * One question, answered in the largest type that fits: how many people are
- * coming to breakfast, which menus, at what time. Two buttons at the top pick
- * the day (today, tomorrow), one button at the bottom goes to the door scanner,
- * and that is the whole interface. No settings, no menus to edit, no money —
+ * coming to breakfast, which menus, at what time. Two big buttons jump to today
+ * and tomorrow, two arrows step through any other day, one button at the bottom
+ * goes to the door scanner, and that is the whole interface. No settings, no menus to edit, no money —
  * those live in the admin panel, behind a different login.
  *
  * German by default, because that is the language spoken on the pass; English
@@ -15,7 +15,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { MdQrCodeScanner, MdRefresh } from 'react-icons/md'
+import { MdChevronLeft, MdChevronRight, MdQrCodeScanner, MdRefresh } from 'react-icons/md'
 import { MenuIcon } from '@/app/_components/breakfast/MenuIcon'
 import { addDays } from '@/lib/breakfastDates'
 
@@ -26,6 +26,8 @@ const T = {
     title: 'Frühstück',
     today: 'Heute',
     tomorrow: 'Morgen',
+    dayBefore: 'Vorheriger Tag',
+    dayAfter: 'Nächster Tag',
     people: (n: number) => (n === 1 ? '1 Gast' : `${n} Gäste`),
     nobody: 'Niemand zum Frühstück.',
     toCook: 'Was kochen',
@@ -49,6 +51,8 @@ const T = {
     title: 'Breakfast',
     today: 'Today',
     tomorrow: 'Tomorrow',
+    dayBefore: 'Previous day',
+    dayAfter: 'Next day',
     people: (n: number) => (n === 1 ? '1 guest' : `${n} guests`),
     nobody: 'Nobody for breakfast.',
     toCook: 'What to cook',
@@ -95,7 +99,10 @@ const berlinToday = () =>
 
 export default function KitchenPage() {
   const [lang, setLang] = useState<Lang>('de')
-  const [day, setDay] = useState<'today' | 'tomorrow'>('today')
+  // Any morning, not only today and tomorrow: the pass needs those two most,
+  // but the week's shopping is planned further out, so the arrows step a day
+  // at a time and the two big buttons jump straight back.
+  const [morning, setMorning] = useState(berlinToday)
   const [report, setReport] = useState<Report | null>(null)
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading')
   const t = T[lang]
@@ -118,8 +125,6 @@ export default function KitchenPage() {
       // Same as above.
     }
   }
-
-  const morning = day === 'today' ? berlinToday() : addDays(berlinToday(), 1)
 
   const load = useCallback(async (date: string, locale: Lang) => {
     setState('loading')
@@ -148,15 +153,30 @@ export default function KitchenPage() {
 
   const notChosen = report ? report.covers - report.chosen : 0
 
-  const dayButton = (which: 'today' | 'tomorrow', label: string) => (
+  const today = berlinToday()
+  const tomorrow = addDays(today, 1)
+
+  const jumpButton = (target: string, label: string) => (
     <button
       type='button'
-      onClick={() => setDay(which)}
+      onClick={() => setMorning(target)}
       className={`h-16 flex-1 rounded-2xl text-2xl font-bold transition-colors ${
-        day === which ? 'bg-black text-white' : 'bg-gray-100 text-black hover:bg-gray-200'
+        morning === target ? 'bg-black text-white' : 'bg-gray-100 text-black hover:bg-gray-200'
       }`}
     >
       {label}
+    </button>
+  )
+
+  const stepButton = (days: number, label: string) => (
+    <button
+      type='button'
+      onClick={() => setMorning(m => addDays(m, days))}
+      aria-label={label}
+      title={label}
+      className='flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gray-100 text-black hover:bg-gray-200'
+    >
+      {days < 0 ? <MdChevronLeft className='h-9 w-9' /> : <MdChevronRight className='h-9 w-9' />}
     </button>
   )
 
@@ -188,8 +208,10 @@ export default function KitchenPage() {
       </div>
 
       <div className='mb-3 flex gap-3'>
-        {dayButton('today', t.today)}
-        {dayButton('tomorrow', t.tomorrow)}
+        {stepButton(-1, t.dayBefore)}
+        {jumpButton(today, t.today)}
+        {jumpButton(tomorrow, t.tomorrow)}
+        {stepButton(1, t.dayAfter)}
       </div>
       <p className='mb-6 text-xl capitalize text-gray-700'>{dateLabel}</p>
 
