@@ -5,9 +5,17 @@
  *
  * One question, answered in the largest type that fits: how many people are
  * coming to breakfast, which menus, at what time. Two big buttons jump to today
- * and tomorrow, two arrows step through any other day, one button at the bottom
- * goes to the door scanner, and that is the whole interface. No settings, no menus to edit, no money —
- * those live in the admin panel, behind a different login.
+ * and tomorrow, two arrows step through any other day, one button goes to the
+ * door scanner, and that is the whole interface. No settings, no menus to edit,
+ * no money — those live in the admin panel, behind a different login.
+ *
+ * Every block carries a picture as well as a word, because the word may be in
+ * the wrong language for whoever is on the pass that morning.
+ *
+ * On a phone it is one column with the scanner pinned to the bottom. On a
+ * screen wide enough — the PC at reception, a tablet on its side — the number,
+ * the sittings and the menus sit side by side so nothing has to be scrolled
+ * for, and the scanner button moves up into the header.
  *
  * German by default, because that is the language spoken on the pass; English
  * is one tap away and the choice is remembered on the device.
@@ -15,7 +23,19 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { MdChevronLeft, MdChevronRight, MdQrCodeScanner, MdRefresh } from 'react-icons/md'
+import {
+  MdChevronLeft,
+  MdChevronRight,
+  MdEvent,
+  MdGroups,
+  MdHelpOutline,
+  MdListAlt,
+  MdQrCodeScanner,
+  MdRefresh,
+  MdRestaurantMenu,
+  MdSchedule,
+  MdToday,
+} from 'react-icons/md'
 import { MenuIcon } from '@/app/_components/breakfast/MenuIcon'
 import { addDays } from '@/lib/breakfastDates'
 
@@ -97,6 +117,16 @@ interface Report {
 const berlinToday = () =>
   new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(new Date())
 
+/** A section title: picture first, word second. */
+function Heading({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <h2 className='mb-3 flex items-center gap-2 text-xl font-bold'>
+      <span className='text-gray-500'>{icon}</span>
+      {children}
+    </h2>
+  )
+}
+
 export default function KitchenPage() {
   const [lang, setLang] = useState<Lang>('de')
   // Any morning, not only today and tomorrow: the pass needs those two most,
@@ -156,14 +186,15 @@ export default function KitchenPage() {
   const today = berlinToday()
   const tomorrow = addDays(today, 1)
 
-  const jumpButton = (target: string, label: string) => (
+  const jumpButton = (target: string, label: string, icon: React.ReactNode) => (
     <button
       type='button'
       onClick={() => setMorning(target)}
-      className={`h-16 flex-1 rounded-2xl text-2xl font-bold transition-colors ${
+      className={`flex h-16 flex-1 items-center justify-center gap-2 rounded-2xl text-2xl font-bold transition-colors ${
         morning === target ? 'bg-black text-white' : 'bg-gray-100 text-black hover:bg-gray-200'
       }`}
     >
+      {icon}
       {label}
     </button>
   )
@@ -180,11 +211,23 @@ export default function KitchenPage() {
     </button>
   )
 
+  const scanButton = (className: string) => (
+    <Link
+      href='/kitchen/scan'
+      className={`flex items-center justify-center gap-3 rounded-2xl bg-black font-bold text-white ${className}`}
+    >
+      <MdQrCodeScanner className='h-8 w-8' /> {t.scan}
+    </Link>
+  )
+
   return (
-    <main className='mx-auto w-full max-w-[900px] p-4 pb-32 sm:p-6'>
-      <div className='mb-4 flex items-center justify-between'>
-        <h1 className='text-2xl font-bold'>{t.title}</h1>
-        <div className='flex items-center gap-2'>
+    <main className='mx-auto w-full max-w-[1400px] p-4 pb-32 sm:p-6 lg:pb-8'>
+      {/* Header: title, controls, and — on a wide screen — the scanner. */}
+      <div className='mb-4 flex flex-wrap items-center gap-3'>
+        <h1 className='flex items-center gap-2 text-2xl font-bold'>
+          <MdRestaurantMenu className='h-7 w-7' /> {t.title}
+        </h1>
+        <div className='ml-auto flex items-center gap-2'>
           <button
             type='button'
             onClick={() => void load(morning, lang)}
@@ -205,12 +248,13 @@ export default function KitchenPage() {
             ))}
           </div>
         </div>
+        {scanButton('hidden h-12 px-5 text-lg lg:flex')}
       </div>
 
-      <div className='mb-3 flex gap-3'>
+      <div className='mb-3 flex gap-3 lg:max-w-[720px]'>
         {stepButton(-1, t.dayBefore)}
-        {jumpButton(today, t.today)}
-        {jumpButton(tomorrow, t.tomorrow)}
+        {jumpButton(today, t.today, <MdToday className='h-7 w-7' />)}
+        {jumpButton(tomorrow, t.tomorrow, <MdEvent className='h-7 w-7' />)}
         {stepButton(1, t.dayAfter)}
       </div>
       <p className='mb-6 text-xl capitalize text-gray-700'>{dateLabel}</p>
@@ -220,22 +264,48 @@ export default function KitchenPage() {
 
       {state === 'ready' && report && (
         <>
-          <section className='rounded-3xl bg-black px-6 py-8 text-white'>
-            <div className='text-7xl font-bold leading-none'>{report.covers}</div>
-            <div className='mt-2 text-2xl'>{t.people(report.covers)}</div>
-          </section>
+          {/* Wide screens: the number and the sittings on the left, the menus on
+              the right, so the three answers are visible without scrolling. */}
+          <div className='grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start'>
+            <div className='flex flex-col gap-6'>
+              <section className='flex items-center gap-5 rounded-3xl bg-black px-6 py-8 text-white'>
+                <MdGroups className='h-20 w-20 shrink-0 opacity-80' />
+                <div>
+                  <div className='text-7xl font-bold leading-none'>{report.covers}</div>
+                  <div className='mt-2 text-2xl'>{t.people(report.covers)}</div>
+                </div>
+              </section>
 
-          {report.covers === 0 ? (
-            <p className='mt-8 text-2xl text-gray-500'>{t.nobody}</p>
-          ) : (
-            <>
-              <section className='mt-8'>
-                <h2 className='mb-3 text-xl font-bold'>{t.toCook}</h2>
+              {report.covers > 0 && (
+                <section>
+                  <Heading icon={<MdSchedule className='h-7 w-7' />}>{t.times}</Heading>
+                  <ul className='divide-y-2 rounded-2xl border-2 border-gray-200'>
+                    {report.bySitting.map(s => (
+                      <li key={s.id ?? 'none'} className='flex items-center justify-between gap-3 px-5 py-4'>
+                        <span className='text-2xl font-bold'>{s.id == null ? t.anyTime : s.label}</span>
+                        <span className='text-right'>
+                          <span className='text-3xl font-bold'>{s.persons}</span>
+                          <span className='block text-sm text-gray-600'>
+                            {s.menus.map(m => `${m.persons}× ${m.code}`).join(' · ')}
+                          </span>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+            </div>
+
+            {report.covers === 0 ? (
+              <p className='text-2xl text-gray-500'>{t.nobody}</p>
+            ) : (
+              <section>
+                <Heading icon={<MdRestaurantMenu className='h-7 w-7' />}>{t.toCook}</Heading>
                 <ul className='grid grid-cols-2 gap-3 sm:grid-cols-3'>
                   {report.byMenu.map(m => (
                     <li key={m.code} className='rounded-2xl border-2 border-gray-200 p-4'>
                       <div className='flex items-center gap-2 text-lg font-medium'>
-                        <MenuIcon name={m.icon} className='h-7 w-7 shrink-0' />
+                        <MenuIcon name={m.icon} className='h-8 w-8 shrink-0' />
                         {m.name}
                       </div>
                       <div className='mt-1 text-5xl font-bold'>{m.persons}</div>
@@ -243,90 +313,80 @@ export default function KitchenPage() {
                   ))}
                   {notChosen > 0 && (
                     <li className='rounded-2xl border-2 border-dashed border-amber-500 bg-amber-50 p-4 text-amber-900'>
-                      <div className='text-lg font-medium'>{t.noMenu}</div>
+                      <div className='flex items-center gap-2 text-lg font-medium'>
+                        <MdHelpOutline className='h-8 w-8 shrink-0' />
+                        {t.noMenu}
+                      </div>
                       <div className='mt-1 text-5xl font-bold'>{notChosen}</div>
                     </li>
                   )}
                 </ul>
               </section>
+            )}
+          </div>
 
-              <section className='mt-8'>
-                <h2 className='mb-3 text-xl font-bold'>{t.times}</h2>
-                <ul className='divide-y-2 rounded-2xl border-2 border-gray-200'>
-                  {report.bySitting.map(s => (
-                    <li key={s.id ?? 'none'} className='flex items-center justify-between gap-3 px-5 py-4'>
-                      <span className='text-2xl font-bold'>{s.id == null ? t.anyTime : s.label}</span>
-                      <span className='text-right'>
-                        <span className='text-3xl font-bold'>{s.persons}</span>
-                        <span className='block text-sm text-gray-600'>
-                          {s.menus.map(m => `${m.persons}× ${m.code}`).join(' · ')}
-                        </span>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-
-              <section className='mt-8'>
-                <h2 className='mb-3 text-xl font-bold'>{t.list}</h2>
-                <div className='overflow-x-auto'>
-                  <table className='w-full min-w-[520px] text-lg'>
-                    <thead>
-                      <tr className='border-b-2 text-left text-sm uppercase tracking-wide text-gray-500'>
-                        <th className='py-2 pr-3'>{t.room}</th>
-                        <th className='py-2 pr-3'>{t.guest}</th>
-                        <th className='py-2 pr-3'>{t.menu}</th>
-                        <th className='py-2'>{t.time}</th>
+          {report.covers > 0 && (
+            <section className='mt-8'>
+              <Heading icon={<MdListAlt className='h-7 w-7' />}>{t.list}</Heading>
+              <div className='overflow-x-auto rounded-2xl border-2 border-gray-200'>
+                <table className='w-full min-w-[520px] text-lg'>
+                  <thead>
+                    <tr className='border-b-2 bg-gray-50 text-left text-sm uppercase tracking-wide text-gray-500'>
+                      <th className='px-4 py-2'>{t.room}</th>
+                      <th className='px-4 py-2'>{t.guest}</th>
+                      <th className='px-4 py-2'>{t.menu}</th>
+                      <th className='px-4 py-2'>{t.time}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {report.lines.map(line => (
+                      <tr key={line.reservationId} className='border-b last:border-0'>
+                        <td className='px-4 py-3 text-2xl font-bold'>{line.room || '—'}</td>
+                        <td className='px-4 py-3'>
+                          {line.guest || '—'}
+                          <span className='block text-sm text-gray-600'>{t.people(line.persons)}</span>
+                        </td>
+                        <td className='px-4 py-3'>
+                          {line.menus.length === 0 ? (
+                            <span className='inline-flex items-center gap-1 text-amber-700'>
+                              <MdHelpOutline className='h-5 w-5' /> {t.notChosen}
+                            </span>
+                          ) : (
+                            <span className='flex flex-wrap gap-x-3 gap-y-1'>
+                              {line.menus.map(m => (
+                                <span key={m.code} className='inline-flex items-center gap-1'>
+                                  <MenuIcon name={m.icon} className='h-5 w-5 shrink-0' />
+                                  {m.persons}× {m.name}
+                                </span>
+                              ))}
+                            </span>
+                          )}
+                        </td>
+                        <td className='px-4 py-3 font-bold'>
+                          {line.slot ? (
+                            `${line.slot.startsAt}–${line.slot.endsAt}`
+                          ) : (
+                            <span className='font-normal text-gray-500'>{t.anyTime}</span>
+                          )}
+                          {line.attendedPersons != null && (
+                            <span className='ml-2 rounded-full bg-green-100 px-2 py-0.5 text-sm font-medium text-green-800'>
+                              ✓ {t.came}
+                            </span>
+                          )}
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {report.lines.map(line => (
-                        <tr key={line.reservationId} className='border-b'>
-                          <td className='py-3 pr-3 text-2xl font-bold'>{line.room || '—'}</td>
-                          <td className='py-3 pr-3'>
-                            {line.guest || '—'}
-                            <span className='block text-sm text-gray-600'>{t.people(line.persons)}</span>
-                          </td>
-                          <td className='py-3 pr-3'>
-                            {line.menus.length === 0 ? (
-                              <span className='text-amber-700'>{t.notChosen}</span>
-                            ) : (
-                              <span className='flex flex-wrap gap-x-3 gap-y-1'>
-                                {line.menus.map(m => (
-                                  <span key={m.code} className='inline-flex items-center gap-1'>
-                                    <MenuIcon name={m.icon} className='h-5 w-5 shrink-0' />
-                                    {m.persons}× {m.name}
-                                  </span>
-                                ))}
-                              </span>
-                            )}
-                          </td>
-                          <td className='py-3 font-bold'>
-                            {line.slot ? `${line.slot.startsAt}–${line.slot.endsAt}` : <span className='font-normal text-gray-500'>{t.anyTime}</span>}
-                            {line.attendedPersons != null && (
-                              <span className='ml-2 rounded-full bg-green-100 px-2 py-0.5 text-sm font-medium text-green-800'>
-                                ✓ {t.came}
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            </>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
           )}
         </>
       )}
 
-      <div className='fixed inset-x-0 bottom-0 border-t bg-white p-4'>
-        <Link
-          href='/kitchen/scan'
-          className='mx-auto flex h-16 w-full max-w-[900px] items-center justify-center gap-3 rounded-2xl bg-black text-2xl font-bold text-white'
-        >
-          <MdQrCodeScanner className='h-8 w-8' /> {t.scan}
-        </Link>
+      {/* Phone and tablet: the scanner stays under the thumb. */}
+      <div className='fixed inset-x-0 bottom-0 border-t bg-white p-4 lg:hidden'>
+        {scanButton('mx-auto h-16 w-full max-w-[900px] text-2xl')}
       </div>
     </main>
   )
