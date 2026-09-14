@@ -14,13 +14,28 @@ import { getAdminSession } from '@/lib/requireAdmin'
  * Plain full-width pages with no site chrome: a tablet on the pass does not
  * need the hotel's header and footer around a number.
  *
- * No viewport-height sizing here at all, and nothing pinned to the bottom of
- * the screen. The site body insists on 100vh, which on iOS is the height with
- * the browser bars hidden: a short page was taller than what was visible by
- * a toolbar, scrolled that far, hid its own header and stuck. The style below
- * lets the body be as tall as its content on these screens, so a short page
- * does not scroll and a long one scrolls like any other page.
+ * The style below is the fix for a screen that scrolled down once and would
+ * not come back. A phone browser has two viewport heights: the small one,
+ * with the address bar and the tab bar showing, and the large one once they
+ * slide away. The document is laid out against the LARGE one, so a short page
+ * — a morning with nobody for breakfast — was 442px of content in a document
+ * as tall as the large viewport, while only the small one was visible:
+ * scrollable by exactly one toolbar and no more. Scrolling that far made the
+ * toolbars slide away, the visible area then matched the document, the scroll
+ * range became zero, and the page was left with its own header off the top
+ * and nothing to scroll back. Pulling down reached the browser's
+ * pull-to-refresh instead of the page.
+ *
+ * Pinning the document to the SMALL viewport (svh) removes the trap: a short
+ * page is exactly as tall as what is visible, so it never scrolls and the
+ * toolbars never slide away; a busy morning is taller than both and scrolls
+ * like any other page. `overscroll-behavior` keeps pull-to-refresh out of it.
  */
+const FIT_THE_PHONE = `
+  html { height: 100svh; overscroll-behavior-y: contain; }
+  body { min-height: 100svh; }
+`
+
 export default async function KitchenLayout({ children }: { children: ReactNode }) {
   const session = await getAdminSession()
   if (session.status !== 'ok') redirect('/admin/login')
@@ -28,7 +43,7 @@ export default async function KitchenLayout({ children }: { children: ReactNode 
 
   return (
     <>
-      <style>{'body{min-height:auto}'}</style>
+      <style>{FIT_THE_PHONE}</style>
       <div className='bg-white text-black'>{children}</div>
     </>
   )

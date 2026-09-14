@@ -294,7 +294,7 @@ export default function KitchenPage() {
   )
 
   return (
-    <main className='mx-auto w-full max-w-[1400px] p-4 sm:p-6'>
+    <main className='mx-auto w-full max-w-[1400px] p-4 pb-10 sm:p-6'>
       {/* Header: title, controls, and — on a wide screen — the scanner. */}
       <div className='mb-4 flex flex-wrap items-center gap-3'>
         <h1 className='flex items-center gap-2 text-2xl font-bold'>
