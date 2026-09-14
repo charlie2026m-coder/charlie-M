@@ -294,7 +294,7 @@ export default function KitchenPage() {
   )
 
   return (
-    <main className='mx-auto flex w-full max-w-[1400px] flex-1 flex-col p-4 sm:p-6 lg:pb-8'>
+    <main className='mx-auto w-full max-w-[1400px] p-4 sm:p-6'>
       {/* Header: title, controls, and — on a wide screen — the scanner. */}
       <div className='mb-4 flex flex-wrap items-center gap-3'>
         <h1 className='flex items-center gap-2 text-2xl font-bold'>
@@ -326,6 +326,12 @@ export default function KitchenPage() {
         </div>
         {scanButton('hidden h-12 px-5 text-lg lg:flex')}
       </div>
+
+      {/* Phone and tablet: the scanner is the first thing under the title —
+          in the flow, not pinned to the bottom. A bar fixed or stuck to the
+          bottom of the screen fought the browser's own toolbars on iOS and
+          the page could not be scrolled back up. */}
+      {scanButton('mb-4 h-16 w-full text-2xl lg:hidden')}
 
       {/* Seven mornings, the head count above each date. On a phone the strip
           scrolls sideways under the thumb; on a wide screen it sits whole. */}
@@ -467,14 +473,6 @@ export default function KitchenPage() {
         </>
       )}
 
-      {/* Phone and tablet: the scanner stays under the thumb. */}
-      {/* Pinned to the bottom of what is visible, in the flow rather than
-          position:fixed: fixed bars and iOS toolbars disagree about where the
-          bottom is; sticky ones do not. mt-auto keeps it at the bottom even
-          when the page is short. */}
-      <div className='sticky bottom-0 -mx-4 mt-auto border-t bg-white p-4 pt-4 sm:-mx-6 lg:hidden'>
-        {scanButton('mx-auto h-16 w-full max-w-[900px] text-2xl')}
-      </div>
     </main>
   )
 }
