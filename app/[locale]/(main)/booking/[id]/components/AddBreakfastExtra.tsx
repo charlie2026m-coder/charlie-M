@@ -56,6 +56,7 @@ interface MenuOption {
   description: string
   items: string[]
   allergens: string
+  photoUrl: string | null
 }
 
 interface MorningMenus {
@@ -368,6 +369,15 @@ const AddBreakfastExtra = ({
                 <div className='mt-3 grid gap-3 sm:grid-cols-2'>
                   {menuLegend.map(menu => (
                     <div key={menu.code}>
+                      {menu.photoUrl && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={menu.photoUrl}
+                          alt={menu.name}
+                          loading='lazy'
+                          className='mb-2 aspect-[4/3] w-full rounded-lg object-cover'
+                        />
+                      )}
                       <div className='flex items-center gap-2 text-sm font-medium'>
                         <MenuIcon name={menu.icon} className='h-4 w-4 shrink-0' />
                         {menu.name}

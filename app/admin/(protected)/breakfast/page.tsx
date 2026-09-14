@@ -10,12 +10,13 @@
  * else's while they were typing.
  */
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { MdAdd, MdDelete } from 'react-icons/md'
 import { Button } from '@/app/_components/ui/button'
 import { MenuIcon, MENU_ICON_NAMES } from '@/app/_components/breakfast/MenuIcon'
 import { PageHeader } from '@/app/_components/admin/PageHeader'
 import { addDays } from '@/lib/breakfastDates'
+import { nextMenuCode } from '@/lib/menuCode'
 
 interface MenuRow {
   code: string
@@ -28,6 +29,7 @@ interface MenuRow {
   items_en: string
   allergens_de: string
   allergens_en: string
+  photo_url: string | null
   sort_order: number
   is_active: boolean
 }
@@ -69,7 +71,6 @@ export default function BreakfastAdminPage() {
 function Menus() {
   const [menus, setMenus] = useState<MenuRow[] | null>(null)
   const [adding, setAdding] = useState(false)
-  const [newCode, setNewCode] = useState('')
   const [note, setNote] = useState('')
 
   const load = useCallback(async () => {
@@ -80,25 +81,34 @@ function Menus() {
   }, [])
 
   useEffect(() => {
-    void load()
+    // Deferred a tick, so the effect itself changes no state
+    // (react-hooks/set-state-in-effect); the data comes from the API anyway.
+    const timer = window.setTimeout(() => void load(), 0)
+    return () => window.clearTimeout(timer)
   }, [load])
 
+  // The code is picked here, not typed: the next free letter. It is what the
+  // kitchen sheet prints and what bookings point at, so it never changes.
   const add = async () => {
-    const code = newCode.trim().toUpperCase()
-    if (!code) return
+    const existing = menus ?? []
+    const code = nextMenuCode(existing.map(m => m.code))
+    const sortOrder = existing.reduce((max, m) => Math.max(max, m.sort_order ?? 0), 0) + 1
     setAdding(true)
     const res = await fetch('/api/admin/breakfast/menus', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, name_en: `Menu ${code}`, name_de: `Menü ${code}`, icon: 'utensils' }),
+      body: JSON.stringify({
+        code,
+        name_en: `Menu ${code}`,
+        name_de: `Menü ${code}`,
+        icon: 'utensils',
+        sort_order: sortOrder,
+      }),
     })
     const json = await res.json().catch(() => ({ ok: false }))
     setAdding(false)
-    setNote(json.ok ? '' : json.error === 'code_taken' ? 'That code already exists.' : 'Could not add it.')
-    if (json.ok) {
-      setNewCode('')
-      void load()
-    }
+    setNote(json.ok ? '' : 'Could not add it.')
+    if (json.ok) void load()
   }
 
   return (
@@ -115,16 +125,13 @@ function Menus() {
         </div>
       )}
 
-      <div className='mt-4 flex flex-wrap items-center gap-2'>
-        <input
-          value={newCode}
-          onChange={e => setNewCode(e.target.value)}
-          placeholder='New code, e.g. E'
-          className={`${field} w-40`}
-        />
-        <Button variant='outline' size='sm' className='h-9' disabled={adding} onClick={() => void add()}>
-          <MdAdd /> Add menu
+      <div className='mt-4 flex flex-wrap items-center gap-3'>
+        <Button size='sm' className='h-9' disabled={adding || menus === null} onClick={() => void add()}>
+          <MdAdd /> {adding ? 'Adding…' : 'Add a menu'}
         </Button>
+        <span className='text-sm text-gray-500'>
+          A new card appears below — give it a name, what is in it, and a photo.
+        </span>
         {note && <span className='text-sm text-red-700'>{note}</span>}
       </div>
       <p className='mt-2 text-xs text-gray-500'>
@@ -139,7 +146,13 @@ function MenuCard({ menu, onSaved }: { menu: MenuRow; onSaved: () => void }) {
   const [draft, setDraft] = useState(menu)
   const [state, setState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
 
-  useEffect(() => setDraft(menu), [menu])
+  // A fresh row from the server (after a save or a photo change) replaces the
+  // draft. Done during render, the way React asks for "state from props".
+  const [seen, setSeen] = useState(menu)
+  if (menu !== seen) {
+    setSeen(menu)
+    setDraft(menu)
+  }
 
   const set = (patch: Partial<MenuRow>) => {
     setDraft(d => ({ ...d, ...patch }))
@@ -199,6 +212,8 @@ function MenuCard({ menu, onSaved }: { menu: MenuRow; onSaved: () => void }) {
         </label>
       </div>
 
+      <MenuPhoto code={menu.code} url={menu.photo_url} onChanged={onSaved} />
+
       <div className='grid gap-3 sm:grid-cols-2'>
         <Text label='Name (EN)' value={draft.name_en} onChange={v => set({ name_en: v })} />
         <Text label='Name (DE)' value={draft.name_de} onChange={v => set({ name_de: v })} />
@@ -240,6 +255,102 @@ function MenuCard({ menu, onSaved }: { menu: MenuRow; onSaved: () => void }) {
         </Button>
         {state === 'saved' && <span className='text-sm text-green-700'>Saved</span>}
         {state === 'error' && <span className='text-sm text-red-700'>Could not save</span>}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * The picture guests see next to this menu. Uploaded straight from here; the
+ * card reloads afterwards, so save any text edits first.
+ */
+function MenuPhoto({
+  code,
+  url,
+  onChanged,
+}: {
+  code: string
+  url: string | null
+  onChanged: () => void
+}) {
+  const [busy, setBusy] = useState(false)
+  const [note, setNote] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const upload = async (file: File) => {
+    setBusy(true)
+    setNote('')
+    const form = new FormData()
+    form.append('code', code)
+    form.append('file', file)
+    const res = await fetch('/api/admin/breakfast/menus/photo', { method: 'POST', body: form })
+    const json = await res.json().catch(() => ({ ok: false }))
+    setBusy(false)
+    if (!json.ok) {
+      setNote(
+        json.error === 'too_big'
+          ? 'Too big — 5 MB at most.'
+          : json.error === 'bad_type'
+            ? 'JPG, PNG or WebP only.'
+            : 'Could not upload it.',
+      )
+      return
+    }
+    onChanged()
+  }
+
+  const remove = async () => {
+    setBusy(true)
+    setNote('')
+    const res = await fetch(`/api/admin/breakfast/menus/photo?code=${encodeURIComponent(code)}`, {
+      method: 'DELETE',
+    })
+    const json = await res.json().catch(() => ({ ok: false }))
+    setBusy(false)
+    if (!json.ok) {
+      setNote('Could not remove it.')
+      return
+    }
+    onChanged()
+  }
+
+  return (
+    <div className='mb-3 flex flex-wrap items-center gap-3'>
+      {url ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={url} alt='' className='h-16 w-20 rounded-lg object-cover' />
+      ) : (
+        <div className='flex h-16 w-20 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400'>
+          no photo
+        </div>
+      )}
+      <div className='flex flex-wrap items-center gap-2'>
+        <input
+          ref={inputRef}
+          type='file'
+          accept='image/jpeg,image/png,image/webp'
+          className='hidden'
+          onChange={e => {
+            const file = e.target.files?.[0]
+            if (file) void upload(file)
+            e.target.value = ''
+          }}
+        />
+        <Button
+          variant='outline'
+          size='sm'
+          className='h-8'
+          disabled={busy}
+          onClick={() => inputRef.current?.click()}
+        >
+          {busy ? 'Uploading…' : url ? 'Replace photo' : 'Add photo'}
+        </Button>
+        {url && (
+          <Button variant='outline' size='sm' className='h-8' disabled={busy} onClick={() => void remove()}>
+            Remove
+          </Button>
+        )}
+        {note && <span className='text-sm text-red-700'>{note}</span>}
       </div>
     </div>
   )
@@ -298,7 +409,10 @@ function Slots() {
   }, [])
 
   useEffect(() => {
-    void load()
+    // Deferred a tick, so the effect itself changes no state
+    // (react-hooks/set-state-in-effect); the data comes from the API anyway.
+    const timer = window.setTimeout(() => void load(), 0)
+    return () => window.clearTimeout(timer)
   }, [load])
 
   const patch = async (row: SlotRow) => {
@@ -397,7 +511,11 @@ function SlotRowEditor({
   onDelete: (id: number) => void
 }) {
   const [draft, setDraft] = useState(slot)
-  useEffect(() => setDraft(slot), [slot])
+  const [seen, setSeen] = useState(slot)
+  if (slot !== seen) {
+    setSeen(slot)
+    setDraft(slot)
+  }
   const dirty = JSON.stringify(draft) !== JSON.stringify(slot)
 
   return (

@@ -37,6 +37,7 @@ export interface MenuRow {
   items_en: string
   allergens_de: string
   allergens_en: string
+  photo_url: string | null
   sort_order: number
   is_active: boolean
 }
@@ -129,6 +130,72 @@ export async function updateMenu(
     return { ok: false, error: 'failed' }
   }
   return { ok: true }
+}
+
+const PHOTO_BUCKET = 'breakfast-menus'
+
+/**
+ * Put a picture on a menu, replacing whatever was there. The object name
+ * carries a timestamp so a replaced picture is a new URL and no browser or
+ * CDN keeps serving the old one; the old object is removed afterwards, best
+ * effort — a leftover file costs nothing, a wrong picture on the menu would.
+ */
+export async function uploadMenuPhoto(
+  code: string,
+  bytes: Buffer,
+  contentType: string,
+  ext: string,
+): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  if (!MENU_CODE.test(code)) return { ok: false, error: 'bad_code' }
+  const db = admin()
+
+  const { data: row } = await db.from('breakfast_menus').select('photo_url').eq('code', code).maybeSingle()
+  if (!row) return { ok: false, error: 'unknown_menu' }
+
+  const path = `${code}-${Date.now()}.${ext}`
+  const { error: upErr } = await db.storage.from(PHOTO_BUCKET).upload(path, bytes, {
+    contentType,
+    cacheControl: '31536000',
+    upsert: false,
+  })
+  if (upErr) {
+    bfLog.error('menu photo upload failed', { code, error: upErr.message })
+    return { ok: false, error: 'failed' }
+  }
+  const url = db.storage.from(PHOTO_BUCKET).getPublicUrl(path).data.publicUrl
+
+  const { error } = await db.from('breakfast_menus').update({ photo_url: url }).eq('code', code)
+  if (error) {
+    bfLog.error('menu photo save failed', { code, error: error.message })
+    return { ok: false, error: 'failed' }
+  }
+  await removeStoredPhoto(row.photo_url as string | null)
+  return { ok: true, url }
+}
+
+export async function clearMenuPhoto(code: string): Promise<{ ok: boolean; error?: string }> {
+  if (!MENU_CODE.test(code)) return { ok: false, error: 'bad_code' }
+  const db = admin()
+  const { data: row } = await db.from('breakfast_menus').select('photo_url').eq('code', code).maybeSingle()
+  if (!row) return { ok: false, error: 'unknown_menu' }
+  const { error } = await db.from('breakfast_menus').update({ photo_url: null }).eq('code', code)
+  if (error) {
+    bfLog.error('menu photo clear failed', { code, error: error.message })
+    return { ok: false, error: 'failed' }
+  }
+  await removeStoredPhoto(row.photo_url as string | null)
+  return { ok: true }
+}
+
+/** Delete the object behind one of our own public URLs; anything else is left alone. */
+async function removeStoredPhoto(url: string | null): Promise<void> {
+  if (!url) return
+  const marker = `/object/public/${PHOTO_BUCKET}/`
+  const at = url.indexOf(marker)
+  if (at < 0) return
+  const path = decodeURIComponent(url.slice(at + marker.length))
+  const { error } = await admin().storage.from(PHOTO_BUCKET).remove([path])
+  if (error) bfLog.warn('old menu photo not removed', { path, error: error.message })
 }
 
 function slotPatch(body: Record<string, unknown>): Record<string, unknown> {

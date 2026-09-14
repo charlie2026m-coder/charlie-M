@@ -20,16 +20,41 @@ import { landingFor, normaliseAreas } from '@/lib/adminAccess'
 const input =
   'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-black transition-colors text-black placeholder:text-gray-400'
 
-/** Two-step login set up on this account, and not yet passed this session? */
+/** The `aal` claim of the session's token: 'aal2' once the code has been passed. */
+function assuranceLevel(accessToken: string | undefined): string | null {
+  if (!accessToken) return null
+  try {
+    const payload = JSON.parse(atob(accessToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+    return typeof payload?.aal === 'string' ? payload.aal : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Two-step login set up on this account, and not yet passed this session?
+ * Asked of the auth server (getUser) rather than the copy of the user kept in
+ * the cookie — that copy predates an enrolment made on another device, and
+ * the server-side gate would then bounce a login this page thought complete.
+ */
 async function needsCode(): Promise<boolean> {
-  const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
-  return data?.nextLevel === 'aal2' && data.currentLevel !== 'aal2'
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  const enrolled = (user?.factors ?? []).some(f => f.status === 'verified')
+  if (!enrolled) return false
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+  return assuranceLevel(session?.access_token) !== 'aal2'
 }
 
 export default function AdminLoginPage() {
   const router = useRouter()
   const [step, setStep] = useState<'password' | 'code'>('password')
   const [email, setEmail] = useState('')
+  /** The e-mail the session carries — what the admins row is keyed on. */
+  const [sessionEmail, setSessionEmail] = useState('')
   const [password, setPassword] = useState('')
   const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
@@ -62,8 +87,8 @@ export default function AdminLoginPage() {
         data: { user },
       } = await supabase.auth.getUser()
       if (!user?.email) return
+      setSessionEmail(user.email)
       if (await needsCode()) {
-        setEmail(user.email)
         setStep('code')
         return
       }
@@ -79,6 +104,7 @@ export default function AdminLoginPage() {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
       if (!data.user?.email) throw new Error('Login failed')
+      setSessionEmail(data.user.email)
       if (await needsCode()) {
         setStep('code')
         return
@@ -107,7 +133,7 @@ export default function AdminLoginPage() {
       if (error) {
         throw new Error('That code did not work. Codes change every 30 seconds — type the one showing now.')
       }
-      await finish(email)
+      await finish(sessionEmail)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not check the code')
     } finally {

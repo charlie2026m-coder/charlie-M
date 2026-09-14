@@ -97,6 +97,7 @@ export default function AdminRoomsPage() {
                       <Link
                         href={`/admin/rooms/${room.id}`}
                         aria-label={`Edit ${room.title_en}`}
+                        onClick={e => e.stopPropagation()}
                         className='inline-flex h-8 w-8 items-center justify-center rounded-full bg-black text-white hover:bg-gray-800'
                       >
                         <MdEdit className='size-4' />

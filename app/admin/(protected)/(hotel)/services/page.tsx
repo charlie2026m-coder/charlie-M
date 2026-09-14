@@ -105,6 +105,7 @@ export default function AdminServicesPage() {
                         <Link
                           href={`/admin/services/${service.id}`}
                           aria-label={`Edit ${service.title_en}`}
+                        onClick={e => e.stopPropagation()}
                           className='inline-flex h-8 w-8 items-center justify-center rounded-full bg-black text-white hover:bg-gray-800'
                         >
                           <MdEdit className='size-4' />

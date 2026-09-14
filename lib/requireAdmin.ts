@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { canUsePanel, normaliseAreas, type Area } from '@/lib/adminAccess';
@@ -44,7 +45,10 @@ function assuranceLevel(accessToken: string | undefined): string | null {
   }
 }
 
-export async function getAdminSession(): Promise<AdminSessionResult> {
+// Wrapped in React's cache(): the panel layout, a section's AreaGate and the
+// page may all ask within one request, and the answer costs a round-trip to
+// the auth server. One request, one answer.
+export const getAdminSession = cache(async (): Promise<AdminSessionResult> => {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user?.email) return { status: 'anonymous' };
@@ -70,7 +74,7 @@ export async function getAdminSession(): Promise<AdminSessionResult> {
     role: row.role ?? '',
     areas: normaliseAreas(row.areas),
   };
-}
+});
 
 export type AdminGuard =
   | ({ ok: true } & AdminSession)

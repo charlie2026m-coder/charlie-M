@@ -24,6 +24,25 @@ export interface ChipMenu {
   code: string
   icon: string
   name: string
+  /** A picture of the plate, when the kitchen has uploaded one. */
+  photoUrl?: string | null
+}
+
+/** The picture if there is one, the icon if not — same footprint either way. */
+function MenuMark({ menu, size }: { menu: ChipMenu; size: 'sm' | 'md' }) {
+  const box = size === 'sm' ? 'h-6 w-6' : 'h-9 w-9'
+  if (menu.photoUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={menu.photoUrl}
+        alt=''
+        loading='lazy'
+        className={`${box} shrink-0 rounded-full object-cover`}
+      />
+    )
+  }
+  return <MenuIcon name={menu.icon} className={`${size === 'sm' ? 'h-4 w-4' : 'h-5 w-5'} shrink-0`} />
 }
 
 /** How many of the party take each menu, e.g. `{ A: 1, B: 1 }`. */
@@ -63,7 +82,7 @@ export function randomSplit(
 }
 
 const chipBase =
-  'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-60'
+  'inline-flex items-center gap-1.5 rounded-full border py-1 pl-2 pr-3 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-60'
 
 function RandomButton({
   label,
@@ -133,7 +152,7 @@ export function MenuPicker({
                   : 'border-transparent bg-black/[0.04] hover:bg-black/[0.07]'
               }`}
             >
-              <MenuIcon name={menu.icon} className='h-4 w-4 shrink-0' />
+              <MenuMark menu={menu} size='sm' />
               {menu.name}
             </button>
           )
@@ -167,7 +186,7 @@ export function MenuPicker({
               count > 0 ? 'bg-blue/30' : ''
             }`}
           >
-            <MenuIcon name={menu.icon} className='h-4 w-4 shrink-0' />
+            <MenuMark menu={menu} size='md' />
             <span className='min-w-0 flex-1 truncate text-sm'>{menu.name}</span>
             <ButtonIcon
               symbol='-'

@@ -86,11 +86,16 @@ export default function BreakfastPage() {
   // Language: an explicit ?lang wins, otherwise the browser. Read in an effect
   // because navigator does not exist while the page is being prerendered.
   useEffect(() => {
-    const q = search?.get('lang')
-    if (q === 'de' || q === 'en') return setLang(q)
-    if (typeof navigator !== 'undefined' && navigator.language?.toLowerCase().startsWith('de')) {
-      setLang('de')
-    }
+    // Deferred a tick, so the effect itself changes no state
+    // (react-hooks/set-state-in-effect).
+    const timer = window.setTimeout(() => {
+      const q = search?.get('lang')
+      if (q === 'de' || q === 'en') return setLang(q)
+      if (typeof navigator !== 'undefined' && navigator.language?.toLowerCase().startsWith('de')) {
+        setLang('de')
+      }
+    }, 0)
+    return () => window.clearTimeout(timer)
   }, [search])
 
   const t = (key: TKey) => T[lang][key]
@@ -121,7 +126,10 @@ export default function BreakfastPage() {
   }, [token, lang])
 
   useEffect(() => {
-    void load()
+    // Deferred a tick, so the effect itself changes no state
+    // (react-hooks/set-state-in-effect); the data comes from the API anyway.
+    const timer = window.setTimeout(() => void load(), 0)
+    return () => window.clearTimeout(timer)
   }, [load])
 
   const save = async (morning: string) => {
@@ -224,6 +232,15 @@ export default function BreakfastPage() {
               <div className='mt-4 grid gap-4 sm:grid-cols-2'>
                 {menuLegend.map(menu => (
                   <div key={menu.code}>
+                    {menu.photoUrl && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={menu.photoUrl}
+                        alt={menu.name}
+                        loading='lazy'
+                        className='mb-2 aspect-[4/3] w-full rounded-xl object-cover'
+                      />
+                    )}
                     <div className='flex items-center gap-2 font-medium'>
                       <MenuIcon name={menu.icon} className='h-[18px] w-[18px] shrink-0' />
                       {menu.name}
