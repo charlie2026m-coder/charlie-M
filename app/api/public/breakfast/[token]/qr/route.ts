@@ -9,10 +9,11 @@ import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
  * lives on, so gating the picture would protect nothing. It is the same token,
  * drawn instead of typed.
  *
- * The code encodes the RAW TOKEN, not a URL. A URL would send any phone camera
- * that happens to point at it to the guest page, and the person holding the
- * scanner at the dining-room door is staff using our admin screen, which wants
- * the token and nothing else. Plain text keeps the two apart.
+ * The code encodes the guest page's URL. Two people point a camera at it:
+ * the guest with their own phone, who should land on their choices rather
+ * than on a string of letters the camera app does nothing with; and staff at
+ * the dining-room door, whose scanner takes the token back out of that URL
+ * (lib/breakfastToken). One picture, both readers.
  *
  * Not cached as immutable even though tokens never rotate: the image is tiny
  * and a wrong cached QR is a guest standing at a door that will not let them in.
@@ -34,7 +35,8 @@ export async function GET(
   }
 
   const fmt = request.nextUrl.searchParams.get('fmt') === 'png' ? 'png' : 'svg'
-  const { data, mime } = await makeQr(token, fmt)
+  const base = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.charlie-m.de').replace(/\/+$/, '')
+  const { data, mime } = await makeQr(`${base}/breakfast/${token}`, fmt)
 
   return new NextResponse(data as BodyInit, {
     headers: {

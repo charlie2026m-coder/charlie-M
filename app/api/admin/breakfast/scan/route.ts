@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/requireAdmin'
 import { scanBreakfast } from '@/services/breakfast'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
+import { tokenFromScan } from '@/lib/breakfastToken'
 
 /**
  * The dining-room door: staff scanned a guest's breakfast QR.
@@ -30,11 +31,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, result: 'error' }, { status: 400 })
   }
 
-  // Scanners and phone cameras both hand over stray whitespace; a QR that
-  // encoded a URL rather than the bare token is not ours, so it is refused
-  // rather than parsed — see the note in the QR route.
-  const token = String(body?.token ?? '').trim()
-  if (!/^[A-Za-z0-9_-]{8,64}$/.test(token)) {
+  // The QR carries the guest page's URL; a typed or older code is the bare
+  // token. Both come back as the token — anything else is not ours.
+  const token = tokenFromScan(body?.token)
+  if (!token) {
     return NextResponse.json(
       { ok: false, result: 'unknown_token' },
       { status: 200, headers: { 'Cache-Control': 'no-store' } },

@@ -18,8 +18,8 @@
  *     so on an iPad the button says so instead of failing silently, and the
  *     scanner and typing still work.
  *
- * The QR encodes the bare token (see the QR route), so anything that looks like
- * a URL is somebody else's code and is refused by the API rather than parsed.
+ * The QR encodes the guest page's URL (so a guest's own camera opens their
+ * choices); the API takes the token back out of it, and refuses any other URL.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
