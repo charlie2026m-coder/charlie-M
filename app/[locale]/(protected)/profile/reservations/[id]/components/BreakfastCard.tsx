@@ -14,7 +14,7 @@
 
 import { useEffect, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
-import { LuChevronRight } from 'react-icons/lu'
+import { LuChevronRight, LuCroissant } from 'react-icons/lu'
 import { Button } from '@/app/_components/ui/button'
 import { MenuIcon } from '@/app/_components/breakfast/MenuIcon'
 
@@ -70,7 +70,10 @@ const BreakfastCard = ({ reservationId }: { reservationId: string }) => {
   return (
     <section className='bg-blue/20 rounded-[20px] p-5 w-full mt-5'>
       <div className='flex flex-wrap items-center justify-between gap-3'>
-        <h4 className='font-semibold'>{t('breakfastCardTitle')}</h4>
+        <h4 className='flex items-center gap-2 font-semibold'>
+          <LuCroissant className='size-5 shrink-0 text-dark-gold' aria-hidden />
+          {t('breakfastCardTitle')}
+        </h4>
         {view.needsChoice && (
           <span className='rounded-full bg-dark-gold px-3 py-1 text-xs font-medium text-white'>
             {t('breakfastCardNeedsChoice')}
