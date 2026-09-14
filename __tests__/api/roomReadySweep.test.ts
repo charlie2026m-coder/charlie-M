@@ -924,3 +924,39 @@ describe('the morning report: rooms sold twice over today', () => {
     expect(reported()).toHaveLength(0)
   })
 })
+
+describe('the sweep and the reasons no retry can clear', () => {
+  // Said once an hour — the :10 pass — with the room and in words. Every pass
+  // would be a storm; never would hide a door that will not open all day.
+  const guest = { id: 'HARD-1', arrival: '2026-09-08T15:00:00+02:00', status: 'Confirmed', unit: { id: 'MOT-DUO', name: '310' } }
+
+  it('says so on the hour pass', async () => {
+    vi.setSystemTime(new Date('2026-09-08T10:10:00+02:00'))
+    arrivals([guest])
+    runRoomReady.mockResolvedValue({ status: 'skipped', reason: 'no-offer' })
+    await call()
+
+    expect(log.error).toHaveBeenCalledWith(
+      'Room 310: door not opened — Apaleo offered nothing for the earlier time',
+      expect.objectContaining({ reservationId: 'HARD-1', 'what to do': expect.stringContaining('Extend access') }),
+    )
+  })
+
+  it('holds its tongue on the other three passes of the hour', async () => {
+    vi.setSystemTime(new Date('2026-09-08T10:25:00+02:00'))
+    arrivals([guest])
+    runRoomReady.mockResolvedValue({ status: 'skipped', reason: 'no-offer' })
+    await call()
+
+    expect(log.error).not.toHaveBeenCalled()
+  })
+
+  it('never says it for a room that is merely not clean yet', async () => {
+    vi.setSystemTime(new Date('2026-09-08T10:10:00+02:00'))
+    arrivals([guest])
+    runRoomReady.mockResolvedValue({ status: 'skipped', reason: 'unit-dirty' })
+    await call()
+
+    expect(log.error).not.toHaveBeenCalled()
+  })
+})

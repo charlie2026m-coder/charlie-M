@@ -1,6 +1,6 @@
-import { openRoomEarly, type RoomReadyOutcome } from '@/services/apaleo/amendStayTime';
+import { loadReservationForAmend, openRoomEarly, type RoomReadyOutcome } from '@/services/apaleo/amendStayTime';
 import { bookingLog } from '@/lib/logger';
-import { doorStayedShut } from '@/lib/roomReadyOutcome';
+import { plainReason, webhookShouldAlert, whatToDo } from '@/lib/roomReadyOutcome';
 import { buildRoomReadyMessage, sendGuestwayMessage } from '@/services/guestway/sendGuestwayMessage';
 import { doorFollowsArrival } from '@/services/guestway/doorAccess';
 
@@ -18,6 +18,17 @@ import { doorFollowsArrival } from '@/services/guestway/doorAccess';
  * Idempotent through openRoomEarly: once the arrival has been moved, every
  * later call returns `nothing-earlier-to-gain` and no second message goes out.
  */
+/** The room as a person knows it ("18"), for the alerts; '?' when unreadable —
+ *  an alert with no room still beats no alert. */
+async function roomNameOf(reservationId: string): Promise<string> {
+  try {
+    const ctx = await loadReservationForAmend(reservationId);
+    return ctx?.unitName ?? ctx?.unitId ?? '?';
+  } catch {
+    return '?';
+  }
+}
+
 export async function runRoomReady(
   reservationId: string,
   opts: { alertOnFailure?: boolean; trustGuestwayClean?: boolean } = {},
@@ -42,9 +53,11 @@ export async function runRoomReady(
     // pre-check-in, and a person can follow up. Never a word before a door.
     const door = await doorFollowsArrival(reservationId, result.to);
     if (door !== 'confirmed') {
-      bookingLog.error(`room-ready: arrival moved but the door has not followed — guest NOT told (${door})`, {
+      const room = await roomNameOf(reservationId);
+      bookingLog.error(`Room ${room}: arrival moved in Apaleo but the door has not followed — guest NOT told (${door})`, {
         reservationId,
         arrival: result.to,
+        'what to do': 'check the reservation in Guestway; Extend access opens the door by hand',
       });
       return result;
     }
@@ -75,16 +88,28 @@ export async function runRoomReady(
   }
 
   if (result.status === 'error') {
-    bookingLog.error('room-ready: amend failed', { reservationId, result });
+    const room = await roomNameOf(reservationId);
+    bookingLog.error(`Room ${room}: door could not be opened — Apaleo error`, {
+      reservationId,
+      error: result.reason,
+      'what to do': 'open by hand in Guestway (Extend access); the sweep retries every 15 min',
+    });
     return result;
   }
 
-  if (opts.alertOnFailure && result.status === 'skipped' && doorStayedShut(result.reason)) {
-    // Only the reasons no retry can clear (see lib/roomReadyOutcome). The reason
-    // goes in the MESSAGE, not just the payload, so Sentry groups one issue per
-    // reason and Slack throttles per reason instead of collapsing a burst into
-    // a single line.
-    bookingLog.error(`room-ready: door not opened — ${result.reason}`, { reservationId });
+  if (opts.alertOnFailure && result.status === 'skipped' && webhookShouldAlert(result.reason)) {
+    // Guestway has just said the room is finished; every refusal but the benign
+    // ones is a door that should have opened and did not (lib/roomReadyOutcome).
+    // Said with the room and in words, because the reader is whoever can fix
+    // it, and with what to do, because the fix differs per reason. The reason
+    // stays in the message so Sentry groups one issue per reason and Slack
+    // throttles per room and reason rather than collapsing a burst.
+    const room = await roomNameOf(reservationId);
+    bookingLog.error(`Room ${room}: cleaned, but the door was NOT moved — ${plainReason(result.reason)}`, {
+      reservationId,
+      reason: result.reason,
+      'what to do': whatToDo(result.reason),
+    });
     return result;
   }
 

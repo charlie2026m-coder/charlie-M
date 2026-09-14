@@ -4,6 +4,7 @@ import { unitReadiness } from '@/services/apaleo/amendStayTime'
 import { bookingLog } from '@/lib/logger'
 import { notifySlack } from '@/lib/slack'
 import { sameGuest } from '@/lib/sameGuest'
+import { PLAIN_REASON, sweepShouldNudge, whatToDo } from '@/lib/roomReadyOutcome'
 
 /**
  * Re-try the early door for every guest arriving today, all day.
@@ -173,21 +174,9 @@ const STALE_AFTER_MIN = 180
 // Saying otherwise is what made a normal 14:10 read as two broken rooms.
 const URGENT_BEFORE_MIN = 30
 
-/** Plain words for the reasons a door stayed shut. The alert is read by whoever
- *  can fix it, not by whoever wrote the code. */
-const PLAIN: Record<string, string> = {
-  'unit-dirty': 'not cleaned yet',
-  'unit-occupied': 'previous guest still checked in',
-  'unit-unknown': 'room status unreadable',
-  'unit-reassigned': 'guest moved to another room',
-  'unit-no-longer-ready': 'room stopped being ready',
-  'no-unit-assigned': 'no room assigned yet',
-  'no-offer': 'Apaleo offered nothing for the earlier time',
-  'price-drift': 'price would change — refused',
-  'opposite-extension-conflict': 'departing guest bought a late checkout',
-  'nothing-earlier-to-gain': 'nothing earlier to gain',
-  opened: 'opened',
-}
+// Plain words for every reason live in lib/roomReadyOutcome, shared with the
+// alerts — one vocabulary for the report and the pager.
+const PLAIN = PLAIN_REASON
 
 /** Minutes since midnight for a zero-padded "HH:mm". */
 function minutesOf(hhmm: string): number {
@@ -330,6 +319,16 @@ export async function GET(req: Request) {
       } else if (out.status === 'skipped') {
         reasons[out.reason] = (reasons[out.reason] ?? 0) + 1
         outcome.set(r.id, out.reason)
+        // The reasons no retry can clear, once an hour (the :10 pass), with the
+        // room and in words. Every pass would be a storm; never would hide a
+        // door that will not open all day.
+        if (sweepShouldNudge(out.reason) && hhmm.endsWith(':10')) {
+          bookingLog.error(`Room ${r.unit?.name ?? r.unit?.id ?? '?'}: door not opened — ${PLAIN[out.reason] ?? out.reason}`, {
+            reservationId: r.id,
+            reason: out.reason,
+            'what to do': whatToDo(out.reason),
+          })
+        }
         if (out.reason === 'unit-occupied') occupied.push(r.id)
       } else {
         reasons.error = (reasons.error ?? 0) + 1

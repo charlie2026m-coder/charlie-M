@@ -55,3 +55,86 @@ const DOOR_BLOCKING_REASONS = new Set([
 export function doorStayedShut(reason: string): boolean {
   return DOOR_BLOCKING_REASONS.has(reason);
 }
+
+/** Plain words for every reason a door can refuse. Read by whoever can act on
+ *  it — the alert, the daily report — not by whoever wrote the code. */
+export const PLAIN_REASON: Record<string, string> = {
+  'unit-dirty': 'not cleaned yet',
+  'unit-occupied': 'previous guest still checked in',
+  'unit-unknown': 'room status unreadable',
+  'unit-reassigned': 'guest moved to another room',
+  'unit-no-longer-ready': 'room stopped being ready',
+  'no-unit-assigned': 'no room assigned yet',
+  'no-offer': 'Apaleo offered nothing for the earlier time',
+  'price-drift': 'price would change — refused',
+  'opposite-extension-conflict': 'departing guest bought a late checkout',
+  'nothing-earlier-to-gain': 'nothing earlier to gain',
+  'no-arrival-time': 'reservation has no arrival time',
+  'not-configured': 'APALEO_PROPERTY_ID is not set',
+  'not-found-or-other-property': 'reservation not found in this hotel',
+  'not-arriving-today': 'not arriving today',
+  'too-late-in-day': 'too late in the day',
+  opened: 'opened',
+};
+
+export function plainReason(reason: string): string {
+  if (reason.startsWith('status-')) return `guest is ${reason.slice('status-'.length)}`;
+  return PLAIN_REASON[reason] ?? reason;
+}
+
+/** The second line of an alert: what a person can do about it. The fix
+ *  differs per reason, and "open by hand in Guestway" is a real one — the
+ *  Extend access button works when nothing else does. */
+const WHAT_TO_DO: Record<string, string> = {
+  'unit-occupied': 'check the previous guest out in Apaleo — the door cannot open while they are in the room',
+  'unit-unknown': 'Apaleo could not be read; the sweep retries every 15 min',
+  'unit-reassigned': 'the guest now has a different room; the sweep looks at it next pass',
+  'unit-no-longer-ready': 'the room stopped being ready between the check and the amend — ask housekeeping',
+  'no-unit-assigned': 'assign a room in Apaleo, or open by hand in Guestway (Extend access)',
+  'no-offer': 'Apaleo offers nothing for this reservation — open by hand in Guestway (Extend access)',
+  'price-drift': 'Apaleo would re-price the stay — open by hand in Guestway (Extend access)',
+  'opposite-extension-conflict': 'the departing guest has a late checkout on this room; the door cannot open before 13:00',
+  'no-arrival-time': 'the reservation has no arrival time — fix it in Apaleo',
+  'not-configured': 'set APALEO_PROPERTY_ID in Vercel',
+  'unit-dirty': 'Guestway said clean but Apaleo reads dirty — check the room',
+};
+
+export function whatToDo(reason: string): string | undefined {
+  return WHAT_TO_DO[reason];
+}
+
+/** Outcomes that mean "nothing to do" even right after Guestway said the room
+ *  is finished: the door is already open, the guest is already in (or out, or
+ *  cancelled), or the day is over. */
+const BENIGN_WHEN_CLEAN = new Set([
+  'nothing-earlier-to-gain',
+  'not-arriving-today',
+  'too-late-in-day',
+  'not-found-or-other-property',
+]);
+
+/**
+ * On the WEBHOOK path Guestway has just said the room is finished. Every
+ * refusal but the benign ones is then a door that should have opened and did
+ * not — the previous guest still checked in, no offer, a re-priced stay, no
+ * room assigned, the room read dirty after all. Each of those needs a person,
+ * and the person needs to hear it now, not at the 14:10 report. The owner's
+ * word on 2026-09-14: "if it doesn't work or errors — an alert in Slack".
+ */
+export function webhookShouldAlert(reason: string): boolean {
+  if (reason.startsWith('status-')) return false;
+  return !BENIGN_WHEN_CLEAN.has(reason);
+}
+
+/**
+ * On the SWEEP, which runs 44 times a day, the reasons no retry can clear are
+ * said once an hour (the :10 pass) with the room and in words. Every pass
+ * would be a storm; never would hide a door that will not open all day.
+ * `unit-*` states are not here: they are the normal morning, and the urgent
+ * alert speaks for them thirty minutes before the guest is due.
+ */
+const SWEEP_HOURLY = new Set(['not-configured', 'no-arrival-time', 'price-drift', 'no-offer']);
+
+export function sweepShouldNudge(reason: string): boolean {
+  return SWEEP_HOURLY.has(reason);
+}

@@ -14,6 +14,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const openRoomEarly = vi.fn()
 vi.mock('@/services/apaleo/amendStayTime', () => ({
   openRoomEarly: (...a: unknown[]) => openRoomEarly(...a),
+  loadReservationForAmend: async () => ({ unitId: 'MOT-QGO', unitName: '18' }),
 }))
 const sendGuestwayMessage = vi.fn()
 vi.mock('@/services/guestway/sendGuestwayMessage', () => ({

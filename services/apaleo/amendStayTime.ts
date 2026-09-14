@@ -232,6 +232,7 @@ export interface ReservationAmendContext {
   adults: number;
   childrenAges: number[];
   unitId?: string;       // assigned unit, when Apaleo has one
+  unitName?: string;     // its display name ("18") — for alerts read by people
   timeSlices: AmendTimeSlice[]; // original slices, to restore the time on rollback
   status?: string;       // Apaleo reservation status (Confirmed / InHouse / …)
   // Who is staying. The collision guard needs it to tell a guest bridging their
@@ -287,7 +288,7 @@ export async function loadReservationForAmend(
       adults: number;
       childrenAges?: number[];
       status?: string;
-      unit?: { id?: string };
+      unit?: { id?: string; name?: string };
       primaryGuest?: { email?: string; lastName?: string };
       property?: { id?: string };
       ratePlan?: { id?: string };
@@ -320,6 +321,7 @@ export async function loadReservationForAmend(
       adults: res.adults,
       childrenAges: res.childrenAges ?? [],
       unitId: res.unit?.id,
+      unitName: res.unit?.name,
       timeSlices,
       status: res.status,
       primaryGuest: res.primaryGuest,
