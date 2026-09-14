@@ -668,8 +668,8 @@ export async function reverseStayExtension(applied: AppliedStayExtension): Promi
 // only paid-ECI guests), charges NOTHING, and only ever moves the arrival
 // EARLIER on the arrival day itself.
 //
-// A paid-ECI guest is NOT a no-op at a 09:00 floor: a guest who bought 13:00
-// and whose room is finished at 10:00 gets moved to 10:03 — they keep what they
+// A paid-ECI guest is NOT a no-op at an 11:00 floor: a guest who bought 13:00
+// and whose room is finished at 11:30 gets moved to 11:33 — they keep what they
 // paid for and gain on top. The reverse can never happen: the only-move-earlier
 // guard below still refuses to push any arrival later.
 //
@@ -690,19 +690,28 @@ export async function reverseStayExtension(applied: AppliedStayExtension): Promi
 // GET /reservation-accesses, comparing each door's code.validFrom against the
 // reservation's checkIn: most reservations showed a 0.0h gap, the amended ones
 // moved with the arrival, and one landed on a NON-round 14:01 from a room-ready
-// that fired at ~13:58. The last case is the one that settles it — the code
-// tracks whatever arrival we write, not a fixed step. So the floor is purely an
-// operational choice.
+// that fired at ~13:58. The last row settles that the LOCK would follow any time. What it does not
+// settle is what APALEO will do with the time — and that is where 09:00 failed.
 //
-// 09:00 is that choice, matching Motz19: early enough to hand over a room the
-// moment housekeeping is done (checkout is 11:00, so turnovers land well after
-// this), late enough that nobody is let into the building at dawn. The Guestway
-// automation is the other bound — it cannot fire before its own trigger — and
-// this constant is the belt for the day someone widens that trigger.
+// Apaleo's night is a time slice from 15:00 to 11:00 the next morning. Amend an
+// arrival to anything before 11:00 and the reservation now starts inside the
+// PREVIOUS night's slice: the amend offer comes back one night longer. Verified
+// live on 2026-09-14 — arrival 10:59 → a 114 EUR slice prepended, 11:00 → the
+// nights as booked. The price guard below refuses such an offer, and rightly:
+// nobody may be charged a night for a door. So with the floor at 09:00 (from
+// 2026-09-07 to 2026-09-14) every attempt before 11:00 was refused as price
+// drift, and every door that did open, opened after 11:00 — 11:13, 11:16,
+// 11:54, 12:04. On 2026-09-14 at 09:15 a guest was told "your room is ready,
+// come in" by Guestway's own automation while our amend to 09:18 was being
+// refused for exactly this; he stood at a locked door at 10:25.
+//
+// The floor is therefore the house checkout hour — the end of the previous
+// night's slice — and it is tied to that constant so the two cannot drift
+// apart. It is physics, not policy: there is no earlier door by any amend.
 //
 // NOT the same value as EARLY_CHECKIN_HHMM: that one is what the PAID early
 // check-in sells and must stay at 13:00.
-const ROOM_READY_FLOOR_HHMM = '09:00';
+const ROOM_READY_FLOOR_HHMM = DEFAULT_CHECKOUT_HHMM;
 // Headroom added to "now" so the amended arrival is never in the past by the
 // time Apaleo evaluates it (berlinNow truncates to the minute and the offer +
 // amend round-trips take seconds).
@@ -844,8 +853,9 @@ export async function openRoomEarly(
 
   // Target = max(floor, now + headroom): never below ROOM_READY_FLOOR_HHMM,
   // never in the past when Apaleo evaluates it. Zero-padded HH:mm ⇒ lexical
-  // compare works. The floor is 09:00 since 2026-09-07; it read 13:00 before
-  // that, and the two bullets below are what changed with it.
+  // compare works. The floor is 11:00 since 2026-09-14 — 09:00 for the week
+  // before, 13:00 before that; see ROOM_READY_FLOOR_HHMM for why 09:00 could
+  // never work — and the two bullets below are what changed with it.
   const nowPlus = addMinutes(now.hhmm, ROOM_READY_HEADROOM_MIN);
   if (!nowPlus) return { status: 'skipped', reason: 'too-late-in-day' };
   const target = nowPlus > ROOM_READY_FLOOR_HHMM ? nowPlus : ROOM_READY_FLOOR_HHMM;
