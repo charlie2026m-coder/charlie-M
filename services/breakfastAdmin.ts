@@ -272,6 +272,63 @@ export async function deleteSlot(id: number): Promise<{ ok: boolean; error?: str
   return { ok: true }
 }
 
+/**
+ * Put one menu on, or take it off, every day of a range — leaving the other
+ * menus on those days alone. This is the "Serve every day" button on a menu
+ * card: the kitchen has just added a menu and wants it available, not to
+ * re-enter the whole calendar.
+ */
+export async function changeCalendarForMenu(
+  from: string,
+  to: string,
+  code: string,
+  action: 'add' | 'remove',
+): Promise<{ ok: boolean; days?: number; error?: string }> {
+  if (!MENU_CODE.test(code)) return { ok: false, error: 'bad_code' }
+  const start = Date.parse(`${from}T00:00:00Z`)
+  const end = Date.parse(`${to}T00:00:00Z`)
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) {
+    return { ok: false, error: 'bad_range' }
+  }
+  const days = Math.round((end - start) / 86_400_000) + 1
+  if (days > MAX_RANGE_DAYS) return { ok: false, error: 'range_too_long' }
+
+  const db = admin()
+
+  if (action === 'remove') {
+    const { error } = await db
+      .from('breakfast_menu_days')
+      .delete()
+      .eq('menu_code', code)
+      .gte('service_date', from)
+      .lte('service_date', to)
+    if (error) {
+      bfLog.error('calendar remove failed', { code, from, to, error: error.message })
+      return { ok: false, error: 'failed' }
+    }
+    return { ok: true, days }
+  }
+
+  const { data: known } = await db.from('breakfast_menus').select('code').eq('code', code).maybeSingle()
+  if (!known) return { ok: false, error: 'unknown_menu' }
+
+  const rows: { service_date: string; menu_code: string }[] = []
+  for (let i = 0; i < days; i++) {
+    rows.push({ service_date: new Date(start + i * 86_400_000).toISOString().slice(0, 10), menu_code: code })
+  }
+  for (let i = 0; i < rows.length; i += 500) {
+    // Days that already serve it are left as they are.
+    const { error } = await db
+      .from('breakfast_menu_days')
+      .upsert(rows.slice(i, i + 500), { onConflict: 'service_date,menu_code', ignoreDuplicates: true })
+    if (error) {
+      bfLog.error('calendar add failed', { code, from, to, error: error.message })
+      return { ok: false, error: 'failed' }
+    }
+  }
+  return { ok: true, days }
+}
+
 /** Which menus are on offer on each day of a range. */
 export async function readCalendar(
   from: string,

@@ -46,6 +46,12 @@ interface SlotRow {
 const berlinToday = () =>
   new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(new Date())
 
+/** How far ahead "serve every day" reaches, and how far the cards look. */
+const HORIZON = 30
+/** Fired by a menu card after it changed the calendar, so the calendar
+ *  section below refreshes without the two knowing each other. */
+const CALENDAR_CHANGED = 'breakfast-calendar-changed'
+
 const field =
   'h-9 w-full rounded-lg border border-gray-300 px-2 text-sm outline-none focus:border-black'
 const area =
@@ -72,12 +78,29 @@ function Menus() {
   const [menus, setMenus] = useState<MenuRow[] | null>(null)
   const [adding, setAdding] = useState(false)
   const [note, setNote] = useState('')
+  /** Days in the next HORIZON on which each menu is served. */
+  const [served, setServed] = useState<Map<string, number>>(new Map())
 
   const load = useCallback(async () => {
-    const res = await fetch('/api/admin/breakfast/menus', { cache: 'no-store' })
-    if (!res.ok) return setMenus([])
-    const json = await res.json()
+    const today = berlinToday()
+    const [menusRes, daysRes] = await Promise.all([
+      fetch('/api/admin/breakfast/menus', { cache: 'no-store' }),
+      fetch(`/api/admin/breakfast/calendar?from=${today}&to=${addDays(today, HORIZON - 1)}`, {
+        cache: 'no-store',
+      }),
+    ])
+    if (!menusRes.ok) return setMenus([])
+    const json = await menusRes.json()
     setMenus(json.menus ?? [])
+
+    const counts = new Map<string, number>()
+    if (daysRes.ok) {
+      const days = ((await daysRes.json()).days ?? []) as { date: string; codes: string[] }[]
+      for (const day of days) {
+        for (const code of day.codes) counts.set(code, (counts.get(code) ?? 0) + 1)
+      }
+    }
+    setServed(counts)
   }, [])
 
   useEffect(() => {
@@ -120,7 +143,7 @@ function Menus() {
       ) : (
         <div className='flex flex-col gap-4'>
           {menus.map(menu => (
-            <MenuCard key={menu.code} menu={menu} onSaved={load} />
+            <MenuCard key={menu.code} menu={menu} served={served.get(menu.code) ?? 0} onSaved={load} />
           ))}
         </div>
       )}
@@ -130,7 +153,8 @@ function Menus() {
           <MdAdd /> {adding ? 'Adding…' : 'Add a menu'}
         </Button>
         <span className='text-sm text-gray-500'>
-          A new card appears below — give it a name, what is in it, and a photo.
+          A new card appears below: name it, say what is in it, add a photo, then press “Serve
+          every day” so guests can pick it.
         </span>
         {note && <span className='text-sm text-red-700'>{note}</span>}
       </div>
@@ -142,7 +166,16 @@ function Menus() {
   )
 }
 
-function MenuCard({ menu, onSaved }: { menu: MenuRow; onSaved: () => void }) {
+function MenuCard({
+  menu,
+  served,
+  onSaved,
+}: {
+  menu: MenuRow
+  /** Days in the next HORIZON on which it is served. */
+  served: number
+  onSaved: () => void
+}) {
   const [draft, setDraft] = useState(menu)
   const [state, setState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
 
@@ -213,6 +246,7 @@ function MenuCard({ menu, onSaved }: { menu: MenuRow; onSaved: () => void }) {
       </div>
 
       <MenuPhoto code={menu.code} url={menu.photo_url} onChanged={onSaved} />
+      <MenuCalendar code={menu.code} served={served} active={menu.is_active} onChanged={onSaved} />
 
       <div className='grid gap-3 sm:grid-cols-2'>
         <Text label='Name (EN)' value={draft.name_en} onChange={v => set({ name_en: v })} />
@@ -256,6 +290,75 @@ function MenuCard({ menu, onSaved }: { menu: MenuRow; onSaved: () => void }) {
         {state === 'saved' && <span className='text-sm text-green-700'>Saved</span>}
         {state === 'error' && <span className='text-sm text-red-700'>Could not save</span>}
       </div>
+    </div>
+  )
+}
+
+/**
+ * Whether guests can actually pick this menu: a menu has to be on the
+ * calendar, not merely in the list, and a freshly added one is on no day at
+ * all. Two buttons cover what the kitchen nearly always means — on every day
+ * for the next month, or off all of them; the calendar section below is
+ * still there for anything finer.
+ */
+function MenuCalendar({
+  code,
+  served,
+  active,
+  onChanged,
+}: {
+  code: string
+  served: number
+  active: boolean
+  onChanged: () => void
+}) {
+  const [busy, setBusy] = useState(false)
+  const [note, setNote] = useState('')
+
+  const change = async (action: 'add' | 'remove') => {
+    setBusy(true)
+    setNote('')
+    const today = berlinToday()
+    const res = await fetch('/api/admin/breakfast/calendar', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: today, to: addDays(today, HORIZON - 1), code, action }),
+    })
+    const json = await res.json().catch(() => ({ ok: false }))
+    setBusy(false)
+    if (!json.ok) {
+      setNote('Could not change the calendar.')
+      return
+    }
+    window.dispatchEvent(new Event(CALENDAR_CHANGED))
+    onChanged()
+  }
+
+  const everyDay = served >= HORIZON
+  const status =
+    served === 0
+      ? 'Not on the calendar yet — guests cannot pick it.'
+      : everyDay
+        ? `On the menu every day for the next ${HORIZON} days.`
+        : `On the menu ${served} of the next ${HORIZON} days.`
+
+  return (
+    <div className='mb-3 flex flex-wrap items-center gap-3 rounded-lg bg-gray-50 px-3 py-2 text-sm'>
+      <span className={served === 0 && active ? 'text-amber-800' : 'text-gray-700'}>
+        {status}
+        {!active && ' Not on offer, so hidden either way.'}
+      </span>
+      {!everyDay && (
+        <Button size='sm' className='h-8' disabled={busy} onClick={() => void change('add')}>
+          {busy ? 'Working…' : 'Serve every day'}
+        </Button>
+      )}
+      {served > 0 && (
+        <Button variant='outline' size='sm' className='h-8' disabled={busy} onClick={() => void change('remove')}>
+          Take off all days
+        </Button>
+      )}
+      {note && <span className='text-red-700'>{note}</span>}
     </div>
   )
 }
@@ -610,6 +713,12 @@ function Calendar() {
       }
       await loadDays()
     })()
+  }, [loadDays])
+
+  useEffect(() => {
+    const refresh = () => void loadDays()
+    window.addEventListener(CALENDAR_CHANGED, refresh)
+    return () => window.removeEventListener(CALENDAR_CHANGED, refresh)
   }, [loadDays])
 
   const apply = async () => {

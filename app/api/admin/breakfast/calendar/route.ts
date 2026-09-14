@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/requireAdmin'
-import { readCalendar, writeCalendar } from '@/services/breakfastAdmin'
+import { changeCalendarForMenu, readCalendar, writeCalendar } from '@/services/breakfastAdmin'
 
 /** Which menus are served on which mornings — admin only. */
 const NO_STORE = { 'Cache-Control': 'no-store' }
@@ -33,5 +33,25 @@ export async function POST(request: NextRequest) {
   }
 
   const result = await writeCalendar(from, to, codes.map(String))
+  return NextResponse.json(result, { status: result.ok ? 200 : 400, headers: NO_STORE })
+}
+
+/** One menu on or off every day of a range; the other menus stay. */
+export async function PATCH(request: NextRequest) {
+  const guard = await requireAdmin({ anyOf: ['breakfast'] })
+  if (!guard.ok) return guard.response
+
+  const body = (await request.json().catch(() => null)) as
+    | { from?: unknown; to?: unknown; code?: unknown; action?: unknown }
+    | null
+  const from = String(body?.from ?? '')
+  const to = String(body?.to ?? '')
+  const code = String(body?.code ?? '')
+  const action = body?.action
+  if (!ISO.test(from) || !ISO.test(to) || (action !== 'add' && action !== 'remove')) {
+    return NextResponse.json({ ok: false, error: 'bad_body' }, { status: 400, headers: NO_STORE })
+  }
+
+  const result = await changeCalendarForMenu(from, to, code, action)
   return NextResponse.json(result, { status: result.ok ? 200 : 400, headers: NO_STORE })
 }
