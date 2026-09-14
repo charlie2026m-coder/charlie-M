@@ -35,7 +35,7 @@ function archiveName(base: string, kind: 'booking' | 'checkout', fmt: string): s
 }
 
 export async function GET(request: NextRequest) {
-  const guard = await requireAdmin()
+  const guard = await requireAdmin({ anyOf: ['hotel'] })
   if (!guard.ok) return guard.response
 
   const sp = request.nextUrl.searchParams

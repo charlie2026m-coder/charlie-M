@@ -7,7 +7,7 @@ import { createSupabaseServerClient } from '@/lib/supabase-server'
  * admin-only RLS SELECT policy on self_checkout_tokens authorizes it.
  */
 export async function GET(request: NextRequest) {
-  const guard = await requireAdmin()
+  const guard = await requireAdmin({ anyOf: ['hotel'] })
   if (!guard.ok) return guard.response
 
   const supabase = await createSupabaseServerClient()

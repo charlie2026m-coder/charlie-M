@@ -18,7 +18,7 @@ import { ensureBreakfastToken, guestView } from '@/services/breakfast'
  * one, because the guest may already have the QR saved.
  */
 export async function GET(request: NextRequest) {
-  const guard = await requireAdmin()
+  const guard = await requireAdmin({ anyOf: ['breakfast'] })
   if (!guard.ok) return guard.response
 
   const reservationId = (request.nextUrl.searchParams.get('reservationId') ?? '').trim()

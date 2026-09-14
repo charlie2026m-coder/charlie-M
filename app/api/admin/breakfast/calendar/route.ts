@@ -7,7 +7,7 @@ const NO_STORE = { 'Cache-Control': 'no-store' }
 const ISO = /^\d{4}-\d{2}-\d{2}$/
 
 export async function GET(request: NextRequest) {
-  const guard = await requireAdmin()
+  const guard = await requireAdmin({ anyOf: ['breakfast'] })
   if (!guard.ok) return guard.response
 
   const from = request.nextUrl.searchParams.get('from') ?? ''
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const guard = await requireAdmin()
+  const guard = await requireAdmin({ anyOf: ['breakfast'] })
   if (!guard.ok) return guard.response
 
   const body = await request.json().catch(() => null)

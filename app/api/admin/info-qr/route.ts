@@ -32,7 +32,7 @@ const querySchema = z.object({
  * stale domain.
  */
 export async function GET(request: NextRequest) {
-  const guard = await requireAdmin()
+  const guard = await requireAdmin({ anyOf: ['hotel'] })
   if (!guard.ok) return guard.response
 
   const sp = request.nextUrl.searchParams

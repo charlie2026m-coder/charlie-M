@@ -19,7 +19,7 @@ export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
 export async function GET(request: NextRequest) {
-  const guard = await requireAdmin()
+  const guard = await requireAdmin({ anyOf: ['breakfast'] })
   if (!guard.ok) return guard.response
 
   const reservationId = (request.nextUrl.searchParams.get('reservationId') ?? '').trim()

@@ -16,7 +16,7 @@ export const maxDuration = 120
 const ISO = /^\d{4}-\d{2}-\d{2}$/
 
 export async function GET(request: NextRequest) {
-  const guard = await requireAdmin()
+  const guard = await requireAdmin({ anyOf: ['breakfast'] })
   if (!guard.ok) return guard.response
 
   const sp = request.nextUrl.searchParams

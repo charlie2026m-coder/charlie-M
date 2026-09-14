@@ -37,7 +37,11 @@ function makeSessionClient(opts: SessionOpts) {
         return {
           select: () => ({
             eq: () => ({
-              single: async () => ({ data: opts.admin ? { role: 'super_admin' } : null }),
+              single: async () => ({
+                data: opts.admin
+                  ? { role: 'super_admin', areas: ['breakfast', 'hotel', 'kitchen', 'team'], name: null }
+                  : null,
+              }),
             }),
           }),
         };

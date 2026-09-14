@@ -9,7 +9,7 @@ import { logger } from '@/lib/logger'
  * physical) — re-running is always safe.
  */
 export async function POST() {
-  const guard = await requireAdmin()
+  const guard = await requireAdmin({ anyOf: ['hotel'] })
   if (!guard.ok) return guard.response
 
   try {

@@ -9,10 +9,15 @@
  * behind "Breakfast setup" and then a second button. Now every screen is one
  * click away from every other, grouped by what the person is trying to do.
  *
+ * The menu shows only what this person may open: each item names the area it
+ * belongs to, and the (protected) layout hands in the areas of whoever is
+ * signed in. Hiding is a courtesy, not the guard — the sections' layouts and
+ * the API refuse by area regardless of what the menu showed.
+ *
  * Sidebar on a wide screen; a top bar with a menu button on a phone.
  */
 
-import { useState } from 'react'
+import { createContext, useContext, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
@@ -20,6 +25,7 @@ import {
   MdBed,
   MdClose,
   MdDashboard,
+  MdGroups,
   MdLogout,
   MdMenu,
   MdQrCode2,
@@ -27,10 +33,12 @@ import {
   MdRestaurantMenu,
   MdRoomService,
   MdSearch,
+  MdSettings,
   MdTune,
   MdTv,
 } from 'react-icons/md'
 import { supabase } from '@/lib/supabase'
+import type { Area } from '@/lib/adminAccess'
 
 export interface AdminNavItem {
   href: string
@@ -41,6 +49,8 @@ export interface AdminNavItem {
   prefix?: boolean
   /** Opens elsewhere — the restaurant's screen is not part of this panel. */
   external?: boolean
+  /** Shown only to people with this area. None = everybody on the panel. */
+  area?: Area
 }
 
 export interface AdminNavGroup {
@@ -59,39 +69,73 @@ export const ADMIN_NAV: AdminNavGroup[] = [
   {
     title: 'Breakfast',
     items: [
-      { href: '/admin/breakfast/overview', label: 'Numbers', hint: 'Sold, chosen, revenue', icon: <MdBarChart /> },
-      { href: '/admin/breakfast/report', label: 'Kitchen sheet', hint: 'What to cook on a morning', icon: <MdRestaurantMenu /> },
-      { href: '/admin/breakfast/reservation', label: 'Booking', hint: 'Look one up, add breakfast', icon: <MdSearch /> },
-      { href: '/admin/breakfast/scan', label: 'Door', hint: 'Scan the guest’s QR', icon: <MdQrCodeScanner /> },
-      { href: '/admin/breakfast', label: 'Setup', hint: 'Menus, sittings, calendar', icon: <MdTune /> },
+      { href: '/admin/breakfast/overview', label: 'Numbers', hint: 'Sold, chosen, revenue', icon: <MdBarChart />, area: 'breakfast' },
+      { href: '/admin/breakfast/report', label: 'Kitchen sheet', hint: 'What to cook on a morning', icon: <MdRestaurantMenu />, area: 'breakfast' },
+      { href: '/admin/breakfast/reservation', label: 'Booking', hint: 'Look one up, add breakfast', icon: <MdSearch />, area: 'breakfast' },
+      { href: '/admin/breakfast/scan', label: 'Door', hint: 'Scan the guest’s QR', icon: <MdQrCodeScanner />, area: 'breakfast' },
+      { href: '/admin/breakfast', label: 'Setup', hint: 'Menus, sittings, calendar', icon: <MdTune />, area: 'breakfast' },
     ],
   },
   {
     title: 'Hotel',
     items: [
-      { href: '/admin/rooms', label: 'Rooms', hint: 'Photos and descriptions', icon: <MdBed />, prefix: true },
-      { href: '/admin/services', label: 'Extras', hint: 'What guests can add', icon: <MdRoomService />, prefix: true },
-      { href: '/admin/checkout', label: 'QR codes', hint: 'Print for the rooms', icon: <MdQrCode2 /> },
+      { href: '/admin/rooms', label: 'Rooms', hint: 'Photos and descriptions', icon: <MdBed />, prefix: true, area: 'hotel' },
+      { href: '/admin/services', label: 'Extras', hint: 'What guests can add', icon: <MdRoomService />, prefix: true, area: 'hotel' },
+      { href: '/admin/checkout', label: 'QR codes', hint: 'Print for the rooms', icon: <MdQrCode2 />, area: 'hotel' },
     ],
   },
   {
     title: 'Restaurant',
     items: [
-      { href: '/kitchen', label: 'Kitchen screen', hint: 'What the restaurant sees', icon: <MdTv />, external: true },
+      { href: '/kitchen', label: 'Kitchen screen', hint: 'What the restaurant sees', icon: <MdTv />, external: true, area: 'kitchen' },
+    ],
+  },
+  {
+    title: 'Account',
+    items: [
+      { href: '/admin/settings', label: 'Settings', hint: 'Password, two-step login', icon: <MdSettings /> },
+      { href: '/admin/team', label: 'Team', hint: 'Who can log in, what they can do', icon: <MdGroups />, area: 'team' },
     ],
   },
 ]
+
+/** The groups a person with these areas may see; groups left empty vanish. */
+export function visibleNav(areas: readonly Area[]): AdminNavGroup[] {
+  return ADMIN_NAV.map(group => ({
+    ...group,
+    items: group.items.filter(item => !item.area || areas.includes(item.area)),
+  })).filter(group => group.items.length > 0)
+}
+
+interface AdminContextValue {
+  areas: Area[]
+  /** The signed-in person, as the screens should address them. */
+  who: string
+}
+
+const AdminContext = createContext<AdminContextValue>({ areas: [], who: '' })
+
+/** Who is signed in and what they may do — for the screens inside the shell. */
+export const useAdmin = () => useContext(AdminContext)
 
 function isActive(item: AdminNavItem, pathname: string): boolean {
   if (item.prefix) return pathname === item.href || pathname.startsWith(item.href + '/')
   return pathname === item.href
 }
 
-function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+function NavList({
+  groups,
+  pathname,
+  onNavigate,
+}: {
+  groups: AdminNavGroup[]
+  pathname: string
+  onNavigate?: () => void
+}) {
   return (
     <nav className='flex flex-col gap-5'>
-      {ADMIN_NAV.map((group, i) => (
-        <div key={i}>
+      {groups.map((group, i) => (
+        <div key={group.title ?? i}>
           {group.title && (
             <div className='mb-1 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400'>
               {group.title}
@@ -135,10 +179,19 @@ function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () =
   )
 }
 
-export function AdminShell({ children }: { children: React.ReactNode }) {
+export function AdminShell({
+  areas,
+  who,
+  children,
+}: {
+  areas: Area[]
+  who: string
+  children: React.ReactNode
+}) {
   const pathname = usePathname() ?? ''
   const router = useRouter()
   const [open, setOpen] = useState(false)
+  const groups = visibleNav(areas)
 
   const logout = async () => {
     await supabase.auth.signOut()
@@ -157,49 +210,56 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     </div>
   )
 
-  const logoutButton = (
-    <button
-      type='button'
-      onClick={() => void logout()}
-      className='flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-gray-600 hover:bg-gray-100'
-    >
-      <MdLogout className='text-xl' /> Log out
-    </button>
+  const footer = (
+    <div className='mt-4 border-t border-gray-200 pt-3'>
+      <div className='truncate px-3 pb-1 text-xs text-gray-500' title={who}>
+        {who}
+      </div>
+      <button
+        type='button'
+        onClick={() => void logout()}
+        className='flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-gray-600 hover:bg-gray-100'
+      >
+        <MdLogout className='text-xl' /> Log out
+      </button>
+    </div>
   )
 
   return (
-    <div className='min-h-screen bg-white text-black lg:flex'>
-      {/* Wide screens: a sidebar that stays put. */}
-      <aside className='hidden w-64 shrink-0 flex-col border-r border-gray-200 p-4 lg:sticky lg:top-0 lg:flex lg:h-screen'>
-        <div className='mb-6'>{brand}</div>
-        <div className='flex-1 overflow-y-auto'>
-          <NavList pathname={pathname} />
-        </div>
-        <div className='mt-4 border-t border-gray-200 pt-3'>{logoutButton}</div>
-      </aside>
-
-      {/* Phones: a bar with the menu behind one button. */}
-      <div className='lg:hidden'>
-        <div className='flex items-center justify-between border-b border-gray-200 p-3'>
-          {brand}
-          <button
-            type='button'
-            onClick={() => setOpen(o => !o)}
-            aria-label={open ? 'Close menu' : 'Open menu'}
-            className='flex h-10 w-10 items-center justify-center rounded-xl border border-gray-300 text-2xl'
-          >
-            {open ? <MdClose /> : <MdMenu />}
-          </button>
-        </div>
-        {open && (
-          <div className='border-b border-gray-200 p-3'>
-            <NavList pathname={pathname} onNavigate={() => setOpen(false)} />
-            <div className='mt-4 border-t border-gray-200 pt-3'>{logoutButton}</div>
+    <AdminContext.Provider value={{ areas, who }}>
+      <div className='min-h-screen bg-white text-black lg:flex'>
+        {/* Wide screens: a sidebar that stays put. */}
+        <aside className='hidden w-64 shrink-0 flex-col border-r border-gray-200 p-4 lg:sticky lg:top-0 lg:flex lg:h-screen'>
+          <div className='mb-6'>{brand}</div>
+          <div className='flex-1 overflow-y-auto'>
+            <NavList groups={groups} pathname={pathname} />
           </div>
-        )}
-      </div>
+          {footer}
+        </aside>
 
-      <div className='min-w-0 flex-1'>{children}</div>
-    </div>
+        {/* Phones: a bar with the menu behind one button. */}
+        <div className='lg:hidden'>
+          <div className='flex items-center justify-between border-b border-gray-200 p-3'>
+            {brand}
+            <button
+              type='button'
+              onClick={() => setOpen(o => !o)}
+              aria-label={open ? 'Close menu' : 'Open menu'}
+              className='flex h-10 w-10 items-center justify-center rounded-xl border border-gray-300 text-2xl'
+            >
+              {open ? <MdClose /> : <MdMenu />}
+            </button>
+          </div>
+          {open && (
+            <div className='border-b border-gray-200 p-3'>
+              <NavList groups={groups} pathname={pathname} onNavigate={() => setOpen(false)} />
+              {footer}
+            </div>
+          )}
+        </div>
+
+        <div className='min-w-0 flex-1'>{children}</div>
+      </div>
+    </AdminContext.Provider>
   )
 }

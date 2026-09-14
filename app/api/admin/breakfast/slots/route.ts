@@ -6,13 +6,13 @@ import { createSlot, deleteSlot, listSlots, updateSlot } from '@/services/breakf
 const NO_STORE = { 'Cache-Control': 'no-store' }
 
 export async function GET() {
-  const guard = await requireAdmin()
+  const guard = await requireAdmin({ anyOf: ['breakfast'] })
   if (!guard.ok) return guard.response
   return NextResponse.json({ ok: true, slots: await listSlots() }, { headers: NO_STORE })
 }
 
 export async function POST(request: NextRequest) {
-  const guard = await requireAdmin()
+  const guard = await requireAdmin({ anyOf: ['breakfast'] })
   if (!guard.ok) return guard.response
 
   const body = await request.json().catch(() => null)
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const guard = await requireAdmin()
+  const guard = await requireAdmin({ anyOf: ['breakfast'] })
   if (!guard.ok) return guard.response
 
   const body = await request.json().catch(() => null)
@@ -39,7 +39,7 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const guard = await requireAdmin()
+  const guard = await requireAdmin({ anyOf: ['breakfast'] })
   if (!guard.ok) return guard.response
 
   const id = Number(request.nextUrl.searchParams.get('id'))

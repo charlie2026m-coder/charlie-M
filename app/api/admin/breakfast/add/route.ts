@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
 export async function POST(request: NextRequest) {
-  const guard = await requireAdmin()
+  const guard = await requireAdmin({ anyOf: ['breakfast'] })
   if (!guard.ok) return guard.response
 
   const body = await request.json().catch(() => null)

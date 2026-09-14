@@ -23,7 +23,7 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ token: string }> }
 ) {
-  const guard = await requireAdmin()
+  const guard = await requireAdmin({ anyOf: ['hotel'] })
   if (!guard.ok) return guard.response
 
   const { token } = await params

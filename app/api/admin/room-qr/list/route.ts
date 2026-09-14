@@ -8,7 +8,7 @@ import { listRooms, roomTokenFor, roomAccessEnabled } from '@/services/roomAcces
  * Admin-only: these URLs are the credential the sticker carries.
  */
 export async function GET(request: NextRequest) {
-  const guard = await requireAdmin()
+  const guard = await requireAdmin({ anyOf: ['hotel'] })
   if (!guard.ok) return guard.response
 
   if (!roomAccessEnabled()) {

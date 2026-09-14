@@ -18,7 +18,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { MdArrowForward } from 'react-icons/md'
 import { PageHeader } from '@/app/_components/admin/PageHeader'
-import { ADMIN_NAV } from '@/app/_components/admin/AdminShell'
+import { useAdmin, visibleNav } from '@/app/_components/admin/AdminShell'
 import { addDays } from '@/lib/breakfastDates'
 
 const berlinToday = () =>
@@ -57,6 +57,8 @@ const pick = <T, K extends keyof T>(value: Loadable<T>, key: K): Loadable<T[K] &
 }
 
 export default function AdminHomePage() {
+  const { areas } = useAdmin()
+  const hasBreakfast = areas.includes('breakfast')
   const [today] = useState(berlinToday)
   const tomorrow = addDays(today, 1)
 
@@ -77,12 +79,14 @@ export default function AdminHomePage() {
       }
     }
     void get<HotelToday>('/api/admin/today', setHotel)
-    void get<BreakfastMorning>(`/api/admin/breakfast/report?morning=${today}`, setBfToday)
-    void get<BreakfastMorning>(`/api/admin/breakfast/report?morning=${tomorrow}`, setBfTomorrow)
+    if (hasBreakfast) {
+      void get<BreakfastMorning>(`/api/admin/breakfast/report?morning=${today}`, setBfToday)
+      void get<BreakfastMorning>(`/api/admin/breakfast/report?morning=${tomorrow}`, setBfTomorrow)
+    }
     return () => {
       cancelled = true
     }
-  }, [today, tomorrow])
+  }, [today, tomorrow, hasBreakfast])
 
   const breakfastNote = (value: Loadable<BreakfastMorning>): string | undefined => {
     if (value.state !== 'ready') return undefined
@@ -95,7 +99,7 @@ export default function AdminHomePage() {
     <main className='mx-auto w-full max-w-[1100px] p-4 pb-16 sm:p-6'>
       <PageHeader title='Today' description={longDate(today)} />
 
-      <section className='mb-3'>
+      <section className={hasBreakfast ? 'mb-3' : 'mb-10'}>
         <div className='grid grid-cols-3 gap-3'>
           <Stat label='Arriving' value={show(pick(hotel, 'arrivals'))} />
           <Stat label='Leaving' value={show(pick(hotel, 'departures'))} />
@@ -103,6 +107,7 @@ export default function AdminHomePage() {
         </div>
       </section>
 
+      {hasBreakfast && (
       <section className='mb-10'>
         <div className='grid grid-cols-2 gap-3'>
           <Stat
@@ -121,8 +126,9 @@ export default function AdminHomePage() {
           />
         </div>
       </section>
+      )}
 
-      {ADMIN_NAV.filter(group => group.title).map(group => (
+      {visibleNav(areas).filter(group => group.title).map(group => (
         <section key={group.title} className='mb-8'>
           <h2 className='mb-3 text-xs font-medium uppercase tracking-[0.14em] text-gray-500'>
             {group.title}

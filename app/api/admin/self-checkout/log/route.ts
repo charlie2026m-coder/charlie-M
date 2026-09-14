@@ -4,7 +4,7 @@ import { createSupabaseServerClient } from '@/lib/supabase-server'
 
 /** Audit log of self-checkout attempts, newest first. */
 export async function GET(request: NextRequest) {
-  const guard = await requireAdmin()
+  const guard = await requireAdmin({ anyOf: ['hotel'] })
   if (!guard.ok) return guard.response
 
   const raw = Number(request.nextUrl.searchParams.get('limit') || 200)
