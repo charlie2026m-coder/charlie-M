@@ -1359,6 +1359,9 @@ export interface ScanResult {
   attendedAt?: string | null
   /** The guest's note to the kitchen, for the person at the door. */
   note?: string
+  /** On a refusal for "not today": the mornings this reservation DOES have
+   *  breakfast on, so the door can say "yours is tomorrow" instead of "no". */
+  mornings?: string[]
 }
 
 /**
@@ -1406,10 +1409,14 @@ export async function scanBreakfast(token: string, locale = 'de'): Promise<ScanR
   // money path depends on.
   const room = String((reservation as { unit?: { name?: string } }).unit?.name ?? '')
 
-  const paid = paidBreakfastMornings(reservation).find(p => p.morning === morning)
+  const paidMornings = paidBreakfastMornings(reservation)
+  const paid = paidMornings.find(p => p.morning === morning)
   if (!paid) {
     await log('not_paid', { reservation_id: reservationId, guest })
-    return { ok: false, result: 'not_paid', guest, room }
+    return {
+      ok: false, result: 'not_paid', guest, room,
+      mornings: paidMornings.map(p => p.morning).sort(),
+    }
   }
 
   const { data: booking } = await db

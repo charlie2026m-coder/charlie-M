@@ -38,6 +38,7 @@ interface ScanResponse {
   persons?: number
   attendedAt?: string | null
   note?: string
+  mornings?: string[]
 }
 
 interface Entry extends ScanResponse {
@@ -78,6 +79,15 @@ const VERDICT: Record<ScanResponse['result'], { tone: string; title: string; blu
     blurb: 'Try once more. If it keeps failing, take the room number and let them in.',
   },
 }
+
+/** "Wed 17 Sept" — how the door says a date to a guest. */
+const dayLabel = (iso: string) =>
+  new Intl.DateTimeFormat('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+  }).format(new Date(`${iso}T00:00:00Z`))
 
 const hhmm = (iso: string) =>
   new Intl.DateTimeFormat('en-GB', {
@@ -143,20 +153,30 @@ export function DoorScanner({
     } finally {
       setBusy(false)
       setToken('')
-      inputRef.current?.focus()
+      if (cameraRef.current !== 'on') inputRef.current?.focus()
     }
   }, [busy])
 
   // Keep the wedge scanner's keystrokes landing somewhere: it types wherever
   // the focus happens to be, so anything that steals focus breaks the door.
+  // Not while the camera is open, though — on a phone that yanked the page
+  // back to the input every second and a half and popped the keyboard, so
+  // the screen could not be scrolled at all.
+  const cameraRef = useRef<CameraState>('off')
+  cameraRef.current = camera
   useEffect(() => {
+    if (camera === 'on') {
+      inputRef.current?.blur()
+      return
+    }
     const keep = () => {
-      if (document.activeElement?.tagName !== 'INPUT') inputRef.current?.focus()
+      if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+        inputRef.current?.focus()
+      }
     }
     const id = window.setInterval(keep, 1500)
-    inputRef.current?.focus()
     return () => window.clearInterval(id)
-  }, [])
+  }, [camera])
 
   const stopCamera = useCallback(() => {
     streamRef.current?.getTracks().forEach(t => t.stop())
@@ -373,6 +393,19 @@ export function DoorScanner({
             <p className='mt-3 rounded-xl border border-current/30 bg-white/60 px-3 py-2 text-base'>
               <span className='mr-1 font-semibold'>Note:</span>
               {last.note}
+            </p>
+          )}
+
+          {last.result === 'not_paid' && (
+            <p className='mt-3 rounded-xl border border-current/30 bg-white/60 px-3 py-2 text-base'>
+              {last.mornings && last.mornings.length > 0 ? (
+                <>
+                  <span className='mr-1 font-semibold'>Breakfast is booked for:</span>
+                  {last.mornings.map(dayLabel).join(', ')}
+                </>
+              ) : (
+                'No breakfast on this reservation at all.'
+              )}
             </p>
           )}
 
