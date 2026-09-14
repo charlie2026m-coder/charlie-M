@@ -31,6 +31,18 @@ vi.mock('@/lib/slack', () => ({
   notifySlack: (...a: unknown[]) => notifySlack(...(a as [])),
 }))
 
+const guestway = { hasRoomReadyMessage: vi.fn(), sendGuestwayMessage: vi.fn() }
+vi.mock('@/services/guestway/sendGuestwayMessage', () => ({
+  hasRoomReadyMessage: (...a: unknown[]) => guestway.hasRoomReadyMessage(...a),
+  sendGuestwayMessage: (...a: unknown[]) => guestway.sendGuestwayMessage(...a),
+  buildRoomReadyMessage: (readyFrom: string) => `ready from ${readyFrom}`,
+}))
+const doorFollowsArrival = vi.fn()
+vi.mock('@/services/guestway/doorAccess', () => ({
+  doorFollowsArrival: (...a: unknown[]) => doorFollowsArrival(...a),
+}))
+
+
 process.env.APALEO_PROPERTY_ID = 'MOT'
 process.env.GUESTWAY_ROOM_READY_ENABLED = 'true'
 delete process.env.CRON_SECRET
@@ -63,6 +75,12 @@ beforeEach(() => {
   vi.clearAllMocks()
   runRoomReady.mockResolvedValue({ status: 'skipped', reason: 'unit-dirty' })
   unitReadiness.mockResolvedValue('ready')
+  // By default every guest has already been told and every door has followed,
+  // so the catch-up below has nothing to add to the older tests.
+  guestway.hasRoomReadyMessage.mockResolvedValue(true)
+  guestway.sendGuestwayMessage.mockResolvedValue({ success: true })
+  doorFollowsArrival.mockResolvedValue('confirmed')
+
   vi.useFakeTimers()
   // Mid-morning: rooms are still dirty and the audit window is hours away.
   vi.setSystemTime(new Date('2026-09-08T10:25:00+02:00'))
@@ -374,7 +392,8 @@ describe('a door already open onto a room that is not ready', () => {
     unitReadiness.mockResolvedValue('dirty')
     await call()
 
-    expect(unitReadiness).not.toHaveBeenCalled()
+    // "Never looked at the room" used to stand in for this; the catch-up for
+    // untold guests now legitimately looks. What matters is the silence.
     expect(log.error).not.toHaveBeenCalled()
   })
 
@@ -958,5 +977,95 @@ describe('the sweep and the reasons no retry can clear', () => {
     await call()
 
     expect(log.error).not.toHaveBeenCalled()
+  })
+})
+
+describe('the word that was not said', () => {
+  // A door opened at 11:00 whose guest was never told — the webhook gave up
+  // waiting for the lock. The sweep says it on a later pass, and knows whether
+  // it was said from the guest's own conversation.
+  const untold = {
+    id: 'UNTOLD-1',
+    arrival: '2026-09-08T11:00:00+02:00',
+    status: 'Confirmed',
+    unit: { id: 'MOT-QGO', name: '18' },
+  }
+
+  beforeEach(() => {
+    vi.setSystemTime(new Date('2026-09-08T11:25:00+02:00'))
+    arrivals([untold])
+    unitReadiness.mockResolvedValue('ready')
+    guestway.hasRoomReadyMessage.mockResolvedValue(false)
+  })
+
+  it('tells the guest once the door is seen open and the thread has no word yet', async () => {
+    await call()
+
+    expect(doorFollowsArrival).toHaveBeenCalledWith('UNTOLD-1', untold.arrival, { attempts: 1 })
+    expect(guestway.sendGuestwayMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ reservationId: 'UNTOLD-1', body: `ready from ${untold.arrival}` }),
+    )
+    expect(log.info).toHaveBeenCalledWith('room-ready: guest told on a later pass', expect.objectContaining({ arrival: '11:00' }))
+  })
+
+  it('does not say it twice — the thread remembers', async () => {
+    guestway.hasRoomReadyMessage.mockResolvedValue(true)
+    await call()
+
+    expect(guestway.sendGuestwayMessage).not.toHaveBeenCalled()
+  })
+
+  it('waits while the lock has not followed', async () => {
+    doorFollowsArrival.mockResolvedValue('not-yet')
+    await call()
+
+    expect(guestway.sendGuestwayMessage).not.toHaveBeenCalled()
+  })
+
+  it('waits while Apaleo still reads the room as not ready', async () => {
+    // An early hour alone proves nothing: an Airbnb ETA of 11:00 comes with a
+    // lock to match, and nobody has checked that room.
+    unitReadiness.mockResolvedValue('dirty')
+    await call()
+
+    expect(guestway.sendGuestwayMessage).not.toHaveBeenCalled()
+    expect(guestway.hasRoomReadyMessage).not.toHaveBeenCalled()
+    expect(doorFollowsArrival).not.toHaveBeenCalled()
+  })
+
+  it('does not act on a thread it cannot read', async () => {
+    guestway.hasRoomReadyMessage.mockResolvedValue(null)
+    await call()
+
+    expect(guestway.sendGuestwayMessage).not.toHaveBeenCalled()
+  })
+
+  it('leaves a paid early check-in alone — the sale told them', async () => {
+    fetchMock.mockImplementation((endpoint: string) => {
+      const u = String(endpoint)
+      if (u.includes('/finance/v1/folios')) return Promise.resolve({ folios: [{ charges: [{ name: 'Early Check-In' }] }] })
+      return Promise.resolve({ reservations: u.includes('dateFilter=Departure') ? [] : [untold] })
+    })
+    await call()
+
+    expect(guestway.sendGuestwayMessage).not.toHaveBeenCalled()
+  })
+
+  it('does nothing with the doors switched off', async () => {
+    process.env.GUESTWAY_ROOM_READY_ENABLED = 'false'
+    await call()
+    process.env.GUESTWAY_ROOM_READY_ENABLED = 'true'
+
+    expect(guestway.sendGuestwayMessage).not.toHaveBeenCalled()
+  })
+
+  it('raises it when the message cannot be delivered', async () => {
+    guestway.sendGuestwayMessage.mockResolvedValue({ success: false, error: 'no conversation found' })
+    await call()
+
+    expect(log.error).toHaveBeenCalledWith(
+      'room-ready: door opened but guest was not told',
+      expect.objectContaining({ reservationId: 'UNTOLD-1' }),
+    )
   })
 })

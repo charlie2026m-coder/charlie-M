@@ -96,6 +96,40 @@ interface ConversationsResponse {
   data?: Array<{ id: string }>
 }
 
+/** The first line of every room-ready note we send — what "already told" is
+ *  recognised by in the guest's thread. Guestway's own automation used a
+ *  different sentence, so it cannot be mistaken for ours. */
+export const ROOM_READY_SIGNATURE = 'Your room is ready early'
+
+/**
+ * Has this guest already been told the room is ready — by us, on any path?
+ *
+ * The guest's conversation is the memory: our note is in the thread, and
+ * Guestway keeps it. No table, no custom field, nothing to drift. `null` when
+ * the thread cannot be read (not configured, no single conversation, an
+ * error) — not "no", merely unknown, and callers must not act on it.
+ */
+export async function hasRoomReadyMessage(reservationId: string): Promise<boolean | null> {
+  if (!API_URL || !PARTNERSHIP_API_KEY || !MESSAGE_TOKEN) return null
+  try {
+    const conversationId = await findConversationId(reservationId)
+    if (!conversationId) return null
+    const res = await fetch(`${API_URL}/conversations/${encodeURIComponent(conversationId)}/messages`, {
+      headers: headers(MESSAGE_TOKEN as string),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    })
+    if (!res.ok) return null
+    const json = (await res.json()) as { data?: Array<{ body?: string | null }> }
+    return (json.data ?? []).some((m) => typeof m.body === 'string' && m.body.includes(ROOM_READY_SIGNATURE))
+  } catch (err) {
+    bookingLog.warn('guestway: could not read the guest thread', {
+      reservationId,
+      error: err instanceof Error ? err.message : String(err),
+    })
+    return null
+  }
+}
+
 function headers(bearer: string) {
   return {
     'X-Api-Key': PARTNERSHIP_API_KEY as string,

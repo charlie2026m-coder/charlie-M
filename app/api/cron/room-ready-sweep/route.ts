@@ -5,6 +5,8 @@ import { bookingLog } from '@/lib/logger'
 import { notifySlack } from '@/lib/slack'
 import { sameGuest } from '@/lib/sameGuest'
 import { PLAIN_REASON, sweepShouldNudge, whatToDo } from '@/lib/roomReadyOutcome'
+import { buildRoomReadyMessage, hasRoomReadyMessage, sendGuestwayMessage } from '@/services/guestway/sendGuestwayMessage'
+import { doorFollowsArrival } from '@/services/guestway/doorAccess'
 
 /**
  * Re-try the early door for every guest arriving today, all day.
@@ -412,6 +414,46 @@ export async function GET(req: Request) {
       openSince: arrivalHHmm,
       openForMin,
     })
+  }
+
+  // THE WORD THAT WAS NOT SAID.
+  //
+  // A door can be opened and its guest left untold: the webhook waits twenty
+  // seconds for Guestway to move the lock and then gives up without a word
+  // (rightly — never a word before a door), and openRoomEarly never returns
+  // `moved` for that guest again. So every pass looks at each early arrival
+  // still Confirmed and, if the room is ready, the lock now really starts at
+  // that hour, and the guest's conversation has no such message yet, says it.
+  //
+  // The conversation IS the memory — no table, no custom field, nothing to
+  // drift: "told" means our message is in the thread, and Guestway keeps it.
+  //
+  // Not for a paid early check-in (told by the sale, on its own path), not
+  // with the doors switched off (nothing was ours to open), and not on a
+  // guess: unreadable thread or unreadable lock means wait for the next pass.
+  // An early hour alone proves nothing — an Airbnb guest with an 11:00 ETA has
+  // an early arrival and a lock to match, and nobody has checked their room.
+  for (const r of doorsEnabled ? arrivals : []) {
+    if (Date.now() - startedAt > PASS_BUDGET_MS) break
+    if (r.status !== 'Confirmed' || !r.unit?.id) continue
+    if (hhmmOf(r.arrival) >= STANDARD_CHECKIN_HHMM) continue
+    // Cheapest and most telling first: a room not ready ends it in one Apaleo
+    // read, a guest already told in one thread read; the folio and the lock
+    // are asked only for the few who are ready and untold.
+    if ((await unitReadiness(r.unit.id)) !== 'ready') continue
+    if ((await hasRoomReadyMessage(r.id)) !== false) continue
+    if ((await paidEarlyCheckIn(r.id)) === true) continue
+    if ((await doorFollowsArrival(r.id, r.arrival, { attempts: 1 })) !== 'confirmed') continue
+    const chat = await sendGuestwayMessage({
+      reservationId: r.id,
+      medium: 'channel_chat',
+      body: buildRoomReadyMessage(r.arrival),
+    })
+    if (chat.success) {
+      bookingLog.info('room-ready: guest told on a later pass', { reservationId: r.id, arrival: hhmmOf(r.arrival) })
+    } else {
+      bookingLog.error('room-ready: door opened but guest was not told', { reservationId: r.id, error: chat.error })
+    }
   }
 
   // THE ONE THAT MATTERS: the guest is nearly here and the room is not ready.
