@@ -3,6 +3,7 @@
   "noCapacity": "Nicht genug Kapazität für diese Gästezahl",
   "check_in_btn": "Einchecken",
   "sign_in_btn": "Anmelden",
+  "profile_btn": "Profil",
   "loading": "Wird geladen...",
   "phoneInput": {
     "searchPlaceholder": "Land oder Vorwahl suchen...",

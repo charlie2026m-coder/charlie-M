@@ -3,6 +3,7 @@
   "noCapacity": "Not enough capacity for this number of guests",
   "check_in_btn": "Check In",
   "sign_in_btn": "Login",
+  "profile_btn": "Profile",
   "loading": "Loading...",
   "phoneInput": {
     "searchPlaceholder": "Search country or code...",
