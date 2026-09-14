@@ -15,10 +15,10 @@
  */
 
 import { useCallback, useEffect, useState } from 'react'
-import Link from 'next/link'
-import { MdArrowBack, MdChevronLeft, MdChevronRight, MdPrint, MdRefresh } from 'react-icons/md'
+import { MdChevronLeft, MdChevronRight, MdPrint, MdRefresh } from 'react-icons/md'
 import { Button } from '@/app/_components/ui/button'
 import { MenuIcon } from '@/app/_components/breakfast/MenuIcon'
+import { PageHeader } from '@/app/_components/admin/PageHeader'
 import { addDays } from '@/lib/breakfastDates'
 
 interface Line {
@@ -79,27 +79,32 @@ export default function BreakfastReportPage() {
     void load(morning)
   }, [load, morning])
 
+  // Opened from the home page with a morning in the URL: show that one.
+  useEffect(() => {
+    const asked = new URLSearchParams(window.location.search).get('morning')
+    if (asked && /^\d{4}-\d{2}-\d{2}$/.test(asked)) setMorning(asked)
+  }, [])
+
   const shift = (days: number) => setMorning(d => addDays(d, days))
   const notChosen = report ? report.covers - report.chosen : 0
 
   return (
     <main className='mx-auto w-full max-w-[900px] p-4 pb-16 sm:p-6'>
-      <div className='mb-4 flex flex-wrap items-center gap-3 print:hidden'>
-        <Button asChild variant='outline' size='sm' className='h-8'>
-          <Link href='/admin'>
-            <MdArrowBack /> Admin
-          </Link>
-        </Button>
-        <h1 className='text-xl font-bold text-black'>Breakfast — kitchen sheet</h1>
-        <div className='ml-auto flex items-center gap-2'>
-          <Button variant='outline' size='sm' className='h-8' onClick={() => void load(morning)}>
-            <MdRefresh /> Refresh
-          </Button>
-          <Button variant='outline' size='sm' className='h-8' onClick={() => window.print()}>
-            <MdPrint /> Print
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        className='print:hidden'
+        title='Kitchen sheet'
+        description='Everybody with breakfast on a morning and what they chose. Prep from the covers, not from the choices — the ones without a menu still come.'
+        actions={
+          <>
+            <Button variant='outline' size='sm' className='h-8' onClick={() => void load(morning)}>
+              <MdRefresh /> Refresh
+            </Button>
+            <Button variant='outline' size='sm' className='h-8' onClick={() => window.print()}>
+              <MdPrint /> Print
+            </Button>
+          </>
+        }
+      />
 
       <div className='mb-6 flex flex-wrap items-center gap-2 print:hidden'>
         <Button variant='outline' size='sm' className='h-8' onClick={() => shift(-1)}>

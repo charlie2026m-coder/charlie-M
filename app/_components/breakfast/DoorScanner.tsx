@@ -86,9 +86,10 @@ const hhmm = (iso: string) =>
   }).format(new Date(iso))
 
 export function DoorScanner({
-  backHref = '/admin',
-  backLabel = 'Admin',
+  backHref,
+  backLabel = 'Back',
 }: {
+  /** Where "back" goes. The admin panel has its own menu and passes nothing. */
   backHref?: string
   backLabel?: string
 }) {
@@ -208,11 +209,13 @@ export function DoorScanner({
   return (
     <main className='mx-auto w-full max-w-[760px] p-4 pb-16 sm:p-6'>
       <div className='mb-4 flex items-center gap-3'>
-        <Button asChild variant='outline' size='sm' className='h-8'>
-          <Link href={backHref}>
-            <MdArrowBack /> {backLabel}
-          </Link>
-        </Button>
+        {backHref && (
+          <Button asChild variant='outline' size='sm' className='h-8'>
+            <Link href={backHref}>
+              <MdArrowBack /> {backLabel}
+            </Link>
+          </Button>
+        )}
         <h1 className='text-xl font-bold text-black'>Breakfast door</h1>
       </div>
 

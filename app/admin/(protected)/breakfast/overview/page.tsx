@@ -9,9 +9,9 @@
  */
 
 import { useCallback, useEffect, useState } from 'react'
-import Link from 'next/link'
-import { MdArrowBack, MdRefresh } from 'react-icons/md'
+import { MdRefresh } from 'react-icons/md'
 import { Button } from '@/app/_components/ui/button'
+import { PageHeader } from '@/app/_components/admin/PageHeader'
 import { addDays } from '@/lib/breakfastDates'
 
 interface Day {
@@ -74,17 +74,15 @@ export default function BreakfastOverviewPage() {
 
   return (
     <main className='mx-auto w-full max-w-[900px] p-4 pb-16 sm:p-6'>
-      <div className='mb-4 flex flex-wrap items-center gap-3'>
-        <Button asChild variant='outline' size='sm' className='h-8'>
-          <Link href='/admin/breakfast'>
-            <MdArrowBack /> Breakfast
-          </Link>
-        </Button>
-        <h1 className='text-xl font-bold text-black'>Breakfast — overview</h1>
-        <Button variant='outline' size='sm' className='ml-auto h-8' onClick={() => void load(from, to)}>
-          <MdRefresh /> Refresh
-        </Button>
-      </div>
+      <PageHeader
+        title='Breakfast numbers'
+        description='Breakfasts sold per morning, how many of those guests have chosen a menu, and the revenue.'
+        actions={
+          <Button variant='outline' size='sm' className='h-8' onClick={() => void load(from, to)}>
+            <MdRefresh /> Refresh
+          </Button>
+        }
+      />
 
       <div className='mb-6 flex flex-wrap items-center gap-2'>
         <input type='date' value={from} onChange={e => e.target.value && setFrom(e.target.value)} className={field} />

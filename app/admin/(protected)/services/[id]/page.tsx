@@ -10,8 +10,9 @@ import { useUpdateService } from '@/app/hooks/useUpdateService'
 import { useUploadServicePhoto, useDeleteServicePhoto, getServiceImageUrl } from '@/app/hooks/useServicePhoto'
 import { Button } from '@/app/_components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/app/_components/ui/popover'
-import { IoArrowBack, IoTrash } from 'react-icons/io5'
+import { IoTrash } from 'react-icons/io5'
 import { MdAdd } from 'react-icons/md'
+import { PageHeader } from '@/app/_components/admin/PageHeader'
 
 export default function EditServicePage() {
   const params = useParams()
@@ -133,31 +134,19 @@ export default function EditServicePage() {
 
   if (loading || !isAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="text-sm text-gray-600">Loading...</div>
-      </div>
+      <div className="p-6 text-sm text-gray-500">Loading…</div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="border-b border-gray-200">
-        <div className="max-w-[1200px] mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/admin/services">
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 border-black text-black hover:bg-black hover:text-white h-8"
-            >
-              <IoArrowBack className="size-3.5" />
-              Back
-            </Button>
-          </Link>
-          <div className="font-mono text-sm font-bold">{service?.id}</div>
-        </div>
-      </div>
+    <main className='mx-auto w-full max-w-[1200px] p-4 pb-16 sm:p-6'>
+      <PageHeader
+        back={{ href: '/admin/services', label: 'All extras' }}
+        title={service?.title_en || serviceId}
+        description={<span className="font-mono">{service?.id}</span>}
+      />
 
-      <div className="max-w-[1200px] mx-auto px-4 py-6">
+      <div>
         <form onSubmit={handleSubmit} className="space-y-6 mb-6">
           <div className="border-2 border-gray-200 rounded-lg p-6">
             <div className="space-y-4">
@@ -279,6 +268,6 @@ export default function EditServicePage() {
           <p className="text-xs text-gray-400 mt-4">One image per service. Upload replaces the current image.</p>
         </div>
       </div>
-    </div>
+    </main>
   )
 }

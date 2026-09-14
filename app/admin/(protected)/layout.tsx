@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { isKitchenRole } from '@/lib/requireAdmin';
 import type { ReactNode } from 'react';
+import { AdminShell } from '@/app/_components/admin/AdminShell';
 
 export default async function ProtectedAdminLayout({ children }: { children: ReactNode }) {
   const supabase = await createSupabaseServerClient();
@@ -27,5 +28,5 @@ export default async function ProtectedAdminLayout({ children }: { children: Rea
     redirect('/kitchen');
   }
 
-  return <>{children}</>;
+  return <AdminShell>{children}</AdminShell>;
 }

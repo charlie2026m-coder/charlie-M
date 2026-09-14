@@ -35,7 +35,7 @@ export default function AdminLoginPage() {
 
   // Where each login belongs. The restaurant's account goes to its own
   // screens; everything else is a full admin and lands on the panel.
-  const destinationFor = (role?: string | null) => (role === 'kitchen' ? '/kitchen' : '/admin/rooms')
+  const destinationFor = (role?: string | null) => (role === 'kitchen' ? '/kitchen' : '/admin')
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()

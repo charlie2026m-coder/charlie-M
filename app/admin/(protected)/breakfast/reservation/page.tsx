@@ -11,10 +11,10 @@
  */
 
 import { useState } from 'react'
-import Link from 'next/link'
-import { MdArrowBack, MdContentCopy } from 'react-icons/md'
+import { MdContentCopy } from 'react-icons/md'
 import { Button } from '@/app/_components/ui/button'
 import { MenuIcon } from '@/app/_components/breakfast/MenuIcon'
+import { PageHeader } from '@/app/_components/admin/PageHeader'
 
 interface Morning {
   morning: string
@@ -127,14 +127,10 @@ export default function BreakfastReservationPage() {
 
   return (
     <main className='mx-auto w-full max-w-[860px] p-4 pb-16 sm:p-6'>
-      <div className='mb-4 flex flex-wrap items-center gap-3'>
-        <Button asChild variant='outline' size='sm' className='h-8'>
-          <Link href='/admin/breakfast'>
-            <MdArrowBack /> Breakfast
-          </Link>
-        </Button>
-        <h1 className='text-xl font-bold text-black'>Breakfast on a booking</h1>
-      </div>
+      <PageHeader
+        title='Breakfast on a booking'
+        description='Look a booking up by its Apaleo ID to see its breakfasts, copy the guest’s link, or add breakfast to it — for a test booking, or a guest who asks at the desk.'
+      />
 
       <form
         onSubmit={e => {

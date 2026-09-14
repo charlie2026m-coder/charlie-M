@@ -11,10 +11,10 @@
  */
 
 import { useCallback, useEffect, useState } from 'react'
-import Link from 'next/link'
-import { MdAdd, MdArrowBack, MdDelete } from 'react-icons/md'
+import { MdAdd, MdDelete } from 'react-icons/md'
 import { Button } from '@/app/_components/ui/button'
 import { MenuIcon, MENU_ICON_NAMES } from '@/app/_components/breakfast/MenuIcon'
+import { PageHeader } from '@/app/_components/admin/PageHeader'
 import { addDays } from '@/lib/breakfastDates'
 
 interface MenuRow {
@@ -52,28 +52,10 @@ const area =
 export default function BreakfastAdminPage() {
   return (
     <main className='mx-auto w-full max-w-[980px] p-4 pb-20 sm:p-6'>
-      <div className='mb-6 flex flex-wrap items-center gap-3'>
-        <Button asChild variant='outline' size='sm' className='h-8'>
-          <Link href='/admin'>
-            <MdArrowBack /> Admin
-          </Link>
-        </Button>
-        <h1 className='text-xl font-bold text-black'>Breakfast</h1>
-        <div className='ml-auto flex gap-2'>
-          <Button asChild variant='outline' size='sm' className='h-8'>
-            <Link href='/admin/breakfast/overview'>Overview</Link>
-          </Button>
-          <Button asChild variant='outline' size='sm' className='h-8'>
-            <Link href='/admin/breakfast/reservation'>Booking</Link>
-          </Button>
-          <Button asChild variant='outline' size='sm' className='h-8'>
-            <Link href='/admin/breakfast/report'>Kitchen sheet</Link>
-          </Button>
-          <Button asChild variant='outline' size='sm' className='h-8'>
-            <Link href='/admin/breakfast/scan'>Door</Link>
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title='Breakfast setup'
+        description='The menus guests choose from, the sittings, and which menus are served on which days. The price is set in Apaleo.'
+      />
 
       <Menus />
       <Slots />

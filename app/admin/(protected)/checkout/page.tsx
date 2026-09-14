@@ -1,10 +1,10 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import Link from 'next/link'
 import { Toaster, toast } from 'sonner'
 import { Button } from '@/app/_components/ui/button'
-import { MdQrCode2, MdSync, MdArrowBack } from 'react-icons/md'
+import { MdSync } from 'react-icons/md'
+import { PageHeader } from '@/app/_components/admin/PageHeader'
 import {
   useSelfCheckoutList,
   useGenerateTokens,
@@ -90,24 +90,18 @@ export default function AdminCheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <main className='mx-auto w-full max-w-[1200px] p-4 pb-16 sm:p-6'>
       <Toaster position="top-right" richColors />
 
-      {/* Header */}
-      <div className="border-b border-gray-200">
-        <div className="max-w-[1600px] mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-black text-white">
-              <MdQrCode2 className="size-4" />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-black">QR Self-Checkout</h1>
-              <p className="text-xs text-gray-500">
-                {isLoading ? 'Loading…' : `${items.length} rooms with QR codes`}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
+      <PageHeader
+        title='QR codes'
+        description={
+          isLoading
+            ? 'Loading…'
+            : `${items.length} rooms have codes. Two different stickers per room — check-out and booking — plus one code for each information page.`
+        }
+        actions={
+          <>
             <Button
               onClick={handleGenerate}
               disabled={generate.isPending}
@@ -127,17 +121,11 @@ export default function AdminCheckoutPage() {
               endpoint="/api/admin/room-qr/zip"
               label="Booking QR"
             />
-            <Button asChild variant="outline" size="sm" className="gap-1.5 h-8">
-              <Link href="/admin/rooms">
-                <MdArrowBack className="size-3.5" />
-                Rooms
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </div>
+          </>
+        }
+      />
 
-      <div className="max-w-[1200px] mx-auto px-4 py-4 space-y-8">
+      <div className="space-y-8">
         {/* Room-agnostic QRs for the public guide pages — above the per-room grid. */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {PAGE_QRS.map((q) => (
@@ -155,6 +143,6 @@ export default function AdminCheckoutPage() {
       </div>
 
       <QrPrintDialog item={printItem} onClose={() => setPrintItem(null)} />
-    </div>
+    </main>
   )
 }
