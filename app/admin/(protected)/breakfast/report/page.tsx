@@ -29,6 +29,7 @@ interface Line {
   menus: { code: string; name: string; icon: string; persons: number }[]
   slot: { id: number; startsAt: string; endsAt: string } | null
   attendedPersons: number | null
+  note?: string
 }
 
 interface Report {
@@ -76,13 +77,19 @@ export default function BreakfastReportPage() {
   }, [])
 
   useEffect(() => {
-    void load(morning)
+    // Deferred a tick, so the effect itself changes no state (react-hooks/set-state-in-effect).
+    const timer = window.setTimeout(() => void load(morning), 0)
+    return () => window.clearTimeout(timer)
   }, [load, morning])
 
   // Opened from the home page with a morning in the URL: show that one.
   useEffect(() => {
-    const asked = new URLSearchParams(window.location.search).get('morning')
-    if (asked && /^\d{4}-\d{2}-\d{2}$/.test(asked)) setMorning(asked)
+    // Deferred a tick, so the effect itself changes no state (react-hooks/set-state-in-effect).
+    const timer = window.setTimeout(() => {
+      const asked = new URLSearchParams(window.location.search).get('morning')
+      if (asked && /^\d{4}-\d{2}-\d{2}$/.test(asked)) setMorning(asked)
+    }, 0)
+    return () => window.clearTimeout(timer)
   }, [])
 
   const shift = (days: number) => setMorning(d => addDays(d, days))
@@ -232,7 +239,14 @@ export default function BreakfastReportPage() {
                           className='break-inside-avoid border-b last:border-0'
                         >
                           <td className='py-2 pr-3 font-medium'>{line.room || '—'}</td>
-                          <td className='py-2 pr-3'>{line.guest || '—'}</td>
+                          <td className='py-2 pr-3'>
+                            {line.guest || '—'}
+                            {line.note && (
+                              <span className='mt-1 block rounded-lg bg-amber-50 px-2 py-1 text-xs text-amber-900'>
+                                {line.note}
+                              </span>
+                            )}
+                          </td>
                           <td className='py-2 pr-3'>{line.persons}</td>
                           <td className='py-2 pr-3'>
                             {line.menus.length === 0 ? (

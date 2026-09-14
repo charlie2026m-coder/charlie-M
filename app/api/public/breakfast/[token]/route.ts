@@ -59,7 +59,7 @@ export async function POST(
   const { token } = await params
   if (rateLimited(request, 'breakfast-choose', token)) return tooMany()
 
-  let body: { morning?: string; menus?: Record<string, unknown>; slotId?: number }
+  let body: { morning?: string; menus?: Record<string, unknown>; slotId?: number; note?: unknown }
   try {
     body = await request.json()
   } catch {
@@ -92,7 +92,7 @@ export async function POST(
 
   // Everything is re-checked server-side against Apaleo, the menu calendar and
   // the seat count — the page the guest is looking at may be minutes old.
-  const result = await chooseBreakfast(token, morning, menus, slotId)
+  const result = await chooseBreakfast(token, morning, menus, slotId, body?.note)
 
   // Refusals are HTTP 200 with a reason: the page renders the reason, and a
   // "slot is full" is a normal outcome rather than a transport failure.

@@ -181,6 +181,8 @@ export interface MorningView {
   attendedAt: string | null
   /** Past 23:59 the evening before: the kitchen is cooking to what is on file. */
   locked: boolean
+  /** The guest's own words for the kitchen — "no onions". Empty when none. */
+  note: string
 }
 
 export interface GuestBreakfastView {
@@ -375,6 +377,7 @@ export async function guestView(token: string, locale = 'en'): Promise<GuestBrea
       chosenSlot: mine?.slot_id != null ? Number(mine.slot_id) : null,
       attendedAt: (mine?.attended_at as string | null) ?? null,
       locked: choiceLocked(morning, today),
+      note: String(mine?.note ?? ''),
     }
   })
 
@@ -474,11 +477,21 @@ export type ChooseResult =
  * the sitting — two guests taking the last seat at the same moment is not
  * hypothetical when a Guestway blast lands on every phone at once.
  */
+/** A note as the kitchen will read it: one line of plain text, capped. */
+export function cleanNote(raw: unknown): string {
+  return String(raw ?? '')
+    .replace(/[\u0000-\u001f\u007f]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 300)
+}
+
 export async function chooseBreakfast(
   token: string,
   morning: string,
   menus: Record<string, number>,
   slotId: number,
+  note: unknown = '',
 ): Promise<ChooseResult> {
   const db = admin()
   const { data: row } = await db
@@ -527,6 +540,19 @@ export async function chooseBreakfast(
     p_menus: wanted,
     p_slot_id: slotId,
   })
+
+  // The note rides beside the choice, written once the seat is held. A failure
+  // here is logged and not returned: the guest's seat and menu are saved, and a
+  // missing "no onions" is not worth telling them their choice failed.
+  if (!error) {
+    const text = cleanNote(note)
+    const { error: noteError } = await db
+      .from('breakfast_bookings')
+      .update({ note: text || null })
+      .eq('reservation_id', reservationId)
+      .eq('service_date', morning)
+    if (noteError) bfLog.warn('breakfast note not saved', { reservationId, morning, error: noteError.message })
+  }
 
   if (error) {
     const msg = String(error.message || '')
@@ -719,6 +745,8 @@ export interface KitchenLine {
   menus: { code: string; name: string; icon: string; persons: number }[]
   slot: { id: number; startsAt: string; endsAt: string } | null
   attendedPersons: number | null
+  /** The guest's note to the kitchen, verbatim. Empty when none. */
+  note: string
 }
 
 export interface KitchenReport {
@@ -882,7 +910,7 @@ export async function kitchenReport(morning: string, locale = 'en'): Promise<Kit
   const [{ data: bookings }, { data: menus }, { data: slots }] = await Promise.all([
     db
       .from('breakfast_bookings')
-      .select('id, reservation_id, slot_id, attended_persons')
+      .select('id, reservation_id, slot_id, attended_persons, note')
       .eq('service_date', morning)
       .in('reservation_id', ids),
     db.from('breakfast_menus').select('code, icon, name_de, name_en').order('sort_order'),
@@ -938,6 +966,7 @@ export async function kitchenReport(morning: string, locale = 'en'): Promise<Kit
       slot: slot && slotId != null ? { id: slotId, ...slot } : null,
       attendedPersons:
         booking?.attended_persons != null ? Number(booking.attended_persons) : null,
+      note: String(booking?.note ?? '').trim(),
     }
   })
 
@@ -1328,6 +1357,8 @@ export interface ScanResult {
   slot?: { startsAt: string; endsAt: string } | null
   persons?: number
   attendedAt?: string | null
+  /** The guest's note to the kitchen, for the person at the door. */
+  note?: string
 }
 
 /**
@@ -1383,7 +1414,7 @@ export async function scanBreakfast(token: string, locale = 'de'): Promise<ScanR
 
   const { data: booking } = await db
     .from('breakfast_bookings')
-    .select('id, slot_id, attended_at, persons')
+    .select('id, slot_id, attended_at, persons, note')
     .eq('reservation_id', reservationId)
     .eq('service_date', morning)
     .maybeSingle()
@@ -1450,6 +1481,7 @@ export async function scanBreakfast(token: string, locale = 'de'): Promise<ScanR
     return {
       ok: true, result: 'already', guest, room, menus, slot,
       persons: paid.persons, attendedAt: String(booking.attended_at),
+      note: String(booking.note ?? '').trim(),
     }
   }
 
@@ -1463,5 +1495,8 @@ export async function scanBreakfast(token: string, locale = 'de'): Promise<ScanR
     reservation_id: reservationId, guest, persons: paid.persons, menu_code: menuSummary,
   })
 
-  return { ok: true, result: 'ok', guest, room, menus, slot, persons: paid.persons, attendedAt: now }
+  return {
+    ok: true, result: 'ok', guest, room, menus, slot, persons: paid.persons, attendedAt: now,
+    note: String(booking.note ?? '').trim(),
+  }
 }

@@ -51,6 +51,10 @@ export const T = {
     step2: 'Uhrzeit wählen',
     step3: 'Code am Frühstücksraum zeigen',
     deadline: 'Ändern können Sie Ihre Wahl bis 23:59 Uhr am Vorabend.',
+    noteLabel: 'Eine Notiz an die Küche (optional)',
+    notePlaceholder: 'z. B. keine Zwiebeln, glutenfreies Brot, Kaffee sehr heiß',
+    noteHint:
+      'Wir lesen jede Notiz und geben unser Bestes, sie zu berücksichtigen. Wir sind ein kleines Team, das mit Sorgfalt kocht – und ab und zu rutscht etwas durch. Sagen Sie uns dann bitte im Frühstücksraum Bescheid, wir bringen es sofort in Ordnung. Danke für Ihr Verständnis.',
     locked:
       'Seit 23:59 Uhr gestern Abend geschlossen – die Küche bereitet diesen Morgen bereits vor. Änderungen nur noch im Frühstücksraum.',
     lockedShort: 'Gesperrt',
@@ -102,6 +106,10 @@ export const T = {
     step2: 'Pick a time',
     step3: 'Show your code at the breakfast room',
     deadline: 'You can change your choice until 23:59 the evening before.',
+    noteLabel: 'A note for the kitchen (optional)',
+    notePlaceholder: 'e.g. no onions, gluten-free bread, coffee very hot',
+    noteHint:
+      'We read every note and do our best to follow it. We are a small team cooking with care — and now and then something slips through. If it does, tell us at the breakfast room and we will put it right straight away. Thank you for your understanding.',
     locked:
       'Closed since 23:59 last night — the kitchen is already preparing this morning. Changes only at the breakfast room.',
     lockedShort: 'Locked',

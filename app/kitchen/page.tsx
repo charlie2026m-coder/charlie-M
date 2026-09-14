@@ -26,6 +26,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
+  MdChatBubbleOutline,
   MdChevronLeft,
   MdChevronRight,
   MdGroups,
@@ -102,6 +103,7 @@ interface Line {
   menus: { code: string; name: string; icon: string; persons: number }[]
   slot: { id: number; startsAt: string; endsAt: string } | null
   attendedPersons: number | null
+  note?: string
 }
 
 interface Report {
@@ -146,12 +148,16 @@ export default function KitchenPage() {
 
   // Remembered per device, so the tablet on the pass stays in its language.
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('kitchen-lang')
-      if (saved === 'de' || saved === 'en') setLang(saved)
-    } catch {
-      // No storage, no memory — German it is.
-    }
+    // Deferred a tick, so the effect itself changes no state (react-hooks/set-state-in-effect).
+    const timer = window.setTimeout(() => {
+      try {
+        const saved = localStorage.getItem('kitchen-lang')
+        if (saved === 'de' || saved === 'en') setLang(saved)
+      } catch {
+        // No storage, no memory — German it is.
+      }
+    }, 0)
+    return () => window.clearTimeout(timer)
   }, [])
 
   const pick = (next: Lang) => {
@@ -178,7 +184,9 @@ export default function KitchenPage() {
   }, [])
 
   useEffect(() => {
-    void load(morning, lang)
+    // Deferred a tick, so the effect itself changes no state (react-hooks/set-state-in-effect).
+    const timer = window.setTimeout(() => void load(morning, lang), 0)
+    return () => window.clearTimeout(timer)
   }, [load, morning, lang])
 
   const strip = Array.from({ length: 7 }, (_, i) => addDays(windowStart, i))
@@ -201,7 +209,9 @@ export default function KitchenPage() {
   }, [])
 
   useEffect(() => {
-    void loadCounts(windowStart, windowEnd)
+    // Deferred a tick, so the effect itself changes no state (react-hooks/set-state-in-effect).
+    const timer = window.setTimeout(() => void loadCounts(windowStart, windowEnd), 0)
+    return () => window.clearTimeout(timer)
   }, [loadCounts, windowStart, windowEnd])
 
   // Move the strip a week; keep the chosen morning if it is still on the
@@ -412,6 +422,12 @@ export default function KitchenPage() {
                         <td className='px-4 py-3'>
                           {line.guest || '—'}
                           <span className='block text-sm text-gray-600'>{t.people(line.persons)}</span>
+                          {line.note && (
+                            <span className='mt-1 inline-flex items-start gap-1.5 rounded-lg bg-amber-50 px-2 py-1 text-base text-amber-900'>
+                              <MdChatBubbleOutline className='mt-0.5 h-4 w-4 shrink-0' />
+                              {line.note}
+                            </span>
+                          )}
                         </td>
                         <td className='px-4 py-3'>
                           {line.menus.length === 0 ? (

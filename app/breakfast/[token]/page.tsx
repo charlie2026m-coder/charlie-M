@@ -30,8 +30,10 @@ import {
   LuChevronRight,
   LuClock,
   LuCroissant,
+  LuHeart,
   LuInfo,
   LuLock,
+  LuMessageSquare,
   LuQrCode,
   LuUsers,
   LuUtensils,
@@ -67,6 +69,7 @@ interface MorningView {
   attendedAt: string | null
   /** Past 23:59 the evening before: shown with a lock, nothing can change. */
   locked: boolean
+  note: string
 }
 
 interface ViewData {
@@ -88,6 +91,7 @@ const settled = (m: MorningView): boolean =>
 interface Draft {
   menus: MenuSplit
   slot: number | null
+  note: string
   status: 'idle' | 'saving' | 'saved' | 'error'
   error?: string
 }
@@ -142,7 +146,7 @@ export default function BreakfastPage() {
         const next = { ...prev }
         for (const m of json.mornings) {
           if (!next[m.morning]) {
-            next[m.morning] = { menus: { ...m.chosenMenus }, slot: m.chosenSlot, status: 'idle' }
+            next[m.morning] = { menus: { ...m.chosenMenus }, slot: m.chosenSlot, note: m.note ?? '', status: 'idle' }
           }
         }
         return next
@@ -172,7 +176,7 @@ export default function BreakfastPage() {
       const res = await fetch(`/api/public/breakfast/${encodeURIComponent(token)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ morning, menus: draft.menus, slotId: draft.slot }),
+        body: JSON.stringify({ morning, menus: draft.menus, slotId: draft.slot, note: draft.note }),
       })
       const json = (await res.json()) as { ok: boolean; reason?: string }
       if (json.ok) {
@@ -231,6 +235,7 @@ export default function BreakfastPage() {
   const draft: Draft = (current && drafts[current.morning]) ?? {
     menus: { ...(current?.chosenMenus ?? {}) },
     slot: current?.chosenSlot ?? null,
+    note: current?.note ?? '',
     status: 'idle',
   }
   const set = (patch: Partial<Draft>) => {
@@ -487,6 +492,26 @@ export default function BreakfastPage() {
                           )
                         })}
                       </div>
+                    </fieldset>
+
+                    <fieldset className='mb-5'>
+                      <legend className='mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-[0.14em] text-mute'>
+                        <LuMessageSquare className='h-4 w-4' aria-hidden />
+                        {t('noteLabel')}
+                      </legend>
+                      <textarea
+                        value={draft.note}
+                        onChange={e => set({ note: e.target.value.slice(0, 300) })}
+                        disabled={!!current.attendedAt || current.locked}
+                        rows={2}
+                        maxLength={300}
+                        placeholder={t('notePlaceholder')}
+                        className='w-full rounded-xl border px-3 py-2 text-sm outline-none focus:border-dark-gold disabled:opacity-60'
+                      />
+                      <p className='mt-2 flex items-start gap-2 text-xs text-mute'>
+                        <LuHeart className='mt-0.5 h-3.5 w-3.5 shrink-0 text-dark-gold' aria-hidden />
+                        <span>{t('noteHint')}</span>
+                      </p>
                     </fieldset>
 
                     {!current.attendedAt && !current.locked && (

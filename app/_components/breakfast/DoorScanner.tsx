@@ -37,6 +37,7 @@ interface ScanResponse {
   slot?: { startsAt: string; endsAt: string } | null
   persons?: number
   attendedAt?: string | null
+  note?: string
 }
 
 interface Entry extends ScanResponse {
@@ -300,6 +301,13 @@ export function DoorScanner({
           {last.slot && (
             <p className='mt-3 text-sm'>
               Sitting {last.slot.startsAt}–{last.slot.endsAt}
+            </p>
+          )}
+
+          {last.note && (
+            <p className='mt-3 rounded-xl border border-current/30 bg-white/60 px-3 py-2 text-base'>
+              <span className='mr-1 font-semibold'>Note:</span>
+              {last.note}
             </p>
           )}
 
