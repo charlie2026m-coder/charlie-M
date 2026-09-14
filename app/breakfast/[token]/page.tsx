@@ -192,6 +192,21 @@ export default function BreakfastPage() {
     return [...seen.values()]
   })()
 
+  const doorCode = (
+    <section className='mb-8 rounded-2xl border bg-white p-5 text-center'>
+      <h2 className='font-medium mb-1'>{t('qrTitle')}</h2>
+      <p className='text-mute text-sm mb-4'>{t(data.needsChoice ? 'qrMsgChooseFirst' : 'qrMsg')}</p>
+      {/* eslint-disable-next-line @next/next/no-img-element -- an SVG QR
+          from our own route; next/image would only add a proxy hop. */}
+      <img
+        src={`/api/public/breakfast/${encodeURIComponent(token)}/qr`}
+        alt=''
+        aria-hidden
+        className='mx-auto h-44 w-44'
+      />
+    </section>
+  )
+
   return (
     <Shell>
       <h1 className='text-2xl font-semibold mb-1'>{t('title')}</h1>
@@ -203,20 +218,12 @@ export default function BreakfastPage() {
         <>
           <p className='text-mute mb-6'>{t('intro')}</p>
 
-          {/* The door code sits at the top: on the morning itself this is the
-              only thing the guest opens the page for. */}
-          <section className='mb-8 rounded-2xl border bg-white p-5 text-center'>
-            <h2 className='font-medium mb-1'>{t('qrTitle')}</h2>
-            <p className='text-mute text-sm mb-4'>{t('qrMsg')}</p>
-            {/* eslint-disable-next-line @next/next/no-img-element -- an SVG QR
-                from our own route; next/image would only add a proxy hop. */}
-            <img
-              src={`/api/public/breakfast/${encodeURIComponent(token)}/qr`}
-              alt=''
-              aria-hidden
-              className='mx-auto h-44 w-44'
-            />
-          </section>
+          {/* The door code goes where the guest is: while a menu is still to be
+              chosen it sits BELOW the choices, or a guest reads "show this code"
+              and never scrolls down to choose. Once every morning is settled
+              it moves to the top — on the morning itself the code is the only
+              thing the page is opened for. */}
+          {!data.needsChoice && doorCode}
 
           {menuLegend.length > 0 && (
             <details className='group mb-6 rounded-2xl border bg-white p-5'>
@@ -360,6 +367,8 @@ export default function BreakfastPage() {
               </section>
             )
           })}
+
+          {data.needsChoice && doorCode}
         </>
       )}
     </Shell>

@@ -49,6 +49,8 @@ export const T = {
 
     qrTitle: 'Ihr Code für den Eingang',
     qrMsg: 'Zeigen Sie diesen Code am Frühstücksraum. Er gilt für Ihren gesamten Aufenthalt.',
+    qrMsgChooseFirst:
+      'Wählen Sie oben zuerst Menü und Uhrzeit. Diesen Code zeigen Sie dann am Frühstücksraum – er gilt für Ihren gesamten Aufenthalt.',
   },
   en: {
     title: 'Your breakfast',
@@ -88,6 +90,8 @@ export const T = {
 
     qrTitle: 'Your code for the entrance',
     qrMsg: 'Show this code at the breakfast room. It is valid for your whole stay.',
+    qrMsgChooseFirst:
+      'First choose your menu and time above. Then show this code at the breakfast room — it is valid for your whole stay.',
   },
 } as const
 
