@@ -23,7 +23,18 @@ import {
   sumSplit,
   type MenuSplit,
 } from '@/app/_components/breakfast/MenuPicker'
-import { LuCheck, LuChevronDown, LuChevronLeft, LuChevronRight } from 'react-icons/lu'
+import {
+  LuCheck,
+  LuChevronDown,
+  LuChevronLeft,
+  LuChevronRight,
+  LuClock,
+  LuCroissant,
+  LuInfo,
+  LuQrCode,
+  LuUsers,
+  LuUtensils,
+} from 'react-icons/lu'
 import { Button } from '@/app/_components/ui/button'
 
 interface MenuView {
@@ -231,7 +242,10 @@ export default function BreakfastPage() {
 
   const doorCode = (
     <section className='mb-8 rounded-2xl border bg-white p-5 text-center'>
-      <h2 className='font-medium mb-1'>{t('qrTitle')}</h2>
+      <h2 className='mb-1 flex items-center justify-center gap-2 font-medium'>
+        <LuQrCode className='h-5 w-5 shrink-0' aria-hidden />
+        {t('qrTitle')}
+      </h2>
       <p className='text-mute text-sm mb-4'>{t(data.needsChoice ? 'qrMsgChooseFirst' : 'qrMsg')}</p>
       {/* eslint-disable-next-line @next/next/no-img-element -- an SVG QR
           from our own route; next/image would only add a proxy hop. */}
@@ -246,14 +260,39 @@ export default function BreakfastPage() {
 
   return (
     <Shell>
-      <h1 className='text-2xl font-semibold mb-1'>{t('title')}</h1>
-      <p className='mb-1'>{greeting}</p>
+      <div className='mb-5 flex items-center gap-3'>
+        <span className='flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue text-mute'>
+          <LuCroissant className='h-6 w-6' aria-hidden />
+        </span>
+        <div>
+          <h1 className='text-2xl font-semibold leading-tight'>{t('title')}</h1>
+          <p className='text-mute'>{greeting}</p>
+        </div>
+      </div>
 
       {data.mornings.length === 0 ? (
         <Notice title={t('nothingTitle')} msg={t('nothingMsg')} />
       ) : (
         <>
-          <p className='text-mute mb-6'>{t('intro')}</p>
+          {/* Three steps, each with its picture, instead of a paragraph nobody
+              reads on a phone. Same order as the page below. */}
+          <ol className='mb-6 grid gap-2 sm:grid-cols-3'>
+            {[
+              { icon: <LuUtensils className='h-4 w-4' aria-hidden />, text: t('step1') },
+              { icon: <LuClock className='h-4 w-4' aria-hidden />, text: t('step2') },
+              { icon: <LuQrCode className='h-4 w-4' aria-hidden />, text: t('step3') },
+            ].map((step, i) => (
+              <li key={i} className='flex items-center gap-3 rounded-xl border bg-white px-3 py-2 text-sm'>
+                <span className='flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue text-mute'>
+                  {step.icon}
+                </span>
+                <span>
+                  <span className='mr-1 font-semibold'>{i + 1}.</span>
+                  {step.text}
+                </span>
+              </li>
+            ))}
+          </ol>
 
           {/* The door code goes where the guest is: while a menu is still to be
               chosen it sits BELOW the choices, or a guest reads "show this code"
@@ -267,7 +306,10 @@ export default function BreakfastPage() {
               {/* The native marker is a 6px triangle nobody reads as "this
                   opens". A full-width row with a chevron that turns does. */}
               <summary className='flex cursor-pointer list-none items-center justify-between gap-2 font-medium [&::-webkit-details-marker]:hidden'>
-                <span className='underline underline-offset-4'>{t('whatsIn')}</span>
+                <span className='flex items-center gap-2'>
+                  <LuInfo className='h-5 w-5 shrink-0 text-dark-gold' aria-hidden />
+                  <span className='underline underline-offset-4'>{t('whatsIn')}</span>
+                </span>
                 <LuChevronDown
                   className='h-5 w-5 shrink-0 transition-transform group-open:rotate-180'
                   aria-hidden
@@ -353,9 +395,17 @@ export default function BreakfastPage() {
                 )}
                 <header className='mb-4'>
                   <h2 className='text-lg font-medium'>{niceDate(current.morning, lang)}</h2>
-                  <p className='text-mute text-sm'>
-                    {fmt(current.persons === 1 ? t('persons') : t('personsPlural'), { count: current.persons })}
-                    {current.attendedAt ? ` · ${t('attended')}` : ''}
+                  <p className='flex flex-wrap items-center gap-x-3 gap-y-1 text-mute text-sm'>
+                    <span className='inline-flex items-center gap-1.5'>
+                      <LuUsers className='h-4 w-4' aria-hidden />
+                      {fmt(current.persons === 1 ? t('persons') : t('personsPlural'), { count: current.persons })}
+                    </span>
+                    {current.attendedAt && (
+                      <span className='inline-flex items-center gap-1.5 text-green'>
+                        <LuCheck className='h-4 w-4' aria-hidden />
+                        {t('attended')}
+                      </span>
+                    )}
                   </p>
                 </header>
 
@@ -364,7 +414,8 @@ export default function BreakfastPage() {
                 ) : (
                   <>
                     <fieldset className='mb-5'>
-                      <legend className='text-xs font-medium uppercase tracking-[0.14em] text-mute mb-2'>
+                      <legend className='mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-[0.14em] text-mute'>
+                        <LuUtensils className='h-4 w-4' aria-hidden />
                         {t('menuLabel')}
                       </legend>
                       <MenuPicker
@@ -381,10 +432,11 @@ export default function BreakfastPage() {
                     </fieldset>
 
                     <fieldset className='mb-5'>
-                      <legend className='text-xs font-medium uppercase tracking-[0.14em] text-mute mb-2'>
+                      <legend className='mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-[0.14em] text-mute'>
+                        <LuClock className='h-4 w-4' aria-hidden />
                         {t('timeLabel')}
                       </legend>
-                      <div className='flex flex-wrap gap-2'>
+                      <div className='grid grid-cols-3 gap-2'>
                         {current.slots.map(s => {
                           // A slot the guest already holds stays selectable even
                           // at zero left — those seats are theirs. For the rest,
@@ -399,14 +451,16 @@ export default function BreakfastPage() {
                               type='button'
                               disabled={full || !!current.attendedAt}
                               onClick={() => set({ slot: s.id })}
-                              className={`rounded-full border px-4 py-2 text-sm transition-colors ${
+                              className={`flex flex-col items-center rounded-xl border px-2 py-2 text-sm transition-colors ${
                                 draft.slot === s.id
                                   ? 'border-dark-gold bg-blue text-mute'
                                   : 'hover:bg-black/[0.03]'
                               } ${full ? 'cursor-not-allowed opacity-40' : ''}`}
                             >
-                              {s.startsAt}–{s.endsAt}
-                              <span className='ml-2 text-xs opacity-70'>
+                              <span className='font-medium'>
+                                {s.startsAt}–{s.endsAt}
+                              </span>
+                              <span className='text-[11px] opacity-70'>
                                 {full ? t('seatsNone') : fmt(t('seatsLeft'), { count: s.seatsLeft })}
                               </span>
                             </button>
@@ -421,12 +475,15 @@ export default function BreakfastPage() {
                           type='button'
                           onClick={() => void save(current.morning)}
                           disabled={draft.status === 'saving'}
-                          className='h-[45px] px-6 text-base'
+                          className='h-[45px] w-full px-6 text-base sm:w-auto'
                         >
                           {draft.status === 'saving' ? t('saving') : t('save')}
                         </Button>
                         {draft.status === 'saved' && (
-                          <span className='text-sm text-green'>{t('saved')}</span>
+                          <span className='inline-flex items-center gap-1 text-sm text-green'>
+                            <LuCheck className='h-4 w-4' aria-hidden />
+                            {t('saved')}
+                          </span>
                         )}
                         {draft.status === 'error' && draft.error && (
                           <span className='text-sm text-red'>{draft.error}</span>

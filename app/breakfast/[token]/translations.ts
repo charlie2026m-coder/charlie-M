@@ -47,6 +47,9 @@ export const T = {
     failed: 'Konnte nicht gespeichert werden. Bitte erneut versuchen.',
     attended: 'Bereits eingecheckt',
 
+    step1: 'Menü für jeden Morgen wählen',
+    step2: 'Uhrzeit wählen',
+    step3: 'Code am Frühstücksraum zeigen',
     prevDay: 'Vorheriger Tag',
     nextDay: 'Nächster Tag',
     chosenMark: 'gewählt',
@@ -91,6 +94,9 @@ export const T = {
     failed: 'Could not save. Please try again.',
     attended: 'Already checked in',
 
+    step1: 'Choose a menu for each morning',
+    step2: 'Pick a time',
+    step3: 'Show your code at the breakfast room',
     prevDay: 'Previous day',
     nextDay: 'Next day',
     chosenMark: 'chosen',
