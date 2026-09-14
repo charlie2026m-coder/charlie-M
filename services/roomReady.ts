@@ -2,6 +2,7 @@ import { openRoomEarly, type RoomReadyOutcome } from '@/services/apaleo/amendSta
 import { bookingLog } from '@/lib/logger';
 import { doorStayedShut } from '@/lib/roomReadyOutcome';
 import { buildRoomReadyMessage, sendGuestwayMessage } from '@/services/guestway/sendGuestwayMessage';
+import { doorFollowsArrival } from '@/services/guestway/doorAccess';
 
 /**
  * Open one guest's door early and tell them — the whole room-ready act, in the
@@ -30,6 +31,23 @@ export async function runRoomReady(
 
   if (result.status === 'moved') {
     bookingLog.info('room-ready: result', { reservationId, result });
+    // Door first, then the word — and the door has to be SEEN to move, not
+    // assumed from the amend. Apaleo accepting the new arrival is a request;
+    // the code on the room door is Guestway's, and it follows with a delay of
+    // its own. On 2026-09-14 a guest was told "come in" while the door was
+    // shut and stood outside at 10:25. So this asks Guestway whether the room
+    // door's window now starts at the new arrival, and speaks only when it
+    // does. Not confirmed in time means no message and an alert: the door is
+    // open (or about to be), the guest still has the access details from
+    // pre-check-in, and a person can follow up. Never a word before a door.
+    const door = await doorFollowsArrival(reservationId, result.to);
+    if (door !== 'confirmed') {
+      bookingLog.error(`room-ready: arrival moved but the door has not followed — guest NOT told (${door})`, {
+        reservationId,
+        arrival: result.to,
+      });
+      return result;
+    }
     // Told from here, not by a second Guestway automation, so the words and the
     // door cannot disagree: the guest hears about it when it is true, and never
     // on a schedule of its own.
