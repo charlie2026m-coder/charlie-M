@@ -44,3 +44,10 @@ export function breakfastMorningsForStay(from: string, to: string): string[] {
   }
   return out
 }
+
+/**
+ * The kitchen cooks to the morning's choices from first thing, so a choice
+ * may change until 23:59 the evening before and not a minute later. In date
+ * terms: locked once Berlin's date has reached the morning itself.
+ */
+export const choiceLocked = (morning: string, today: string): boolean => morning <= today

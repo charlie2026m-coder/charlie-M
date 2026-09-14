@@ -975,6 +975,7 @@
     "breakfastCardTitle": "Ihr Frühstück",
     "breakfastCardNeedsChoice": "Auswahl offen",
     "breakfastCardNotChosen": "kein Menü gewählt",
+    "breakfastCardLocked": "gesperrt, die Küche bereitet vor",
     "breakfastCardNoTime": "keine Uhrzeit gewählt",
     "breakfastCardChoose": "Menü und Uhrzeit wählen",
     "breakfastCardChange": "Auswahl ändern"

@@ -25,12 +25,7 @@ import { BREAKFAST_FOOD_ID, BREAKFAST_BEVERAGE_ID } from '@/lib/breakfastBundle'
 import { getApaleoExtras } from '@/app/actions/apaleo/services/getExtras'
 import { bookReservationService } from '@/services/bookReservationServices'
 import { verifyReservationInProperty } from '@/services/verifyReservationInProperty'
-import {
-  addDays,
-  nightToMorning,
-  morningToNight,
-  breakfastMorningsForStay,
-} from '@/lib/breakfastDates'
+import { addDays, nightToMorning, morningToNight, breakfastMorningsForStay, choiceLocked } from '@/lib/breakfastDates'
 import {
   buildBreakfastReminder,
   deliverBreakfastMenuInvite,
@@ -184,6 +179,8 @@ export interface MorningView {
   chosenMenus: Record<string, number>
   chosenSlot: number | null
   attendedAt: string | null
+  /** Past 23:59 the evening before: the kitchen is cooking to what is on file. */
+  locked: boolean
 }
 
 export interface GuestBreakfastView {
@@ -377,6 +374,7 @@ export async function guestView(token: string, locale = 'en'): Promise<GuestBrea
       chosenMenus: mine ? (splitByDate.get(morning) ?? {}) : {},
       chosenSlot: mine?.slot_id != null ? Number(mine.slot_id) : null,
       attendedAt: (mine?.attended_at as string | null) ?? null,
+      locked: choiceLocked(morning, today),
     }
   })
 
@@ -386,9 +384,11 @@ export async function guestView(token: string, locale = 'en'): Promise<GuestBrea
     mornings,
     // A morning with nothing on offer is not the guest's problem to solve, so
     // it does not count as an outstanding choice.
+    // Nor a locked one: nothing the guest does now can change it.
     needsChoice: mornings.some(
       m =>
         m.menus.length > 0 &&
+        !m.locked &&
         (m.chosenSlot == null || sumPortions(m.chosenMenus) !== m.persons),
     ),
   }
@@ -455,6 +455,7 @@ export type ChooseResult =
       reason:
         | 'unknown_token'
         | 'not_paid'
+        | 'locked'
         | 'menu_not_offered'
         | 'menu_total_mismatch'
         | 'slot_full'
@@ -488,7 +489,13 @@ export async function chooseBreakfast(
   if (!row?.reservation_id) return { ok: false, reason: 'unknown_token' }
   const reservationId = String(row.reservation_id)
 
-  if (morning < berlinToday()) return { ok: false, reason: 'past' }
+  // Until 23:59 the evening before, and not a minute later: the kitchen cooks
+  // to these choices from first thing. Checked here, not only on the page —
+  // the page the guest is looking at may have been open since yesterday.
+  const today = berlinToday()
+  if (choiceLocked(morning, today)) {
+    return { ok: false, reason: morning < today ? 'past' : 'locked' }
+  }
 
   const reservation = await loadReservation(reservationId)
   if (!reservation) return { ok: false, reason: 'error', detail: 'reservation unavailable' }

@@ -31,6 +31,7 @@ import {
   LuClock,
   LuCroissant,
   LuInfo,
+  LuLock,
   LuQrCode,
   LuUsers,
   LuUtensils,
@@ -64,6 +65,8 @@ interface MorningView {
   chosenMenus: Record<string, number>
   chosenSlot: number | null
   attendedAt: string | null
+  /** Past 23:59 the evening before: shown with a lock, nothing can change. */
+  locked: boolean
 }
 
 interface ViewData {
@@ -129,7 +132,7 @@ export default function BreakfastPage() {
       const json = (await res.json()) as ViewData
       if (firstLoad.current) {
         firstLoad.current = false
-        const open = json.mornings.findIndex(m => !settled(m))
+        const open = json.mornings.findIndex(m => !settled(m) && !m.locked)
         setDayIndex(open >= 0 ? open : 0)
       }
       setData(json)
@@ -179,7 +182,7 @@ export default function BreakfastPage() {
         // The next morning still waiting for a choice, if there is one.
         const mornings = (data as ViewData).mornings
         const here = mornings.findIndex(m => m.morning === morning)
-        const next = mornings.findIndex((m, i) => i > here && !settled(m))
+        const next = mornings.findIndex((m, i) => i > here && !settled(m) && !m.locked)
         if (next >= 0) setDayIndex(next)
         return
       }
@@ -191,9 +194,11 @@ export default function BreakfastPage() {
           error:
             json.reason === 'slot_full'
               ? t('slotFull')
-              : json.reason === 'menu_total_mismatch'
-                ? t('chooseBoth')
-                : t('failed'),
+              : json.reason === 'locked'
+                ? t('locked')
+                : json.reason === 'menu_total_mismatch'
+                  ? t('chooseBoth')
+                  : t('failed'),
         },
       }))
       if (json.reason === 'slot_full') void load()
@@ -293,6 +298,10 @@ export default function BreakfastPage() {
               </li>
             ))}
           </ol>
+          <p className='-mt-4 mb-6 flex items-center gap-2 text-xs text-mute'>
+            <LuLock className='h-3.5 w-3.5 shrink-0' aria-hidden />
+            {t('deadline')}
+          </p>
 
           {/* The door code goes where the guest is: while a menu is still to be
               chosen it sits BELOW the choices, or a guest reads "show this code"
@@ -377,7 +386,11 @@ export default function BreakfastPage() {
                           <span className='text-[11px] uppercase tracking-wide'>{dayName(d.morning)}</span>
                           <span className='text-lg font-semibold'>{dayNumber(d.morning)}</span>
                           <span className='flex h-4 items-center text-[11px]'>
-                            {settled(d) && <LuCheck className='h-3.5 w-3.5' aria-label={t('chosenMark')} />}
+                            {d.locked ? (
+                              <LuLock className='h-3.5 w-3.5 opacity-60' aria-label={t('lockedShort')} />
+                            ) : (
+                              settled(d) && <LuCheck className='h-3.5 w-3.5' aria-label={t('chosenMark')} />
+                            )}
                           </span>
                         </button>
                       ))}
@@ -409,6 +422,13 @@ export default function BreakfastPage() {
                   </p>
                 </header>
 
+                {current.locked && !current.attendedAt && (
+                  <p className='mb-4 flex items-start gap-2 rounded-xl bg-black/[0.04] px-3 py-2 text-sm text-mute'>
+                    <LuLock className='mt-0.5 h-4 w-4 shrink-0' aria-hidden />
+                    {t('locked')}
+                  </p>
+                )}
+
                 {current.menus.length === 0 ? (
                   <p className='text-mute text-sm'>{t('noMenus')}</p>
                 ) : (
@@ -423,7 +443,7 @@ export default function BreakfastPage() {
                         persons={current.persons}
                         value={draft.menus}
                         onChange={menus => set({ menus })}
-                        disabled={!!current.attendedAt}
+                        disabled={!!current.attendedAt || current.locked}
                         randomLabel={t('random')}
                         chosenLabel={(count, total) =>
                           fmt(t('chosen'), { count, total })
@@ -449,7 +469,7 @@ export default function BreakfastPage() {
                             <button
                               key={s.id}
                               type='button'
-                              disabled={full || !!current.attendedAt}
+                              disabled={full || !!current.attendedAt || current.locked}
                               onClick={() => set({ slot: s.id })}
                               className={`flex flex-col items-center rounded-xl border px-2 py-2 text-sm transition-colors ${
                                 draft.slot === s.id
@@ -469,7 +489,7 @@ export default function BreakfastPage() {
                       </div>
                     </fieldset>
 
-                    {!current.attendedAt && (
+                    {!current.attendedAt && !current.locked && (
                       <div className='flex flex-wrap items-center gap-3'>
                         <Button
                           type='button'

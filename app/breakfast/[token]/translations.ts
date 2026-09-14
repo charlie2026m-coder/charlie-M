@@ -50,6 +50,10 @@ export const T = {
     step1: 'Menü für jeden Morgen wählen',
     step2: 'Uhrzeit wählen',
     step3: 'Code am Frühstücksraum zeigen',
+    deadline: 'Ändern können Sie Ihre Wahl bis 23:59 Uhr am Vorabend.',
+    locked:
+      'Seit 23:59 Uhr gestern Abend geschlossen – die Küche bereitet diesen Morgen bereits vor. Änderungen nur noch im Frühstücksraum.',
+    lockedShort: 'Gesperrt',
     prevDay: 'Vorheriger Tag',
     nextDay: 'Nächster Tag',
     chosenMark: 'gewählt',
@@ -97,6 +101,10 @@ export const T = {
     step1: 'Choose a menu for each morning',
     step2: 'Pick a time',
     step3: 'Show your code at the breakfast room',
+    deadline: 'You can change your choice until 23:59 the evening before.',
+    locked:
+      'Closed since 23:59 last night — the kitchen is already preparing this morning. Changes only at the breakfast room.',
+    lockedShort: 'Locked',
     prevDay: 'Previous day',
     nextDay: 'Next day',
     chosenMark: 'chosen',

@@ -14,7 +14,7 @@
 
 import { useEffect, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
-import { LuChevronRight, LuCroissant } from 'react-icons/lu'
+import { LuChevronRight, LuCroissant, LuLock } from 'react-icons/lu'
 import { Button } from '@/app/_components/ui/button'
 import { MenuIcon } from '@/app/_components/breakfast/MenuIcon'
 
@@ -25,6 +25,8 @@ interface Morning {
   chosenMenus: Record<string, number>
   chosenSlot: number | null
   slots: { id: number; startsAt: string; endsAt: string }[]
+  /** Past 23:59 the evening before — the kitchen is cooking to it. */
+  locked?: boolean
 }
 
 interface View {
@@ -87,7 +89,10 @@ const BreakfastCard = ({ reservationId }: { reservationId: string }) => {
           const slot = m.slots.find(s => s.id === m.chosenSlot)
           return (
             <li key={m.morning} className='flex flex-wrap items-center gap-x-3 gap-y-1 text-sm'>
-              <span className='w-24 shrink-0 font-medium'>{dateLabel(m.morning)}</span>
+              <span className='inline-flex w-24 shrink-0 items-center gap-1 font-medium'>
+                {dateLabel(m.morning)}
+                {m.locked && <LuLock className='h-3.5 w-3.5 text-dark' aria-label={t('breakfastCardLocked')} />}
+              </span>
               {chosen.length === 0 ? (
                 <span className='text-dark-gold'>{t('breakfastCardNotChosen')}</span>
               ) : (

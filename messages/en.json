@@ -975,6 +975,7 @@
     "breakfastCardTitle": "Your breakfast",
     "breakfastCardNeedsChoice": "Choice needed",
     "breakfastCardNotChosen": "no menu chosen",
+    "breakfastCardLocked": "locked, the kitchen is preparing",
     "breakfastCardNoTime": "no time chosen",
     "breakfastCardChoose": "Choose your menu and time",
     "breakfastCardChange": "Change your choice"
