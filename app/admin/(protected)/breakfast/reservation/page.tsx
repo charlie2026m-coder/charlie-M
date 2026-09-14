@@ -179,10 +179,13 @@ export default function BreakfastReservationPage() {
 
           <section className='mt-4 rounded-xl border border-gray-200 p-4'>
             <h2 className='mb-2 text-xs font-medium uppercase tracking-[0.14em] text-gray-500'>
-              Breakfast on this booking
+              Breakfast still to come on this booking
             </h2>
             {data.mornings.length === 0 ? (
-              <p className='text-sm text-gray-600'>None — no breakfast service on the remaining nights.</p>
+              <p className='text-sm text-gray-600'>
+                None — no breakfast service on the remaining nights. (Mornings already past are
+                not listed here.)
+              </p>
             ) : (
               <ul className='divide-y'>
                 {data.mornings.map(m => {

@@ -29,6 +29,7 @@ interface Overview {
   pricePerPerson: number | null
   days: Day[]
   totals: { covers: number; chosen: number; revenue: number | null }
+  truncated: boolean
 }
 
 const berlinToday = () =>
@@ -111,6 +112,13 @@ export default function BreakfastOverviewPage() {
               warn={data.totals.covers - data.totals.chosen > 0}
             />
           </section>
+
+          {data.truncated && (
+            <p className='mt-3 rounded-lg border border-amber-500 bg-amber-50 p-3 text-sm text-amber-900'>
+              Apaleo returned more reservations than one read can hold, so these numbers are a
+              floor, not a total. Pick a shorter range.
+            </p>
+          )}
 
           <p className='mt-2 text-xs text-gray-500'>
             {data.pricePerPerson != null

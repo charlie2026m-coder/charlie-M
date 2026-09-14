@@ -744,17 +744,28 @@ interface ApaleoReservationsPage {
  * count would be three round trips to exclude two.
  */
 async function reservationsStayingOn(night: string): Promise<ApaleoReservationResponse[]> {
-  return reservationsStayingBetween(night, night)
+  // One night at 124 rooms cannot fill eighty pages; nothing to report here.
+  return (await reservationsStayingBetween(night, night)).reservations
 }
 
-/** Every reservation staying at least one night in [fromNight, toNight]. */
+/**
+ * Every reservation staying at least one night in [fromNight, toNight].
+ *
+ * The page cap is a safety net, not a budget: a month at 124 rooms is well
+ * over a thousand reservations, and a cap that stopped short would not fail —
+ * it would hand back a shorter list that looked complete, and the overview
+ * built on it would under-report the money without a word. So the cap is set
+ * far beyond any real month, and reaching it is reported as `truncated` rather
+ * than swallowed.
+ */
 async function reservationsStayingBetween(
   fromNight: string,
   toNight: string,
-): Promise<ApaleoReservationResponse[]> {
+): Promise<{ reservations: ApaleoReservationResponse[]; truncated: boolean }> {
   const out: ApaleoReservationResponse[] = []
   const PAGE = 100
-  const MAX_PAGES = 12
+  const MAX_PAGES = 80
+  let truncated = false
 
   for (let page = 1; page <= MAX_PAGES; page++) {
     const params = new URLSearchParams({
@@ -792,9 +803,17 @@ async function reservationsStayingBetween(
     }
 
     if (items.length < PAGE) break
+    if (page === MAX_PAGES) {
+      truncated = true
+      bfLog.error('kitchen: reservation sweep hit the page cap — list is incomplete', {
+        fromNight,
+        toNight,
+        pages: MAX_PAGES,
+      })
+    }
   }
 
-  return out
+  return { reservations: out, truncated }
 }
 
 /**
@@ -1086,6 +1105,8 @@ export interface BreakfastOverview {
   pricePerPerson: number | null
   days: OverviewDay[]
   totals: { covers: number; chosen: number; revenue: number | null }
+  /** True when the Apaleo sweep stopped short — every number below is a floor. */
+  truncated: boolean
 }
 
 /** What a guest pays for one breakfast: both VAT halves, from the catalogue. */
@@ -1124,13 +1145,14 @@ export async function breakfastOverview(from: string, to: string): Promise<Break
     pricePerPerson: null,
     days: [],
     totals: { covers: 0, chosen: 0, revenue: null },
+    truncated: false,
   }
   const ISO = /^\d{4}-\d{2}-\d{2}$/
   if (!ISO.test(from) || !ISO.test(to) || to < from) return empty
   const span = (Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000
   if (span > MAX_OVERVIEW_DAYS) return empty
 
-  const [reservations, price] = await Promise.all([
+  const [{ reservations, truncated }, price] = await Promise.all([
     reservationsStayingBetween(morningToNight(from), morningToNight(to)),
     breakfastPricePerPerson(),
   ])
@@ -1151,11 +1173,17 @@ export async function breakfastOverview(from: string, to: string): Promise<Break
   const chosenByMorning = new Map<string, number>()
   if (mornings.length > 0) {
     const db = admin()
-    const { data: bookings } = await db
+    const { data: allBookings } = await db
       .from('breakfast_bookings')
-      .select('id, service_date')
+      .select('id, service_date, reservation_id')
       .in('service_date', mornings)
-    const ids = (bookings ?? []).map(b => Number(b.id)).filter(Number.isFinite)
+    // Only bookings whose reservation still carries breakfast that morning. A
+    // choice made and then refunded in Apaleo would otherwise count as a chosen
+    // cover that no longer exists, and "not chosen" could go negative.
+    const bookings = (allBookings ?? []).filter(b =>
+      byMorning.get(String(b.service_date).slice(0, 10))?.reservations.has(String(b.reservation_id)),
+    )
+    const ids = bookings.map(b => Number(b.id)).filter(Number.isFinite)
     const { data: split } = ids.length
       ? await db.from('breakfast_booking_menus').select('booking_id, persons').in('booking_id', ids)
       : { data: [] as { booking_id: number; persons: number }[] }
@@ -1164,7 +1192,7 @@ export async function breakfastOverview(from: string, to: string): Promise<Break
       const key = Number(row.booking_id)
       chosenByBooking.set(key, (chosenByBooking.get(key) ?? 0) + Number(row.persons ?? 0))
     }
-    for (const b of bookings ?? []) {
+    for (const b of bookings) {
       const date = String(b.service_date).slice(0, 10)
       chosenByMorning.set(date, (chosenByMorning.get(date) ?? 0) + (chosenByBooking.get(Number(b.id)) ?? 0))
     }
@@ -1186,7 +1214,14 @@ export async function breakfastOverview(from: string, to: string): Promise<Break
 
   const covers = days.reduce((sum, d) => sum + d.covers, 0)
   const chosen = days.reduce((sum, d) => sum + d.chosen, 0)
-  return { from, to, pricePerPerson: price, days, totals: { covers, chosen, revenue: money(covers) } }
+  return {
+    from,
+    to,
+    pricePerPerson: price,
+    days,
+    totals: { covers, chosen, revenue: money(covers) },
+    truncated,
+  }
 }
 
 // ── The desk: put breakfast on a booking ────────────────────────────────────
