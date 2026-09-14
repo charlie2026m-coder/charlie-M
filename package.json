@@ -41,6 +41,7 @@
     "dayjs": "^1.11.19",
     "embla-carousel-react": "^8.6.0",
     "i18n-iso-countries": "^7.14.0",
+    "jsqr": "^1.4.0",
     "jszip": "^3.10.1",
     "libphonenumber-js": "^1.13.6",
     "lucide-react": "^0.552.0",

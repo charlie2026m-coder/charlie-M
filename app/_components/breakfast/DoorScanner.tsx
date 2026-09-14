@@ -13,10 +13,10 @@
  *   - a keyboard-wedge scanner (USB or Bluetooth) types the token and presses
  *     Enter; the input is kept focused so that just works, with no camera
  *     permission, no library and no browser support question;
- *   - the tablet camera, via the browser's own BarcodeDetector where it exists.
- *     It is progressive enhancement on purpose: Safari has no BarcodeDetector,
- *     so on an iPad the button says so instead of failing silently, and the
- *     scanner and typing still work.
+ *   - the device camera, opened on arrival. Chrome and Android read the code
+ *     natively (BarcodeDetector); Safari has no such thing, so there each
+ *     frame goes through a small decoder in JavaScript (jsqr) instead. Same
+ *     loop, two readers, and the scanner and typing still work regardless.
  *
  * The QR encodes the guest page's URL (so a guest's own camera opens their
  * choices); the API takes the token back out of it, and refuses any other URL.
@@ -86,22 +86,32 @@ const hhmm = (iso: string) =>
     timeZone: 'Europe/Berlin',
   }).format(new Date(iso))
 
+type CameraState = 'off' | 'on' | 'unsupported' | 'denied' | 'nocamera'
+
+type NativeDetector = new (o: { formats: string[] }) => {
+  detect(s: CanvasImageSource): Promise<{ rawValue: string }[]>
+}
+
 export function DoorScanner({
   backHref,
   backLabel = 'Back',
+  autoStart = true,
 }: {
   /** Where "back" goes. The admin panel has its own menu and passes nothing. */
   backHref?: string
   backLabel?: string
+  /** Open the camera as soon as the screen appears. */
+  autoStart?: boolean
 }) {
   const [token, setToken] = useState('')
   const [busy, setBusy] = useState(false)
   const [last, setLast] = useState<Entry | null>(null)
   const [history, setHistory] = useState<Entry[]>([])
-  const [camera, setCamera] = useState<'off' | 'on' | 'unsupported' | 'denied'>('off')
+  const [camera, setCamera] = useState<CameraState>('off')
 
   const inputRef = useRef<HTMLInputElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   // The camera sees the same code thirty times a second. Without this the
   // second frame re-scans a token the first one already counted.
@@ -155,41 +165,81 @@ export function DoorScanner({
   }, [])
 
   const startCamera = useCallback(async () => {
-    const Detector = (window as unknown as { BarcodeDetector?: new (o: { formats: string[] }) => { detect(s: CanvasImageSource): Promise<{ rawValue: string }[]> } }).BarcodeDetector
-    if (!Detector || !navigator.mediaDevices?.getUserMedia) {
+    if (!navigator.mediaDevices?.getUserMedia) {
       setCamera('unsupported')
       return
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
+        video: { facingMode: { ideal: 'environment' } },
+        audio: false,
       })
       streamRef.current = stream
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-        await videoRef.current.play()
-      }
       setCamera('on')
-    } catch {
-      setCamera('denied')
+    } catch (e) {
+      const name = e instanceof Error ? e.name : ''
+      setCamera(name === 'NotFoundError' || name === 'OverconstrainedError' ? 'nocamera' : 'denied')
     }
   }, [])
 
-  // Polls a few times a second rather than every frame: a QR held up to a
-  // tablet does not move, and decoding at 60fps only heats the device.
+  // The <video> exists only while the camera is on, so the stream is attached
+  // once it has mounted. Attaching before that hit an empty ref, the picture
+  // never appeared, and the button read as doing nothing.
   useEffect(() => {
     if (camera !== 'on') return
-    const Detector = (window as unknown as { BarcodeDetector?: new (o: { formats: string[] }) => { detect(s: CanvasImageSource): Promise<{ rawValue: string }[]> } }).BarcodeDetector
-    if (!Detector) return
-    const detector = new Detector({ formats: ['qr_code'] })
+    const video = videoRef.current
+    const stream = streamRef.current
+    if (!video || !stream) return
+    video.srcObject = stream
+    void video.play().catch(() => {
+      // Autoplay refused: the tap on "Open the camera" will do it.
+    })
+  }, [camera])
+
+  // Opens on arrival: the person at the door came to scan, not to look for a
+  // button. A refusal falls back to the input, which the handheld scanner and
+  // typing still feed.
+  useEffect(() => {
+    if (!autoStart) return
+    const timer = window.setTimeout(() => void startCamera(), 0)
+    return () => window.clearTimeout(timer)
+  }, [autoStart, startCamera])
+
+  // Polls a few times a second rather than every frame: a QR held up to a
+  // tablet does not move, and decoding at 60fps only heats the device. Chrome
+  // and Android read the code natively; Safari has no BarcodeDetector, so
+  // there a frame is drawn to a canvas and decoded in JavaScript instead.
+  useEffect(() => {
+    if (camera !== 'on') return
     let stopped = false
+    const Detector = (window as unknown as { BarcodeDetector?: NativeDetector }).BarcodeDetector
+    const native = Detector ? new Detector({ formats: ['qr_code'] }) : null
+    let decoder: typeof import('jsqr').default | null = null
 
     const tick = async () => {
       const video = videoRef.current
       if (stopped || !video || video.readyState < 2) return
       try {
-        const codes = await detector.detect(video)
-        const value = codes[0]?.rawValue?.trim()
+        let value: string | undefined
+        if (native) {
+          const codes = await native.detect(video)
+          value = codes[0]?.rawValue?.trim()
+        } else {
+          if (!decoder) decoder = (await import('jsqr')).default
+          const canvas = canvasRef.current
+          if (!canvas || stopped) return
+          const width = video.videoWidth || 640
+          const height = video.videoHeight || 480
+          const scale = Math.min(1, 640 / width)
+          canvas.width = Math.round(width * scale)
+          canvas.height = Math.round(height * scale)
+          const ctx = canvas.getContext('2d', { willReadFrequently: true })
+          if (!ctx) return
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+          const image = ctx.getImageData(0, 0, canvas.width, canvas.height)
+          const code = decoder(image.data, image.width, image.height, { inversionAttempts: 'dontInvert' })
+          value = code?.data?.trim()
+        }
         if (value) void submit(value)
       } catch {
         // A frame that will not decode is the normal case, not an error.
@@ -242,33 +292,48 @@ export function DoorScanner({
         </Button>
       </form>
 
-      <div className='mt-2 flex flex-wrap items-center gap-3 text-xs text-gray-500'>
-        <button
+      <div className='mt-3 flex flex-wrap items-center gap-3'>
+        <Button
           type='button'
+          variant={camera === 'on' ? 'outline' : 'default'}
           onClick={() => (camera === 'on' ? stopCamera() : void startCamera())}
-          className='inline-flex items-center gap-1.5 underline underline-offset-2'
+          className='h-11 px-5 text-base'
         >
           {camera === 'on' ? <MdVideocamOff /> : <MdPhotoCamera />}
-          {camera === 'on' ? 'Turn the camera off' : 'Use the camera'}
-        </button>
+          {camera === 'on' ? 'Camera off' : 'Open the camera'}
+        </Button>
         {camera === 'unsupported' && (
-          <span>
-            This browser cannot read QR codes from the camera (Safari does not support it). Use a
-            handheld scanner, or type the code.
+          <span className='text-sm text-gray-600'>
+            This browser cannot use the camera. Use a handheld scanner, or type the code.
           </span>
         )}
-        {camera === 'denied' && <span>Camera permission was refused.</span>}
+        {camera === 'nocamera' && (
+          <span className='text-sm text-gray-600'>
+            No camera on this device. Use a handheld scanner, or type the code.
+          </span>
+        )}
+        {camera === 'denied' && (
+          <span className='text-sm text-gray-600'>
+            Camera permission was refused — allow it in the browser settings, or type the code.
+          </span>
+        )}
       </div>
 
-      {/* Kept mounted while the camera is on so the video element the detector
-          reads from never has to be re-created mid-service. */}
       {camera === 'on' && (
-        <video
-          ref={videoRef}
-          muted
-          playsInline
-          className='mt-3 aspect-video w-full rounded-xl border border-gray-300 bg-black object-cover'
-        />
+        <div className='relative mt-3'>
+          <video
+            ref={videoRef}
+            muted
+            playsInline
+            autoPlay
+            className='aspect-[4/3] w-full rounded-xl border border-gray-300 bg-black object-cover sm:aspect-video'
+          />
+          {/* Off-screen frame buffer for the JavaScript decoder. */}
+          <canvas ref={canvasRef} className='hidden' />
+          <p className='pointer-events-none absolute inset-x-0 bottom-2 text-center text-sm text-white drop-shadow'>
+            Hold the guest’s QR in front of the camera
+          </p>
+        </div>
       )}
 
       {verdict && last && (
