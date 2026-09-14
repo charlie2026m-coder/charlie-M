@@ -21,7 +21,10 @@ import crypto from 'crypto'
 import { createClient } from '@supabase/supabase-js'
 import { Fetch } from '@/services/Request'
 import { logger } from '@/lib/logger'
-import { BREAKFAST_FOOD_ID } from '@/lib/breakfastBundle'
+import { BREAKFAST_FOOD_ID, BREAKFAST_BEVERAGE_ID } from '@/lib/breakfastBundle'
+import { getApaleoExtras } from '@/app/actions/apaleo/services/getExtras'
+import { bookReservationService } from '@/services/bookReservationServices'
+import { verifyReservationInProperty } from '@/services/verifyReservationInProperty'
 import {
   addDays,
   nightToMorning,
@@ -741,16 +744,24 @@ interface ApaleoReservationsPage {
  * count would be three round trips to exclude two.
  */
 async function reservationsStayingOn(night: string): Promise<ApaleoReservationResponse[]> {
+  return reservationsStayingBetween(night, night)
+}
+
+/** Every reservation staying at least one night in [fromNight, toNight]. */
+async function reservationsStayingBetween(
+  fromNight: string,
+  toNight: string,
+): Promise<ApaleoReservationResponse[]> {
   const out: ApaleoReservationResponse[] = []
   const PAGE = 100
-  const MAX_PAGES = 6
+  const MAX_PAGES = 12
 
   for (let page = 1; page <= MAX_PAGES; page++) {
     const params = new URLSearchParams({
       propertyIds: propertyId(),
       dateFilter: 'Stay',
-      from: `${night}T00:00:00Z`,
-      to: `${night}T23:59:59Z`,
+      from: `${fromNight}T00:00:00Z`,
+      to: `${toNight}T23:59:59Z`,
       pageNumber: String(page),
       pageSize: String(PAGE),
       expand: 'services',
@@ -764,7 +775,8 @@ async function reservationsStayingOn(night: string): Promise<ApaleoReservationRe
       res = await Fetch<ApaleoReservationsPage>(url)
     } catch (e) {
       bfLog.error('kitchen: reservation page failed', {
-        night,
+        fromNight,
+        toNight,
         page,
         error: e instanceof Error ? e.message : String(e),
       })
@@ -1051,6 +1063,215 @@ export async function remindUnchosenBreakfast(morning: string): Promise<Reminder
 
   bfLog.info('reminder run', run as unknown as Record<string, unknown>)
   return run
+}
+
+// ── The owner's overview ────────────────────────────────────────────────────
+
+export interface OverviewDay {
+  morning: string
+  /** People breakfast is paid for. */
+  covers: number
+  /** Reservations those people belong to. */
+  reservations: number
+  /** Of the covers, how many have a menu on file. */
+  chosen: number
+  /** covers × the catalogue price, or null when the price could not be read. */
+  revenue: number | null
+}
+
+export interface BreakfastOverview {
+  from: string
+  to: string
+  /** The bundle price a guest pays per person per morning, from Apaleo. */
+  pricePerPerson: number | null
+  days: OverviewDay[]
+  totals: { covers: number; chosen: number; revenue: number | null }
+}
+
+/** What a guest pays for one breakfast: both VAT halves, from the catalogue. */
+async function breakfastPricePerPerson(): Promise<number | null> {
+  try {
+    const catalog = await getApaleoExtras(undefined, undefined, 'en')
+    const food = catalog.find(s => s.id === BREAKFAST_FOOD_ID)
+    const beverage = catalog.find(s => s.id === BREAKFAST_BEVERAGE_ID)
+    if (!food || !beverage) return null
+    return Math.round((Number(food.price) + Number(beverage.price)) * 100) / 100
+  } catch (e) {
+    bfLog.warn('overview: catalogue price unreadable', {
+      error: e instanceof Error ? e.message : String(e),
+    })
+    return null
+  }
+}
+
+const MAX_OVERVIEW_DAYS = 62
+
+/**
+ * How many breakfasts are sold, on which mornings, and for how much.
+ *
+ * One Apaleo sweep for the whole range rather than one per morning: a guest on
+ * a five-night stay carries all five mornings on the same reservation, so the
+ * reservations staying between the first and last night ARE the answer.
+ *
+ * Revenue is covers times the catalogue price. Every breakfast is sold at that
+ * price — there is no other — so this is exact rather than an estimate, and it
+ * spares a folio read per reservation that Apaleo would make us pay for.
+ */
+export async function breakfastOverview(from: string, to: string): Promise<BreakfastOverview> {
+  const empty: BreakfastOverview = {
+    from,
+    to,
+    pricePerPerson: null,
+    days: [],
+    totals: { covers: 0, chosen: 0, revenue: null },
+  }
+  const ISO = /^\d{4}-\d{2}-\d{2}$/
+  if (!ISO.test(from) || !ISO.test(to) || to < from) return empty
+  const span = (Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000
+  if (span > MAX_OVERVIEW_DAYS) return empty
+
+  const [reservations, price] = await Promise.all([
+    reservationsStayingBetween(morningToNight(from), morningToNight(to)),
+    breakfastPricePerPerson(),
+  ])
+
+  const byMorning = new Map<string, { covers: number; reservations: Set<string> }>()
+  for (const r of reservations) {
+    const id = String((r as { id?: string }).id ?? '')
+    for (const paid of paidBreakfastMornings(r)) {
+      if (paid.morning < from || paid.morning > to) continue
+      const bucket = byMorning.get(paid.morning) ?? { covers: 0, reservations: new Set<string>() }
+      bucket.covers += paid.persons
+      if (id) bucket.reservations.add(id)
+      byMorning.set(paid.morning, bucket)
+    }
+  }
+
+  const mornings = [...byMorning.keys()].sort()
+  const chosenByMorning = new Map<string, number>()
+  if (mornings.length > 0) {
+    const db = admin()
+    const { data: bookings } = await db
+      .from('breakfast_bookings')
+      .select('id, service_date')
+      .in('service_date', mornings)
+    const ids = (bookings ?? []).map(b => Number(b.id)).filter(Number.isFinite)
+    const { data: split } = ids.length
+      ? await db.from('breakfast_booking_menus').select('booking_id, persons').in('booking_id', ids)
+      : { data: [] as { booking_id: number; persons: number }[] }
+    const chosenByBooking = new Map<number, number>()
+    for (const row of split ?? []) {
+      const key = Number(row.booking_id)
+      chosenByBooking.set(key, (chosenByBooking.get(key) ?? 0) + Number(row.persons ?? 0))
+    }
+    for (const b of bookings ?? []) {
+      const date = String(b.service_date).slice(0, 10)
+      chosenByMorning.set(date, (chosenByMorning.get(date) ?? 0) + (chosenByBooking.get(Number(b.id)) ?? 0))
+    }
+  }
+
+  const money = (persons: number) =>
+    price == null ? null : Math.round(persons * price * 100) / 100
+
+  const days: OverviewDay[] = mornings.map(morning => {
+    const bucket = byMorning.get(morning)!
+    return {
+      morning,
+      covers: bucket.covers,
+      reservations: bucket.reservations.size,
+      chosen: chosenByMorning.get(morning) ?? 0,
+      revenue: money(bucket.covers),
+    }
+  })
+
+  const covers = days.reduce((sum, d) => sum + d.covers, 0)
+  const chosen = days.reduce((sum, d) => sum + d.chosen, 0)
+  return { from, to, pricePerPerson: price, days, totals: { covers, chosen, revenue: money(covers) } }
+}
+
+// ── The desk: put breakfast on a booking ────────────────────────────────────
+
+export type AddBreakfastResult =
+  | { ok: true; nights: string[]; persons: number; token: string }
+  | {
+      ok: false
+      reason: 'not-found' | 'bad-persons' | 'not-active' | 'no-nights' | 'catalog' | 'booking-failed'
+      detail?: string
+    }
+
+/**
+ * Book breakfast onto an existing reservation for the rest of its stay.
+ *
+ * The same two Apaleo services the booking flow sells, at the catalogue
+ * price, one entry per remaining night — so everything downstream (the guest
+ * page, the kitchen sheet, the door) sees exactly what a web sale would have
+ * left. It ADDS: a reservation that already carries breakfast on those nights
+ * ends up with it twice, which is what the desk asked for if they asked.
+ *
+ * No money moves here. The charges land on the folio and are settled at the
+ * desk in Apaleo, the way any walk-up purchase is; this is also what makes it
+ * the right tool for a test booking.
+ */
+export async function addBreakfastToReservation(
+  reservationId: string,
+  persons: number,
+): Promise<AddBreakfastResult> {
+  if (!Number.isInteger(persons) || persons < 1 || persons > 6) {
+    return { ok: false, reason: 'bad-persons' }
+  }
+
+  const verified = await verifyReservationInProperty(reservationId)
+  if (!verified.ok) return { ok: false, reason: 'not-found' }
+  const reservation = verified.reservation
+
+  const status = String(reservation.status ?? '')
+  if (status !== 'Confirmed' && status !== 'InHouse') {
+    return { ok: false, reason: 'not-active', detail: status }
+  }
+
+  const arrival = String(reservation.arrival ?? '').slice(0, 10)
+  const departure = String(reservation.departure ?? '').slice(0, 10)
+  const today = berlinToday()
+  const nights: string[] = []
+  for (let d = arrival > today ? arrival : today; d < departure; d = addDays(d, 1)) nights.push(d)
+  if (nights.length === 0) return { ok: false, reason: 'no-nights' }
+
+  let food: { id: string; price: number; currency?: string } | undefined
+  let beverage: { id: string; price: number; currency?: string } | undefined
+  try {
+    const catalog = await getApaleoExtras(arrival, departure, 'en')
+    food = catalog.find(s => s.id === BREAKFAST_FOOD_ID)
+    beverage = catalog.find(s => s.id === BREAKFAST_BEVERAGE_ID)
+  } catch (e) {
+    return { ok: false, reason: 'catalog', detail: e instanceof Error ? e.message : String(e) }
+  }
+  if (!food || !beverage) return { ok: false, reason: 'catalog', detail: 'breakfast services not in catalogue' }
+
+  for (const svc of [food, beverage]) {
+    try {
+      await bookReservationService(reservationId, {
+        serviceId: svc.id,
+        dates: nights.map(serviceDate => ({
+          serviceDate,
+          count: persons,
+          amount: {
+            amount: Math.round(Number(svc.price) * persons * 100) / 100,
+            currency: svc.currency || 'EUR',
+          },
+        })),
+      })
+    } catch (e) {
+      return {
+        ok: false,
+        reason: 'booking-failed',
+        detail: `${svc.id}: ${e instanceof Error ? e.message : String(e)}`,
+      }
+    }
+  }
+
+  const token = await ensureBreakfastToken(reservationId)
+  bfLog.info('desk: breakfast added', { reservationId, persons, nights: nights.length })
+  return { ok: true, nights, persons, token }
 }
 
 // ── The door ────────────────────────────────────────────────────────────────

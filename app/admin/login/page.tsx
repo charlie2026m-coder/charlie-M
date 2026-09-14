@@ -28,10 +28,14 @@ export default function AdminLoginPage() {
         .single()
 
       if (adminData) {
-        router.push('/admin/rooms')
+        router.push(destinationFor(adminData.role))
       }
     }
   }
+
+  // Where each login belongs. The restaurant's account goes to its own
+  // screens; everything else is a full admin and lands on the panel.
+  const destinationFor = (role?: string | null) => (role === 'kitchen' ? '/kitchen' : '/admin/rooms')
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -55,7 +59,7 @@ export default function AdminLoginPage() {
           .single()
 
         if (adminData) {
-          router.push('/admin/rooms')
+          router.push(destinationFor(adminData.role))
         } else {
           setError('You don\'t have admin privileges')
           await supabase.auth.signOut()

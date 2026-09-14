@@ -61,6 +61,12 @@ export default function BreakfastAdminPage() {
         <h1 className='text-xl font-bold text-black'>Breakfast</h1>
         <div className='ml-auto flex gap-2'>
           <Button asChild variant='outline' size='sm' className='h-8'>
+            <Link href='/admin/breakfast/overview'>Overview</Link>
+          </Button>
+          <Button asChild variant='outline' size='sm' className='h-8'>
+            <Link href='/admin/breakfast/reservation'>Booking</Link>
+          </Button>
+          <Button asChild variant='outline' size='sm' className='h-8'>
             <Link href='/admin/breakfast/report'>Kitchen sheet</Link>
           </Button>
           <Button asChild variant='outline' size='sm' className='h-8'>

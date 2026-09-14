@@ -20,7 +20,7 @@ export const maxDuration = 60
 const ISO = /^\d{4}-\d{2}-\d{2}$/
 
 export async function GET(request: NextRequest) {
-  const guard = await requireAdmin()
+  const guard = await requireAdmin({ allowKitchen: true })
   if (!guard.ok) return guard.response
 
   const asked = (request.nextUrl.searchParams.get('morning') ?? '').trim()

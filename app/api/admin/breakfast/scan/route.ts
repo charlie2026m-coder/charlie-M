@@ -16,7 +16,7 @@ import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
  * locked out at the door has no fallback.
  */
 export async function POST(request: NextRequest) {
-  const guard = await requireAdmin()
+  const guard = await requireAdmin({ allowKitchen: true })
   if (!guard.ok) return guard.response
 
   if (!checkRateLimit('breakfast-scan-ip', getClientIp(request), 2000)) {
