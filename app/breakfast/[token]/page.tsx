@@ -14,7 +14,7 @@
  * browser rather than from a locale prefix the guest would have to carry.
  */
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import { T, fmt, niceDate, type Lang, type TKey } from './translations'
 import { MenuIcon } from '@/app/_components/breakfast/MenuIcon'
@@ -23,7 +23,7 @@ import {
   sumSplit,
   type MenuSplit,
 } from '@/app/_components/breakfast/MenuPicker'
-import { LuChevronDown } from 'react-icons/lu'
+import { LuCheck, LuChevronDown, LuChevronLeft, LuChevronRight } from 'react-icons/lu'
 import { Button } from '@/app/_components/ui/button'
 
 interface MenuView {
@@ -65,6 +65,10 @@ interface ViewData {
 
 type State = ViewData | 'loading' | 'unknown' | 'net_error'
 
+/** Every portion spoken for and a sitting held: nothing left to do that morning. */
+const settled = (m: MorningView): boolean =>
+  m.chosenSlot !== null && sumSplit(m.chosenMenus) === m.persons
+
 /** Per-morning UI state. Kept beside the data rather than inside it so a
  *  refetch cannot silently discard what the guest is in the middle of doing. */
 interface Draft {
@@ -82,6 +86,10 @@ export default function BreakfastPage() {
   const [lang, setLang] = useState<Lang>('en')
   const [data, setData] = useState<State>('loading')
   const [drafts, setDrafts] = useState<Record<string, Draft>>({})
+  // One card, one morning at a time: the days sit across the top like a
+  // calendar strip. Opens on the first morning still to be chosen.
+  const [dayIndex, setDayIndex] = useState(0)
+  const firstLoad = useRef(true)
 
   // Language: an explicit ?lang wins, otherwise the browser. Read in an effect
   // because navigator does not exist while the page is being prerendered.
@@ -108,6 +116,11 @@ export default function BreakfastPage() {
       if (res.status === 404) return setData('unknown')
       if (!res.ok) return setData('net_error')
       const json = (await res.json()) as ViewData
+      if (firstLoad.current) {
+        firstLoad.current = false
+        const open = json.mornings.findIndex(m => !settled(m))
+        setDayIndex(open >= 0 ? open : 0)
+      }
       setData(json)
       // Seed the drafts from what is already stored, so the current choice is
       // visible as selected rather than the guest having to re-pick it.
@@ -152,6 +165,11 @@ export default function BreakfastPage() {
         setDrafts(d => ({ ...d, [morning]: { ...d[morning], status: 'saved' } }))
         // Refetch so the seat counts everyone else sees update here too.
         void load()
+        // The next morning still waiting for a choice, if there is one.
+        const mornings = (data as ViewData).mornings
+        const here = mornings.findIndex(m => m.morning === morning)
+        const next = mornings.findIndex((m, i) => i > here && !settled(m))
+        if (next >= 0) setDayIndex(next)
         return
       }
       setDrafts(d => ({
@@ -191,6 +209,25 @@ export default function BreakfastPage() {
     }
     return [...seen.values()]
   })()
+
+  const index = Math.min(dayIndex, Math.max(0, data.mornings.length - 1))
+  const current: MorningView | undefined = data.mornings[index]
+  const draft: Draft = (current && drafts[current.morning]) ?? {
+    menus: { ...(current?.chosenMenus ?? {}) },
+    slot: current?.chosenSlot ?? null,
+    status: 'idle',
+  }
+  const set = (patch: Partial<Draft>) => {
+    if (!current) return
+    const morning = current.morning
+    setDrafts(d => ({ ...d, [morning]: { ...draft, ...patch, status: 'idle', error: undefined } }))
+  }
+
+  const dayName = (iso: string) =>
+    new Intl.DateTimeFormat(lang === 'de' ? 'de-DE' : 'en-GB', { weekday: 'short', timeZone: 'UTC' }).format(
+      new Date(`${iso}T00:00:00Z`),
+    )
+  const dayNumber = (iso: string) => String(Number(iso.slice(8, 10)))
 
   const doorCode = (
     <section className='mb-8 rounded-2xl border bg-white p-5 text-center'>
@@ -269,26 +306,60 @@ export default function BreakfastPage() {
             </details>
           )}
 
-          {data.mornings.map(m => {
-            const draft = drafts[m.morning] ?? {
-              menus: { ...m.chosenMenus },
-              slot: m.chosenSlot,
-              status: 'idle' as const,
-            }
-            const set = (patch: Partial<Draft>) =>
-              setDrafts(d => ({ ...d, [m.morning]: { ...draft, ...patch, status: 'idle', error: undefined } }))
-
-            return (
-              <section key={m.morning} className='mb-6 rounded-2xl border bg-white p-5'>
+          {current && (
+              <section key={current.morning} className='mb-6 rounded-2xl border bg-white p-5'>
+                {data.mornings.length > 1 && (
+                  <div className='mb-4 flex items-center gap-2'>
+                    <button
+                      type='button'
+                      onClick={() => setDayIndex(i => Math.max(0, i - 1))}
+                      disabled={index === 0}
+                      aria-label={t('prevDay')}
+                      className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-colors hover:bg-black/[0.03] disabled:opacity-30'
+                    >
+                      <LuChevronLeft className='h-5 w-5' aria-hidden />
+                    </button>
+                    <div className='flex flex-1 gap-1.5 overflow-x-auto'>
+                      {data.mornings.map((d, i) => (
+                        <button
+                          key={d.morning}
+                          type='button'
+                          onClick={() => setDayIndex(i)}
+                          aria-pressed={i === index}
+                          className={`flex min-w-[4.25rem] flex-1 flex-col items-center rounded-xl border px-2 py-1.5 leading-tight transition-colors ${
+                            i === index
+                              ? 'border-dark-gold bg-blue text-mute'
+                              : 'border-transparent bg-black/[0.04] hover:bg-black/[0.07]'
+                          }`}
+                        >
+                          <span className='text-[11px] uppercase tracking-wide'>{dayName(d.morning)}</span>
+                          <span className='text-lg font-semibold'>{dayNumber(d.morning)}</span>
+                          <span className='flex h-4 items-center text-[11px]'>
+                            {settled(d) && <LuCheck className='h-3.5 w-3.5' aria-label={t('chosenMark')} />}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      type='button'
+                      onClick={() => setDayIndex(i => Math.min(data.mornings.length - 1, i + 1))}
+                      disabled={index >= data.mornings.length - 1}
+                      aria-label={t('nextDay')}
+                      className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-colors hover:bg-black/[0.03] disabled:opacity-30'
+                    >
+                      <LuChevronRight className='h-5 w-5' aria-hidden />
+                    </button>
+                  </div>
+                )}
                 <header className='mb-4'>
-                  <h2 className='text-lg font-medium'>{niceDate(m.morning, lang)}</h2>
+                  <h2 className='text-lg font-medium'>{niceDate(current.morning, lang)}</h2>
                   <p className='text-mute text-sm'>
-                    {fmt(m.persons === 1 ? t('persons') : t('personsPlural'), { count: m.persons })}
-                    {m.attendedAt ? ` · ${t('attended')}` : ''}
+                    {fmt(current.persons === 1 ? t('persons') : t('personsPlural'), { count: current.persons })}
+                    {current.attendedAt ? ` · ${t('attended')}` : ''}
                   </p>
                 </header>
 
-                {m.menus.length === 0 ? (
+                {current.menus.length === 0 ? (
                   <p className='text-mute text-sm'>{t('noMenus')}</p>
                 ) : (
                   <>
@@ -297,11 +368,11 @@ export default function BreakfastPage() {
                         {t('menuLabel')}
                       </legend>
                       <MenuPicker
-                        options={m.menus}
-                        persons={m.persons}
+                        options={current.menus}
+                        persons={current.persons}
                         value={draft.menus}
                         onChange={menus => set({ menus })}
-                        disabled={!!m.attendedAt}
+                        disabled={!!current.attendedAt}
                         randomLabel={t('random')}
                         chosenLabel={(count, total) =>
                           fmt(t('chosen'), { count, total })
@@ -314,19 +385,19 @@ export default function BreakfastPage() {
                         {t('timeLabel')}
                       </legend>
                       <div className='flex flex-wrap gap-2'>
-                        {m.slots.map(s => {
+                        {current.slots.map(s => {
                           // A slot the guest already holds stays selectable even
                           // at zero left — those seats are theirs. For the rest,
                           // seatsLeft already excludes this reservation, so it has
                           // to cover the whole party: offering a sitting with one
                           // seat left to a couple only earns them a slot_full.
-                          const mine = m.chosenSlot === s.id
-                          const full = s.seatsLeft < m.persons && !mine
+                          const mine = current.chosenSlot === s.id
+                          const full = s.seatsLeft < current.persons && !mine
                           return (
                             <button
                               key={s.id}
                               type='button'
-                              disabled={full || !!m.attendedAt}
+                              disabled={full || !!current.attendedAt}
                               onClick={() => set({ slot: s.id })}
                               className={`rounded-full border px-4 py-2 text-sm transition-colors ${
                                 draft.slot === s.id
@@ -344,11 +415,11 @@ export default function BreakfastPage() {
                       </div>
                     </fieldset>
 
-                    {!m.attendedAt && (
+                    {!current.attendedAt && (
                       <div className='flex flex-wrap items-center gap-3'>
                         <Button
                           type='button'
-                          onClick={() => void save(m.morning)}
+                          onClick={() => void save(current.morning)}
                           disabled={draft.status === 'saving'}
                           className='h-[45px] px-6 text-base'
                         >
@@ -365,8 +436,7 @@ export default function BreakfastPage() {
                   </>
                 )}
               </section>
-            )
-          })}
+          )}
 
           {data.needsChoice && doorCode}
         </>

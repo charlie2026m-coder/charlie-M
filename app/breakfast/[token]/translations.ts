@@ -47,6 +47,9 @@ export const T = {
     failed: 'Konnte nicht gespeichert werden. Bitte erneut versuchen.',
     attended: 'Bereits eingecheckt',
 
+    prevDay: 'Vorheriger Tag',
+    nextDay: 'Nächster Tag',
+    chosenMark: 'gewählt',
     qrTitle: 'Ihr Code für den Eingang',
     qrMsg: 'Zeigen Sie diesen Code am Frühstücksraum. Er gilt für Ihren gesamten Aufenthalt.',
     qrMsgChooseFirst:
@@ -88,6 +91,9 @@ export const T = {
     failed: 'Could not save. Please try again.',
     attended: 'Already checked in',
 
+    prevDay: 'Previous day',
+    nextDay: 'Next day',
+    chosenMark: 'chosen',
     qrTitle: 'Your code for the entrance',
     qrMsg: 'Show this code at the breakfast room. It is valid for your whole stay.',
     qrMsgChooseFirst:
