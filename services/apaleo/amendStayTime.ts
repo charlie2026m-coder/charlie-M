@@ -2,6 +2,7 @@
 import { Fetch } from '@/services/Request';
 import { markUnitClean } from '@/services/apaleo/markUnitClean';
 import { sameGuest } from '@/lib/sameGuest';
+import { stayExtensionQuota } from '@/services/apaleo/stayExtensionQuota';
 import { isStayExtensionService } from '@/lib/extrasPrice';
 import { apaleoLog } from '@/lib/logger';
 
@@ -527,6 +528,15 @@ export async function bookStayExtension(
   const offer = await quoteStayExtension(reservationId, kind, ctx);
   if (!offer) {
     return { success: false, error: `${kind === 'late' ? 'Late check-out' : 'Early check-in'} time is not available for this reservation` };
+  }
+
+  // 2b. Apaleo's quota for the day (Services → Availability → quantity), asked
+  //     once more at the moment of sale: two guests buying the last one within
+  //     the same minute both pass the validator. A refusal here means the
+  //     caller refunds — rare, and right. Unreadable counts as unlimited.
+  const quota = await stayExtensionQuota(kind, payload.serviceId, ctx, { excludeReservationId: reservationId });
+  if (quota && quota.remaining <= 0) {
+    return { success: false, error: `${kind === 'late' ? 'Late check-out' : 'Early check-in'} is sold out for that day` };
   }
 
   // 3. Apply the amend.

@@ -28,6 +28,7 @@ import {
 } from '@/lib/extrasPrice'
 import { getSecondGuestQuote } from '@/services/apaleo/addSecondGuest'
 import { hasOppositeExtensionConflict, quoteStayExtension } from '@/services/apaleo/amendStayTime'
+import { stayExtensionQuota } from '@/services/apaleo/stayExtensionQuota'
 import { priceLog, apaleoLog } from '@/lib/logger'
 import { pendingServicesReadSchema } from '@/types/schemas'
 import type { Booking } from '@/types/booking'
@@ -238,6 +239,30 @@ export async function validatePaymentAmount(
     // "2026-09-17T15:00:00+02:00" → "2026-09-17" deterministically.
     const from = reservation.arrival.slice(0, 10)
     const to = reservation.departure.slice(0, 10)
+
+    // Apaleo's own quota for early check-in / late checkout (Services →
+    // Availability → quantity), asked before any card is charged. Our sale is
+    // an amend plus a folio line, not a service booking, so Apaleo's counter
+    // never sees it — the helper adds what we sold ourselves. No reservation
+    // exists yet here; the dates are enough. Unreadable counts as unlimited.
+    for (const service of reservation.services ?? []) {
+      const kind = isStayExtensionService(service.serviceId)
+      if (!kind) continue
+      const quota = await stayExtensionQuota(kind, service.serviceId, {
+        arrival: reservation.arrival,
+        departure: reservation.departure,
+      })
+      if (quota && quota.remaining <= 0) {
+        priceLog.error('validation: stay-extension quota for the day is used up — refusing', {
+          reference,
+          ...quota,
+        })
+        return {
+          status: 'unavailable',
+          reason: kind === 'late' ? 'late check-out is sold out for that day' : 'early check-in is sold out for that day',
+        }
+      }
+    }
     const adults = reservation.adults
 
     const offers = await fetchOfferWithRetry(unitGroupId, from, to, String(adults))
@@ -671,6 +696,28 @@ export async function validateServicesPayment(
             ext === 'late'
               ? 'late check-out is not available for this reservation'
               : 'early check-in is not available for this reservation',
+        }
+      }
+      // Apaleo's own quota for the day (Services → Availability → quantity).
+      // Apaleo enforces it for service bookings; our sale is an amend plus a
+      // folio line, so its counter never saw us — the helper adds our own.
+      // Quota 1 late checkout, 2 sold, Motz19 2026-09-14. Refuse at zero,
+      // before the card; unreadable counts as unlimited.
+      const quota = await stayExtensionQuota(
+        ext,
+        service.serviceId,
+        { arrival: reservation.arrivalIso, departure: reservation.departureIso },
+        { excludeReservationId: row.reservation_id },
+      )
+      if (quota && quota.remaining <= 0) {
+        priceLog.error('services validation: stay-extension quota for the day is used up — refusing', {
+          reference,
+          reservationId: row.reservation_id,
+          ...quota,
+        })
+        return {
+          status: 'unavailable',
+          reason: ext === 'late' ? 'late check-out is sold out for that day' : 'early check-in is sold out for that day',
         }
       }
     }
