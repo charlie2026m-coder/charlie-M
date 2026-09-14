@@ -13,11 +13,22 @@ import { getAdminSession } from '@/lib/requireAdmin'
  *
  * Plain full-width pages with no site chrome: a tablet on the pass does not
  * need the hotel's header and footer around a number.
+ *
+ * Sized to the viewport the phone actually shows (dvh), not to 100vh. On
+ * iOS 100vh is the height with the browser bars hidden, so a short page was
+ * taller than what was visible by exactly a toolbar: it scrolled that far,
+ * hid its own header, and stopped — which reads as "the page will not
+ * scroll". The site body is 100vh too; the style below narrows that here.
  */
 export default async function KitchenLayout({ children }: { children: ReactNode }) {
   const session = await getAdminSession()
   if (session.status !== 'ok') redirect('/admin/login')
   if (!session.areas.includes('kitchen')) redirect('/admin')
 
-  return <div className='min-h-screen bg-white text-black'>{children}</div>
+  return (
+    <>
+      <style>{'body{min-height:100dvh}'}</style>
+      <div className='flex min-h-dvh flex-col bg-white text-black'>{children}</div>
+    </>
+  )
 }
