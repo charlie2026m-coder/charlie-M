@@ -444,6 +444,31 @@ export async function hasOppositeExtensionConflict(
   }
 }
 
+/**
+ * Apaleo's own word on whether this extension can be applied: the amend offer
+ * for the new time. `null` means Apaleo offers nothing — the time would be
+ * unchanged, the reservation can no longer be amended, the rate plan has
+ * nothing for that day, or Apaleo could not be reached — and the sale must not
+ * go ahead without it.
+ *
+ * Asked twice on purpose, through this one function: by the pre-payment
+ * validator, so a refusal never costs the guest a charge-and-refund, and by
+ * bookStayExtension itself just before it amends, in case the world changed
+ * in between. What it is NOT is a check against the opposite product on the
+ * same room: Apaleo's availability is per night, not per hour — that is
+ * hasOppositeExtensionConflict's job.
+ */
+export async function quoteStayExtension(
+  reservationId: string,
+  kind: 'late' | 'early',
+  ctx: Pick<ReservationAmendContext, 'arrival' | 'departure'>,
+): Promise<StayAmendOffer | null> {
+  const newTime = kind === 'late'
+    ? withLocalTime(ctx.departure, LATE_CHECKOUT_HHMM)
+    : withLocalTime(ctx.arrival, EARLY_CHECKIN_HHMM);
+  return getStayAmendOffer(reservationId, kind === 'late' ? { departure: newTime } : { arrival: newTime });
+}
+
 /** True if the reservation already has this extension applied (its time is
  *  already at 13:00). Used to reject an idempotent re-buy BEFORE charging.
  *  Module-private: this file is 'use server', whose exports must all be async. */
@@ -499,13 +524,7 @@ export async function bookStayExtension(
 
   // 2. Offer for the new time. null ⇒ unchanged time OR not available (e.g. the
   //    assigned unit is occupied for the extended window) ⇒ can't extend.
-  const newTime = kind === 'late'
-    ? withLocalTime(ctx.departure, LATE_CHECKOUT_HHMM)
-    : withLocalTime(ctx.arrival, EARLY_CHECKIN_HHMM);
-  const offer = await getStayAmendOffer(
-    reservationId,
-    kind === 'late' ? { departure: newTime } : { arrival: newTime },
-  );
+  const offer = await quoteStayExtension(reservationId, kind, ctx);
   if (!offer) {
     return { success: false, error: `${kind === 'late' ? 'Late check-out' : 'Early check-in'} time is not available for this reservation` };
   }
@@ -549,7 +568,12 @@ export async function bookStayExtension(
     }
   }
 
-  apaleoLog.success('stay-extension applied', { reservationId, kind, newTime, feeAmount });
+  apaleoLog.success('stay-extension applied', {
+    reservationId,
+    kind,
+    newTime: kind === 'late' ? offer.departure : offer.arrival,
+    feeAmount,
+  });
   return {
     success: true,
     applied: {

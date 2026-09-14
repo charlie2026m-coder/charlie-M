@@ -27,7 +27,7 @@ import {
   type ApaleoBookServicePayload,
 } from '@/lib/extrasPrice'
 import { getSecondGuestQuote } from '@/services/apaleo/addSecondGuest'
-import { hasOppositeExtensionConflict } from '@/services/apaleo/amendStayTime'
+import { hasOppositeExtensionConflict, quoteStayExtension } from '@/services/apaleo/amendStayTime'
 import { priceLog, apaleoLog } from '@/lib/logger'
 import { pendingServicesReadSchema } from '@/types/schemas'
 import type { Booking } from '@/types/booking'
@@ -646,6 +646,31 @@ export async function validateServicesPayment(
             ext === 'late'
               ? 'late check-out unavailable — an early check-in is booked on this room for that day'
               : 'early check-in unavailable — a late check-out is booked on this room for that day',
+        }
+      }
+      // Apaleo's own word, before the card: the amend offer for the new time.
+      // If Apaleo offers nothing — the reservation can no longer be amended, the
+      // rate plan has nothing for that day, or Apaleo is unreachable — the sale
+      // in the webhook would refuse the very same amend after the charge and
+      // refund. Ask now, through the helper the sale itself uses. (Per NIGHT,
+      // not per hour: this does not see a late checkout on the same room — the
+      // guard above does.)
+      const offer = await quoteStayExtension(row.reservation_id, ext, {
+        arrival: reservation.arrivalIso,
+        departure: reservation.departureIso,
+      })
+      if (!offer) {
+        priceLog.error('services validation: Apaleo offers no amend for the stay extension — refusing', {
+          reference,
+          reservationId: row.reservation_id,
+          kind: ext,
+        })
+        return {
+          status: 'unavailable',
+          reason:
+            ext === 'late'
+              ? 'late check-out is not available for this reservation'
+              : 'early check-in is not available for this reservation',
         }
       }
     }
