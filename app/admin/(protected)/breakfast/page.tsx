@@ -107,7 +107,13 @@ function Menus() {
     // Deferred a tick, so the effect itself changes no state
     // (react-hooks/set-state-in-effect); the data comes from the API anyway.
     const timer = window.setTimeout(() => void load(), 0)
-    return () => window.clearTimeout(timer)
+    // The calendar section below writes the same days these cards count.
+    const refresh = () => void load()
+    window.addEventListener(CALENDAR_CHANGED, refresh)
+    return () => {
+      window.clearTimeout(timer)
+      window.removeEventListener(CALENDAR_CHANGED, refresh)
+    }
   }, [load])
 
   // The code is picked here, not typed: the next free letter. It is what the
@@ -179,11 +185,14 @@ function MenuCard({
   const [draft, setDraft] = useState(menu)
   const [state, setState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
 
-  // A fresh row from the server (after a save or a photo change) replaces the
-  // draft. Done during render, the way React asks for "state from props".
-  const [seen, setSeen] = useState(menu)
-  if (menu !== seen) {
-    setSeen(menu)
+  // A fresh row from the server replaces the draft — but only when the row
+  // itself CHANGED. Comparing by identity reset every card on the screen
+  // whenever any one of them reloaded the list, so an admin halfway through
+  // retyping one menu lost it because they had pressed Save on another.
+  const fromServer = JSON.stringify(menu)
+  const [seen, setSeen] = useState(fromServer)
+  if (fromServer !== seen) {
+    setSeen(fromServer)
     setDraft(menu)
   }
 
@@ -544,7 +553,11 @@ function Slots() {
     void load()
   }
 
+  const [adding, setAdding] = useState(false)
+
   const add = async () => {
+    if (adding) return
+    setAdding(true)
     setNote('')
     const last = slots?.[slots.length - 1]
     const res = await fetch('/api/admin/breakfast/slots', {
@@ -558,6 +571,7 @@ function Slots() {
       }),
     })
     const json = await res.json().catch(() => ({ ok: false }))
+    setAdding(false)
     if (!json.ok) setNote('Could not add a sitting.')
     void load()
   }
@@ -594,8 +608,8 @@ function Slots() {
       )}
 
       <div className='mt-3 flex flex-wrap items-center gap-3'>
-        <Button variant='outline' size='sm' className='h-9' onClick={() => void add()}>
-          <MdAdd /> Add sitting
+        <Button variant='outline' size='sm' className='h-9' disabled={adding} onClick={() => void add()}>
+          <MdAdd /> {adding ? 'Adding…' : 'Add sitting'}
         </Button>
         <span className='text-sm text-gray-500'>{total} seats a morning in total</span>
         {note && <span className='text-sm text-red-700'>{note}</span>}
@@ -614,9 +628,10 @@ function SlotRowEditor({
   onDelete: (id: number) => void
 }) {
   const [draft, setDraft] = useState(slot)
-  const [seen, setSeen] = useState(slot)
-  if (slot !== seen) {
-    setSeen(slot)
+  const fromServer = JSON.stringify(slot)
+  const [seen, setSeen] = useState(fromServer)
+  if (fromServer !== seen) {
+    setSeen(fromServer)
     setDraft(slot)
   }
   const dirty = JSON.stringify(draft) !== JSON.stringify(slot)
@@ -738,6 +753,10 @@ function Calendar() {
           : 'Could not apply it.',
       )
     }
+    // The cards above count the days each menu is served on; applying a range
+    // changes that, and without this they went on saying "Not on the calendar
+    // yet" until the page was reloaded.
+    if (json.ok) window.dispatchEvent(new Event(CALENDAR_CHANGED))
     await loadDays()
   }
 

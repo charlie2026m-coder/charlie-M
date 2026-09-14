@@ -62,18 +62,28 @@ export async function GET(request: Request) {
       const hasRecentRecovery = data?.user?.recovery_sent_at && 
         (Date.now() - new Date(data.user.recovery_sent_at).getTime()) < 3600000;
       
-      if (isRecovery || hasRecentRecovery) {
-        return NextResponse.redirect(`${requestUrl.origin}${localePrefix}/reset-password`);
-      }
-
       // Staff signing in with Google from /admin/login: the login page sets a
       // short-lived cookie first, because the redirect URL itself must match
       // Supabase's allow-list exactly and cannot carry a "next" parameter.
-      // Back to the panel, which checks the admins table; the cookie is spent.
-      if (cookieStore.get('admin-after-login')?.value === '1') {
-        const res = NextResponse.redirect(`${requestUrl.origin}/admin`);
-        res.cookies.set('admin-after-login', '', { path: '/', maxAge: 0 });
+      //
+      // It is spent on the way out of EVERY branch, not only the one that uses
+      // it. Abandoning the Google chooser left it live for ten minutes, and the
+      // next thing through this callback in the same browser — a guest
+      // confirming their sign-up — was redirected to /admin before the code
+      // below could sync their e-mail or write their consent row, so that GDPR
+      // record silently did not exist.
+      const staffLogin = cookieStore.get('admin-after-login')?.value === '1';
+      const leave = (url: string) => {
+        const res = NextResponse.redirect(url);
+        if (staffLogin) res.cookies.set('admin-after-login', '', { path: '/', maxAge: 0 });
         return res;
+      };
+
+      // An explicit recovery link always goes to the password page. The
+      // "asked for a reset recently" guess does not outrank a staff member who
+      // asked for one and then signed in with Google instead.
+      if (isRecovery || (hasRecentRecovery && !staffLogin)) {
+        return leave(`${requestUrl.origin}${localePrefix}/reset-password`);
       }
 
       // Check if this is email confirmation
@@ -120,11 +130,19 @@ export async function GET(request: Request) {
           console.error('Failed to save consent:', consentError)
         }
         
-        return NextResponse.redirect(`${requestUrl.origin}${localePrefix}/profile/reservations?email_confirmed=true`);
+        return leave(
+          staffLogin
+            ? `${requestUrl.origin}/admin`
+            : `${requestUrl.origin}${localePrefix}/profile/reservations?email_confirmed=true`,
+        );
       }
       
       // Default redirect to reservations for other auth flows (OAuth, etc.)
-      return NextResponse.redirect(`${requestUrl.origin}${localePrefix}/profile/reservations`);
+      return leave(
+        staffLogin
+          ? `${requestUrl.origin}/admin`
+          : `${requestUrl.origin}${localePrefix}/profile/reservations`,
+      );
     } catch (err) {
       console.error('Unexpected error during code exchange:', err);
       return NextResponse.redirect(

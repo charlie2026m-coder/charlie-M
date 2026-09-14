@@ -4,9 +4,15 @@
  * The QR encodes the guest page's URL, so a guest pointing their own phone
  * camera at it lands on their choices, and the staff scanner at the door
  * gets the token out of the same picture. A bare token (typed, or from an
- * older code) is accepted as it is. Anything else — some other site's URL,
- * a room code, free text — is not ours and comes back null rather than
- * being guessed at.
+ * older code) is accepted as it is. Anything without a /breakfast/{token}
+ * path — a room code, another page of ours, free text — comes back null
+ * rather than being guessed at.
+ *
+ * The HOST is deliberately not checked: the door runs on localhost in
+ * development and on preview deployments as well as on the live domain, and
+ * a foreign host buys an attacker nothing — the token still has to exist,
+ * and anyone able to print a QR could print the bare token just as easily.
+ * What protects the door is that scanning is admin-only.
  */
 
 export const TOKEN_SHAPE = /^[A-Za-z0-9_-]{8,64}$/

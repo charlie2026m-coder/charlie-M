@@ -86,6 +86,14 @@ type State = ViewData | 'loading' | 'unknown' | 'net_error'
 const settled = (m: MorningView): boolean =>
   m.chosenSlot !== null && sumSplit(m.chosenMenus) === m.persons
 
+/**
+ * Is there anything for the guest to DO on this morning? A morning the kitchen
+ * serves nothing on can never be settled, so without this the page opened on
+ * it — a card with no menus, no times and no button — and left the mornings
+ * that did need choosing behind it.
+ */
+const openFor = (m: MorningView): boolean => m.menus.length > 0 && !m.locked && !settled(m)
+
 /** Per-morning UI state. Kept beside the data rather than inside it so a
  *  refetch cannot silently discard what the guest is in the middle of doing. */
 interface Draft {
@@ -107,6 +115,8 @@ export default function BreakfastPage() {
   // One card, one morning at a time: the days sit across the top like a
   // calendar strip. Opens on the first morning still to be chosen.
   const [dayIndex, setDayIndex] = useState(0)
+  /** The morning whose save just landed — the only one the tick belongs to. */
+  const [savedMorning, setSavedMorning] = useState<string | null>(null)
   const firstLoad = useRef(true)
 
   // Language: an explicit ?lang wins, otherwise the browser. Read in an effect
@@ -126,17 +136,28 @@ export default function BreakfastPage() {
 
   const t = (key: TKey) => T[lang][key]
 
+  // Two loads can be in the air at once — the language effect re-issues one
+  // with a different locale, and a save refetches. Only the newest answer may
+  // land, or German chrome ends up around English menu text.
+  const loadSeq = useRef(0)
+
   const load = useCallback(async () => {
+    const mine = ++loadSeq.current
     try {
       const res = await fetch(`/api/public/breakfast/${encodeURIComponent(token)}?locale=${lang}`, {
         cache: 'no-store',
       })
+      if (mine !== loadSeq.current) return
       if (res.status === 404) return setData('unknown')
-      if (!res.ok) return setData('net_error')
+      // A refetch that is refused — a rate limit, a dropped connection — leaves
+      // the working page alone; only the very first load may replace it with
+      // an error, or a guest loses the choices they were in the middle of.
+      if (!res.ok) return setData(current => (current === 'loading' ? 'net_error' : current))
+      if (mine !== loadSeq.current) return
       const json = (await res.json()) as ViewData
       if (firstLoad.current) {
         firstLoad.current = false
-        const open = json.mornings.findIndex(m => !settled(m) && !m.locked)
+        const open = json.mornings.findIndex(openFor)
         setDayIndex(open >= 0 ? open : 0)
       }
       setData(json)
@@ -152,7 +173,12 @@ export default function BreakfastPage() {
         return next
       })
     } catch {
-      setData('net_error')
+      if (mine !== loadSeq.current) return
+      // Only the FIRST load may replace the page with an error. A refetch that
+      // fails — a rate limit, a dropped connection — leaves the guest looking
+      // at what they already have, which is still true, rather than at
+      // "connection failed" with their unsaved choices gone.
+      setData(current => (current === 'loading' ? 'net_error' : current))
     }
   }, [token, lang])
 
@@ -181,12 +207,13 @@ export default function BreakfastPage() {
       const json = (await res.json()) as { ok: boolean; reason?: string }
       if (json.ok) {
         setDrafts(d => ({ ...d, [morning]: { ...d[morning], status: 'saved' } }))
+        setSavedMorning(morning)
         // Refetch so the seat counts everyone else sees update here too.
         void load()
         // The next morning still waiting for a choice, if there is one.
         const mornings = (data as ViewData).mornings
         const here = mornings.findIndex(m => m.morning === morning)
-        const next = mornings.findIndex((m, i) => i > here && !settled(m) && !m.locked)
+        const next = mornings.findIndex((m, i) => i > here && openFor(m))
         if (next >= 0) setDayIndex(next)
         return
       }
@@ -196,13 +223,15 @@ export default function BreakfastPage() {
           ...d[morning],
           status: 'error',
           error:
-            json.reason === 'slot_full'
-              ? t('slotFull')
-              : json.reason === 'locked'
-                ? t('locked')
-                : json.reason === 'menu_total_mismatch'
-                  ? t('chooseBoth')
-                  : t('failed'),
+            json.reason === 'rate_limited'
+              ? t('tooFast')
+              : json.reason === 'slot_full'
+                ? t('slotFull')
+                : json.reason === 'locked'
+                  ? t('locked')
+                  : json.reason === 'menu_total_mismatch'
+                    ? t('chooseBoth')
+                    : t('failed'),
         },
       }))
       if (json.reason === 'slot_full') void load()
@@ -241,6 +270,7 @@ export default function BreakfastPage() {
   const set = (patch: Partial<Draft>) => {
     if (!current) return
     const morning = current.morning
+    setSavedMorning(null)
     setDrafts(d => ({ ...d, [morning]: { ...draft, ...patch, status: 'idle', error: undefined } }))
   }
 
@@ -368,7 +398,7 @@ export default function BreakfastPage() {
                   <div className='mb-4 flex items-center gap-2'>
                     <button
                       type='button'
-                      onClick={() => setDayIndex(i => Math.max(0, i - 1))}
+                      onClick={() => setDayIndex(Math.max(0, index - 1))}
                       disabled={index === 0}
                       aria-label={t('prevDay')}
                       className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-colors hover:bg-black/[0.03] disabled:opacity-30'
@@ -402,7 +432,7 @@ export default function BreakfastPage() {
                     </div>
                     <button
                       type='button'
-                      onClick={() => setDayIndex(i => Math.min(data.mornings.length - 1, i + 1))}
+                      onClick={() => setDayIndex(Math.min(data.mornings.length - 1, index + 1))}
                       disabled={index >= data.mornings.length - 1}
                       aria-label={t('nextDay')}
                       className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-colors hover:bg-black/[0.03] disabled:opacity-30'
@@ -448,7 +478,7 @@ export default function BreakfastPage() {
                         persons={current.persons}
                         value={draft.menus}
                         onChange={menus => set({ menus })}
-                        disabled={!!current.attendedAt || current.locked}
+                        disabled={!!current.attendedAt || current.locked || draft.status === 'saving'}
                         randomLabel={t('random')}
                         chosenLabel={(count, total) =>
                           fmt(t('chosen'), { count, total })
@@ -474,7 +504,7 @@ export default function BreakfastPage() {
                             <button
                               key={s.id}
                               type='button'
-                              disabled={full || !!current.attendedAt || current.locked}
+                              disabled={full || !!current.attendedAt || current.locked || draft.status === 'saving'}
                               onClick={() => set({ slot: s.id })}
                               className={`flex flex-col items-center rounded-xl border px-2 py-2 text-sm transition-colors ${
                                 draft.slot === s.id
@@ -502,7 +532,7 @@ export default function BreakfastPage() {
                       <textarea
                         value={draft.note}
                         onChange={e => set({ note: e.target.value.slice(0, 300) })}
-                        disabled={!!current.attendedAt || current.locked}
+                        disabled={!!current.attendedAt || current.locked || draft.status === 'saving'}
                         rows={2}
                         maxLength={300}
                         placeholder={t('notePlaceholder')}
@@ -524,7 +554,7 @@ export default function BreakfastPage() {
                         >
                           {draft.status === 'saving' ? t('saving') : t('save')}
                         </Button>
-                        {draft.status === 'saved' && (
+                        {draft.status === 'saved' && savedMorning === current.morning && (
                           <span className='inline-flex items-center gap-1 text-sm text-green'>
                             <LuCheck className='h-4 w-4' aria-hidden />
                             {t('saved')}

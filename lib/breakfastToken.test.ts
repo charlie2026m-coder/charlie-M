@@ -10,9 +10,11 @@ describe('tokenFromScan', () => {
     expect(tokenFromScan('https://www.charlie-m.de/breakfast/CMlzxq-c-ndF/?lang=de')).toBe('CMlzxq-c-ndF')
     expect(tokenFromScan('http://localhost:3000/breakfast/CMlzxq-c-ndF')).toBe('CMlzxq-c-ndF')
   })
+  it('takes the path from any host — dev, preview and live all serve this page', () => {
+    expect(tokenFromScan('https://example.com/breakfast/CMlzxq-c-ndF')).toBe('CMlzxq-c-ndF')
+  })
   it('refuses everything else', () => {
     expect(tokenFromScan('https://www.charlie-m.de/r/ABC12345')).toBeNull()
-    expect(tokenFromScan('https://example.com/breakfast/CMlzxq-c-ndF')).toBe('CMlzxq-c-ndF')
     expect(tokenFromScan('mailto:x@y.de')).toBeNull()
     expect(tokenFromScan('short')).toBeNull()
     expect(tokenFromScan('')).toBeNull()

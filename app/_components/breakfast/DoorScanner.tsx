@@ -30,7 +30,7 @@ import { MenuIcon } from '@/app/_components/breakfast/MenuIcon'
 
 interface ScanResponse {
   ok: boolean
-  result: 'ok' | 'already' | 'no_booking' | 'not_paid' | 'unknown_token' | 'error'
+  result: 'ok' | 'already' | 'no_booking' | 'not_paid' | 'unknown_token' | 'signed_out' | 'error'
   guest?: string
   room?: string
   menus?: { code: string; name: string; icon: string; persons: number }[]
@@ -72,6 +72,11 @@ const VERDICT: Record<ScanResponse['result'], { tone: string; title: string; blu
     tone: 'bg-red-50 border-red-600 text-red-900',
     title: 'Code not recognised',
     blurb: 'Not one of our breakfast codes. Check they are showing the breakfast QR.',
+  },
+  signed_out: {
+    tone: 'bg-red-50 border-red-600 text-red-900',
+    title: 'This screen is signed out',
+    blurb: 'Nothing is being counted. Sign in again below, then scan once more.',
   },
   error: {
     tone: 'bg-red-50 border-red-600 text-red-900',
@@ -124,15 +129,26 @@ export function DoorScanner({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   // The camera sees the same code thirty times a second. Without this the
-  // second frame re-scans a token the first one already counted.
+  // second frame re-scans a token the first one already counted — and the
+  // answer would change under the guest's eyes, because the first scan is what
+  // marks attendance and the second one is then "already checked in".
+  //
+  // The stamp is refreshed on every SIGHTING, not only on the one that was
+  // sent, so a guest who leaves their phone in front of the lens never
+  // re-triggers; the window re-arms once the code has been out of frame for
+  // eight seconds. A different code is never held back by it.
   const recentRef = useRef<{ token: string; at: number } | null>(null)
+  const SAME_CODE_MS = 8000
 
   const submit = useCallback(async (raw: string) => {
     const value = raw.trim()
     if (!value || busy) return
 
     const recent = recentRef.current
-    if (recent && recent.token === value && Date.now() - recent.at < 4000) return
+    if (recent && recent.token === value && Date.now() - recent.at < SAME_CODE_MS) {
+      recentRef.current = { token: value, at: Date.now() }
+      return
+    }
     recentRef.current = { token: value, at: Date.now() }
 
     setBusy(true)
@@ -144,7 +160,7 @@ export function DoorScanner({
       })
       const json: ScanResponse = res.ok
         ? await res.json()
-        : { ok: false, result: res.status === 401 || res.status === 403 ? 'error' : 'error' }
+        : { ok: false, result: res.status === 401 || res.status === 403 ? 'signed_out' : 'error' }
       const entry: Entry = { ...json, at: Date.now(), token: value }
       setLast(entry)
       setHistory(h => [entry, ...h].slice(0, 8))
@@ -153,30 +169,59 @@ export function DoorScanner({
     } finally {
       setBusy(false)
       setToken('')
+      // The answer is what the guest is waiting on: start the same-code window
+      // from here, not from when the request went out, or a slow Apaleo lookup
+      // leaves the window nearly spent by the time the verdict appears.
+      recentRef.current = { token: value, at: Date.now() }
       if (cameraRef.current !== 'on') inputRef.current?.focus()
     }
   }, [busy])
 
-  // Keep the wedge scanner's keystrokes landing somewhere: it types wherever
-  // the focus happens to be, so anything that steals focus breaks the door.
-  // Not while the camera is open, though — on a phone that yanked the page
-  // back to the input every second and a half and popped the keyboard, so
-  // the screen could not be scrolled at all.
   const cameraRef = useRef<CameraState>('off')
   cameraRef.current = camera
+
+  // A handheld scanner is a keyboard: it types the code wherever the focus
+  // happens to be and presses Enter. With the camera off the input is kept
+  // focused so that lands in the field.
+  //
+  // With the camera on the focus is deliberately let go — holding it on a
+  // phone popped the keyboard every 1.5s and the page could not be scrolled —
+  // so the keystrokes are caught at the document instead. Without this the
+  // tablet on the pass, which opens the camera by itself, silently ignored
+  // every scan from its handheld reader.
   useEffect(() => {
-    if (camera === 'on') {
-      inputRef.current?.blur()
-      return
-    }
-    const keep = () => {
-      if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
-        inputRef.current?.focus()
+    if (camera !== 'on') {
+      const keep = () => {
+        if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+          inputRef.current?.focus()
+        }
       }
+      const id = window.setInterval(keep, 1500)
+      return () => window.clearInterval(id)
     }
-    const id = window.setInterval(keep, 1500)
-    return () => window.clearInterval(id)
-  }, [camera])
+
+    inputRef.current?.blur()
+    let typed = ''
+    let lastKeyAt = 0
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return
+      const now = Date.now()
+      // A scanner types in one burst; a stray keypress a second later starts
+      // a new code rather than being glued onto the last one.
+      if (now - lastKeyAt > 1000) typed = ''
+      lastKeyAt = now
+      if (e.key === 'Enter') {
+        const value = typed.trim()
+        typed = ''
+        if (value) void submit(value)
+        return
+      }
+      if (e.key.length === 1) typed = (typed + e.key).slice(-256)
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [camera, submit])
 
   const stopCamera = useCallback(() => {
     streamRef.current?.getTracks().forEach(t => t.stop())
@@ -184,19 +229,38 @@ export function DoorScanner({
     setCamera('off')
   }, [])
 
+  // Permission prompts and camera warm-up take seconds, and the screen can be
+  // left or the button tapped again in the meantime. Whatever arrives for a
+  // screen that is gone — or for a second attempt that already has a stream —
+  // is stopped on the spot; a MediaStream nobody holds keeps the lens light on
+  // until the page is reloaded.
+  const aliveRef = useRef(true)
+  useEffect(() => {
+    aliveRef.current = true
+    return () => {
+      aliveRef.current = false
+    }
+  }, [])
+
   const startCamera = useCallback(async () => {
     if (!navigator.mediaDevices?.getUserMedia) {
       setCamera('unsupported')
       return
     }
+    if (streamRef.current) return
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: { ideal: 'environment' } },
         audio: false,
       })
+      if (!aliveRef.current || streamRef.current) {
+        stream.getTracks().forEach(t => t.stop())
+        return
+      }
       streamRef.current = stream
       setCamera('on')
     } catch (e) {
+      if (!aliveRef.current) return
       const name = e instanceof Error ? e.name : ''
       setCamera(name === 'NotFoundError' || name === 'OverconstrainedError' ? 'nocamera' : 'denied')
     }
@@ -393,6 +457,17 @@ export function DoorScanner({
             <p className='mt-3 rounded-xl border border-current/30 bg-white/60 px-3 py-2 text-base'>
               <span className='mr-1 font-semibold'>Note:</span>
               {last.note}
+            </p>
+          )}
+
+          {last.result === 'signed_out' && (
+            <p className='mt-3'>
+              <Link
+                href='/admin/login'
+                className='inline-flex items-center rounded-xl border border-current/40 bg-white/70 px-4 py-2 font-medium'
+              >
+                Sign in again
+              </Link>
             </p>
           )}
 

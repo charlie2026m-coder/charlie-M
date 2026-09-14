@@ -23,7 +23,7 @@
  * is one tap away and the choice is remembered on the device.
  */
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import {
   MdChatBubbleOutline,
@@ -169,16 +169,26 @@ export default function KitchenPage() {
     }
   }
 
+  // Which report was asked for last. Tapping Saturday then Sunday sends two
+  // requests; if Saturday's answers second it must be dropped, or the pass
+  // reads Saturday's covers and menus under Sunday's date and cooks to it.
+  const reportSeq = useRef(0)
+
   const load = useCallback(async (date: string, locale: Lang) => {
+    const mine = ++reportSeq.current
     setState('loading')
     try {
       const res = await fetch(`/api/admin/breakfast/report?morning=${date}&locale=${locale}`, {
         cache: 'no-store',
       })
+      if (mine !== reportSeq.current) return
       if (!res.ok) return setState('error')
-      setReport(await res.json())
+      const json = await res.json()
+      if (mine !== reportSeq.current) return
+      setReport(json)
       setState('ready')
     } catch {
+      if (mine !== reportSeq.current) return
       setState('error')
     }
   }, [])

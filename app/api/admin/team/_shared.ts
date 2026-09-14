@@ -1,6 +1,9 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
 import { normaliseAreas, roleLabel, type Area } from '@/lib/adminAccess'
+import { logger } from '@/lib/logger'
+
+const bfLog = logger.withTag('team')
 
 /**
  * What the three team routes share: the service-role client (the staff list
@@ -48,11 +51,18 @@ export async function rows(db: SupabaseClient): Promise<Row[]> {
   return (data ?? []) as Row[]
 }
 
+/**
+ * One staff row by e-mail. `eq`, never `ilike`: an ilike value is a LIKE
+ * PATTERN, so an address containing `_` (which is common) would match its
+ * neighbours as well, and the caller would edit or delete more rows than it
+ * named. Addresses are stored lower-cased by this API, and `cleanEmail`
+ * lower-cases what comes in, so exact matching is also correct.
+ */
 export async function findRow(db: SupabaseClient, email: string): Promise<Row | null> {
   const { data } = await db
     .from('admins')
     .select('email, name, areas, user_id, created_at')
-    .ilike('email', email)
+    .eq('email', email)
     .maybeSingle()
   return (data as Row | null) ?? null
 }
@@ -112,9 +122,9 @@ export async function ensureLogin(
   db: SupabaseClient,
   email: string,
   name: string,
-): Promise<{ userId: string; password: string | null }> {
+): Promise<{ userId: string; password: string | null; created: boolean }> {
   const existing = await authUserId(db, email)
-  if (existing) return { userId: existing, password: null }
+  if (existing) return { userId: existing, password: null, created: false }
 
   const password = temporaryPassword()
   const { data, error } = await db.auth.admin.createUser({
@@ -124,5 +134,16 @@ export async function ensureLogin(
     user_metadata: name ? { full_name: name } : undefined,
   })
   if (error || !data.user) throw new Error(error?.message ?? 'Could not create the login')
-  return { userId: data.user.id, password }
+  return { userId: data.user.id, password, created: true }
+}
+
+/**
+ * Undo a login this request had just created, when the staff row it was for
+ * could not be written. Without this the account is left behind: the next
+ * attempt finds it, hands back no password because it "already existed", and
+ * the person is on the team with a password nobody knows.
+ */
+export async function undoLogin(db: SupabaseClient, userId: string): Promise<void> {
+  const { error } = await db.auth.admin.deleteUser(userId)
+  if (error) bfLog.error('team: orphan login not removed', { userId, error: error.message })
 }

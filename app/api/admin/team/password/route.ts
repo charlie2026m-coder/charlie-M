@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       if (error || !data.user) throw new Error(error?.message ?? 'Could not create the login')
       userId = data.user.id
     }
-    if (userId !== row.user_id) await db.from('admins').update({ user_id: userId }).ilike('email', email)
+    if (userId !== row.user_id) await db.from('admins').update({ user_id: userId }).eq('email', email)
 
     logger.info('team: password reset', { by: guard.email, email })
     return NextResponse.json({ ok: true, temporaryPassword: password })

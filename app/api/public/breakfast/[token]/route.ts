@@ -20,17 +20,25 @@ import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 
 const NO_STORE = { 'Cache-Control': 'no-store' }
 const IP_CAP = 1500
+/**
+ * Per ten minutes, per token. The default of ten was borrowed from
+ * self-checkout, which a guest opens once; this page is worked through one
+ * morning at a time and reads itself again after every save, so a fortnight's
+ * stay spends more than ten before the guest has finished — and the eleventh
+ * refusal turned a page that was working into "connection failed".
+ */
+const TOKEN_CAP = 120
 
-const tooMany = () =>
+const tooMany = (reason: string) =>
   NextResponse.json(
-    { ok: false, error: 'rate_limited' },
+    { ok: false, reason, error: 'rate_limited' },
     { status: 429, headers: NO_STORE },
   )
 
 function rateLimited(request: NextRequest, fineStore: string, token: string): boolean {
   const ip = getClientIp(request)
   if (!checkRateLimit('breakfast-ip', ip, IP_CAP)) return true
-  if (!checkRateLimit(fineStore, `${ip}:${token}`)) return true
+  if (!checkRateLimit(fineStore, `${ip}:${token}`, TOKEN_CAP)) return true
   return false
 }
 
@@ -39,7 +47,7 @@ export async function GET(
   { params }: { params: Promise<{ token: string }> },
 ) {
   const { token } = await params
-  if (rateLimited(request, 'breakfast-view', token)) return tooMany()
+  if (rateLimited(request, 'breakfast-view', token)) return tooMany('rate_limited')
 
   const locale = request.nextUrl.searchParams.get('locale') === 'de' ? 'de' : 'en'
   const view = await guestView(token, locale)
@@ -57,7 +65,7 @@ export async function POST(
   { params }: { params: Promise<{ token: string }> },
 ) {
   const { token } = await params
-  if (rateLimited(request, 'breakfast-choose', token)) return tooMany()
+  if (rateLimited(request, 'breakfast-choose', token)) return tooMany('rate_limited')
 
   let body: { morning?: string; menus?: Record<string, unknown>; slotId?: number; note?: unknown }
   try {

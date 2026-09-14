@@ -45,6 +45,7 @@ export const T = {
     chooseBoth: 'Bitte für jede Person ein Menü und eine Uhrzeit wählen.',
     slotFull: 'Diese Uhrzeit ist gerade voll geworden. Bitte wählen Sie eine andere.',
     failed: 'Konnte nicht gespeichert werden. Bitte erneut versuchen.',
+    tooFast: 'Zu viele Versuche in kurzer Zeit. Bitte einen Moment warten.',
     attended: 'Bereits eingecheckt',
 
     step1: 'Menü für jeden Morgen wählen',
@@ -100,6 +101,7 @@ export const T = {
     chooseBoth: 'Please choose a menu for everyone and a time.',
     slotFull: 'That time has just filled up. Please choose another.',
     failed: 'Could not save. Please try again.',
+    tooFast: 'Too many attempts in a short time. Please wait a moment.',
     attended: 'Already checked in',
 
     step1: 'Choose a menu for each morning',

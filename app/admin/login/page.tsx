@@ -160,7 +160,16 @@ export default function AdminLoginPage() {
         if (!factor) throw new Error('No authenticator app is set up on this account.')
         const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: factor.id, code: digits })
         if (error) {
-          throw new Error('That code did not work. Codes change every 30 seconds — type the one showing now.')
+          // Only a rejected code gets the "try the current one" advice. A rate
+          // limit or a dropped connection said the same thing before, so staff
+          // kept retyping correct codes and kept extending their own lockout.
+          const message = error.message.toLowerCase()
+          const wrongCode = message.includes('invalid') || message.includes('incorrect')
+          throw new Error(
+            wrongCode
+              ? 'That code did not work. Codes change every 30 seconds — type the one showing now.'
+              : explain(error.message),
+          )
         }
         await finish(sessionEmail)
       } catch (err) {

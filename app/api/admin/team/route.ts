@@ -12,6 +12,7 @@ import {
   findRow,
   present,
   rows,
+  undoLogin,
 } from './_shared'
 
 /**
@@ -52,8 +53,10 @@ export async function POST(request: NextRequest) {
   const db = admin()
   if (await findRow(db, email)) return refusal('already_on_team')
 
+  let created: string | null = null
   try {
     const login = await ensureLogin(db, email, name)
+    created = login.created ? login.userId : null
     const { error } = await db.from('admins').insert({
       email,
       name: name || null,
@@ -62,6 +65,7 @@ export async function POST(request: NextRequest) {
       user_id: login.userId,
     })
     if (error) throw new Error(error.message)
+    created = null
 
     logger.info('team: member added', { by: guard.email, email, areas, newLogin: login.password !== null })
     const member = (await present(db, [(await findRow(db, email))!], guard.email))[0]
@@ -72,6 +76,10 @@ export async function POST(request: NextRequest) {
       existingAccount: login.password === null,
     })
   } catch (e) {
+    // The login was made for a row that did not get written; take it back so a
+    // second attempt is a clean one rather than "this e-mail already has an
+    // account" with a password nobody knows.
+    if (created) await undoLogin(db, created)
     logger.error('team: add failed', { by: guard.email, email, error: e instanceof Error ? e.message : String(e) })
     return refusal('failed', 500)
   }
@@ -99,7 +107,7 @@ export async function PATCH(request: NextRequest) {
   if (!members.some(m => m.email === email)) return refusal('unknown', 404)
   if (Object.keys(patch).length === 0) return refusal('nothing_to_change', 400)
 
-  const { error } = await db.from('admins').update(patch).ilike('email', email)
+  const { error } = await db.from('admins').update(patch).eq('email', email)
   if (error) {
     logger.error('team: update failed', { by: guard.email, email, error: error.message })
     return refusal('failed', 500)
@@ -119,7 +127,7 @@ export async function DELETE(request: NextRequest) {
   const why = refuseRemoval(members, email, guard.email.toLowerCase())
   if (why) return refusal(why, why === 'unknown' ? 404 : 409)
 
-  const { error } = await db.from('admins').delete().ilike('email', email)
+  const { error } = await db.from('admins').delete().eq('email', email)
   if (error) {
     logger.error('team: remove failed', { by: guard.email, email, error: error.message })
     return refusal('failed', 500)
